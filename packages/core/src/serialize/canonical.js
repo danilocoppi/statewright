@@ -6,6 +6,23 @@
  * @returns {string}
  */
 export function canonicalize(value) {
+  if (value !== null && typeof value === "object" && Object.isFrozen(value)) {
+    const known = kept.get(value);
+    if (known !== undefined) return known;
+    const text = canonicalOf(value);
+    kept.set(value, text);
+    return text;
+  }
+  return canonicalOf(value);
+}
+
+/**
+ * Canonical forms of frozen objects (what applyBatch returns), kept with them: hashing an edited document revisits
+ * only the parts it changed (performance spec §3 P3).
+ */
+const kept = new WeakMap();
+
+function canonicalOf(value) {
   if (value === null || typeof value !== "object") {
     if (value === undefined || typeof value === "function" || typeof value === "symbol") {
       throw new TypeError(`Cannot canonicalize a value of type ${typeof value}`);
