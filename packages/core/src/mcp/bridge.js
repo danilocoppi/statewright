@@ -273,9 +273,15 @@ export function createBridge({
 
   /** The person writes to the agent: text (and what goes with it), or Stop. */
   function message(own, body, response) {
-    const { text, action, context, marks, image, stop } = body;
+    const { text, action, context, marks, image, proposal, stop } = body;
     const written = typeof text === "string" && text.trim() !== "";
-    if (!written && stop !== true) return send(response, 400, { error: "A message has text, or is a stop" });
+    const answered = isObject(proposal) && typeof proposal.id === "string" && typeof proposal.accepted === "boolean";
+    if (proposal !== undefined && !answered) {
+      return send(response, 400, { error: "A proposal's answer has its id and whether it was accepted" });
+    }
+    if (!written && stop !== true && !answered) {
+      return send(response, 400, { error: "A message has text, is a stop, or answers a proposal" });
+    }
     if (action !== undefined && typeof action !== "string") return send(response, 400, { error: "action is a word" });
     if (context !== undefined && !isObject(context)) return send(response, 400, { error: "context is an object" });
     if (marks !== undefined && !(Array.isArray(marks) && marks.every(isObject))) {
@@ -290,6 +296,7 @@ export function createBridge({
       ...(context !== undefined ? { context } : {}),
       ...(marks !== undefined ? { marks } : {}),
       ...(image !== undefined ? { image } : {}),
+      ...(answered ? { proposal } : {}),
       ...(stop === true ? { stop: true } : {})
     });
     return send(response, 202, { id });

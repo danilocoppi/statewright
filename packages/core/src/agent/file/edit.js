@@ -29,7 +29,13 @@ export function change(session, commands, label) {
 }
 
 export const editOperations = {
-  "batch.apply": (session, { commands, label }) => {
+  "batch.apply": (session, { commands, label, propose }) => {
+    if (propose) {
+      throw new AgentError(
+        "NOT_ALLOWED",
+        "proposals need the Editor, where the person accepts or rejects them: pair with it, or apply the batch"
+      );
+    }
     const { result, problems } = change(session, commands, label);
     return { created: result.created, problems };
   },

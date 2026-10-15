@@ -981,7 +981,7 @@ its own changes), `BUSY` (a dialog of the person's is open, or they are typing i
 | `query.path` | `query_path` | `id` | The levels from the root down to an element. | a file or the Editor |
 | `problems.list` | `problems_list` | `severity?`, `canvas?` | The document's Problems (the rules' findings), by severity and level when asked. | a file or the Editor |
 | `editor.state` | `editor_state` |  | What the Editor shows: the project, the level, the selection, what is open, and a run when there is one. | the Editor |
-| `batch.apply` | `batch_apply` | `commands`, `label` | Apply a batch of document commands atomically, as one change named by its label. | a file or the Editor |
+| `batch.apply` | `batch_apply` | `commands`, `label`, `propose?`, `title?`, `why?` | Apply a batch of document commands atomically, as one change named by its label — or, in the Editor, propose it. | a file or the Editor |
 | `history.undo` | `history_undo` |  | Undo the last change, when it is the agent's own. | a file or the Editor |
 | `history.redo` | `history_redo` |  | Redo the change the agent last undid. | a file or the Editor |
 | `layout.arrange` | `layout_arrange` | `canvas`, `scope?` | Place a level's boxes: those without a position, or all of them. | a file or the Editor |

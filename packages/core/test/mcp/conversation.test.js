@@ -3,6 +3,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { memoryFiles } from "../../src/agent/index.js";
 import { createBridge } from "../../src/mcp/bridge.js";
+import { channelOf } from "../../src/mcp/serve.js";
 import { serveMcp } from "../../src/mcp/serve.js";
 import { fakeTab } from "./tab.js";
 
@@ -284,6 +285,23 @@ describe("the person writes to the agent (collaboration spec §3)", () => {
       answered: false,
       question: "qst_1",
       inbox: { unread: 1, note: "The person wrote to you: read editor_inbox" }
+    });
+  });
+
+  it("says the answer to a proposal in words", () => {
+    const words = proposal => channelOf({ id: "msg_1", proposal }).content;
+    expect(words({ id: "prp_1", title: "Remove the old clock", accepted: true })).toBe(
+      "Proposal prp_1 (Remove the old clock) was accepted."
+    );
+    expect(words({ id: "prp_1", title: "Remove the old clock", accepted: false, reason: "keep it" })).toBe(
+      "Proposal prp_1 (Remove the old clock) was rejected: keep it."
+    );
+    expect(words({ id: "prp_1", title: "Remove the old clock", accepted: false, stale: "nod_x is gone" })).toBe(
+      "Proposal prp_1 (Remove the old clock) no longer applies: nod_x is gone."
+    );
+    expect(channelOf({ id: "msg_1", proposal: { id: "prp_1", title: "T", accepted: true } }).meta).toEqual({
+      message: "msg_1",
+      proposal: "prp_1"
     });
   });
 });

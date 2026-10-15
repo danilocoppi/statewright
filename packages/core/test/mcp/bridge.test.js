@@ -584,4 +584,13 @@ describe("the agent asks the person (collaboration spec §6.1)", () => {
     await settle();
     expect(tab.events("listening").at(-1)).toEqual({ listening: false, channel: false });
   });
+
+  it("takes the person's answer to a proposal as a message (collaboration spec §7)", async () => {
+    const { bridge, address } = await bridgeOn();
+    const { tab } = await paired(bridge, address);
+    const proposal = { id: "prp_1", title: "Remove the old clock", accepted: false, reason: "keep it" };
+    expect((await tab.send({ proposal })).status).toBe(202);
+    expect(bridge.inbox().result.messages).toMatchObject([{ proposal }]);
+    expect((await tab.send({ proposal: { id: 1 } })).status).toBe(400);
+  });
 });

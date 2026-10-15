@@ -97,7 +97,15 @@ function markInWords(mark) {
  * @returns {{ content: string, meta: Record<string, string> }}
  */
 export function channelOf(message) {
-  const { id, text, stop, answers, context = {} } = message;
+  const { id, text, stop, answers, proposal, context = {} } = message;
+  if (proposal) {
+    const name = `Proposal ${proposal.id}${proposal.title ? ` (${proposal.title})` : ""}`;
+    const content =
+      proposal.accepted ? `${name} was accepted.`
+      : proposal.stale ? `${name} no longer applies: ${proposal.stale}.`
+      : `${name} was rejected${proposal.reason ? `: ${proposal.reason}` : ""}.`;
+    return { content, meta: { message: id, proposal: proposal.id } };
+  }
   if (stop) {
     return {
       content: "The person asked you to stop: read editor_inbox, then go on only as they say.",

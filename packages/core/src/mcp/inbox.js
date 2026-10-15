@@ -40,7 +40,7 @@ export function createInbox({ now = () => new Date(), number } = {}) {
     /** Put a message in: `{ text?, action?, context?, stop? }`. */
     add(body) {
       next += 1;
-      const { text, action, context, marks, image, answers, stop } = body;
+      const { text, action, context, marks, image, answers, proposal, stop } = body;
       /** @type {Message} */
       const message = {
         id: `msg_${number ? number() : next}`,
@@ -51,6 +51,7 @@ export function createInbox({ now = () => new Date(), number } = {}) {
         ...(marks !== undefined ? { marks } : {}),
         ...(image !== undefined ? { image } : {}),
         ...(answers !== undefined ? { answers } : {}),
+        ...(proposal !== undefined ? { proposal } : {}),
         ...(stop ? { stop: true } : {})
       };
       unread.push(message);

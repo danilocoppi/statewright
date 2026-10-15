@@ -161,15 +161,32 @@ export const OPERATIONS = [
   {
     name: "batch.apply",
     writes: true,
-    summary: "Apply a batch of document commands atomically, as one change named by its label.",
+    summary:
+      "Apply a batch of document commands atomically, as one change named by its label — or, in the Editor, propose it.",
     input: z.strictObject({
       commands: z.array(z.looseObject({ type: z.string().min(1), args: z.looseObject({}).optional() })).min(1),
-      label: z.string().min(1).describe("What the change does, in a few words; shown in the history")
+      label: z.string().min(1).describe("What the change does, in a few words; shown in the history"),
+      propose: z
+        .boolean()
+        .optional()
+        .describe(
+          "Propose it instead of making it (the person accepts or rejects it in the Editor; the answer comes as a " +
+            "message). Anything that removes is always proposed. Only with the Editor."
+        ),
+      title: z.string().min(1).optional().describe("A proposal's title, as the person reads it"),
+      why: z.string().min(1).optional().describe("Why you propose it, in a sentence")
     }),
-    result: z.looseObject({
-      created: z.array(Id),
-      problems: z.looseObject({ added: z.array(Problem), removed: z.array(Problem) })
-    })
+    result: z.union([
+      z.looseObject({
+        created: z.array(Id),
+        problems: z.looseObject({ added: z.array(Problem), removed: z.array(Problem) })
+      }),
+      z.looseObject({
+        proposed: z.string(),
+        forced: z.enum(["deletes", "locked"]).optional(),
+        reason: z.string().optional()
+      })
+    ])
   },
   {
     name: "history.undo",

@@ -175,4 +175,19 @@ describe("the agent contract (AI interface spec §4)", () => {
       ])
     );
   });
+
+  it("lets batch.apply propose, and answers what was proposed (collaboration spec §7)", async () => {
+    const { validateCall: checkArgs, checkResult } = await import("../../src/agent/index.js");
+    const args = {
+      label: "x",
+      commands: [{ type: "node.remove", args: { id: "nod_a" } }],
+      propose: true,
+      title: "Remove a",
+      why: "unused"
+    };
+    expect(checkArgs("batch.apply", args)).toMatchObject({ ok: true });
+    expect(checkResult("batch.apply", { proposed: "prp_1", forced: "deletes", reason: "It removes nod_a" })).toEqual({
+      ok: true
+    });
+  });
 });

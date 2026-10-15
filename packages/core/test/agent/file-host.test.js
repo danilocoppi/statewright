@@ -32,6 +32,22 @@ function payments() {
 describeContract("the file host", async () => payments());
 
 describe("the file host (AI interface spec §4.3)", () => {
+  it("refuses a proposal: proposals need the Editor (collaboration spec §7)", async () => {
+    const { call, files } = payments();
+    const before = files.text(FILE);
+    const answer = await call("batch.apply", {
+      label: "Rename",
+      propose: true,
+      title: "A clearer name",
+      commands: [{ type: "node.update", args: { id: "nod_paused", set: { name: "on hold" } } }]
+    });
+    expect(answer).toMatchObject({
+      ok: false,
+      error: { code: "NOT_ALLOWED", message: expect.stringMatching(/proposals need the Editor/) }
+    });
+    expect(files.text(FILE)).toBe(before);
+  });
+
   it("writes every change at once, signed by the agent", async () => {
     const { call, files } = payments();
     await call("batch.apply", {
