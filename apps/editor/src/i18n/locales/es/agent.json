@@ -84,5 +84,29 @@
     "undo": "Deshacer",
     "show": "Ver",
     "empty": "Escribe a {{agent}}: lo que selecciones va con tu mensaje."
+  },
+  "marks": {
+    "tools": "Herramientas para marcar",
+    "mark": "Marcar para la IA",
+    "pencil": "Lápiz (Alt+clic: una etiqueta)",
+    "rectangle": "Rectángulo",
+    "ellipse": "Elipse",
+    "eraser": "Borrador (Mayús+clic: borrar todo)",
+    "colour": "Color",
+    "colours": {
+      "red": "Rojo: incorrecto",
+      "amber": "Ámbar: una duda",
+      "green": "Verde: correcto",
+      "neutral": "Neutro"
+    },
+    "label": "Una etiqueta",
+    "labelPlaceholder": "Una nota breve…",
+    "chips": {
+      "elements_one": "{{count}} marcado en {{levels}} nivel",
+      "elements_other": "{{count}} marcados en {{levels}} niveles",
+      "marks_one": "{{count}} marca",
+      "marks_other": "{{count}} marcas"
+    },
+    "show": "Ver marcas"
   }
 }

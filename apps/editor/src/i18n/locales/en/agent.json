@@ -84,5 +84,29 @@
     "undo": "Undo",
     "show": "Show",
     "empty": "Write to {{agent}}: what you select goes with your message."
+  },
+  "marks": {
+    "tools": "Marking tools",
+    "mark": "Mark for the AI",
+    "pencil": "Pencil (Alt+click: a label)",
+    "rectangle": "Rectangle",
+    "ellipse": "Ellipse",
+    "eraser": "Eraser (Shift+click: erase all)",
+    "colour": "Colour",
+    "colours": {
+      "red": "Red: wrong",
+      "amber": "Amber: a question",
+      "green": "Green: right",
+      "neutral": "Neutral"
+    },
+    "label": "A label",
+    "labelPlaceholder": "A short note…",
+    "chips": {
+      "elements_one": "{{count}} marked on {{levels}} level",
+      "elements_other": "{{count}} marked on {{levels}} levels",
+      "marks_one": "{{count}} mark",
+      "marks_other": "{{count}} marks"
+    },
+    "show": "Show marks"
   }
 }

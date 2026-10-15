@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Island } from "@/components/ui/Island";
 import { cn } from "@/lib/cn";
+import { MarkTools } from "@/marks/MarkTools";
 import { indexOf } from "@/lib/derived";
 import { isSimulating } from "@/simulate/store";
 import { editorStore, useEditor } from "@/store/editor";
@@ -16,8 +17,8 @@ import { chipsOf, contextOf } from "./context";
 import { WORKING_MS, conversationStore, statusOf, useConversation } from "./store";
 
 /** The bar's widest, and the narrowest it takes in a row before it moves up a row. */
-const WIDEST = 560;
-const NARROWEST = 320;
+const WIDEST = 680;
+const NARROWEST = 420;
 /** Room kept between the bar and what is beside it, and from the window's edges. */
 const GAP = 12;
 const EDGE = 16;
@@ -331,6 +332,9 @@ export function ConversationBar({ onNavigate }) {
         </ol>
       )}
       <div className="flex items-end gap-1.5">
+        <span className="mb-0.5">
+          <MarkTools />
+        </span>
         <button
           type="button"
           aria-expanded={historyOpen}

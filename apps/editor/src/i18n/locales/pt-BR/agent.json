@@ -84,5 +84,29 @@
     "undo": "Desfazer",
     "show": "Ver",
     "empty": "Escreva para {{agent}}: o que você selecionar vai junto com a mensagem."
+  },
+  "marks": {
+    "tools": "Ferramentas de marcação",
+    "mark": "Marcar para a IA",
+    "pencil": "Lápis (Alt+clique: uma etiqueta)",
+    "rectangle": "Retângulo",
+    "ellipse": "Elipse",
+    "eraser": "Borracha (Shift+clique: apagar tudo)",
+    "colour": "Cor",
+    "colours": {
+      "red": "Vermelho: errado",
+      "amber": "Amarelo: uma dúvida",
+      "green": "Verde: certo",
+      "neutral": "Neutro"
+    },
+    "label": "Uma etiqueta",
+    "labelPlaceholder": "Uma nota curta…",
+    "chips": {
+      "elements_one": "{{count}} marcado em {{levels}} nível",
+      "elements_other": "{{count}} marcados em {{levels}} níveis",
+      "marks_one": "{{count}} marca",
+      "marks_other": "{{count}} marcas"
+    },
+    "show": "Ver marcas"
   }
 }

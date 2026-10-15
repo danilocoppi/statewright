@@ -8,6 +8,8 @@ import { createStore } from "zustand/vanilla";
 export const MEANING = { red: "wrong", amber: "question", green: "right", neutral: null };
 /** The colours, in the picker's order. */
 export const COLOURS = ["red", "amber", "green", "neutral"];
+/** Each colour as the Editor's tokens draw it. */
+export const INK = { red: "var(--danger)", amber: "var(--warning)", green: "var(--success)", neutral: "var(--ink)" };
 /** The tools at the bar's left, in order. */
 export const MARK_TOOLS = ["mark", "pencil", "rectangle", "ellipse", "eraser"];
 /** The tools that draw (Ctrl/⌘+Z takes their last mark back, the colour picker shows). */
@@ -72,4 +74,4 @@ export function createMarksStore() {
 export const marksStore = createMarksStore();
 
 /** Read the marks in a component. */
-export const useMarks = selector => useStore(marksStore, selector);
+export const useMarksState = selector => useStore(marksStore, selector);

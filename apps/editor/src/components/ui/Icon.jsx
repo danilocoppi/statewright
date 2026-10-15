@@ -17,6 +17,11 @@ const PATHS = {
   image: "M2.5 3.5h11v9h-11zM2.5 10.5l3-3 2.5 2.5 2-2 3.5 3.5M10.5 6h.01",
   copy: "M5.5 5.5h7v7h-7zM3.5 10.5v-7h7",
   doc: "M4 2.5h8v11H4zM6 5.5h4M6 8h4M6 10.5h2.5",
+  // Marking for the AI: a frame's corners round a point; a rectangle, an ellipse and an eraser to draw and erase.
+  "mark-ai": "M3 6V3h3M10 3h3v3M13 10v3h-3M6 13H3v-3M8 6.5v3M6.5 8h3",
+  rectangle: "M2.5 4.5h11v7h-11z",
+  ellipse: "M8 4.5c3 0 5.5 1.6 5.5 3.5S11 11.5 8 11.5 2.5 9.9 2.5 8 5 4.5 8 4.5z",
+  eraser: "M9.5 3 13.5 7l-5.5 5.5h-3L2.5 10.5zM6.5 6l4 4M8 12.5h5.5",
   // The levels: one above another, as the project's map shows them.
   levels: "M8 2.5 13.5 5.5 8 8.5 2.5 5.5zM2.5 8 8 11l5.5-3M2.5 10.5 8 13.5l5.5-3",
   // The catalog: a card box, its cards behind it, a label on its front.

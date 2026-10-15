@@ -28,14 +28,14 @@ function segmentsMeet([ax, ay], [bx, by], [cx, cy], [dx, dy]) {
 }
 
 /** The distance from a point to a segment. */
-function pointToSegment([px, py], [ax, ay], [bx, by]) {
+export function pointToSegment([px, py], [ax, ay], [bx, by]) {
   const length = (bx - ax) ** 2 + (by - ay) ** 2;
   const t = length ? Math.max(0, Math.min(1, ((px - ax) * (bx - ax) + (py - ay) * (by - ay)) / length)) : 0;
   return Math.hypot(px - (ax + t * (bx - ax)), py - (ay + t * (by - ay)));
 }
 
 /** The distance between two segments (zero when they cross). */
-function segmentDistance(a, b, c, d) {
+export function segmentDistance(a, b, c, d) {
   return Math.min(pointToSegment(a, c, d), pointToSegment(b, c, d), pointToSegment(c, a, b), pointToSegment(d, a, b));
 }
 

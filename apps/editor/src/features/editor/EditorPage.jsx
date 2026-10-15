@@ -8,6 +8,7 @@ import { PairedBadge } from "@/agent/PairedBadge";
 import { connection } from "@/agent/connection";
 import { usePairing } from "@/agent/pairing";
 import { ConversationBar } from "@/conversation/ConversationBar";
+import { DRAWING, marksStore } from "@/marks/store";
 import { focusConversation } from "@/conversation/focus";
 import { useRepository } from "@/app/repository";
 import { Canvas } from "@/canvas/Canvas";
@@ -80,6 +81,24 @@ import { isMac, ownsClipboard, shortcutFor } from "./shortcuts";
 /** What is open over the canvas, typed in, and the canvas's keys that wait while it is. */
 const POPOVERS = new Set(["trigger", "insert", "draft"]);
 const WAITING = new Set(["undo", "redo", "selectAll", "duplicate"]);
+/** The keys a marking tool in hand keeps from the canvas: they would change the document or take another tool. */
+const MARKING_KEEPS = new Set([
+  "up",
+  "undo",
+  "redo",
+  "delete",
+  "tool",
+  "tab",
+  "region",
+  "rename",
+  "trigger",
+  "insert",
+  "select",
+  "selectAll",
+  "duplicate",
+  "arrow",
+  "menu"
+]);
 /** While simulating the document is not edited (simulator spec §6.1): these keys wait, and ⌘Z goes back one step. */
 const SIMULATION_WAITS = new Set([
   "undo",
@@ -273,6 +292,16 @@ export default function EditorPage() {
       }
       const action = shortcutFor(event, { mac });
       if (!action) return;
+      // A marking tool in hand keeps the keys for the marks (collaboration spec §5.1): Esc puts it down, Ctrl/⌘+Z takes
+      // back the last mark drawn, and the keys that would change the document or take another tool wait.
+      const marking = marksStore.getState().tool;
+      if (marking && MARKING_KEEPS.has(action)) {
+        if (action === "up") marksStore.getState().setTool(null);
+        if (action === "undo" && DRAWING.has(marking)) marksStore.getState().undo();
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       // While a trigger, insert by name or a box being named is open over the canvas, the canvas's own keys wait.
       if (POPOVERS.has(editingStore.getState().editor?.type) && WAITING.has(action)) return;
       if (isSimulating() && SIMULATION_WAITS.has(action)) {

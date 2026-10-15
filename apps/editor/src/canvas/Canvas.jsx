@@ -42,6 +42,8 @@ import { pathName } from "@/simulate/words";
 import { editorStore, useEditor } from "@/store/editor";
 import { currentInspectorWidth, useInspectorWidth } from "@/stores/inspector";
 import { useView } from "@/stores/view";
+import { MarksLayer } from "@/marks/MarksLayer";
+import { useMarksState } from "@/marks/store";
 
 import { lightBeacon, useBeacon } from "./beacon";
 import { ConnectionLine } from "./ConnectionLine";
@@ -125,6 +127,8 @@ function Flow({ onNavigate }) {
   // Presenting (simulator spec §7.1), the level is framed on the stage and follows the story.
   const presenting = useSimulation(state => state.stage);
   const locked = readOnly || simulating;
+  // A marking tool in hand takes the pointer for the marks (collaboration spec §5.1).
+  const marking = useMarksState(state => state.tool !== null);
   const selection = useEditor(state => state.view.selections[state.canvasId] ?? NO_SELECTION);
   const flow = useReactFlow();
   // A level is framed with room for the tool dock on a narrow canvas (viewport.js).
@@ -615,15 +619,15 @@ function Flow({ onNavigate }) {
           onMoveEnd={(_event, viewport) =>
             framedRef.current === canvasId && editorStore.getState().setViewport(canvasId, viewport)
           }
-          nodesDraggable={!locked}
+          nodesDraggable={!locked && !marking}
           nodesConnectable={!locked}
           edgesFocusable={false}
           elevateNodesOnSelect={false}
           zIndexMode="manual"
           multiSelectionKeyCode="Shift"
-          selectionOnDrag={!locked}
+          selectionOnDrag={!locked && !marking}
           selectionMode={SelectionMode.Partial}
-          panOnDrag={locked || [1]}
+          panOnDrag={marking ? false : locked || [1]}
           disableKeyboardA11y
           deleteKeyCode={null}
           zoomOnDoubleClick={false}
@@ -634,11 +638,12 @@ function Flow({ onNavigate }) {
           fitViewOptions={fit}
           attributionPosition="bottom-center"
           aria-label={t("canvas.label", { level: doc.canvases[canvasId].name })}
-          className={cn("sw-canvas", tool && "sw-placing")}
+          className={cn("sw-canvas", tool && "sw-placing", marking && "sw-marking")}
         >
           <Background variant={BackgroundVariant.Dots} gap={18} size={1.4} color="var(--dot)" bgColor="var(--canvas)" />
           {presenting && <StageMotion level={level} marks={marks} play={played ?? -1} />}
           {!presenting && <Pointer canvasId={canvasId} />}
+          {!presenting && <MarksLayer canvasId={canvasId} />}
           {showMinimap && (
             <MiniMap
               pannable

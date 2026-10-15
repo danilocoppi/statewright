@@ -403,3 +403,11 @@
     outline-offset: 2px;
   }
 }
+
+/* A marking tool in hand (collaboration spec §5.1): the canvas draws, marks or erases, everywhere. */
+.sw-marking,
+.sw-marking .react-flow__pane,
+.sw-marking .react-flow__node,
+.sw-marking .react-flow__edge {
+  cursor: crosshair !important;
+}

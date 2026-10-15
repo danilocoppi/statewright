@@ -14,6 +14,7 @@ import { Toaster } from "@/components/ui/Toaster";
 import { editingStore } from "@/editing/state";
 import EditorPage from "@/features/editor/EditorPage";
 import { memoryRepository } from "@/persistence/repository";
+import { marksStore } from "@/marks/store";
 import { editorStore } from "@/store/editor";
 import { useToastStore } from "@/stores/toast";
 import { useView } from "@/stores/view";
@@ -189,6 +190,43 @@ describe("Editor page", () => {
       '<img src="x" onerror="alert(1)">'
     );
   });
+  it("keeps the keys for the marks while a marking tool is in hand (collaboration spec §5.1)", async () => {
+    const repository = keeping();
+    await repository.save(await placedExample("payments"));
+    renderEditor(repository, "/p/prj_payments/cnv_lifecycle");
+    await screen.findByTestId("canvas");
+    act(() => editorStore.getState().select(["nod_expiryClock"]));
+    act(() => {
+      marksStore.getState().setTool("pencil");
+      marksStore.getState().add({
+        level: "cnv_lifecycle",
+        kind: "stroke",
+        colour: "red",
+        points: [
+          [0, 0],
+          [9, 9]
+        ]
+      });
+    });
+    const before = editorStore.getState().doc;
+    try {
+      fireEvent.keyDown(window, { key: "Delete" });
+      fireEvent.keyDown(window, { key: "s" });
+      expect(editorStore.getState().doc).toBe(before);
+      fireEvent.keyDown(window, { key: "z", ctrlKey: true });
+      expect(marksStore.getState().marks).toEqual([]);
+      expect(editorStore.getState().doc).toBe(before);
+      fireEvent.keyDown(window, { key: "Escape" });
+      expect(marksStore.getState().tool).toBeNull();
+      expect(screen.getByTestId("canvas").dataset.canvas).toBe("cnv_lifecycle");
+    } finally {
+      act(() => {
+        marksStore.getState().setTool(null);
+        marksStore.getState().clear();
+      });
+    }
+  });
+
   it("opens the levels with L", async () => {
     const repository = keeping();
     await repository.save(await placedExample("payments"));
