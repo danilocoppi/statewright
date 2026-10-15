@@ -20,7 +20,7 @@
     "code": "Código de pareamento",
     "copy": "Copiar",
     "copied": "Copiado",
-    "copyText": "Conecte-se ao meu Statewright Editor: o código é {{code}}",
+    "copyText": "Conecte-se ao meu Statewright Editor: chame editor_pair com o código {{code}}. O Editor procura o servidor MCP do statewright em {{address}}; se ele não estiver rodando aí, inicie-o com: {{command}}",
     "valid": "Vale por 5 minutos.",
     "waiting": "Esperando o agente…",
     "connected": "Conectado a {{agent}}",

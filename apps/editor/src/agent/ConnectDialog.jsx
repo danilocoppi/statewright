@@ -7,7 +7,7 @@ import { TextField } from "@/components/ui/TextField";
 import { cn } from "@/lib/cn";
 
 import { connection } from "./connection";
-import { usePairing } from "./pairing";
+import { serverCommand, usePairing } from "./pairing";
 
 /** How long "Connected to <agent>" stays before the dialog gives the page back to the agent's calls. */
 export const CONNECTED_MS = 1500;
@@ -73,7 +73,7 @@ export function ConnectDialog({ onClose, pairing = connection }) {
   };
   const copy = () => {
     globalThis.navigator?.clipboard
-      ?.writeText(t("pairing.copyText", { code }))
+      ?.writeText(t("pairing.copyText", { code, address, command: serverCommand(address) }))
       .then(() => setCopied(true))
       .catch(() => {});
   };

@@ -109,7 +109,10 @@ describe("Connect an AI… (AI interface spec §7.4)", () => {
     Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
     await settle();
-    expect(writeText).toHaveBeenCalledWith(`Pair with my Statewright Editor: the code is ${code}`);
+    expect(writeText).toHaveBeenCalledWith(
+      `Pair with my Statewright Editor: call editor_pair with the code ${code}. The Editor reaches the statewright ` +
+        "MCP server at 127.0.0.1:47615; if it is not running there, start it with: npx statewright mcp --port 47615"
+    );
     expect(screen.getByRole("button", { name: "Copied" })).toBeTruthy();
   });
 

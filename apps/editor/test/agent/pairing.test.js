@@ -1,7 +1,15 @@
 // A tab pairing with an agent's `statewright mcp` (AI interface spec §6, §7.4), against the real bridge of Core.
 import { afterEach, describe, expect, it } from "vitest";
 
-import { ADDRESS_KEY, BRIDGE_ADDRESS, CODE_ALPHABET, addressOf, createPairing, newCode } from "@/agent/pairing";
+import {
+  ADDRESS_KEY,
+  BRIDGE_ADDRESS,
+  CODE_ALPHABET,
+  addressOf,
+  createPairing,
+  newCode,
+  serverCommand
+} from "@/agent/pairing";
 
 import { createBridge } from "../../../../packages/core/src/mcp/bridge.js";
 
@@ -215,5 +223,17 @@ describe("pairing a tab with an agent (AI interface spec §6, §7.4)", () => {
     expect((await handed).ok).toBe(true);
     await expect.poll(() => second.state()).toMatchObject({ status: "connected", agent: "codex" });
     await expect.poll(() => first.ends).toEqual([{ reason: "replaced", agent: "claude-code" }]);
+  });
+});
+
+describe("serverCommand", () => {
+  it("starts the server where the Editor looks for it, and lets an Editor served elsewhere in", () => {
+    expect(serverCommand("127.0.0.1:47615", "https://statewright.cpss.com.br")).toBe(
+      "npx statewright mcp --port 47615"
+    );
+    expect(serverCommand("localhost:5000", "http://localhost:5173")).toBe("npx statewright mcp --port 5000");
+    expect(serverCommand("127.0.0.1:47615", "https://design.example.com")).toBe(
+      "npx statewright mcp --port 47615 --origin https://design.example.com"
+    );
   });
 });

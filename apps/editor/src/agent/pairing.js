@@ -3,6 +3,7 @@
 // a token, listens for the agent's calls (`GET /calls`, server-sent events) and runs each on `window.statewright` —
 // the Editor's host — answering with its result (`POST /results`). Only one tab is paired with a server: another asks
 // this one first (`handover`).
+import { EDITOR_ORIGIN } from "statewright";
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 
@@ -49,6 +50,18 @@ export async function* eventsOf(body) {
 
 /** An address on this computer, where the bridge listens (spec §6: "Nothing listens on other interfaces"). */
 const LOCAL = /^(127\.0\.0\.1|localhost|\[::1\]):\d{1,5}$/;
+
+/**
+ * The command that starts the server where this Editor looks for it: its port, and `--origin` when the Editor is served
+ * from a page the server does not let in by default (the published Editor and localhost are let in).
+ * @param {string} address As the person typed it, `127.0.0.1:47615`.
+ * @param {string} [origin] This page's origin.
+ */
+export function serverCommand(address, origin = globalThis.location?.origin) {
+  const port = addressOf(address).split(":").pop();
+  const known = origin === EDITOR_ORIGIN || /^http:\/\/localhost(:\d+)?$/.test(origin ?? "");
+  return `npx statewright mcp --port ${port}${origin && !known ? ` --origin ${origin}` : ""}`;
+}
 
 /** The address as the person typed it: `127.0.0.1:47615`, without a scheme or a slash. */
 export const addressOf = text =>

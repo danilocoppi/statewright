@@ -20,7 +20,7 @@
     "code": "Pairing code",
     "copy": "Copy",
     "copied": "Copied",
-    "copyText": "Pair with my Statewright Editor: the code is {{code}}",
+    "copyText": "Pair with my Statewright Editor: call editor_pair with the code {{code}}. The Editor reaches the statewright MCP server at {{address}}; if it is not running there, start it with: {{command}}",
     "valid": "Valid for 5 minutes.",
     "waiting": "Waiting for the agent…",
     "connected": "Connected to {{agent}}",
