@@ -503,6 +503,19 @@ for (const theme of ["light", "dark"]) {
       await expect(page).toHaveScreenshot(`problem-popover-${theme}.png`, { maxDiffPixelRatio: 0.001 });
     });
 
+    test("shows the Problems panel with a group of catalog items opened", async ({ page }) => {
+      await page.goto("/");
+      await page.getByRole("button", { name: /^Payments/ }).click();
+      await expect(page).toHaveURL(/\/p\/prj_payments$/);
+      await settled(page);
+      await page.getByRole("button", { name: /problems$/ }).click();
+      const panel = page.getByRole("dialog", { name: "Problems" });
+      await panel.getByRole("button", { name: /^\d+ events do not specify payload/ }).click();
+      await expect(panel.getByTestId("problems-item").first()).toBeVisible();
+      await page.mouse.move(8, 892);
+      await expect(panel).toHaveScreenshot(`problems-group-${theme}.png`, { maxDiffPixelRatio: 0.001 });
+    });
+
     test("shows the support popover open above its badge, on the Projects screen", async ({ page }) => {
       await page.goto("/");
       await expect(page.getByRole("button", { name: /^Payments/ })).toBeVisible();

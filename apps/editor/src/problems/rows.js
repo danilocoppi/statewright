@@ -2,6 +2,8 @@
 // items with the same finding, which share one line ("8 events do not specify payload").
 import { indexOf, levelPathOf } from "@/lib/derived";
 
+import { PARTS } from "@/catalog/state";
+
 import { SEVERITIES } from "./store";
 
 /** Findings on catalog items that read well as one line per collection. */
@@ -31,8 +33,19 @@ function locate(doc, index, problem) {
  * @typedef {{ kind: "one", key: string, severity: string, code: string, message: string, target: string,
  *   location: ReturnType<typeof locate>, data?: object }} OneRow `data`: the rule's facts (a diverged scenario's step).
  * @typedef {{ kind: "group", key: string, severity: string, code: string, collection: string, fields: string[],
- *   names: string[] }} GroupRow
+ *   names: string[], items: Array<{ target: string, name: string }> }} GroupRow `items`: each item, to open it on.
  */
+
+/**
+ * Where picking a Problem's line takes the catalog sheet: the item in its collection, or the reusable part.
+ * @param {{ target: string, location: ReturnType<typeof locate> }} row
+ * @returns {{ collection: string, item: string } | null} Null for a line on a level or the project.
+ */
+export function catalogPlace(row) {
+  if (row.location.kind === "catalog") return { collection: row.location.collection, item: row.target };
+  if (row.location.kind === "definitions") return { collection: PARTS, item: row.target };
+  return null;
+}
 
 /**
  * @param {any} doc
@@ -79,11 +92,11 @@ export function problemRows(doc, problems) {
     if (!row.members) return row;
     const { members, ...group } = row;
     if (members.length === 1) return one(members[0].problem, members[0].location);
-    return {
-      kind: "group",
-      ...group,
-      names: members.map(({ problem }) => index.get(problem.target)?.value.name ?? problem.target)
-    };
+    const items = members.map(({ problem }) => ({
+      target: problem.target,
+      name: index.get(problem.target)?.value.name ?? problem.target
+    }));
+    return { kind: "group", ...group, names: items.map(item => item.name), items };
   });
   return SEVERITIES.flatMap(severity => lines.filter(row => row.severity === severity));
 }

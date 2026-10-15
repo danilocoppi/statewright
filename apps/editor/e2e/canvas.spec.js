@@ -57,6 +57,29 @@ test("takes a Problem picked in the panel to its level, with the element selecte
   await expect(box(page, "nod_complianceHold").locator('[data-severity="incomplete"]')).toBeVisible();
 });
 
+test("opens a group of catalog Problems to list each item, and opens the catalog on the one picked", async ({
+  page
+}) => {
+  await openExample(page, "Payments");
+  await page.getByRole("button", { name: /problems$/ }).click();
+  const panel = page.getByRole("dialog", { name: "Problems" });
+  const group = panel.getByRole("button", { name: /^\d+ events do not specify payload/ });
+  await expect(group).toHaveAttribute("aria-expanded", "false");
+  await group.click();
+  await expect(group).toHaveAttribute("aria-expanded", "true");
+  const items = panel.getByRole("list", { name: /events do not specify payload/ }).getByRole("button");
+  const first = items.first();
+  const name = (await first.locator("span").first().textContent()).trim();
+  await first.click();
+  const sheet = page.getByTestId("catalog-sheet");
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByRole("button", { name: new RegExp(`^${name}`) })).toHaveAttribute("aria-current", "true");
+  // Closing the catalog leaves the panel where it was, the group still open.
+  await page.keyboard.press("Escape");
+  await expect(sheet).toBeHidden();
+  await expect(group).toHaveAttribute("aria-expanded", "true");
+});
+
 test("draws the diagram with its light colours, and with its dark ones in the dark theme", async ({ page }) => {
   await openExample(page, "Get paid");
   await expect(page).toHaveURL(/\/p\/prj_getPaid$/);

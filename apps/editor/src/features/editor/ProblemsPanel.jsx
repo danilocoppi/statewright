@@ -7,9 +7,10 @@ import { IconButton } from "@/components/ui/Button";
 import { Island } from "@/components/ui/Island";
 import { INSPECTOR, DOCK_SPACE } from "@/canvas/viewport";
 import { Segmented } from "@/components/ui/Segmented";
+import { catalogStore } from "@/catalog/state";
 import { guideHref, ruleAnchor } from "@/guide/links";
 import { cn } from "@/lib/cn";
-import { problemRows } from "@/problems/rows";
+import { catalogPlace, problemRows } from "@/problems/rows";
 import { problemsStore, SEVERITIES, SEVERITY_DOT, summarize, useProblems } from "@/problems/store";
 import { isSimulating, openScenario } from "@/simulate/store";
 import { editorStore, useEditor } from "@/store/editor";
@@ -40,7 +41,8 @@ function where(t, row) {
  * highlights its element while the pointer rests on it and, when picked, shows that level with the element selected.
  * It stays open beside the canvas (a non-modal dialog), left of the inspector when that is open; Esc inside it closes it.
  * Opened on an element ("Show in Problems", from a marker's details), it shows every severity and marks that element's
- * lines, scrolled into view.
+ * lines, scrolled into view. A line on a catalog item or a reusable part opens the catalog on it; a line that groups
+ * catalog items opens to list each, so they can be fixed one by one (the panel stays open behind the catalog).
  * @param {{ onClose: () => void, onNavigate: (canvasId: string) => void, beside?: boolean }} props `beside`: the
  *   inspector is open.
  */
@@ -51,6 +53,8 @@ export function ProblemsPanel({ onClose, onNavigate, beside = false }) {
   const focus = useProblems(state => state.focus);
   const [filter, setFilter] = useState("all");
   const [focused, setFocused] = useState(focus);
+  /** The groups opened to list their items. */
+  const [opened, setOpened] = useState(() => new Set());
   const lines = useRef(null);
   const rows = useMemo(() => problemRows(doc, list), [doc, list]);
   const counts = useMemo(() => summarize(list), [list]);
@@ -72,7 +76,16 @@ export function ProblemsPanel({ onClose, onNavigate, beside = false }) {
     if (focus) lines.current?.querySelector('[aria-current="true"]')?.scrollIntoView?.({ block: "nearest" });
   }, [focus]);
 
+  const toggle = row =>
+    setOpened(before => {
+      const after = new Set(before);
+      if (!after.delete(row.key)) after.add(row.key);
+      return after;
+    });
+
   const pick = row => {
+    const place = catalogPlace(row);
+    if (place) return catalogStore.getState().show(place);
     const { canvas } = row.location;
     const editor = editorStore.getState();
     // A scenario that now goes elsewhere opens at that step (simulator spec §6.4).
@@ -150,62 +163,122 @@ export function ProblemsPanel({ onClose, onNavigate, beside = false }) {
               </h3>
               <ul>
                 {group.map(row => {
-                  const reachable = row.kind === "one" && row.location.kind === "level";
+                  const grouped = row.kind === "group";
+                  const reachable = !grouped && (row.location.kind === "level" || catalogPlace(row) !== null);
+                  const open = grouped && opened.has(row.key);
+                  const headline =
+                    grouped ?
+                      t(`problems.groups.${row.code}`, {
+                        count: row.names.length,
+                        collection: t(`problems.items.${row.collection}`),
+                        fields: row.fields.join(", ")
+                      })
+                    : row.message;
                   const body = (
                     <>
                       {/* Core's message is English in every interface language (spec §8.1); a group is the editor's. */}
-                      <span lang={row.kind === "group" ? undefined : "en"} className="block text-read text-ink">
-                        {row.kind === "group" ?
-                          t(`problems.groups.${row.code}`, {
-                            count: row.names.length,
-                            collection: t(`problems.items.${row.collection}`),
-                            fields: row.fields.join(", ")
-                          })
-                        : row.message}
+                      <span lang={grouped ? undefined : "en"} className="block text-read text-ink">
+                        {headline}
+                        {grouped && (
+                          <Icon
+                            name="chevron-down"
+                            size={14}
+                            className={cn(
+                              "ml-1 inline-block align-[-2px] text-muted transition-transform duration-150 motion-reduce:transition-none",
+                              !open && "-rotate-90"
+                            )}
+                          />
+                        )}
                       </span>
                       <span className="mt-0.5 flex gap-2 text-label">
                         <code className="font-mono text-sub">{row.code}</code>
-                        <span className="truncate text-muted">{where(t, row)}</span>
+                        {/* An open group lists its items below. */}
+                        {!open && <span className="truncate text-muted">{where(t, row)}</span>}
                       </span>
                     </>
                   );
                   const explain = t("problems.explain", { code: row.code });
-                  const current = row.kind === "one" && focus !== null && row.target === focus;
+                  const current = !grouped && focus !== null && row.target === focus;
+                  const highlight = target => ({
+                    onPointerEnter: () => problemsStore.getState().setHighlight(target),
+                    onPointerLeave: () => problemsStore.getState().setHighlight(null),
+                    onFocus: () => problemsStore.getState().setHighlight(target),
+                    onBlur: () => problemsStore.getState().setHighlight(null)
+                  });
+                  const listId = `problems-group-${row.key.replace(/[^\w-]/g, "-")}`;
                   return (
-                    <li
-                      key={row.key}
-                      data-testid="problems-row"
-                      aria-current={current ? "true" : undefined}
-                      className={cn(
-                        "group flex items-start",
-                        current && "bg-accent-soft",
-                        reachable && !current && "hover:bg-subtle"
-                      )}
-                    >
-                      {reachable ?
-                        <button
-                          type="button"
-                          onClick={() => pick(row)}
-                          onPointerEnter={() => problemsStore.getState().setHighlight(row.target)}
-                          onPointerLeave={() => problemsStore.getState().setHighlight(null)}
-                          onFocus={() => problemsStore.getState().setHighlight(row.target)}
-                          onBlur={() => problemsStore.getState().setHighlight(null)}
-                          className="block min-w-0 flex-1 py-2 pl-4 text-left focus-visible:bg-subtle"
-                        >
-                          {body}
-                        </button>
-                      : <div className="min-w-0 flex-1 py-2 pl-4">{body}</div>}
-                      {/* What the rule means, in the guide (spec §8.1); the editor stays where it is. */}
-                      <a
-                        href={guideHref(ruleAnchor(row.code))}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`${explain} (${t("common:guide.newTab")})`}
-                        title={explain}
-                        className="mx-1.5 mt-1.5 grid size-7 shrink-0 place-items-center rounded-control text-muted opacity-0 transition-opacity duration-150 hover:bg-surface hover:text-ink focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+                    <li key={row.key} data-testid="problems-row" aria-current={current ? "true" : undefined}>
+                      <div
+                        className={cn(
+                          "group flex items-start",
+                          current && "bg-accent-soft",
+                          (reachable || grouped) && !current && "hover:bg-subtle"
+                        )}
                       >
-                        <Icon name="book" size={14} />
-                      </a>
+                        {grouped ?
+                          <button
+                            type="button"
+                            aria-expanded={open}
+                            aria-controls={open ? listId : undefined}
+                            onClick={() => toggle(row)}
+                            className="block min-w-0 flex-1 py-2 pl-4 text-left focus-visible:bg-subtle"
+                          >
+                            {body}
+                          </button>
+                        : reachable ?
+                          <button
+                            type="button"
+                            onClick={() => pick(row)}
+                            {...(row.location.kind === "level" ? highlight(row.target) : {})}
+                            className="block min-w-0 flex-1 py-2 pl-4 text-left focus-visible:bg-subtle"
+                          >
+                            {body}
+                          </button>
+                        : <div className="min-w-0 flex-1 py-2 pl-4">{body}</div>}
+                        {/* What the rule means, in the guide (spec §8.1); the editor stays where it is. */}
+                        <a
+                          href={guideHref(ruleAnchor(row.code))}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`${explain} (${t("common:guide.newTab")})`}
+                          title={explain}
+                          className="mx-1.5 mt-1.5 grid size-7 shrink-0 place-items-center rounded-control text-muted opacity-0 transition-opacity duration-150 hover:bg-surface hover:text-ink focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+                        >
+                          <Icon name="book" size={14} />
+                        </a>
+                      </div>
+                      {open && (
+                        <ul id={listId} aria-label={headline} className="mb-1.5 ml-4 mr-3 border-l border-hairline">
+                          {row.items.map(item => (
+                            <li key={item.target}>
+                              <button
+                                type="button"
+                                data-testid="problems-item"
+                                onClick={() =>
+                                  catalogStore.getState().show({ collection: row.collection, item: item.target })
+                                }
+                                className={cn(
+                                  "flex w-full items-baseline gap-2 rounded-r-control py-1 pl-3 pr-2 text-left hover:bg-subtle focus-visible:bg-subtle"
+                                )}
+                              >
+                                <span
+                                  className={cn(
+                                    "min-w-0 truncate text-read text-ink",
+                                    row.collection === "events" && "font-mono text-[12.5px]"
+                                  )}
+                                >
+                                  {item.name}
+                                </span>
+                                {item.name !== item.target && (
+                                  <code className="ml-auto shrink-0 font-mono text-label text-muted">
+                                    {item.target}
+                                  </code>
+                                )}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </li>
                   );
                 })}

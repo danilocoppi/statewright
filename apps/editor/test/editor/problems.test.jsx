@@ -10,9 +10,10 @@ import { check } from "statewright";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { RepositoryContext } from "@/app/repository";
+import { catalogStore } from "@/catalog/state";
 import EditorPage from "@/features/editor/EditorPage";
 import { memoryRepository } from "@/persistence/repository";
-import { problemRows } from "@/problems/rows";
+import { problemRows, sentence } from "@/problems/rows";
 import { problemsStore } from "@/problems/store";
 import { editorStore } from "@/store/editor";
 import { useView, VIEW_DEFAULTS } from "@/stores/view";
@@ -160,5 +161,37 @@ describe("Problems in the editor", () => {
     expect(box("nod_phaseInitial").querySelector("[data-severity]")).toBeNull();
     act(() => useView.getState().toggle("incomplete"));
     expect(box("nod_complianceHold").querySelector("[data-severity]")).toBeNull();
+  });
+
+  it("opens a group of catalog items to list each, and opens the catalog on the one picked", async () => {
+    const user = userEvent.setup();
+    const { doc, problems } = await openPayments("/p/prj_payments/cnv_lifecycle");
+    await user.click(screen.getByRole("button", { name: `${problems.length} problems` }));
+    const panel = screen.getByRole("dialog", { name: "Problems" });
+    const events = problemRows(doc, problems).find(row => row.kind === "group" && row.collection === "events");
+    const group = within(panel).getByRole("button", { name: new RegExp(`^${events.items.length} events do not`) });
+    expect(group.getAttribute("aria-expanded")).toBe("false");
+    await user.click(group);
+    expect(group.getAttribute("aria-expanded")).toBe("true");
+    const list = within(panel).getByRole("list", { name: `${events.items.length} events do not specify payload` });
+    expect(within(list).getAllByRole("button")).toHaveLength(events.items.length);
+    const [first] = events.items;
+    await user.click(within(list).getByRole("button", { name: new RegExp(`^${first.name}`) }));
+    expect(catalogStore.getState()).toMatchObject({ open: true, collection: "events", item: first.target });
+    // The panel stays where it was, ready for the next one.
+    expect(screen.getByRole("dialog", { name: "Problems" })).toBeTruthy();
+    await user.click(group);
+    expect(within(panel).queryByRole("list", { name: /events do not specify payload/ })).toBeNull();
+    act(() => catalogStore.getState().close());
+  });
+
+  it("opens the catalog on a catalog item's own Problem", async () => {
+    const user = userEvent.setup();
+    const { problems } = await openPayments("/p/prj_payments/cnv_lifecycle");
+    await user.click(screen.getByRole("button", { name: `${problems.length} problems` }));
+    const message = problems.find(problem => problem.target === "ept_createPayment").message;
+    await user.click(screen.getByRole("button", { name: name => name.startsWith(sentence(message)) }));
+    expect(catalogStore.getState()).toMatchObject({ open: true, collection: "endpoints", item: "ept_createPayment" });
+    act(() => catalogStore.getState().close());
   });
 });

@@ -1,7 +1,7 @@
 import { check } from "statewright";
 import { describe, expect, it } from "vitest";
 
-import { problemRows, sentence } from "@/problems/rows";
+import { catalogPlace, problemRows, sentence } from "@/problems/rows";
 
 import { placedExample, readExample } from "../fixtures.js";
 
@@ -43,5 +43,26 @@ describe("the lines of the Problems panel", () => {
     expect(events.names).toEqual(eventProblems.map(problem => doc.catalog.events[problem.target].name));
     const endpoint = rows.find(row => row.target === "ept_createPayment");
     expect(endpoint).toMatchObject({ kind: "one", location: { kind: "catalog", collection: "endpoints" } });
+  });
+
+  it("keeps each grouped item, so the line can open on it", () => {
+    const doc = readExample("payments");
+    const rows = problemRows(doc, check(doc));
+    const events = rows.find(row => row.kind === "group" && row.collection === "events");
+    const eventProblems = check(doc).filter(problem => problem.target.startsWith("evt_"));
+    expect(events.items).toEqual(
+      eventProblems.map(problem => ({ target: problem.target, name: doc.catalog.events[problem.target].name }))
+    );
+  });
+
+  it("takes a catalog item's line to the item, a reusable part's to the part, and a level's nowhere in the catalog", () => {
+    const at = (location, target = "x_one") => catalogPlace({ target, location });
+    expect(at({ kind: "catalog", collection: "endpoints" }, "ept_a")).toEqual({
+      collection: "endpoints",
+      item: "ept_a"
+    });
+    expect(at({ kind: "definitions" }, "def_a")).toEqual({ collection: "definitions", item: "def_a" });
+    expect(at({ kind: "level", canvas: "cnv_a", path: ["A"] })).toBeNull();
+    expect(at({ kind: "project" })).toBeNull();
   });
 });
