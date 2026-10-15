@@ -348,6 +348,16 @@ The editor is the platform's web app: it draws each level of a document as its f
 stays in the browser. A double-click or Enter on a box with a second outline opens its level; Esc goes back up. A
 selected box shows in the inspector: what a reviewer needs first, the technical details on request.
 
+A link (a dashed box named `↗` and where it leads; the Link tool, L, adds one) carries a small `↗` mark on its top edge
+that names where it leads ("Go to Paid"). A double-click, Enter or a click on the mark follows it: to a box or an arrow
+on any level — that level opens, as if reached by hand, with the box selected, brought into view and ringed in the
+accent colour for two seconds (a still ring for someone who asks for less motion); to a level, which opens; to a
+reusable part, whose body opens; or to a catalog item, which the catalog opens on. A link whose target is no longer in
+the project says so, and goes nowhere. Esc then comes back to the link, selected — once the selection is cleared, as Esc
+always clears it first — and so does the browser's Back; Esc goes up a level again once you leave the level the link led
+to some other way. F2 renames a link. What an agent brings into view (`view_reveal`) or points out (`view_point`) rings
+the same way.
+
 The tool dock on the left holds the tools of the level shown. A level is a system, a state machine or a flow, and holds
 only its kind's elements, so the tools cannot switch; under them, the level's kind says which it is, and its menu leads
 to a level of another kind. Select a box that can hold one (a system's box, a state, a loop or a subflow) and choose
@@ -362,9 +372,9 @@ the view (Shift+1 too), Shift+A lays it out again (Shift+L too). These keys act 
 | Tab, Shift+Tab | Move between the boxes of the level as a figure is read: left to right, then top to bottom.                                    |
 | Arrows         | With nothing selected, move to the box connected that way; with a selection, move it (Shift: ten times as far).                |
 | Space          | Select the box with the focus; Shift+Space adds it to the selection or takes it out.                                           |
-| Enter          | Open the box's level; on a selected arrow, choose what triggers it.                                                            |
-| Esc            | Clear the selection; with nothing selected, go up a level.                                                                     |
-| F2             | Rename the box.                                                                                                                |
+| Enter          | Open the box's level, or follow the link; on a selected arrow, choose what triggers it.                                        |
+| Esc            | Clear the selection; with nothing selected, go back to the link you followed here, or up a level.                              |
+| F2             | Rename the box, a link included.                                                                                               |
 | F6, Shift+F6   | Move to the next or previous area: the islands at the top, the Problems, the inspector, the tools, the level and its zoom.     |
 | Shift+F10      | Open the menu of the selection.                                                                                                |
 | 1 to 9         | While simulating, answer the question the run asks.                                                                            |

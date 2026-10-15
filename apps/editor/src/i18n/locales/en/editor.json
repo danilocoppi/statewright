@@ -97,6 +97,8 @@
     "empty": "Nothing on this level yet.",
     "placeFailed": "This level could not be arranged.",
     "retry": "Try again",
+    "goTo": "Go to {{name}}",
+    "refMissing": "What this link led to is no longer in the project.",
     "openHint": "Double-click or <key>↵</key> to open",
     "shown": "{{level}} is shown",
     "selected": "Selected: {{names}}"

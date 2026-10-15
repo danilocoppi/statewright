@@ -4,6 +4,7 @@ const PATHS = {
   "arrow-left": "M12.5 8h-9M7 4.5 3.5 8 7 11.5",
   "arrow-right": "M3.5 8h9M9 4.5 12.5 8 9 11.5",
   "arrow-up": "M8 12.5v-9M4.5 7 8 3.5 11.5 7",
+  "arrow-up-right": "M4.5 11.5l7-7M6 4.5h5.5V10",
   search: "M7 11.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM10.3 10.3l3.2 3.2",
   plus: "M8 3.5v9M3.5 8h9",
   minus: "M3.5 8h9",

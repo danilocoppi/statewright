@@ -42,10 +42,12 @@ import { editorStore, useEditor } from "@/store/editor";
 import { currentInspectorWidth, useInspectorWidth } from "@/stores/inspector";
 import { useView } from "@/stores/view";
 
+import { lightBeacon, useBeacon } from "./beacon";
 import { ConnectionLine } from "./ConnectionLine";
 import { DiagramDefs } from "./DiagramDefs";
 import { FigureEdge } from "./FigureEdge";
 import { FindingPopover } from "./FindingPopover";
+import { followRef } from "./follow";
 import { Legend } from "./Legend";
 import { MarkActions } from "./marks";
 import { DecorationNode, FigureNode, HeadingNode, NoteNode } from "./parts";
@@ -196,6 +198,9 @@ function Flow({ onNavigate }) {
   // What an agent points out on this level (view.point) glows, still, until the person clicks elsewhere.
   const pointedIds = useNotice(state => (state.pointed?.canvasId === canvasId ? state.pointed.ids : null));
   const pointed = useMemo(() => new Set(pointedIds ?? []), [pointedIds]);
+  // What a link led to, or an agent shows, rings for a moment once in view (beacon.js).
+  const lit = useBeacon(state => (state.lit?.canvasId === canvasId ? state.lit : null));
+  const beaconed = useMemo(() => new Set(lit?.ids ?? []), [lit]);
 
   const drag = useDrag(t, canvasId);
   const connect = useConnect(t, flow);
@@ -233,9 +238,9 @@ function Flow({ onNavigate }) {
         const recede = Boolean(marks) && box && node.selectable && !marks.kept.has(node.id);
         const glow = glowing.has(node.id);
         const point = pointed.has(node.id);
-        if (!position && !selected.has(node.id) && !canStart && !aimed && !mark && !recede && !glow && !point) {
-          return node;
-        }
+        const ring = beaconed.has(node.id) ? lit.key : null;
+        const plain = !position && !selected.has(node.id) && !canStart && !aimed && !mark && !recede && !glow && !point;
+        if (plain && !ring) return node;
         const state = [
           selected.has(node.id),
           canStart,
@@ -245,25 +250,33 @@ function Flow({ onNavigate }) {
           JSON.stringify(mark),
           recede,
           glow,
-          point
+          point,
+          ring
         ];
         return dressedAs(node, state.join("|"), () => ({
           ...node,
           ...(position && { position }),
           selected: selected.has(node.id),
           ...(mark && { ariaLabel: markedLabel(t, node.ariaLabel, mark, doc, simulationStore.getState().canvas) }),
-          data: { ...node.data, canStart, ...(aimed && { target }), ...(mark && { mark }) },
-          ...((aimed === "invalid" || recede || glow || point) && {
+          data: {
+            ...node.data,
+            canStart,
+            ...(aimed && { target }),
+            ...(mark && { mark }),
+            ...(ring && { beacon: ring })
+          },
+          ...((aimed === "invalid" || recede || glow || point || ring) && {
             className: cn(
               aimed === "invalid" && "sw-refuse",
               recede && "sw-recede",
               glow && "sw-ai",
-              point && "sw-pointed"
+              point && "sw-pointed",
+              ring && "sw-beacon"
             )
           })
         }));
       }),
-    [level, selected, drag.positions, starts, hovered, target, marks, t, doc, glowing, pointed]
+    [level, selected, drag.positions, starts, hovered, target, marks, t, doc, glowing, pointed, beaconed, lit]
   );
   const edges = useMemo(
     () =>
@@ -273,17 +286,18 @@ function Flow({ onNavigate }) {
         const recede = Boolean(marks) && edge.selectable && !mark;
         const glow = glowing.has(edge.id);
         const point = pointed.has(edge.id);
-        if (!moving && !selected.has(edge.id) && !mark && !recede && !glow && !point) return edge;
+        const ring = beaconed.has(edge.id);
+        if (!moving && !selected.has(edge.id) && !mark && !recede && !glow && !point && !ring) return edge;
         return {
           ...edge,
           selected: selected.has(edge.id),
           ...((moving || mark) && { data: { ...edge.data, ...(moving && { moving }), ...(mark && { mark }) } }),
-          ...((recede || glow || point) && {
-            className: cn(recede && "sw-recede", glow && "sw-ai", point && "sw-pointed")
+          ...((recede || glow || point || ring) && {
+            className: cn(recede && "sw-recede", glow && "sw-ai", point && "sw-pointed", ring && "sw-beacon")
           })
         };
       }),
-    [level, selected, drag.positions, marks, glowing, pointed]
+    [level, selected, drag.positions, marks, glowing, pointed, beaconed]
   );
 
   // The level whose view is in place: what is brought into view waits for it.
@@ -343,6 +357,12 @@ function Flow({ onNavigate }) {
     }
     editorStore.getState().reveal(canvasId, null);
   }, [flow, reveal, canvasId, placing, framed, level, shown]);
+
+  // The beacon asked for this level lights once the level is framed, as what it shows is brought into view.
+  const asked = useBeacon(state => state.asked);
+  useEffect(() => {
+    if (asked && !placing && framed === canvasId) lightBeacon(canvasId);
+  }, [asked, placing, framed, canvasId]);
 
   // A box the inspector shows under it (one just made at the right edge, one selected there) slides into view on its
   // left — unless it was just brought into view, already clear of it.
@@ -430,6 +450,11 @@ function Flow({ onNavigate }) {
     if (event.key !== "Enter") return;
     const id = event.target.closest?.(".react-flow__node")?.dataset.id;
     const node = level.nodes.find(item => item.id === id);
+    // Enter on a link follows it (F2 renames it).
+    if (node?.data.follow) {
+      event.preventDefault();
+      return void followRef(node.id);
+    }
     if (!node?.data.part?.interior) return;
     event.preventDefault();
     open(node);
@@ -558,8 +583,9 @@ function Flow({ onNavigate }) {
           onNodesChange={onChange}
           onEdgesChange={onChange}
           onNodeDoubleClick={(_event, node) => {
-            // A box with an interior opens; any other box or note is renamed in place.
+            // A box with an interior opens, a link is followed; any other box or note is renamed in place.
             if (node.data.part?.interior) open(node);
+            else if (node.data.follow) followRef(node.id);
             else if (!locked && node.selectable !== false) editingStore.getState().open({ type: "name", id: node.id });
           }}
           onPaneClick={event => {

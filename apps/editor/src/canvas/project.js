@@ -33,7 +33,8 @@ export const LAYERS = ["findings", "notes", "focus", "lanes"];
  * @param {string} canvasId
  * @param {{ hidden?: string[], nameOf?: (id: string) => string | undefined }} [options] `hidden`: annotation layers
  *   not drawn (the View menu): Core draws the level without them, so what is shown is still its figure. `nameOf`: what
- *   a screen reader calls an element the figure leaves unnamed (a start dot, an arrow without a label).
+ *   a screen reader calls an element the figure leaves unnamed (a start dot, an arrow without a label), and what a link
+ *   says it leads to (`data.follow.name`; null when nothing has that ID).
  * @returns {{ nodes: object[], edges: object[], bounds: { x: number, y: number, w: number, h: number },
  *   unplaced: string[], heading: { kicker: string, title: string, caption: string | null } }}
  */
@@ -76,6 +77,11 @@ export function projectLevel(source, canvasId, { hidden = [], nameOf = () => und
     zIndex: Z[type],
     data: { part }
   });
+  /** Where a link of the level leads, by name (null when its target is gone): the canvas offers to follow it. */
+  const followOf = part => {
+    if (part.shape !== "ref" || !own(part)) return undefined;
+    return { name: nameOf(doc.canvases[canvasId].nodes[part.id].target) ?? null };
+  };
   const element = (type, part, label = part.title || undefined) => ({
     id: partKey(part),
     type,
@@ -88,7 +94,7 @@ export function projectLevel(source, canvasId, { hidden = [], nameOf = () => und
     ariaLabel: (type === "note" ? undefined : nameOf(part.id)) ?? label,
     // A part inside a frame is a picture of a box, named for screen readers; a box of the level is focused and acted on.
     ...(own(part) ? {} : { ariaRole: "img" }),
-    data: { part, uses: usesOf(part) }
+    data: { part, uses: usesOf(part), follow: followOf(part) }
   });
 
   // Reading order (Tab moves through boxes as a person reads a figure): left to right, then top to bottom.

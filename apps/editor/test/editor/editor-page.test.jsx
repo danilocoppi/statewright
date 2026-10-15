@@ -11,13 +11,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { RepositoryContext } from "@/app/repository";
 import { Toaster } from "@/components/ui/Toaster";
+import { editingStore } from "@/editing/state";
 import EditorPage from "@/features/editor/EditorPage";
 import { memoryRepository } from "@/persistence/repository";
 import { editorStore } from "@/store/editor";
 import { useToastStore } from "@/stores/toast";
 import { useView } from "@/stores/view";
 
-import { demoDoc, placedExample, readExample } from "../fixtures.js";
+import { demoDoc, linkedPayments, placedExample, readExample } from "../fixtures.js";
 
 const keeping = () => ({ ...memoryRepository(), persistent: true });
 const rename = name => [{ type: "project.update", args: { set: { name } } }];
@@ -202,6 +203,59 @@ describe("Editor page", () => {
     fireEvent.keyDown(window, { key: "Escape" });
     await waitFor(() => expect(current().textContent).toBe("Runtime"));
     expect(screen.getByTestId("canvas").dataset.canvas).toBe("cnv_runtime");
+  });
+
+  it("follows the link selected with Enter, and comes back to it with Esc once nothing is selected", async () => {
+    const repository = keeping();
+    await repository.save(await linkedPayments());
+    renderEditor(repository, "/p/prj_payments/cnv_expiryClock");
+    await screen.findByTestId("canvas");
+    const address = () => screen.getByTestId("address").textContent;
+    const current = () =>
+      within(screen.getByRole("navigation", { name: "Levels" })).getByRole("link", { current: "page" });
+    act(() => editorStore.getState().select(["nod_toHold"]));
+    fireEvent.keyDown(document.body, { key: "Enter" });
+    await waitFor(() => expect(address()).toBe("/p/prj_payments/cnv_lifecycle"));
+    expect(current().textContent).toBe("Lifecycle engine");
+    expect(editorStore.getState().view.selections.cnv_lifecycle).toEqual(["nod_complianceHold"]);
+    // Esc clears the selection first, as everywhere; then it goes back to the link, not up a level.
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(editorStore.getState().view.selections.cnv_lifecycle).toEqual([]);
+    fireEvent.keyDown(window, { key: "Escape" });
+    await waitFor(() => expect(address()).toBe("/p/prj_payments/cnv_expiryClock"));
+    expect(editorStore.getState().view.selections.cnv_expiryClock).toEqual(["nod_toHold"]);
+    // Back where it was, Esc does what it always does: clears the selection, then goes up.
+    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.keyDown(window, { key: "Escape" });
+    await waitFor(() => expect(address()).toBe("/p/prj_payments/cnv_lifecycle"));
+  });
+
+  it("goes up with Esc from where a link led once the person has moved on from there", async () => {
+    const repository = keeping();
+    await repository.save(await linkedPayments());
+    renderEditor(repository, "/p/prj_payments/cnv_expiryClock");
+    await screen.findByTestId("canvas");
+    const address = () => screen.getByTestId("address").textContent;
+    act(() => editorStore.getState().select(["nod_toPart"]));
+    fireEvent.keyDown(document.body, { key: "Enter" });
+    await waitFor(() => expect(address()).toBe("/p/prj_payments/cnv_crossBorderSend"));
+    fireEvent.click(within(screen.getByRole("navigation", { name: "Levels" })).getByRole("link", { name: "Runtime" }));
+    await waitFor(() => expect(address()).toBe("/p/prj_payments"));
+    act(() => editorStore.getState().setCanvas("cnv_crossBorderSend"));
+    await waitFor(() => expect(address()).toBe("/p/prj_payments/cnv_crossBorderSend"));
+    fireEvent.keyDown(window, { key: "Escape" });
+    await waitFor(() => expect(address()).toBe("/p/prj_payments/cnv_lifecycle"));
+  });
+
+  it("renames a link with F2, Enter and a double-click being for following it", async () => {
+    const repository = keeping();
+    await repository.save(await linkedPayments());
+    renderEditor(repository, "/p/prj_payments/cnv_expiryClock");
+    await screen.findByTestId("canvas");
+    act(() => editorStore.getState().select(["nod_toHold"]));
+    fireEvent.keyDown(document.body, { key: "F2" });
+    expect(editingStore.getState().editor).toEqual({ type: "name", id: "nod_toHold" });
+    act(() => editingStore.getState().close());
   });
 
   it("shows the top level, with its address, when the address names a level the project does not have", async () => {

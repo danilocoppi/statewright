@@ -7,6 +7,7 @@ import { ConnectDialog } from "@/agent/ConnectDialog";
 import { PairedBadge } from "@/agent/PairedBadge";
 import { useRepository } from "@/app/repository";
 import { Canvas } from "@/canvas/Canvas";
+import { followSelection, returnFromRef, watchFollows } from "@/canvas/follow";
 import { hoverShown } from "@/canvas/hover";
 import { CatalogSheet } from "@/catalog/CatalogSheet";
 import { catalogStore } from "@/catalog/state";
@@ -215,6 +216,12 @@ export default function EditorPage() {
     return watchProblems({ editor: editorStore, problems: problemsStore, client: problemsClient() });
   }, [state]);
 
+  // The way back from the links followed (canvas/follow.js), kept while the project is open.
+  useEffect(() => {
+    if (state !== "ready") return;
+    return watchFollows();
+  }, [state]);
+
   // "Show in Problems", from a marker's details (ProblemPopover): the panel opens on the element.
   useEffect(
     () =>
@@ -281,7 +288,8 @@ export default function EditorPage() {
         if (view.selections[canvasId]?.length) {
           editorStore.getState().select([]);
           event.stopPropagation();
-        } else {
+        } else if (!returnFromRef()) {
+          // Where a link led, Esc goes back to the link; anywhere else, up a level.
           const parent = parentLevel(doc, canvasId);
           if (parent) navigate(levelUrl(doc, parent.canvas));
         }
@@ -299,8 +307,13 @@ export default function EditorPage() {
       if (action === "duplicate") duplicateSelection(t);
       if (action === "region") regionSelection(t);
       if (action === "rename") return rename(event);
-      // With an edge selected, Enter is its trigger's, before the box that has the focus.
-      if (action === "trigger") return openTrigger() && event.stopPropagation();
+      // With an edge selected, Enter is its trigger's, before the box that has the focus. With the focus on no box, it
+      // follows the link selected; on a box, the canvas does what Enter does there (opens it, follows a link).
+      if (action === "trigger") {
+        if (openTrigger()) return event.stopPropagation();
+        if (!event.target.closest?.(".react-flow__node")) followSelection();
+        return;
+      }
       if (action === "layout") return void relayout(t);
       if (action === "inspector") return toggleInspector();
       if (action === "palette") return setPalette(true);

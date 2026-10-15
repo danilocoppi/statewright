@@ -302,6 +302,53 @@
 .sw-canvas .react-flow__edge.sw-pointed {
   filter: drop-shadow(0 0 1px var(--accent)) drop-shadow(0 0 7px color-mix(in srgb, var(--accent) 45%, transparent));
 }
+/* The beacon (canvas/beacon.js): what a link led to, or what an agent brings into view or points out, for 2 s. A box
+   gets an accent ring whose halo sends three waves out; an edge glows along its route three times. With reduced motion,
+   the ring and the glow stand still for the same 2 s. */
+.sw-beacon-ring {
+  border: 2px solid var(--accent);
+  animation:
+    sw-beacon-wave 640ms var(--ease-soft) 3,
+    sw-beacon-in 2000ms linear both;
+}
+@keyframes sw-beacon-wave {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 14px color-mix(in srgb, var(--accent) 0%, transparent);
+  }
+}
+@keyframes sw-beacon-in {
+  from {
+    opacity: 0;
+  }
+  6%,
+  88% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.sw-canvas .react-flow__edge.sw-beacon {
+  animation: sw-beacon-glow 640ms var(--ease-soft) 3;
+}
+@keyframes sw-beacon-glow {
+  50% {
+    filter: drop-shadow(0 0 1px var(--accent)) drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 60%, transparent));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sw-beacon-ring {
+    animation: none;
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  .sw-canvas .react-flow__edge.sw-beacon {
+    animation: none;
+    filter: drop-shadow(0 0 1px var(--accent)) drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 50%, transparent));
+  }
+}
 /* Waiting for an agent to bring the code (AI interface spec §7.4): the status's dot breathes, slowly. */
 @keyframes sw-breathe {
   50% {
