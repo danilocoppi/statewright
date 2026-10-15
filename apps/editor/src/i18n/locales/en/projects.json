@@ -37,6 +37,8 @@
     "paymentsHint": "Architecture, lifecycle and a provider's machine",
     "getPaid": "Get paid (as built)",
     "getPaidHint": "One transition table, audited from code",
+    "orderLifecycle": "Order lifecycle",
+    "orderLifecycleHint": "Roles, a lifecycle, lanes, a mixed level",
     "payoutBatch": "Payout batch",
     "payoutBatchHint": "A machine whose action a flow implements, with a scenario"
   },

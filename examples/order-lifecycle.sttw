@@ -7,9 +7,9 @@
   },
   "signature": {
     "algorithm": "sha256",
-    "content": "ed916a3b73d89bf5e0c0d027ab3ff8355b395ef9656bd610a12d658518ab0af3",
-    "annotations": "607529fb6eac20904a141efd98a99c1763730535185b12040aeeff7f5ec8b792",
-    "layout": "058b782ed82ecfef3993094298bf3c3c20b1df811eff20522476f09fd71af0f4",
+    "content": "5f9f1c9bc8d047a492b90293ad0c18f748290514aaa20a641a7977aee51d9ac9",
+    "annotations": "4166f8942f84c728932af1f15bd5b391bfcaf8a8f3ab067cac901a77a636e3e8",
+    "layout": "9a9e2d99db318e888ecc70ad563ac4f20a2647c6d68c4639d8ce254142fcd16e",
     "signedAt": "2026-10-15T12:00:00Z"
   },
   "project": {
@@ -34,6 +34,16 @@
         "name": "payment.captured",
         "payload": null,
         "source": "internal"
+      },
+      "evt_returnApproved": {
+        "name": "return.approved",
+        "payload": null,
+        "source": "internal"
+      },
+      "evt_returnRequested": {
+        "name": "return.requested",
+        "payload": null,
+        "source": "pty_customer"
       }
     },
     "actions": {
@@ -47,6 +57,11 @@
           "canvas": "cnv_chargeCard"
         },
         "description": "Charges the order's total to the customer's card."
+      },
+      "act_refundCard": {
+        "name": "Refund card",
+        "party": "pty_payments",
+        "description": "Gives the order's total back to the card."
       },
       "act_sendReceipt": {
         "name": "Send receipt",
@@ -303,6 +318,13 @@
           "name": "Payments",
           "party": "pty_payments"
         },
+        "nod_returns": {
+          "kind": "service",
+          "name": "Returns",
+          "inner": {
+            "canvas": "cnv_returns"
+          }
+        },
         "nod_shop": {
           "kind": "service",
           "name": "Shop",
@@ -329,6 +351,119 @@
           "from": "nod_shop",
           "to": "nod_payments",
           "kind": "command"
+        },
+        "edg_shopReturns": {
+          "from": "nod_shop",
+          "to": "nod_returns",
+          "kind": "command"
+        }
+      }
+    },
+    "cnv_returns": {
+      "kind": "mixed",
+      "name": "Returns desk",
+      "caption": "A mixed level: a return's states, the steps that approve it, and who acts — the customer who asks, Payments who refunds.",
+      "subject": "return.status",
+      "nodes": {
+        "nod_approve": {
+          "kind": "emit",
+          "name": "Approve the return",
+          "event": "evt_returnApproved"
+        },
+        "nod_approveDone": {
+          "kind": "end",
+          "name": "Approved",
+          "outcome": "success"
+        },
+        "nod_approveRefused": {
+          "kind": "end",
+          "name": "Refused",
+          "outcome": "failure"
+        },
+        "nod_approveStart": {
+          "kind": "start"
+        },
+        "nod_checkReturn": {
+          "kind": "if",
+          "condition": {
+            "text": "the items came back"
+          }
+        },
+        "nod_returnInit": {
+          "kind": "initial"
+        },
+        "nod_returnNew": {
+          "kind": "state",
+          "name": "new",
+          "category": "waiting"
+        },
+        "nod_returnRefunded": {
+          "kind": "state",
+          "name": "refunded",
+          "outcome": "success",
+          "terminal": true
+        },
+        "nod_returnRequested": {
+          "kind": "state",
+          "name": "requested",
+          "category": "processing"
+        },
+        "nod_returnsCustomer": {
+          "kind": "actor",
+          "name": "Customer",
+          "party": "pty_customer"
+        },
+        "nod_returnsPayments": {
+          "kind": "service",
+          "name": "Payments",
+          "party": "pty_payments"
+        }
+      },
+      "edges": {
+        "edg_approveCheck": {
+          "from": "nod_approveStart",
+          "to": "nod_checkReturn"
+        },
+        "edg_approveEnd": {
+          "from": "nod_approve",
+          "to": "nod_approveDone"
+        },
+        "edg_approveNo": {
+          "from": "nod_checkReturn",
+          "to": "nod_approveRefused",
+          "kind": "false"
+        },
+        "edg_approveYes": {
+          "from": "nod_checkReturn",
+          "to": "nod_approve",
+          "kind": "true"
+        },
+        "edg_returnAsk": {
+          "kind": "transition",
+          "from": "nod_returnNew",
+          "to": "nod_returnRequested",
+          "on": [
+            "evt_returnRequested"
+          ]
+        },
+        "edg_returnRefund": {
+          "kind": "transition",
+          "from": "nod_returnRequested",
+          "to": "nod_returnRefunded",
+          "on": [
+            "evt_returnApproved"
+          ],
+          "actions": [
+            {
+              "action": "act_refundCard"
+            }
+          ],
+          "intent": "happy"
+        },
+        "edg_returnStart": {
+          "kind": "transition",
+          "from": "nod_returnInit",
+          "to": "nod_returnNew"
         }
       }
     }
@@ -416,6 +551,39 @@
             "reached": {
               "active": [
                 "nod_paid"
+              ],
+              "ended": "done"
+            }
+          }
+        ]
+      },
+      "scn_aRefundedReturn": {
+        "name": "A refunded return",
+        "description": "On the mixed level: the customer asks, the return is approved, and the card is refunded.",
+        "canvas": "cnv_returns",
+        "start": {
+          "at": "2026-03-02T10:00:00Z"
+        },
+        "steps": [
+          {
+            "do": {
+              "event": "evt_returnRequested"
+            },
+            "caption": "The customer asks to return the order.",
+            "reached": {
+              "active": [
+                "nod_returnRequested"
+              ]
+            }
+          },
+          {
+            "do": {
+              "event": "evt_returnApproved"
+            },
+            "caption": "The return is approved; Payments refunds the card.",
+            "reached": {
+              "active": [
+                "nod_returnRefunded"
               ],
               "ended": "done"
             }
@@ -713,9 +881,13 @@
             "x": 2378,
             "y": 537
           },
+          "nod_returns": {
+            "x": 2370,
+            "y": 625
+          },
           "nod_shop": {
             "x": 2712,
-            "y": 251
+            "y": 257
           }
         },
         "edges": {
@@ -731,11 +903,11 @@
               ],
               [
                 2660,
-                265
+                268
               ],
               [
                 2712,
-                265
+                268
               ]
             ],
             "labelAt": [
@@ -763,11 +935,11 @@
             "points": [
               [
                 2712,
-                293
+                290
               ],
               [
                 2660,
-                293
+                290
               ],
               [
                 2660,
@@ -781,6 +953,188 @@
             "labelAt": [
               2615,
               574
+            ]
+          },
+          "edg_shopReturns": {
+            "points": [
+              [
+                2712,
+                301
+              ],
+              [
+                2670,
+                301
+              ],
+              [
+                2670,
+                653
+              ],
+              [
+                2518,
+                653
+              ]
+            ],
+            "labelAt": [
+              2615,
+              666
+            ]
+          }
+        }
+      },
+      "cnv_returns": {
+        "nodes": {
+          "nod_approve": {
+            "x": 388,
+            "y": 69
+          },
+          "nod_approveDone": {
+            "x": 600,
+            "y": 84
+          },
+          "nod_approveRefused": {
+            "x": 388,
+            "y": 11
+          },
+          "nod_approveStart": {
+            "x": 0,
+            "y": 22
+          },
+          "nod_checkReturn": {
+            "x": 84,
+            "y": 3
+          },
+          "nod_returnInit": {
+            "x": 0,
+            "y": 171
+          },
+          "nod_returnNew": {
+            "x": 84,
+            "y": 153
+          },
+          "nod_returnRefunded": {
+            "x": 932,
+            "y": 137
+          },
+          "nod_returnRequested": {
+            "x": 508,
+            "y": 145
+          },
+          "nod_returnsCustomer": {
+            "x": 296,
+            "y": 210
+          },
+          "nod_returnsPayments": {
+            "x": 720,
+            "y": 202
+          }
+        },
+        "edges": {
+          "edg_approveCheck": {
+            "points": [
+              [
+                12,
+                28
+              ],
+              [
+                84,
+                28
+              ]
+            ]
+          },
+          "edg_approveEnd": {
+            "points": [
+              [
+                528,
+                93
+              ],
+              [
+                600,
+                93
+              ]
+            ]
+          },
+          "edg_approveNo": {
+            "points": [
+              [
+                206,
+                20
+              ],
+              [
+                388,
+                20
+              ]
+            ],
+            "labelAt": [
+              297,
+              8
+            ]
+          },
+          "edg_approveYes": {
+            "points": [
+              [
+                206,
+                37
+              ],
+              [
+                226,
+                37
+              ],
+              [
+                226,
+                93
+              ],
+              [
+                388,
+                93
+              ]
+            ],
+            "labelAt": [
+              297,
+              106
+            ]
+          },
+          "edg_returnAsk": {
+            "points": [
+              [
+                224,
+                169
+              ],
+              [
+                508,
+                169
+              ]
+            ],
+            "labelAt": [
+              366,
+              157
+            ]
+          },
+          "edg_returnRefund": {
+            "points": [
+              [
+                648,
+                161
+              ],
+              [
+                932,
+                161
+              ]
+            ],
+            "labelAt": [
+              790,
+              149
+            ]
+          },
+          "edg_returnStart": {
+            "points": [
+              [
+                12,
+                177
+              ],
+              [
+                84,
+                177
+              ]
             ]
           }
         }

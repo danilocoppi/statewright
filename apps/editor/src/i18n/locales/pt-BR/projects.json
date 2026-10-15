@@ -37,6 +37,8 @@
     "paymentsHint": "Arquitetura, ciclo de vida e a máquina de um provedor",
     "getPaid": "Get paid (as built)",
     "getPaidHint": "Uma tabela de transições, auditada do código",
+    "orderLifecycle": "Order lifecycle",
+    "orderLifecycleHint": "Papéis, ciclo de vida, raias, nível misto",
     "payoutBatch": "Payout batch",
     "payoutBatchHint": "Uma máquina cuja ação um fluxo implementa, com um cenário"
   },

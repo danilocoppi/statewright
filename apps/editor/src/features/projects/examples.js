@@ -13,6 +13,12 @@ export const EXAMPLES = [
     load: () => import("../../../../../examples/get-paid-as-built.sttw?raw").then(module => module.default)
   },
   {
+    id: "orderLifecycle",
+    projectId: "prj_orderLifecycle",
+    file: "order-lifecycle.sttw",
+    load: () => import("../../../../../examples/order-lifecycle.sttw?raw").then(module => module.default)
+  },
+  {
     id: "payoutBatch",
     projectId: "prj_payoutBatch",
     file: "payout-batch.sttw",

@@ -9,12 +9,15 @@
 | order.cancelled | none | Customer |  |
 | order.placed | none | Customer |  |
 | payment.captured | none | internal |  |
+| return.approved | none | internal |  |
+| return.requested | none | Customer |  |
 
 ### Actions
 
 | Action | Input | Output | Description |
 | --- | --- | --- | --- |
 | Charge card |  |  | Charges the order's total to the customer's card. |
+| Refund card |  |  | Gives the order's total back to the card. |
 | Send receipt |  |  |  |
 
 ### Endpoints
@@ -41,6 +44,7 @@ A shop's orders: who places them, who charges them, and the order's lifecycle.
 | Customer | actor |  |
 | Orders | store |  |
 | Payments | service |  |
+| Returns | service |  |
 | Shop | service |  |
 
 | From | To | What |
@@ -48,6 +52,7 @@ A shop's orders: who places them, who charges them, and the order's lifecycle.
 | Customer | Shop | order.placed |
 | Shop | Orders | data |
 | Shop | Payments | command |
+| Shop | Returns | command |
 
 | From | Role | To | About |
 | --- | --- | --- | --- |
@@ -101,6 +106,50 @@ The customer places the order; the card is accepted, so the charge's own steps c
 Starts 2026-03-02T10:00:00Z.
 
 1. order.placed — Customer places the order. Payments charges the card: accepted.
+
+## Order lifecycle › Returns desk
+
+*mixed*
+
+A mixed level: a return's states, the steps that approve it, and who acts — the customer who asks, Payments who refunds.
+
+| Element | Kind | Notes |
+| --- | --- | --- |
+| Approve the return | emit |  |
+| Approved | end |  |
+| Refused | end |  |
+| nod_approveStart | start |  |
+| nod_checkReturn | if |  |
+| nod_returnInit | initial |  |
+| new | state |  |
+| refunded | state |  |
+| requested | state |  |
+| Customer | actor |  |
+| Payments | service |  |
+
+| From | To | What |
+| --- | --- | --- |
+| start | if |  |
+| Approve the return | Approved |  |
+| if | Refused | false |
+| if | Approve the return | true |
+| new | requested | return.requested |
+| requested | refunded | return.approved |
+| initial | new |  |
+
+| From | Role | To | About |
+| --- | --- | --- | --- |
+| return.approved | is for | Payments | Refund card |
+| Customer | sends | return.requested | return.requested |
+
+### Scenario: A refunded return
+
+On the mixed level: the customer asks, the return is approved, and the card is refunded.
+
+Starts 2026-03-02T10:00:00Z.
+
+1. return.requested — The customer asks to return the order.
+2. return.approved — The return is approved; Payments refunds the card.
 
 ## Order lifecycle › Checkout
 

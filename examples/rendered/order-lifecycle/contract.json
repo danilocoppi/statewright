@@ -216,10 +216,72 @@
           "to": "created"
         }
       ]
+    },
+    {
+      "completeness": "partial",
+      "id": "cnv_returns",
+      "name": "Returns desk",
+      "owner": "nod_returns",
+      "starts": [
+        {
+          "id": "nod_returnInit",
+          "kind": "initial",
+          "to": "new"
+        }
+      ],
+      "states": [
+        {
+          "category": "waiting",
+          "id": "nod_returnNew",
+          "name": "new"
+        },
+        {
+          "final": true,
+          "id": "nod_returnRefunded",
+          "name": "refunded",
+          "outcome": "success"
+        },
+        {
+          "category": "processing",
+          "id": "nod_returnRequested",
+          "name": "requested"
+        }
+      ],
+      "subject": "return.status",
+      "transitions": [
+        {
+          "from": "new",
+          "id": "edg_returnAsk",
+          "on": [
+            "return.requested"
+          ],
+          "to": "requested"
+        },
+        {
+          "actions": [
+            "Refund card"
+          ],
+          "from": "requested",
+          "id": "edg_returnRefund",
+          "intent": "happy",
+          "on": [
+            "return.approved"
+          ],
+          "receivedBy": {
+            "Refund card": "Payments"
+          },
+          "to": "refunded"
+        },
+        {
+          "from": "initial:nod_returnInit",
+          "id": "edg_returnStart",
+          "to": "new"
+        }
+      ]
     }
   ],
   "source": {
-    "content": "ed916a3b73d89bf5e0c0d027ab3ff8355b395ef9656bd610a12d658518ab0af3",
+    "content": "acee34540db25c2b0d534a118edc06140f1092fd5b72ff4321487b7b5afb060e",
     "format": "1.2",
     "name": "Order lifecycle",
     "project": "prj_orderLifecycle"
@@ -316,6 +378,52 @@
               "kind": "branch",
               "value": true
             }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scn_aRefundedReturn",
+      "kind": "machine",
+      "level": "cnv_returns",
+      "name": "A refunded return",
+      "start": {
+        "at": "2026-03-02T10:00:00Z",
+        "expect": {
+          "active": [
+            "new"
+          ]
+        },
+        "fired": [
+          "edg_returnStart"
+        ]
+      },
+      "steps": [
+        {
+          "do": {
+            "event": "return.requested"
+          },
+          "expect": {
+            "active": [
+              "requested"
+            ]
+          },
+          "fired": [
+            "edg_returnAsk"
+          ]
+        },
+        {
+          "do": {
+            "event": "return.approved"
+          },
+          "expect": {
+            "active": [
+              "refunded"
+            ],
+            "ended": "done"
+          },
+          "fired": [
+            "edg_returnRefund"
           ]
         }
       ]

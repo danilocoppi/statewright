@@ -7,17 +7,25 @@ This is a generated summary of the Statewright document `prj_orderLifecycle` (fo
 | ID | Kind | Name | Where |
 | --- | --- | --- | --- |
 | `act_chargeCard` | action | Charge card |  |
+| `act_refundCard` | action | Refund card |  |
 | `act_sendReceipt` | action | Send receipt |  |
 | `cnv_chargeCard` | canvas | Charge card |  |
 | `cnv_checkout` | canvas | Checkout |  |
 | `cnv_order` | canvas | Order |  |
 | `cnv_orderLifecycle` | canvas | Order lifecycle |  |
+| `cnv_returns` | canvas | Returns desk |  |
 | `ept_pay` | endpoint | Pay |  |
 | `evt_orderCancelled` | event | order.cancelled |  |
 | `evt_orderPlaced` | event | order.placed |  |
 | `evt_paymentCaptured` | event | payment.captured |  |
+| `evt_returnApproved` | event | return.approved |  |
+| `evt_returnRequested` | event | return.requested |  |
 | `lne_customer` | lane | Customer |  |
 | `lne_payments` | lane | Payments |  |
+| `nod_approve` | emit node | Approve the return | `cnv_returns` |
+| `nod_approveDone` | end node | Approved | `cnv_returns` |
+| `nod_approveRefused` | end node | Refused | `cnv_returns` |
+| `nod_approveStart` | start node | nod_approveStart | `cnv_returns` |
 | `nod_cancelled` | state node | cancelled | `cnv_order` |
 | `nod_captured` | emit node | nod_captured | `cnv_chargeCard` |
 | `nod_cardAccepted` | if node | nod_cardAccepted | `cnv_chargeCard` |
@@ -27,6 +35,7 @@ This is a generated summary of the Statewright document `prj_orderLifecycle` (fo
 | `nod_chargeSteps` | steps node | Charge card | `cnv_order` |
 | `nod_charging` | state node | charging | `cnv_order` |
 | `nod_chargingHere` | state node | charging | `cnv_checkout` |
+| `nod_checkReturn` | if node | nod_checkReturn | `cnv_returns` |
 | `nod_checkoutDone` | end node | Checked out | `cnv_checkout` |
 | `nod_checkoutStart` | start node | nod_checkoutStart | `cnv_checkout` |
 | `nod_created` | state node | created | `cnv_order` |
@@ -41,17 +50,26 @@ This is a generated summary of the Statewright document `prj_orderLifecycle` (fo
 | `nod_paymentsHere` | participant node | Payments | `cnv_order` |
 | `nod_paymentsInFlow` | participant node | Payments | `cnv_checkout` |
 | `nod_placeOrder` | emit node | Place the order | `cnv_checkout` |
+| `nod_returnInit` | initial node | nod_returnInit | `cnv_returns` |
+| `nod_returnNew` | state node | new | `cnv_returns` |
+| `nod_returnRefunded` | state node | refunded | `cnv_returns` |
+| `nod_returnRequested` | state node | requested | `cnv_returns` |
+| `nod_returns` | service node | Returns | `cnv_orderLifecycle` |
+| `nod_returnsCustomer` | actor node | Customer | `cnv_returns` |
+| `nod_returnsPayments` | service node | Payments | `cnv_returns` |
 | `nod_shop` | service node | Shop | `cnv_orderLifecycle` |
 | `prj_orderLifecycle` | project | Order lifecycle |  |
 | `pty_customer` | party | Customer |  |
 | `pty_payments` | party | Payments |  |
 | `scn_aDeclinedCard` | scenario | A declined card |  |
 | `scn_aPaidOrder` | scenario | A paid order |  |
+| `scn_aRefundedReturn` | scenario | A refunded return |  |
 
 ## Levels
 
 - `cnv_orderLifecycle` "Order lifecycle" [system]
   - `nod_orders` → `cnv_order` "Order" [machine]
+  - `nod_returns` → `cnv_returns` "Returns desk" [mixed]
   - `nod_shop` → `cnv_checkout` "Checkout" [flow]
 - `act_chargeCard` → `cnv_chargeCard` "Charge card" [flow]
 
@@ -120,6 +138,26 @@ Roles (derived; change the field that holds them):
 | `edg_customerShop` | `nod_customer` | `nod_shop` | command | evt_orderPlaced |
 | `edg_shopOrders` | `nod_shop` | `nod_orders` | data |  |
 | `edg_shopPayments` | `nod_shop` | `nod_payments` | command |  |
+| `edg_shopReturns` | `nod_shop` | `nod_returns` | command |  |
+
+### `cnv_returns` "Returns desk"
+
+mixed
+
+Roles (derived; change the field that holds them):
+
+- `edg_returnRefund` is for `nod_returnsPayments` — `party` of `act_refundCard`
+- `nod_returnsCustomer` sends `edg_returnAsk` — `source` of `evt_returnRequested`
+
+| Edge | From | To | Kind | References |
+| --- | --- | --- | --- | --- |
+| `edg_approveCheck` | `nod_approveStart` | `nod_checkReturn` |  |  |
+| `edg_approveEnd` | `nod_approve` | `nod_approveDone` |  |  |
+| `edg_approveNo` | `nod_checkReturn` | `nod_approveRefused` | false |  |
+| `edg_approveYes` | `nod_checkReturn` | `nod_approve` | true |  |
+| `edg_returnAsk` | `nod_returnNew` | `nod_returnRequested` | transition |  |
+| `edg_returnRefund` | `nod_returnRequested` | `nod_returnRefunded` | transition |  |
+| `edg_returnStart` | `nod_returnInit` | `nod_returnNew` | transition |  |
 
 ## Findings
 
@@ -143,6 +181,15 @@ start 2026-03-02T10:00:00Z
 | Step | Input | Answers | Reached |
 | --- | --- | --- | --- |
 | 1 | `event:evt_orderPlaced` | `branch@nod_cardAccepted=true` | `nod_paid` ended done |
+
+### `scn_aRefundedReturn` "A refunded return" on `cnv_returns`
+
+start 2026-03-02T10:00:00Z
+
+| Step | Input | Answers | Reached |
+| --- | --- | --- | --- |
+| 1 | `event:evt_returnRequested` |  | `nod_returnRequested` |
+| 2 | `event:evt_returnApproved` |  | `nod_returnRefunded` ended done |
 
 ## Problems
 

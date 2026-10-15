@@ -195,6 +195,21 @@ describe("the platform guide", () => {
     }
   });
 
+  it("tells what a mixed level is, how it connects, what it runs as, and how a level becomes one (mixed levels plan M5)", () => {
+    const section = sectionOf("### Mixed levels");
+    for (const words of [
+      "`mixed`",
+      '`kind: "transition"`',
+      "what its ends make it",
+      "runs as a machine",
+      "Change to mixed",
+      "`canvas.mix`",
+      "Returns desk"
+    ]) {
+      expect(section).toContain(words);
+    }
+  });
+
   it("tells where the findings on an edge are drawn (source-of-truth spec §6)", () => {
     const section = source.slice(source.indexOf("\n## Reading a diagram\n"), source.indexOf("\n## Using the editor\n"));
     expect(section).toContain("The codes of the\nfindings on an edge are a badge under its label");

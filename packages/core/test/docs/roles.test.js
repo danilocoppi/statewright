@@ -79,3 +79,15 @@ describe("a flow's roles in the example (mixed levels spec §4.4)", () => {
     });
   });
 });
+
+describe("the example's mixed level (mixed levels spec §4.5)", () => {
+  it("is documented with its roles, and simulates as its machine", async () => {
+    const doc = order();
+    const markdown = toMarkdown(doc);
+    expect(markdown).toContain("Returns desk");
+    expect(markdown).toMatch(/\| Customer \| sends \| return\.requested \|/);
+    expect(markdown).toMatch(/\| return\.approved \| is for \| Payments \| Refund card \|/);
+    const { replay } = await import("../../src/simulate/index.js");
+    expect(replay(doc, doc.annotations.scenarios.scn_aRefundedReturn).first).toBeNull();
+  });
+});
