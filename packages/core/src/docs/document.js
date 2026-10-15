@@ -3,7 +3,8 @@ import { buildIndex } from "../query/build-index.js";
 import { hierarchy } from "../query/index.js";
 import { check } from "../rules/index.js";
 import { triggersOf } from "../rules/facts.js";
-import { createStyle } from "../style/index.js";
+import { isGuest } from "../roles/kinds.js";
+import { createStyle, stepText } from "../style/index.js";
 
 const sortedKeys = map => Object.keys(map ?? {}).sort();
 const cell = value =>
@@ -263,7 +264,7 @@ export function documentModel(doc) {
           headers: ["Element", "Kind", "Notes"],
           rows: nodeIds.map(nodeId => {
             const node = canvas.nodes[nodeId];
-            const name = node.label ?? node.name ?? nodeId;
+            const name = node.label ?? node.name ?? (isGuest(canvas.kind, node) ? stepText(doc, node) : nodeId);
             const interior = style.node(nodeId).interior;
             return {
               id: nodeId,

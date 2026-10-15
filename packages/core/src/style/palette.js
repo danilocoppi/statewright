@@ -49,6 +49,7 @@ export const NODE_STYLES = {
   },
   "node.external": { fill: "#FAFAFC", stroke: "#878E91", dash: "4,3", chip: "EXTERNAL", label: "External system" },
   "node.actor": { fill: "#FAFAFC", stroke: "#878E91", dash: "4,3", chip: "ACTOR", label: "Actor" },
+  "node.ops": { fill: "#FFFBEB", stroke: "#B45309", dash: "4,3", chip: "OPS", label: "Operator" },
   "node.store": { fill: "#F3F5F9", stroke: "#5B6170", chip: "STORE", label: "Data store" },
   "node.plain": { fill: "#FFFFFF", stroke: "#3B3F4A", label: "Component" },
   "step.plain": { fill: "#FFFFFF", stroke: "#3B3F4A", label: "Step" },

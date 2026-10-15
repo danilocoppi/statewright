@@ -1,4 +1,5 @@
 import { buildIndex } from "../query/build-index.js";
+import { isGuest } from "../roles/kinds.js";
 import { CHIP_LABELS, EDGE_STYLES, MUTED, NODE_STYLES, TONES } from "./palette.js";
 
 export {
@@ -35,7 +36,15 @@ const KIND_CHIPS = {
   wait: "WAIT",
   call: "CALL",
   webhook: "WEBHOOK",
-  assign: "ASSIGN"
+  assign: "ASSIGN",
+  steps: "STEPS"
+};
+/** A participant's style key and shape by its party's kind (mixed levels spec §4.1). */
+const PARTY_LOOKS = {
+  human: { key: "node.actor", shape: "actor" },
+  operator: { key: "node.ops", shape: "actor" },
+  system: { key: "node.plain", shape: "box", chip: "SERVICE" },
+  external: { key: "node.external", shape: "actor" }
 };
 const SHAPES = {
   initial: "dot",
@@ -53,11 +62,46 @@ const SHAPES = {
 /** Shapes that show a node style (pseudo-nodes are drawn the same everywhere and stay out of the legend). */
 const STYLED_SHAPES = new Set(["box", "actor", "ref"]);
 
-/** The canvas a node's interior shows (own canvas or definition body), or null. */
+/** The catalog item embedded steps show: an action, endpoint or webhook (mixed levels spec §4.2), or undefined. */
+const stepsItem = (doc, node) =>
+  doc.catalog.actions[node.action] ?? doc.catalog.endpoints[node.action] ?? doc.catalog.webhooks[node.action];
+
+/**
+ * The canvas a node's interior shows (own canvas or definition body), or null. Embedded steps show their catalog
+ * item's flow.
+ */
 export function interiorOf(doc, node) {
-  if (node?.inner?.canvas) return doc.canvases[node.inner.canvas] ? node.inner.canvas : null;
-  const body = node?.inner?.definition && doc.definitions[node.inner.definition]?.canvas;
+  const inner = node?.kind === "steps" ? stepsItem(doc, node)?.inner : node?.inner;
+  if (inner?.canvas) return doc.canvases[inner.canvas] ? inner.canvas : null;
+  const body = inner?.definition && doc.definitions[inner.definition]?.canvas;
   return body && doc.canvases[body] ? body : null;
+}
+
+/**
+ * How a node with an interior is displayed: the stored display, else a frame for embedded steps (a card when other
+ * steps of the same item on the level come first), else a node. "node" for nodes without an interior.
+ * @returns {"node"|"card"|"frame"}
+ */
+export function displayOf(doc, canvasId, nodeId) {
+  const canvas = doc.canvases[canvasId];
+  const node = canvas?.nodes[nodeId];
+  if (!interiorOf(doc, node)) return "node";
+  const stored = doc.layout?.canvases?.[canvasId]?.nodes?.[nodeId]?.display;
+  if (stored) return stored;
+  if (node.kind !== "steps") return "node";
+  const first = Object.keys(canvas.nodes)
+    .sort()
+    .find(id => canvas.nodes[id].kind === "steps" && canvas.nodes[id].action === node.action);
+  return first === nodeId ? "frame" : "card";
+}
+
+/** The state a state guest stands for, with its machine canvas, or null. */
+function guestTarget(doc, node) {
+  for (const [canvasId, canvas] of Object.entries(doc.canvases)) {
+    const target = canvas.nodes[node.target];
+    if (target && canvas.kind === "machine") return { canvasId, canvas, state: target };
+  }
+  return null;
 }
 
 /**
@@ -70,18 +114,28 @@ export function figureCanvases(doc, canvasId, seen = new Set()) {
   if (seen.has(canvasId) || !doc.canvases[canvasId]) return [];
   seen.add(canvasId);
   const out = [canvasId];
-  const placed = doc.layout?.canvases?.[canvasId]?.nodes ?? {};
   for (const [nodeId, node] of Object.entries(doc.canvases[canvasId].nodes)) {
     const interior = interiorOf(doc, node);
-    if (interior && placed[nodeId]?.display === "frame") out.push(...figureCanvases(doc, interior, seen));
+    if (interior && displayOf(doc, canvasId, nodeId) === "frame") out.push(...figureCanvases(doc, interior, seen));
   }
   return out;
 }
 
-/** Style key of a node (spec §15 precedence: provenance › focus › kind › outcome › category › plain). */
-function nodeKey(canvasKind, node, focused) {
+/**
+ * Style key of a node (spec §15 precedence: provenance › focus › kind › outcome › category › plain). A guest takes
+ * the key of what it stands for: a participant its party's look, a state guest its state's key.
+ */
+function nodeKey(doc, canvasKind, node, focused) {
   if (PROVENANCE_KEYS[node.provenance]) return PROVENANCE_KEYS[node.provenance];
   if (focused) return "state.focus";
+  if (node.kind === "participant") return PARTY_LOOKS[doc.catalog.parties[node.party]?.kind]?.key ?? "node.actor";
+  if (node.kind === "steps") return "step.plain";
+  if (canvasKind === "flow" && node.kind === "state") {
+    const target = guestTarget(doc, node)?.state;
+    return target?.kind === "state" ?
+        nodeKey(doc, "machine", { ...target, provenance: undefined }, false)
+      : "state.plain";
+  }
   if (KIND_KEYS[node.kind]) return KIND_KEYS[node.kind];
   if (node.outcome) return `outcome.${node.outcome}`;
   if (CATEGORY_KEYS[node.category]) return CATEGORY_KEYS[node.category];
@@ -89,8 +143,9 @@ function nodeKey(canvasKind, node, focused) {
 }
 
 /** Shape of a node; an entry is an actor box when someone performs it, otherwise a dot (spec §12.3). */
-function shapeOf(node) {
+function shapeOf(doc, node) {
   if (node.kind === "entry") return node.by ? "actor" : "dot";
+  if (node.kind === "participant") return PARTY_LOOKS[doc.catalog.parties[node.party]?.kind]?.shape ?? "actor";
   if (node.kind === "actor" || node.kind === "external") return "actor";
   return SHAPES[node.kind] ?? "box";
 }
@@ -135,7 +190,7 @@ export function createStyle(doc) {
     if (!entry) return null;
     const value = entry.value;
     const canvasKind = doc.canvases[entry.canvas].kind;
-    const key = nodeKey(canvasKind, value, focus.has(id));
+    const key = nodeKey(doc, canvasKind, value, focus.has(id));
     const style = NODE_STYLES[key];
     const chips = [];
     const chip = (text, color, fill) => {
@@ -149,6 +204,12 @@ export function createStyle(doc) {
       chip(NODE_STYLES[KIND_KEYS[value.kind]].chip, NODE_STYLES[KIND_KEYS[value.kind]].stroke);
     }
     if (KIND_CHIPS[value.kind]) chip(KIND_CHIPS[value.kind], MUTED);
+    if (value.kind === "participant") {
+      const look = PARTY_LOOKS[doc.catalog.parties[value.party]?.kind];
+      if (NODE_STYLES[key].chip) chip(NODE_STYLES[key].chip, NODE_STYLES[key].stroke);
+      else if (look?.chip) chip(look.chip, MUTED);
+    }
+    if (canvasKind === "flow" && value.kind === "state") chip("STATE", MUTED);
     if (value.terminal) chip("FINAL", style.stroke);
     if (CATEGORY_KEYS[value.category]) {
       const category = NODE_STYLES[CATEGORY_KEYS[value.category]];
@@ -170,7 +231,7 @@ export function createStyle(doc) {
       stroke: style.stroke,
       dash: style.dash ?? null,
       opacity: value.confidence === "low" ? 0.6 : 1,
-      shape: shapeOf(value),
+      shape: shapeOf(doc, value),
       chips,
       statuses,
       badges: badges.get(id) ?? [],
@@ -356,9 +417,15 @@ export function createStyle(doc) {
   return { node, edge, edgeLabel, legend, cardSummary, findings };
 }
 
-/** Text of an unnamed flow step (its action, event, endpoint, …), for summaries. */
+/** Text of an unnamed flow step (its action, event, endpoint, …) or guest (what it stands for), for summaries. */
 export function stepText(doc, node) {
   switch (node.kind) {
+    case "participant":
+      return doc.catalog.parties[node.party]?.name ?? node.party;
+    case "steps":
+      return stepsItem(doc, node)?.name ?? node.action;
+    case "state":
+      return node.target ? (guestTarget(doc, node)?.state.name ?? node.target) : "state";
     case "action":
       return doc.catalog.actions[node.action]?.name ?? node.action;
     case "emit":

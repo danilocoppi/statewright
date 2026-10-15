@@ -30,7 +30,8 @@ export default [
     run(ctx, { canvas, id, ...placement }) {
       const entry = requireEntry(ctx, id, ["node"]);
       onCanvas(entry, canvas);
-      if (placement.display !== undefined && !entry.value.inner) {
+      // Embedded steps show their catalog item's flow (mixed levels spec §4.2).
+      if (placement.display !== undefined && !entry.value.inner && entry.value.kind !== "steps") {
         fail("NOT_ALLOWED", `"${id}" has no interior to show as ${placement.display}`, { id });
       }
       const stored = setNodeLayout(ctx.doc, canvas, id, placement);

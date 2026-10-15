@@ -322,6 +322,7 @@ above a box for a defect); the regions of a machine are separate dashed areas, e
 | `prov.implied` | fill #FFFFFF, stroke #B9BDC9, dashed 2,3, chip IMPLIED | Implied · not documented |
 | `node.external` | fill #FAFAFC, stroke #878E91, dashed 4,3, chip EXTERNAL | External system |
 | `node.actor` | fill #FAFAFC, stroke #878E91, dashed 4,3, chip ACTOR | Actor |
+| `node.ops` | fill #FFFBEB, stroke #B45309, dashed 4,3, chip OPS | Operator |
 | `node.store` | fill #F3F5F9, stroke #5B6170, chip STORE | Data store |
 | `node.plain` | fill #FFFFFF, stroke #3B3F4A | Component |
 | `step.plain` | fill #FFFFFF, stroke #3B3F4A | Step |

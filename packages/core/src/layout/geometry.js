@@ -1,4 +1,5 @@
-import { createStyle, stepText } from "../style/index.js";
+import { isGuest } from "../roles/kinds.js";
+import { createStyle, displayOf as displayOfNode, stepText } from "../style/index.js";
 
 // Advance widths of Inter (regular and semibold) for the printable ASCII characters, in thousandths of an em.
 // They let the layout size boxes the way browsers will draw them, without a DOM; other characters count as 0.6 em.
@@ -121,9 +122,8 @@ export function createGeometry(doc, { style = createStyle(doc) } = {}) {
   const boxes = new Map();
   const interiors = new Map();
 
-  /** Display of a node with an interior: "node", "card" or "frame" (stored layout; default node). */
-  const displayOf = (canvasId, nodeId) =>
-    style.node(nodeId)?.interior ? (placed(canvasId)[nodeId]?.display ?? "node") : "node";
+  /** Display of a node with an interior: "node", "card" or "frame" (stored layout; default node, embedded steps frame). */
+  const displayOf = (canvasId, nodeId) => displayOfNode(doc, canvasId, nodeId);
 
   /** Name line of a box: label, name, or what the step does. */
   function title(canvasId, nodeId) {
@@ -138,7 +138,8 @@ export function createGeometry(doc, { style = createStyle(doc) } = {}) {
       return condition?.text ?? (condition?.guard ? doc.catalog.guards[condition.guard]?.name : null) ?? node.kind;
     }
     if (node.kind === "any") return "any";
-    return doc.canvases[canvasId].kind === "flow" ? stepText(doc, node) : node.kind;
+    const canvasKind = doc.canvases[canvasId].kind;
+    return canvasKind === "flow" || isGuest(canvasKind, node) ? stepText(doc, node) : node.kind;
   }
 
   function findValue(id) {
@@ -151,6 +152,13 @@ export function createGeometry(doc, { style = createStyle(doc) } = {}) {
   function paragraphs(canvasId, nodeId) {
     const node = doc.canvases[canvasId].nodes[nodeId];
     const lines = node.summary ? node.summary.split("\n") : [];
+    // A state guest says which machine its state belongs to (mixed levels spec §4.4).
+    if (doc.canvases[canvasId].kind === "flow" && node.kind === "state") {
+      const machine = Object.values(doc.canvases).find(
+        canvas => canvas.kind === "machine" && canvas.nodes[node.target]?.kind === "state"
+      );
+      if (machine) lines.push(machine.name);
+    }
     if (displayOf(canvasId, nodeId) === "card") {
       const card = style.cardSummary(nodeId);
       if (card) lines.push(card);
