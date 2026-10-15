@@ -1,5 +1,5 @@
 {
-  "statewright": "1.1",
+  "statewright": "1.2",
   "generator": {
     "name": "statewright",
     "version": "0.1.0",
@@ -7,7 +7,7 @@
   },
   "signature": {
     "algorithm": "sha256",
-    "content": "9594e210ba9c00c67035b9fd241574b2743b3e01b6c4f4c7aed9fba47eecd7ee",
+    "content": "c78956dd9c6094dff800d4df5ae99b51bbda04f1501c26097e7650e6f5708886",
     "annotations": "353f660bc27cf99fe6b7ba41269ca233fb51c05d338fec1e206a7da99df7e10e",
     "layout": "c3a4d9dd2dd1bcc63988f76940f59f20a7a77bc340bfc0004120ae3f343a6991",
     "signedAt": "2026-10-12T12:00:00Z"

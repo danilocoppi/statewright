@@ -26,8 +26,8 @@ export const Note = obj(
 );
 
 export const Lane = obj(
-  { canvas: idOf("cnv"), label: z.string().min(1), nodes: z.array(idOf("nod")) },
-  { description: "An unboxed caption above a row of nodes." }
+  { canvas: idOf("cnv"), label: z.string().min(1), nodes: z.array(idOf("nod")), party: idOf("pty").optional() },
+  { description: "An unboxed caption above a row of nodes; `party` performs its steps (role R5)." }
 );
 
 /** What a person did in one step of a run (simulator spec §4.2). */

@@ -221,8 +221,8 @@
     }
   ],
   "source": {
-    "content": "b782a8ca926287e82c18ffb461cee27f7e3921490b6e012b127ab1c3033912f2",
-    "format": "1.1",
+    "content": "fdbed5f81a121270b2d4ca931d6988b09895aea6214deda1065736b1549a1cd7",
+    "format": "1.2",
     "name": "Get paid (as built)",
     "project": "prj_getPaid"
   },

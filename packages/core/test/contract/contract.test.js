@@ -30,7 +30,7 @@ describe("toContract (source-of-truth spec §5)", () => {
     expect(contract.source).toEqual({
       project: "prj_bookings",
       name: "Bookings",
-      format: "1.1",
+      format: "1.2",
       content: doc.signature.content
     });
     const moved = applyBatch(doc, [

@@ -111,6 +111,9 @@
     "text": "Text",
     "attachedTo": "Attached to",
     "laneNodes": "Boxes",
+    "performedBy": "Performed by",
+    "receivedBy": "Received by",
+    "standsFor": "Stands for",
     "severity": "Severity",
     "targets": "About",
     "source": "Source",
@@ -262,7 +265,9 @@
       "call": "Call",
       "webhook": "Webhook",
       "assign": "Assign",
-      "subflow": "Subflow"
+      "subflow": "Subflow",
+      "participant": "Participant",
+      "steps": "Embedded steps"
     },
     "edge": {
       "system": "Connection",

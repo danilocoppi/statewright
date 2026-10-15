@@ -1,5 +1,5 @@
 /** Format version written by this package (`"MAJOR.MINOR"`). */
-export const FORMAT_VERSION = "1.1";
+export const FORMAT_VERSION = "1.2";
 
 /** Name stamped into `generator.name`. */
 export const GENERATOR_NAME = "statewright";

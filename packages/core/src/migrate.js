@@ -7,7 +7,9 @@ import { FORMAT_VERSION } from "./constants.js";
  */
 export const MIGRATIONS = [
   // 1.1 adds saved scenarios (annotations.scenarios); a 1.0 document is a valid 1.1 document as it is.
-  { from: "1.0", to: "1.1", up: doc => doc }
+  { from: "1.0", to: "1.1", up: doc => doc },
+  // 1.2 adds guests (mixed levels spec §5): new node kinds and optional fields only.
+  { from: "1.1", to: "1.2", up: doc => doc }
 ];
 
 const VERSION_PATTERN = /^\d+\.\d+$/;

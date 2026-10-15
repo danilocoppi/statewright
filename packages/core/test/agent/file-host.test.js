@@ -192,7 +192,7 @@ describe("the file host (AI interface spec §4.3)", () => {
       { file: "old.json" }
     );
     expect(result.ok).toBe(true);
-    expect(JSON.parse(files.text("old.json")).statewright).toBe("1.1");
+    expect(JSON.parse(files.text("old.json")).statewright).toBe("1.2");
   });
 
   it("answers what needs the Editor with NEEDS_EDITOR", async () => {

@@ -58,15 +58,17 @@ const NODE_SECTIONS = [
 const EDGE_SECTIONS = [section("findings", "findings"), section("focus", "focus"), section("route", "route")];
 
 const name = (required = false) => field("name", "title", "basics", { required });
+// A participant is its party (mixed levels spec §4.1): it has no name of its own, only an optional label.
+const PARTY = ref("party", ["parties"], "basics", { required: true });
 const kind = () => details("kind", "kind");
 
 /** The fields of each node kind, by kind of level. */
 const NODE_FIELDS = {
   system: {
     actor: [name(), basics("kind", "kind"), ref("party", ["parties"], "basics"), SUMMARY, INTERIOR],
-    service: [name(), basics("kind", "kind"), SUMMARY, INTERIOR],
-    store: [name(), basics("kind", "kind"), SUMMARY, INTERIOR],
-    queue: [name(), basics("kind", "kind"), SUMMARY, INTERIOR],
+    service: [name(), basics("kind", "kind"), ref("party", ["parties"], "basics"), SUMMARY, INTERIOR],
+    store: [name(), basics("kind", "kind"), ref("party", ["parties"], "basics"), SUMMARY, INTERIOR],
+    queue: [name(), basics("kind", "kind"), ref("party", ["parties"], "basics"), SUMMARY, INTERIOR],
     external: [name(), basics("kind", "kind"), ref("party", ["parties"], "basics"), SUMMARY, INTERIOR],
     ref: [name(), TARGET, SUMMARY]
   },
@@ -100,6 +102,8 @@ const NODE_FIELDS = {
     choice: [name(), kind(), REGION, SUMMARY],
     history: [name(), basics("depth", "choice", { default: "shallow" }), kind(), REGION, SUMMARY],
     any: [name(), basics("except", "nodes"), kind(), REGION, SUMMARY],
+    participant: [PARTY, kind(), REGION, SUMMARY],
+    steps: [ref("action", ["actions", "endpoints", "webhooks"], "basics", { required: true }), kind(), REGION, SUMMARY],
     ref: [name(), TARGET, REGION, SUMMARY]
   },
   flow: {
@@ -150,6 +154,8 @@ const NODE_FIELDS = {
     webhook: [name(), ref("webhook", ["webhooks"], "basics", { required: true }), kind(), SUMMARY],
     assign: [name(), details("set", "jsonMap"), kind(), SUMMARY],
     subflow: [name(), basics("inner", "interior"), kind(), SUMMARY],
+    participant: [PARTY, kind(), SUMMARY],
+    state: [basics("target", "target", { required: true, label: "standsFor" }), kind(), SUMMARY],
     ref: [name(), TARGET, SUMMARY]
   }
 };
@@ -237,6 +243,7 @@ const CATALOG_FIELDS = {
     ref("input", ["types"], "basics", nullable),
     ref("output", ["types"], "basics", nullable),
     refs("emits", "events", "basics"),
+    ref("party", ["parties"], "basics", { label: "receivedBy" }),
     INTERIOR
   ],
   guards: [name(true), details("expr", "json", { mono: true, label: "expression" })],
@@ -249,6 +256,7 @@ const CATALOG_FIELDS = {
     details("auth", "text"),
     details("idempotent", "toggle"),
     refs("emits", "events"),
+    ref("party", ["parties"], "details", { label: "receivedBy" }),
     INTERIOR
   ],
   webhooks: [
@@ -283,7 +291,11 @@ const OTHER_FIELDS = {
     basics("tone", "choice", { none: "plainNote" }),
     basics("target", "noteTarget", { label: "attachedTo" })
   ],
-  lane: [field("label", "title", "basics", { required: true }), basics("nodes", "nodes", { label: "laneNodes" })],
+  lane: [
+    field("label", "title", "basics", { required: true }),
+    basics("nodes", "nodes", { label: "laneNodes" }),
+    ref("party", ["parties"], "basics", { label: "performedBy" })
+  ],
   finding: [
     field("title", "title", "basics", { required: true }),
     basics("severity", "choice"),

@@ -1104,7 +1104,7 @@ the design or of its scenarios:
 ```json
 {
   "results": "1",
-  "contract": "7efed18c4dede4adf61f06b96e1a037382eefc853ecd5f2a9e48656e69c59ef3",
+  "contract": "c64725aca0ec535bee281e47a2bdd0edac24a0b093ee74be8f39d0ae86ea3b40",
   "runner": "node",
   "vectors": [
     { "id": "scn_aBookingIsDeclined", "steps": [{ "active": ["requested"] }, { "active": ["declined"] }] },
@@ -2297,9 +2297,10 @@ Findings of other sources are left alone, and annotation changes never change th
 
 ## Format reference
 
-The JSON Schema of format 1.1 ships with the package as `statewright/schema.json`, is printed by `statewright schema`
-and is served by the platform at `/schema/1.1.json`. Format 1.0's schema stays at `/schema/1.0.json` for the files
-that still point to it; Statewright reads those files and writes them back in format 1.1.
+The JSON Schema of format 1.2 ships with the package as `statewright/schema.json`, is printed by `statewright schema`
+and is served by the platform at `/schema/1.2.json`. The schemas of formats 1.1 and 1.0 stay at `/schema/1.1.json` and
+`/schema/1.0.json` for the files that still point to them; Statewright reads those files and writes them back in format
+1.2. Format 1.2 adds guests (participants, embedded steps, state guests) and the `party` fields they read.
 
 <!-- generated:schema-reference -->
 
@@ -2312,7 +2313,7 @@ A Statewright document.
 | Field | Type | Notes |
 | --- | --- | --- |
 | `$schema?` | string |  |
-| `statewright` | "1.1" |  |
+| `statewright` | "1.2" |  |
 | `generator?` | Generator |  |
 | `signature?` | Signature |  |
 | `project` | Project |  |
@@ -2376,7 +2377,7 @@ Also accepts the [common fields](#common-fields).
 
 #### Action
 
-An action performed by the runtime (spec §10.3).
+An action performed by the runtime (spec §10.3); `party` receives it.
 
 | Field | Type |
 | --- | --- |
@@ -2384,6 +2385,7 @@ An action performed by the runtime (spec §10.3).
 | `input?` | typ_* \| null |
 | `output?` | typ_* \| null |
 | `emits?` | evt_*[] |
+| `party?` | pty_* |
 | `inner?` | Inner |
 
 Also accepts the [common fields](#common-fields).
@@ -2413,6 +2415,7 @@ An HTTP endpoint (spec §10.5).
 | `auth?` | string |
 | `idempotent?` | boolean |
 | `emits?` | evt_*[] |
+| `party?` | pty_* |
 | `inner?` | Inner |
 
 Also accepts the [common fields](#common-fields).
@@ -2571,6 +2574,7 @@ Also accepts the [common fields](#common-fields).
 | --- | --- |
 | `kind` | "service" |
 | `name?` | string |
+| `party?` | pty_* |
 | `summary?` | string |
 | `inner?` | Inner |
 
@@ -2582,6 +2586,7 @@ Also accepts the [common fields](#common-fields).
 | --- | --- |
 | `kind` | "store" |
 | `name?` | string |
+| `party?` | pty_* |
 | `summary?` | string |
 | `inner?` | Inner |
 
@@ -2593,6 +2598,7 @@ Also accepts the [common fields](#common-fields).
 | --- | --- |
 | `kind` | "queue" |
 | `name?` | string |
+| `party?` | pty_* |
 | `summary?` | string |
 | `inner?` | Inner |
 
@@ -2723,6 +2729,32 @@ Also accepts the [common fields](#common-fields).
 | `name?` | string |
 | `region?` | rgn_* |
 | `except?` | nod_*[] |
+| `summary?` | string |
+
+Also accepts the [common fields](#common-fields).
+
+#### Machine node: `participant`
+
+A party on the level (role R1): it sends, receives or performs what its party does.
+
+| Field | Type |
+| --- | --- |
+| `kind` | "participant" |
+| `party` | pty_* |
+| `region?` | rgn_* |
+| `summary?` | string |
+
+Also accepts the [common fields](#common-fields).
+
+#### Machine node: `steps`
+
+The flow of an action, endpoint or webhook, drawn where it runs (role R2).
+
+| Field | Type |
+| --- | --- |
+| `kind` | "steps" |
+| `action` | act_* \| ept_* \| whk_* |
+| `region?` | rgn_* |
 | `summary?` | string |
 
 Also accepts the [common fields](#common-fields).
@@ -2955,6 +2987,30 @@ Also accepts the [common fields](#common-fields).
 
 Also accepts the [common fields](#common-fields).
 
+#### Flow node: `participant`
+
+A party on the level (role R1): it sends, receives or performs what its party does.
+
+| Field | Type |
+| --- | --- |
+| `kind` | "participant" |
+| `party` | pty_* |
+| `summary?` | string |
+
+Also accepts the [common fields](#common-fields).
+
+#### Flow node: `state`
+
+A state of a machine level, which steps lead to (role R4).
+
+| Field | Type |
+| --- | --- |
+| `kind` | "state" |
+| `target` | nod_* |
+| `summary?` | string |
+
+Also accepts the [common fields](#common-fields).
+
 #### Flow node: `ref`
 
 A shortcut to another canvas, node, definition or catalog item.
@@ -3139,13 +3195,14 @@ A note floating on a canvas or attached to an element.
 
 #### Lane
 
-An unboxed caption above a row of nodes.
+An unboxed caption above a row of nodes; `party` performs its steps (role R5).
 
 | Field | Type |
 | --- | --- |
 | `canvas` | cnv_* |
 | `label` | string |
 | `nodes` | nod_*[] |
+| `party?` | pty_* |
 
 ### Layout
 

@@ -511,8 +511,8 @@
     }
   ],
   "source": {
-    "content": "898a58b232dc3b76ee8dae0fe6e274fd1fb1fa9fdf01c40e08b2403b132d55a3",
-    "format": "1.1",
+    "content": "990998e31c68de443438643f07044a72a8384cc0ba514b01bf045a2ec78cd62e",
+    "format": "1.2",
     "name": "Payments",
     "project": "prj_payments"
   },

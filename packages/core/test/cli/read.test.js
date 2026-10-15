@@ -114,7 +114,7 @@ describe("schema, commands and guide", () => {
   it("prints the JSON Schema", async () => {
     expect(JSON.parse((await cli(["schema"])).stdout)).toEqual(toJSONSchema());
     const withId = JSON.parse((await cli(["schema", "--base-url", "https://example.com"])).stdout);
-    expect(withId.$id).toBe("https://example.com/schema/1.1.json");
+    expect(withId.$id).toBe("https://example.com/schema/1.2.json");
   });
 
   it("lists the document commands", async () => {

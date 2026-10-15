@@ -114,7 +114,7 @@ describe("migrate", () => {
     const { dir, path } = await copy();
     const before = await readFile(path, "utf8");
     const run = await cli(["migrate", "payments.json"], { cwd: dir });
-    expect(run.stdout).toBe("payments.json already uses format 1.1; nothing to do\n");
+    expect(run.stdout).toBe("payments.json already uses format 1.2; nothing to do\n");
     expect(await readFile(path, "utf8")).toBe(before);
   });
 
@@ -125,9 +125,14 @@ describe("migrate", () => {
     delete doc.signature;
     await writeFile(join(dir, "old.json"), JSON.stringify(doc));
     const run = await cli(["migrate", "old.json", "--json"], { cwd: dir });
-    expect(run.json()).toEqual({ ok: true, file: "old.json", migrations: ["1.0 → 1.1"], written: "old.json" });
+    expect(run.json()).toEqual({
+      ok: true,
+      file: "old.json",
+      migrations: ["1.0 → 1.1", "1.1 → 1.2"],
+      written: "old.json"
+    });
     const migrated = parse(await readFile(join(dir, "old.json"), "utf8")).doc;
-    expect(migrated.statewright).toBe("1.1");
+    expect(migrated.statewright).toBe("1.2");
     expect(await verify(migrated)).toEqual({ content: "ok", annotations: "ok", layout: "ok" });
   });
 
@@ -139,6 +144,6 @@ describe("migrate", () => {
     const run = await cli(["apply", "old.json", "-"], { cwd: dir, stdin });
     expect(run.stderr).toBe("");
     expect(run.code).toBe(0);
-    expect(parse(await readFile(join(dir, "old.json"), "utf8")).doc.statewright).toBe("1.1");
+    expect(parse(await readFile(join(dir, "old.json"), "utf8")).doc.statewright).toBe("1.2");
   });
 });

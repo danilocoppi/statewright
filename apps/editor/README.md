@@ -18,7 +18,7 @@ Run from the repository root (or drop `-w @statewright/editor` inside `apps/edit
 ## Building and hosting
 
 The build is a static folder: the app, the guide at `/readme` and the files the platform serves beside it —
-`/README.md` (the guide as Markdown), `/llms.txt`, `/schema/1.1.json` and `/schema/1.0.json` — all built from
+`/README.md` (the guide as Markdown), `/llms.txt`, `/schema/1.2.json`, `/schema/1.1.json` and `/schema/1.0.json` — all built from
 `packages/core`.
 
 Set `VITE_BASE_URL` to the platform's address when building, for example

@@ -1,5 +1,5 @@
 // The platform guide (spec §8.4), built from Core's README at build time: the page's content as data (no Markdown
-// library reaches the browser), and the static files the platform serves — /README.md, /llms.txt, /schema/1.1.json
+// library reaches the browser), and the static files the platform serves — /README.md, /llms.txt, /schema/1.2.json
 // (and format 1.0's, for the files that still point to it) and the README's figures.
 import { readFileSync } from "node:fs";
 import { dirname, relative, resolve, sep } from "node:path";
@@ -10,8 +10,9 @@ import { lexer } from "marked";
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 /** Core's README: the npm README, built from docs/guide/README.md (npm run readme:build). */
 export const README = resolve(ROOT, "packages/core/README.md");
-/** Core's JSON Schema of the format it writes (1.1), and of format 1.0 as it was published. */
-export const SCHEMA = resolve(ROOT, "packages/core/schema/1.1.json");
+/** Core's JSON Schema of the format it writes (1.2), and of formats 1.1 and 1.0 as they were published. */
+export const SCHEMA = resolve(ROOT, "packages/core/schema/1.2.json");
+const SCHEMA_1_1 = resolve(ROOT, "packages/core/schema/1.1.json");
 const SCHEMA_1_0 = resolve(ROOT, "packages/core/schema/1.0.json");
 /** Where the README's figures come from; they are served under guide/ with the same sub-path. */
 export const FIGURES = resolve(ROOT, "examples/rendered");
@@ -177,7 +178,7 @@ export function buildGuide(markdown, { readme = README, url = "/" } = {}) {
           "Editor, window.statewright, the operations and the hooks for testing the Editor"
       ]
     : []),
-    `- [Format 1.1 JSON Schema](${url}schema/1.1.json): the JSON Schema every Statewright document follows`,
+    `- [Format 1.2 JSON Schema](${url}schema/1.2.json): the JSON Schema every Statewright document follows`,
     ""
   ].join("\n");
 
@@ -186,7 +187,8 @@ export function buildGuide(markdown, { readme = README, url = "/" } = {}) {
     files: {
       "README.md": raw,
       "llms.txt": llms,
-      "schema/1.1.json": readFileSync(SCHEMA, "utf8"),
+      "schema/1.2.json": readFileSync(SCHEMA, "utf8"),
+      "schema/1.1.json": readFileSync(SCHEMA_1_1, "utf8"),
       "schema/1.0.json": readFileSync(SCHEMA_1_0, "utf8")
     },
     figures

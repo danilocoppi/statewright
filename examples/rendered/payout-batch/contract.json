@@ -378,8 +378,8 @@
     }
   ],
   "source": {
-    "content": "9594e210ba9c00c67035b9fd241574b2743b3e01b6c4f4c7aed9fba47eecd7ee",
-    "format": "1.1",
+    "content": "c78956dd9c6094dff800d4df5ae99b51bbda04f1501c26097e7650e6f5708886",
+    "format": "1.2",
     "name": "Payout batch",
     "project": "prj_payoutBatch"
   },

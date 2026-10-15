@@ -942,7 +942,7 @@ the design or of its scenarios:
 ```json
 {
   "results": "1",
-  "contract": "7efed18c4dede4adf61f06b96e1a037382eefc853ecd5f2a9e48656e69c59ef3",
+  "contract": "c64725aca0ec535bee281e47a2bdd0edac24a0b093ee74be8f39d0ae86ea3b40",
   "runner": "node",
   "vectors": [
     { "id": "scn_aBookingIsDeclined", "steps": [{ "active": ["requested"] }, { "active": ["declined"] }] },
@@ -2135,9 +2135,10 @@ Findings of other sources are left alone, and annotation changes never change th
 
 ## Format reference
 
-The JSON Schema of format 1.1 ships with the package as `statewright/schema.json`, is printed by `statewright schema`
-and is served by the platform at `/schema/1.1.json`. Format 1.0's schema stays at `/schema/1.0.json` for the files
-that still point to it; Statewright reads those files and writes them back in format 1.1.
+The JSON Schema of format 1.2 ships with the package as `statewright/schema.json`, is printed by `statewright schema`
+and is served by the platform at `/schema/1.2.json`. The schemas of formats 1.1 and 1.0 stay at `/schema/1.1.json` and
+`/schema/1.0.json` for the files that still point to them; Statewright reads those files and writes them back in format
+1.2. Format 1.2 adds guests (participants, embedded steps, state guests) and the `party` fields they read.
 
 <!-- generated:schema-reference -->
 <!-- /generated:schema-reference -->

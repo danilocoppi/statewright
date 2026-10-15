@@ -39,15 +39,15 @@ describe("migrate", () => {
   });
 
   it("fails when a step is missing", () => {
-    expect(migrate({ statewright: "0.5" }).errors[0].message).toBe("No migration from format 0.5 to 1.1");
+    expect(migrate({ statewright: "0.5" }).errors[0].message).toBe("No migration from format 0.5 to 1.2");
   });
 
   it("brings format 1.0 to 1.1, where only the version changes (simulator spec §4.1)", () => {
     const raw = { ...minimalDoc(), statewright: "1.0" };
-    expect(migrate(raw)).toEqual({ ok: true, doc: minimalDoc(), log: ["1.0 → 1.1"] });
+    expect(migrate(raw)).toEqual({ ok: true, doc: minimalDoc(), log: ["1.0 → 1.1", "1.1 → 1.2"] });
     expect(raw.statewright).toBe("1.0");
     const parsed = parse(JSON.stringify(raw));
-    expect(parsed.migrations).toEqual(["1.0 → 1.1"]);
+    expect(parsed.migrations).toEqual(["1.0 → 1.1", "1.1 → 1.2"]);
     expect(stringify(parsed.doc)).toBe(stringify(minimalDoc()));
   });
 });

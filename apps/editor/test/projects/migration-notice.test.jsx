@@ -43,7 +43,7 @@ function renderPage(repository) {
 
 const upload = (text, name) =>
   userEvent.upload(screen.getByLabelText("Open file…"), new File([text], name, { type: "application/json" }));
-const notice = "Updated from format 1.0 to 1.1.";
+const notice = "Updated from format 1.0 to 1.2.";
 
 beforeEach(() => useToastStore.setState({ items: [] }));
 

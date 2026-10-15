@@ -40,7 +40,7 @@ Editor, a static React app over it.
 
 | Path                         | What it holds                                                                                     |
 | ---------------------------- | ------------------------------------------------------------------------------------------------- |
-| `packages/core/src/schema`   | The format: Zod schemas, from which `packages/core/schema/1.1.json` is built                      |
+| `packages/core/src/schema`   | The format: Zod schemas, from which `packages/core/schema/1.2.json` is built                      |
 | `packages/core/src/commands` | The document commands (`node.add`, `edge.add`, …) that every change goes through                  |
 | `packages/core/src/rules`    | The rules behind the Problems                                                                     |
 | `packages/core/src/layout`   | The automatic layout (ELK) and its geometry                                                       |
@@ -70,7 +70,7 @@ Run them from the repository's root.
 | `npm run readme:build`                      | Builds `packages/core/README.md` from `docs/guide/README.md`                                |
 | `npm run examples:normalize`                | Writes the examples in canonical form and signs them                                        |
 | `npm run examples:render`                   | Renders the examples into `examples/rendered/`                                              |
-| `npm run build:schema -w statewright`       | Builds `packages/core/schema/1.1.json` from the schemas                                     |
+| `npm run build:schema -w statewright`       | Builds `packages/core/schema/1.2.json` from the schemas                                     |
 | `npm run editor:dev`                        | The Editor on http://localhost:5173                                                         |
 | `npm run editor:build`                      | Builds the Editor into `apps/editor/dist`                                                   |
 
@@ -97,7 +97,7 @@ Never edit these by hand; change their source and run the command.
 | ------------------------------- | --------------------------------------------------------------------------------------- |
 | `packages/core/README.md`       | `docs/guide/README.md` and the code behind its generated blocks: `npm run readme:build` |
 | `examples/rendered/`            | `examples/*.sttw`: `npm run examples:render`                                            |
-| `packages/core/schema/1.1.json` | `packages/core/src/schema`: `npm run build:schema -w statewright`                       |
+| `packages/core/schema/1.2.json` | `packages/core/src/schema`: `npm run build:schema -w statewright`                       |
 | `examples/*.sttw`               | Signed documents: change them through commands, then `npm run examples:normalize`       |
 
 ### How work is done here

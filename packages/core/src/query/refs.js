@@ -92,6 +92,7 @@ export function createRefCollector() {
           typeRef(id, base, "input", item.input);
           typeRef(id, base, "output", item.output);
           many(id, base, "emits", item.emits, ["evt"]);
+          one(id, base, "party", item.party, ["pty"]);
           inner(id, base, item.inner);
           break;
         case "endpoints":
@@ -100,6 +101,7 @@ export function createRefCollector() {
             if (typeof type === "string") one(id, base, `responses.${code}`, type, ["typ"]);
           }
           many(id, base, "emits", item.emits, ["evt"]);
+          one(id, base, "party", item.party, ["pty"]);
           inner(id, base, item.inner);
           break;
         case "webhooks":
@@ -136,7 +138,16 @@ export function createRefCollector() {
           break;
         case "actor":
         case "external":
+        case "service":
+        case "store":
+        case "queue":
           one(id, base, "party", node.party, ["pty"]);
+          break;
+        case "participant":
+          one(id, base, "party", node.party, ["pty"], "element");
+          break;
+        case "steps":
+          one(id, base, "action", node.action, ["act", "ept", "whk"], "element");
           break;
         case "entry":
           one(id, base, "via", node.via, ["ept", "whk"]);
@@ -145,6 +156,8 @@ export function createRefCollector() {
           condition(id, base, "guard", node.guard);
           break;
         case "state":
+          // On a flow, a state is a guest standing for a machine's state (role R4).
+          one(id, base, "target", node.target, ["nod"], "element");
           many(id, base, "statuses", node.statuses, ["sts"]);
           effects(id, base, "onEntry", node.onEntry);
           effects(id, base, "onExit", node.onExit);
@@ -226,6 +239,7 @@ export function createRefCollector() {
       (Array.isArray(lane.nodes) ? lane.nodes : []).forEach((target, index) =>
         push("annotations", id, "nodes", [...base, "nodes", index], target, ["nod"], "splice")
       );
+      push("annotations", id, "party", [...base, "party"], lane.party, ["pty"], "unset");
     },
 
     /**

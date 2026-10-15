@@ -35,9 +35,9 @@ const systemNode = (kind, extra = {}) =>
 
 export const SystemNode = z.discriminatedUnion("kind", [
   systemNode("actor", { party: idOf("pty").optional() }),
-  systemNode("service"),
-  systemNode("store"),
-  systemNode("queue"),
+  systemNode("service", { party: idOf("pty").optional() }),
+  systemNode("store", { party: idOf("pty").optional() }),
+  systemNode("queue", { party: idOf("pty").optional() }),
   systemNode("external", { party: idOf("pty").optional() }),
   refNode(false)
 ]);
@@ -56,6 +56,21 @@ export const SystemEdge = obj(
   },
   { description: "An interaction between system elements." }
 );
+
+// ── Guests (mixed levels spec §3–§5) ──────────────────────────────────────────
+
+/** A party drawn on a machine or flow level: who sends events, receives actions or performs steps (role R1). */
+const participantNode = withRegion =>
+  obj(
+    {
+      kind: z.literal("participant"),
+      party: idOf("pty"),
+      ...(withRegion ? { region: Region } : {}),
+      summary: Summary.optional(),
+      ...common
+    },
+    { description: "A party on the level (role R1): it sends, receives or performs what its party does." }
+  );
 
 // ── Machine canvas (spec §12.3) ───────────────────────────────────────────────
 
@@ -100,6 +115,17 @@ export const MachineNode = z.discriminatedUnion("kind", [
   pseudo("choice"),
   pseudo("history", { depth: z.enum(["shallow", "deep"]).optional() }),
   pseudo("any", { except: z.array(idOf("nod")).optional() }),
+  participantNode(true),
+  obj(
+    {
+      kind: z.literal("steps"),
+      action: idOf("act", "ept", "whk"),
+      region: Region,
+      summary: Summary.optional(),
+      ...common
+    },
+    { description: "The flow of an action, endpoint or webhook, drawn where it runs (role R2)." }
+  ),
   refNode(true)
 ]);
 
@@ -173,6 +199,11 @@ export const FlowNode = z.discriminatedUnion("kind", [
   step("webhook", { webhook: idOf("whk") }),
   step("assign", { set: z.record(z.string().regex(/^(vars|context)\.[A-Za-z0-9_.]+$/), z.json()).optional() }),
   step("subflow", { inner: Inner.optional() }),
+  participantNode(false),
+  obj(
+    { kind: z.literal("state"), target: idOf("nod"), summary: Summary.optional(), ...common },
+    { description: "A state of a machine level, which steps lead to (role R4)." }
+  ),
   refNode(false)
 ]);
 

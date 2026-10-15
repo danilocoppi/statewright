@@ -111,6 +111,9 @@
     "text": "Texto",
     "attachedTo": "Sujeta a",
     "laneNodes": "Cajas",
+    "performedBy": "Realizado por",
+    "receivedBy": "Recibido por",
+    "standsFor": "Representa",
     "severity": "Gravedad",
     "targets": "Sobre",
     "source": "Origen",
@@ -262,7 +265,9 @@
       "call": "Llamada",
       "webhook": "Webhook",
       "assign": "Asignar",
-      "subflow": "Subflujo"
+      "subflow": "Subflujo",
+      "participant": "Participante",
+      "steps": "Pasos integrados"
     },
     "edge": {
       "system": "Conexión",

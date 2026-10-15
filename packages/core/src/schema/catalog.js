@@ -70,10 +70,11 @@ export const ActionDef = obj(
     input: TypeRefOrNull.optional(),
     output: TypeRefOrNull.optional(),
     emits: z.array(idOf("evt")).optional(),
+    party: idOf("pty").optional(),
     inner: Inner.optional(),
     ...common
   },
-  { description: "An action performed by the runtime (spec §10.3)." }
+  { description: "An action performed by the runtime (spec §10.3); `party` receives it." }
 );
 
 export const GuardDef = obj(
@@ -93,6 +94,7 @@ export const EndpointDef = obj(
     auth: z.string().optional(),
     idempotent: z.boolean().optional(),
     emits: z.array(idOf("evt")).optional(),
+    party: idOf("pty").optional(),
     inner: Inner.optional(),
     ...common
   },
