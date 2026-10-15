@@ -457,6 +457,7 @@
   },
   "roles": {
     "whichAction": "Which action does {{name}} receive?",
+    "whichParty": "Whom does {{name}} act for?",
     "actionPlaceholder": "An action run here",
     "alsoLose_one": "{{count}} other transition also loses its sender.",
     "alsoLose_other": "{{count}} other transitions also lose their sender."

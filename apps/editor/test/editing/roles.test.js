@@ -92,7 +92,8 @@ describe("drawing roles on a machine (mixed levels spec §4.1, §4.2, §6)", () 
       type: "receive",
       from: "nod_paid",
       to: "nod_service",
-      actions: ["act_notify", "act_charge"]
+      needs: "action",
+      options: ["act_notify", "act_charge"]
     });
     receiveWith(t, "act_charge");
     expect(state().doc.catalog.actions.act_charge.party).toBe("pty_payments");

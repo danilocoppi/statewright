@@ -46,6 +46,8 @@ export function edgeFor(doc, canvasId, from, to) {
 export function isRolePair(doc, canvasId, from, to) {
   const canvas = doc.canvases[canvasId];
   if (canvas.edges[to]) return true;
+  // On a system, a transition of a lifecycle framed there (mixed levels spec §4.3).
+  if (canvas.kind === "system" && !canvas.nodes[to]) return true;
   const ends = [canvas.nodes[from], canvas.nodes[to]];
   if (ends.some(node => node?.kind === "ref")) return false;
   return ends.some(node => node && isGuest(canvas.kind, node));
@@ -59,7 +61,7 @@ export function isRolePair(doc, canvasId, from, to) {
 export function connectRefusal(doc, canvasId, from, to) {
   const canvas = doc.canvases[canvasId];
   // A role's connector writes the field that holds its meaning (mixed levels spec §3): Core judges what it means.
-  if (canvas.kind === "machine" && canvas.nodes[from] && isRolePair(doc, canvasId, from, to)) {
+  if (["machine", "system"].includes(canvas.kind) && canvas.nodes[from] && isRolePair(doc, canvasId, from, to)) {
     return associationRefusal(doc, canvasId, from, to);
   }
   const source = canvas.nodes[from];

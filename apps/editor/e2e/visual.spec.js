@@ -5,7 +5,7 @@
 // (mockup 06); plan D1, the documentation page's cover and a level's part; plan A3, an agent's toast and note (AI
 // interface spec §7.3); plan A4, Connect an AI… (§7.4); a finding badge's details, beside it; a Problems marker's
 // details, beside it; the level's kind under the tool dock, its menu open; the support popover above its badge; and
-// plan M2, a machine's roles.
+// plan M2, a machine's roles; plan M3, a lifecycle framed on a system.
 // After a deliberate change of look, update the pictures with
 // `npm run e2e -w @statewright/editor -- e2e/visual.spec.js --update-snapshots=all` and look at every one before
 // committing it.
@@ -65,6 +65,59 @@ const ROLES = canvas => [
       }
     }
   }
+];
+
+/** A shop whose Orders store shows the order's lifecycle as a frame, driven by the customer's Web and by Payments. */
+const LIFECYCLE = shop => [
+  {
+    type: "catalog.add",
+    args: { collection: "parties", id: "pty_customer", item: { kind: "human", name: "Customer" } }
+  },
+  {
+    type: "catalog.add",
+    args: { collection: "parties", id: "pty_payments", item: { kind: "system", name: "Payments" } }
+  },
+  { type: "catalog.add", args: { collection: "events", id: "evt_placed", item: { name: "order.placed" } } },
+  { type: "catalog.add", args: { collection: "events", id: "evt_paid", item: { name: "payment.captured" } } },
+  {
+    type: "node.add",
+    args: { canvas: shop, id: "nod_web", node: { kind: "service", name: "Web", party: "pty_customer" } }
+  },
+  {
+    type: "node.add",
+    args: { canvas: shop, id: "nod_payments", node: { kind: "service", name: "Payments", party: "pty_payments" } }
+  },
+  { type: "node.add", args: { canvas: shop, id: "nod_orders", node: { kind: "store", name: "Orders" } } },
+  { type: "canvas.create", args: { kind: "machine", name: "Order", owner: "nod_orders", id: "cnv_order" } },
+  { type: "node.add", args: { canvas: "cnv_order", id: "nod_init", node: { kind: "initial" } } },
+  { type: "node.add", args: { canvas: "cnv_order", id: "nod_created", node: { kind: "state", name: "created" } } },
+  { type: "node.add", args: { canvas: "cnv_order", id: "nod_charging", node: { kind: "state", name: "charging" } } },
+  {
+    type: "node.add",
+    args: {
+      canvas: "cnv_order",
+      id: "nod_paid",
+      node: { kind: "state", name: "paid", terminal: true, outcome: "success" }
+    }
+  },
+  { type: "edge.add", args: { canvas: "cnv_order", id: "edg_start", edge: { from: "nod_init", to: "nod_created" } } },
+  {
+    type: "edge.add",
+    args: {
+      canvas: "cnv_order",
+      id: "edg_placed",
+      edge: { from: "nod_created", to: "nod_charging", on: ["evt_placed"], by: "pty_customer" }
+    }
+  },
+  {
+    type: "edge.add",
+    args: {
+      canvas: "cnv_order",
+      id: "edg_paid",
+      edge: { from: "nod_charging", to: "nod_paid", on: ["evt_paid"], by: "pty_payments" }
+    }
+  },
+  { type: "layout.node.set", args: { canvas: shop, id: "nod_orders", x: 0, y: 0, display: "frame" } }
 ];
 
 /** Wait until the level is drawn and still: arranged and stored, its fonts in, its view no longer moving. */
@@ -253,6 +306,33 @@ for (const theme of ["light", "dark"]) {
       await page.mouse.move(8, 892);
       await settled(page);
       await expect(page).toHaveScreenshot(`roles-${theme}.png`, { maxDiffPixelRatio: 0.001 });
+    });
+
+    test("shows a lifecycle framed on a system, driven by its services", async ({ page }) => {
+      await page.goto("/");
+      await page.getByRole("button", { name: /^System/ }).click();
+      const dialog = page.getByRole("dialog", { name: "New project" });
+      await dialog.getByRole("textbox", { name: "Name" }).fill("Shop");
+      await dialog.getByRole("button", { name: "Create project" }).click();
+      await expect(page.getByTestId("canvas")).toBeVisible();
+      const call = (name, args) =>
+        page.evaluate(([name, args]) => globalThis.statewright.call(name, args), [name, args]);
+      const shop = (await call("document.get")).result.document.root;
+      await call("batch.apply", { label: "Lifecycle", commands: LIFECYCLE(shop) });
+      // The editor places what the agent added first; Auto-layout then arranges the whole level.
+      const webAt = async () =>
+        (await call("document.get")).result.document.layout?.canvases?.[shop]?.nodes?.nod_web?.x;
+      await expect.poll(webAt).toBeGreaterThan(0);
+      await settled(page);
+      await page.getByRole("button", { name: "Auto-layout" }).click();
+      // Laid out: the services that drive the lifecycle stand before it; then the view fits the level.
+      await expect.poll(webAt).toBe(0);
+      await expect(page.locator(".react-flow__node.sw-ai")).toHaveCount(0, { timeout: 5000 });
+      await expect(page.getByTestId("toast")).toHaveCount(0, { timeout: 8000 });
+      await page.keyboard.press("Shift+F");
+      await page.mouse.move(8, 892);
+      await settled(page);
+      await expect(page).toHaveScreenshot(`lifecycle-${theme}.png`, { maxDiffPixelRatio: 0.001 });
     });
 
     test("shows a badge's findings beside it", async ({ page }) => {

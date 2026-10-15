@@ -12,6 +12,12 @@ function go(canvasId, id) {
   editorStore.getState().reveal(canvasId, id);
 }
 
+/** The level an element at the other end is on: this one, or a lifecycle framed here (mixed levels spec §4.3). */
+const levelOf = (doc, canvasId, id) =>
+  doc.canvases[canvasId].nodes[id] || doc.canvases[canvasId].edges[id] ?
+    canvasId
+  : (Object.keys(doc.canvases).find(key => doc.canvases[key].nodes[id] || doc.canvases[key].edges[id]) ?? canvasId);
+
 /**
  * An element's roles (mixed levels spec §6): what a participant sends and receives, where embedded steps run, who sends
  * a transition and who receives its actions — each a way to the element at the other end. Nothing when it has none.
@@ -44,7 +50,7 @@ export function RolesControl({ id, layer, entry }) {
           >
             <button
               type="button"
-              onClick={() => go(canvasId, item.other)}
+              onClick={() => go(levelOf(doc, canvasId, item.other), item.other)}
               className="min-w-0 truncate py-1.5 text-left text-ui font-medium text-accent hover:underline"
             >
               {nameOf(item.other)}

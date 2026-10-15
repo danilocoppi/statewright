@@ -10,9 +10,11 @@ import { editingStore } from "./state";
 import { useInside } from "./useInside";
 
 /**
- * Which of a place's actions a participant receives (mixed levels spec §4.1), asked where the connector was dropped
- * when the state or transition runs several: picking one gives that action the participant's party.
- * @param {{ editor: { from: string, to: string, at: { x: number, y: number }, actions: string[] } }} props
+ * What a role's connector needs before it is drawn, asked where it was dropped (mixed levels spec §4.1, §4.3): which of
+ * a place's actions a participant receives, or whom a system box acts for (a party of the catalog, or a new one named
+ * as typed).
+ * @param {{ editor: { from: string, to: string, at: { x: number, y: number }, needs: "action" | "party",
+ *   options: string[] } }} props
  */
 export function Receive({ editor }) {
   const { t } = useTranslation("editor");
@@ -21,14 +23,34 @@ export function Receive({ editor }) {
   const { x, y, zoom } = useViewport();
   const section = useRef(null);
   useInside(section);
-  const participant = doc.canvases[canvasId].nodes[editor.to];
-  const who = participant?.label ?? doc.catalog.parties[participant?.party]?.name ?? editor.to;
-  const options = query =>
-    editor.actions
-      .map(id => ({ id, name: doc.catalog.actions[id]?.name ?? id }))
-      .filter(item => item.name.toLowerCase().includes(query.trim().toLowerCase()))
-      .map(item => ({ id: item.id, label: item.name, onPick: () => receiveWith(t, item.id) }));
-  const title = t("roles.whichAction", { name: who });
+  const party = editor.needs === "party";
+  const box = doc.canvases[canvasId].nodes[party ? editor.from : editor.to];
+  const who = box?.label ?? box?.name ?? doc.catalog.parties[box?.party]?.name ?? editor.to;
+  const options = query => {
+    const typed = query.trim();
+    const named = editor.options
+      .map(id => ({ id, name: (party ? doc.catalog.parties : doc.catalog.actions)[id]?.name ?? id }))
+      .filter(item => item.name.toLowerCase().includes(typed.toLowerCase()))
+      .map(item => ({
+        id: item.id,
+        label: item.name,
+        onPick: () => receiveWith(t, party ? { party: { id: item.id } } : item.id)
+      }));
+    const known = Object.values(doc.catalog.parties).some(item => item.name === typed);
+    const create =
+      party && typed && !known ?
+        [
+          {
+            id: "create",
+            create: true,
+            label: t("tools.createParty", { name: typed }),
+            onPick: () => receiveWith(t, { party: { name: typed } })
+          }
+        ]
+      : [];
+    return [...create, ...named];
+  };
+  const title = t(party ? "roles.whichParty" : "roles.whichAction", { name: who });
   return (
     <section
       ref={section}
@@ -44,7 +66,12 @@ export function Receive({ editor }) {
       className="nodrag nopan nowheel absolute z-40 w-[280px] -translate-x-1/2 rounded-island border border-island-border bg-island p-3 shadow-island backdrop-blur-md motion-safe:animate-[menu-in_160ms_var(--ease-soft)]"
     >
       <p className="mb-2 text-ui text-sub">{title}</p>
-      <CatalogPicker label={title} placeholder={t("roles.actionPlaceholder")} options={options} />
+      <CatalogPicker
+        label={title}
+        placeholder={t(party ? "tools.partyPlaceholder" : "roles.actionPlaceholder")}
+        options={options}
+        initial={party ? (box?.name ?? "") : ""}
+      />
     </section>
   );
 }

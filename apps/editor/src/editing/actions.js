@@ -248,7 +248,7 @@ function askAbout(edgeId, boxId) {
 export function connectBoxes(t, from, to, at) {
   const { doc, canvasId, readOnly } = current();
   if (readOnly) return null;
-  if (doc.canvases[canvasId].kind === "machine" && isRolePair(doc, canvasId, from, to)) {
+  if (["machine", "system"].includes(doc.canvases[canvasId].kind) && isRolePair(doc, canvasId, from, to)) {
     return connectRole(t, from, to, at);
   }
   const refusal = connectRefusal(doc, canvasId, from, to);
@@ -278,7 +278,10 @@ export function connectRole(t, from, to, at, choice = {}) {
     return null;
   }
   if (result.needs) {
-    editingStore.getState().open({ type: "receive", from, to, at, actions: result.actions });
+    // A place that runs several actions asks which; a box with no party asks whom it acts for.
+    editingStore
+      .getState()
+      .open({ type: "receive", from, to, at, needs: result.needs, options: result.actions ?? result.parties });
     return null;
   }
   const { ok } = change(result.commands, { label: t(`editing.role.${result.role}`), at });
@@ -289,12 +292,16 @@ export function connectRole(t, from, to, at, choice = {}) {
   return id;
 }
 
-/** The action the `receive` editor's participant receives was picked: draw the connector with it. */
-export function receiveWith(t, action) {
+/**
+ * What the `receive` editor asked was answered — the action a participant receives, or the party a box acts for
+ * (`{ id }` or a new one `{ name }`): draw the connector with it.
+ * @param {string | { party: { id: string } | { name: string } }} choice An action's ID, or the party.
+ */
+export function receiveWith(t, choice) {
   const editor = editingStore.getState().editor;
   if (editor?.type !== "receive") return null;
   editingStore.getState().close();
-  return connectRole(t, editor.from, editor.to, editor.at, { action });
+  return connectRole(t, editor.from, editor.to, editor.at, typeof choice === "string" ? { action: choice } : choice);
 }
 
 /**
