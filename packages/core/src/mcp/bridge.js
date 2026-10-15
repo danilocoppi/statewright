@@ -1,12 +1,15 @@
 // The bridge between `statewright mcp` and an Editor tab (AI interface spec §6), on http://127.0.0.1 only. The tab
 // registers the code it shows (`POST /pair`, answered once an agent pairs with it, or when the code expires); the
 // agent pairs with `editor_pair { code }`; the tab then listens for calls (`GET /calls`, server-sent events) and
-// answers each (`POST /results`). Only the Editor's origins are answered, and, once paired, only with the session's
-// token. Node only: the `mcp` command loads it.
+// answers each (`POST /results`). The person writes to the agent (`POST /messages`, collaboration spec §3): the messages
+// wait in the session's inbox until the agent reads them, and the tab hears when they are read, the agent's replies and
+// whether it listens. Only the Editor's origins are answered, and, once paired, only with the session's token. Node
+// only: the `mcp` command loads it.
 import { Buffer } from "node:buffer";
 import { randomBytes } from "node:crypto";
 import { createServer } from "node:http";
 import { EDITOR_ORIGIN } from "../constants.js";
+import { createInbox } from "./inbox.js";
 
 /** Where the Editor is published, which the bridge answers without --origin. */
 export { EDITOR_ORIGIN };
@@ -25,6 +28,8 @@ const TRIES = 10;
 const MAX_BODY = 64 * 1024 * 1024;
 /** The largest registration: a code, from a page that needs no token to send it. */
 const MAX_CODE_BODY = 1024;
+/** The largest message from the person (collaboration spec §11: "a message is at most 8 MB"). */
+const MAX_MESSAGE = 8 * 1024 * 1024;
 /** What `readJson` answers for a body over its limit. */
 const TOO_LARGE = Symbol("too large");
 
@@ -110,6 +115,8 @@ export function createBridge({
   let gone = null;
   let nextCall = 0;
   let port = null;
+  /** Who hears each message the person sends (the MCP server, for the Channel). */
+  const messageListeners = new Set();
 
   const server = createServer({ requestTimeout: 60000 }, (request, response) => {
     handle(request, response).catch(error => {
@@ -135,6 +142,7 @@ export function createBridge({
     gone = reason === "agent" ? null : { reason, agent: ended.agent };
     for (const resolve of ended.calls.values()) resolve(goneOutcome());
     ended.calls.clear();
+    ended.inbox.close();
     ended.confirming?.resolve("gone");
     if (ended.stream && !ended.stream.writableEnded) {
       ended.stream.write(`event: bye\ndata: ${JSON.stringify({ reason })}\n\n`);
@@ -183,7 +191,7 @@ export function createBridge({
     const route = `${request.method} ${new URL(request.url, "http://127.0.0.1").pathname}`;
     if (route === "POST /pair") return register(request, response);
     const own = sessionOf(request);
-    if (!["DELETE /pair", "GET /calls", "POST /results", "POST /confirm"].includes(route)) {
+    if (!["DELETE /pair", "GET /calls", "POST /results", "POST /confirm", "POST /messages"].includes(route)) {
       return send(response, 404, { error: "unknown" });
     }
     if (!own) return send(response, 401, { error: "Not paired, or paired no more" });
@@ -192,9 +200,10 @@ export function createBridge({
       return send(response, 204);
     }
     if (route === "GET /calls") return listen(own, response);
-    const body = await readJson(request);
+    const body = await readJson(request, route === "POST /messages" ? MAX_MESSAGE : MAX_BODY);
     if (body === TOO_LARGE) return send(response, 413, { error: "Too large" });
     if (!isObject(body)) return send(response, 400, { error: "Not a JSON object" });
+    if (route === "POST /messages") return message(own, body, response);
     if (route === "POST /results") {
       const resolve = own.calls.get(body.id);
       if (!resolve) return send(response, 404, { error: "No call is waiting with this id" });
@@ -209,6 +218,37 @@ export function createBridge({
     if (own.confirming?.id !== body.id) return send(response, 404, { error: "Nothing waits on this answer" });
     own.confirming.resolve(body.accept === true);
     return send(response, 204);
+  }
+
+  /** The person writes to the agent: text (and what goes with it), or Stop. */
+  function message(own, body, response) {
+    const { text, action, context, stop } = body;
+    const written = typeof text === "string" && text.trim() !== "";
+    if (!written && stop !== true) return send(response, 400, { error: "A message has text, or is a stop" });
+    if (action !== undefined && typeof action !== "string") return send(response, 400, { error: "action is a word" });
+    if (context !== undefined && !isObject(context)) return send(response, 400, { error: "context is an object" });
+    const { id } = own.inbox.add({
+      ...(written ? { text } : {}),
+      ...(action !== undefined ? { action } : {}),
+      ...(context !== undefined ? { context } : {}),
+      ...(stop === true ? { stop: true } : {})
+    });
+    return send(response, 202, { id });
+  }
+
+  /** Tell the tab whether the agent listens: waiting for a message, or reached by the Channel. */
+  function sayListening(own) {
+    if (session === own) emit("listening", { listening: own.waits > 0, channel: own.channel });
+  }
+
+  /** A new session's inbox: the tab hears what is read, the server hears each message. */
+  function inboxOf(own) {
+    const inbox = createInbox();
+    inbox.onRead(ids => session === own && emit("read", { ids }));
+    inbox.onAdd(added => {
+      for (const listener of messageListeners) listener(added);
+    });
+    return inbox;
   }
 
   /** A tab registers the code it shows, and waits for an agent to bring it. */
@@ -369,7 +409,18 @@ export function createBridge({
       end(session, "replaced");
       let opened;
       const listening = new Promise(resolve => (opened = resolve));
-      const own = { token: randomBytes(24).toString("hex"), agent, stream: null, calls: new Map(), opened };
+      const own = {
+        token: randomBytes(24).toString("hex"),
+        agent,
+        stream: null,
+        calls: new Map(),
+        opened,
+        waits: 0,
+        channel: false,
+        handed: new Set(),
+        replies: 0
+      };
+      own.inbox = inboxOf(own);
       session = own;
       gone = null;
       send(entry.response, 200, { token: own.token, agent: agent ?? null });
@@ -430,6 +481,85 @@ export function createBridge({
         });
         emit("call", { id, name, args });
       });
+    },
+
+    /**
+     * Wait for the person's messages (`editor_wait`): the unread ones as soon as there are some, none after `seconds`;
+     * `EDITOR_GONE` when the tab goes meanwhile.
+     * @param {number} seconds
+     */
+    async wait(seconds) {
+      const own = session;
+      if (!own?.stream) return goneOutcome();
+      own.waits += 1;
+      if (own.waits === 1) sayListening(own);
+      const messages = await own.inbox.wait(seconds * 1000);
+      own.waits -= 1;
+      if (session !== own) return goneOutcome();
+      if (own.waits === 0) sayListening(own);
+      for (const read of messages) own.handed.add(read.id);
+      return { ok: true, result: { messages } };
+    },
+
+    /** The person's unread messages, now read (`editor_inbox`). */
+    inbox() {
+      const own = session;
+      if (!own?.stream) return goneOutcome();
+      const messages = own.inbox.take();
+      for (const read of messages) own.handed.add(read.id);
+      return { ok: true, result: { messages } };
+    },
+
+    /**
+     * The agent answers in the tab (`editor_reply`); `to` is read from now on. A reply to a message the agent never
+     * took through the bridge shows the Channel brought it.
+     * @param {{ text?: unknown, to?: unknown, point?: unknown }} args
+     */
+    reply({ text, to, point } = {}) {
+      const own = session;
+      if (!own?.stream) return goneOutcome();
+      if (typeof text !== "string" || !text.trim()) {
+        return fail("BAD_ARGUMENTS", "Invalid arguments for editor_reply: text must say something", { path: "text" });
+      }
+      if (to !== undefined && typeof to !== "string") {
+        return fail("BAD_ARGUMENTS", "Invalid arguments for editor_reply: to must be a message's ID", { path: "to" });
+      }
+      if (point !== undefined && !(Array.isArray(point) && point.every(id => typeof id === "string"))) {
+        return fail("BAD_ARGUMENTS", "Invalid arguments for editor_reply: point must be a list of IDs", {
+          path: "point"
+        });
+      }
+      if (to !== undefined) {
+        const unseen = !own.handed.has(to);
+        if (!own.inbox.markRead(to)) {
+          return fail("NOT_FOUND", `No message ${to} from the person: editor_inbox lists the unread ones`, { to });
+        }
+        if (unseen && !own.channel) {
+          own.channel = true;
+          sayListening(own);
+        }
+        own.handed.add(to);
+      }
+      own.replies += 1;
+      const id = `rpl_${own.replies}`;
+      emit("reply", { id, text, ...(to !== undefined ? { to } : {}), ...(point !== undefined ? { point } : {}) });
+      return { ok: true, result: { replied: id } };
+    },
+
+    /** How many of the person's messages wait unread. */
+    unread: () => (session?.stream ? session.inbox.unread().length : 0),
+
+    /** Whether the person asked the agent to stop, and it has not read it yet. */
+    stopping: () => Boolean(session?.stream && session.inbox.stopping()),
+
+    /**
+     * Hear each message the person sends, whatever the session (the Channel, collaboration spec §3.2).
+     * @param {(message: import("./inbox.js").Message) => void} listener
+     * @returns {() => void} Stops hearing.
+     */
+    onMessage(listener) {
+      messageListeners.add(listener);
+      return () => messageListeners.delete(listener);
     },
 
     /**

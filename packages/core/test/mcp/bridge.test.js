@@ -366,3 +366,105 @@ describe("calls through the bridge (AI interface spec §6)", () => {
     expect(times[10]).toBeLessThan(50);
   });
 });
+
+/** Let the bridge's events reach the tab. */
+const settle = (ms = 30) => new Promise(resolve => setTimeout(resolve, ms));
+
+describe("messages from the person (collaboration spec §3.2)", () => {
+  it("takes a message from the paired tab only, and only a message", async () => {
+    const { bridge, address } = await bridgeOn();
+    const { tab } = await paired(bridge, address);
+    const stranger = tabAt(address);
+    expect((await stranger.send({ text: "hi" })).status).toBe(401);
+    expect(await tab.send({ text: "these need a timeout", context: { level: { id: "cnv_a" } } })).toEqual({
+      status: 202,
+      body: { id: "msg_1" }
+    });
+    expect((await tab.send({ context: {} })).status).toBe(400);
+    expect((await tab.send({ text: "" })).status).toBe(400);
+    expect((await tab.send({ text: "x".repeat(8 * 1024 * 1024 + 1) })).status).toBe(413);
+    expect(bridge.unread()).toBe(1);
+  });
+
+  it("hands a waiting agent the message as soon as it comes, says it is read, and says while it listens", async () => {
+    const { bridge, address } = await bridgeOn();
+    const { tab } = await paired(bridge, address);
+    const waiting = bridge.wait(5);
+    await settle();
+    expect(tab.events("listening")).toEqual([{ listening: true, channel: false }]);
+    await tab.send({ text: "hello", context: { level: { id: "cnv_a" } } });
+    const { result } = await waiting;
+    expect(result.messages).toMatchObject([{ id: "msg_1", text: "hello", context: { level: { id: "cnv_a" } } }]);
+    await settle();
+    expect(tab.events("read")).toEqual([{ ids: ["msg_1"] }]);
+    expect(tab.events("listening").at(-1)).toEqual({ listening: false, channel: false });
+    expect(bridge.inbox()).toEqual({ ok: true, result: { messages: [] } });
+  });
+
+  it("ends a wait at once when the tab goes, and a new pairing starts with nothing", async () => {
+    const { bridge, address } = await bridgeOn();
+    const { tab } = await paired(bridge, address);
+    await tab.send({ text: "old" });
+    const waiting = bridge.wait(600);
+    expect((await waiting).result.messages.map(message => message.text)).toEqual(["old"]);
+    const pending = bridge.wait(600);
+    await settle();
+    await tab.disconnect();
+    expect(await pending).toMatchObject({ ok: false, error: { code: "EDITOR_GONE" } });
+    const next = await paired(bridge, address, { code: "222-333" });
+    await next.tab.send({ text: "new" });
+    expect(bridge.inbox().result.messages.map(message => message.text)).toEqual(["new"]);
+  });
+
+  it("shows the agent's reply in the tab, reads what it answers, and learns the Channel is live", async () => {
+    const { bridge, address } = await bridgeOn();
+    const { tab } = await paired(bridge, address);
+    await tab.send({ text: "by the channel" });
+    expect(bridge.reply({ text: "Done", to: "msg_1", point: ["nod_a"] })).toEqual({
+      ok: true,
+      result: { replied: "rpl_1" }
+    });
+    await settle();
+    expect(tab.events("reply")).toEqual([{ id: "rpl_1", text: "Done", to: "msg_1", point: ["nod_a"] }]);
+    expect(tab.events("read")).toEqual([{ ids: ["msg_1"] }]);
+    expect(tab.events("listening")).toEqual([{ listening: false, channel: true }]);
+    await tab.send({ text: "by waiting" });
+    bridge.inbox();
+    bridge.reply({ text: "Again", to: "msg_2" });
+    await settle();
+    expect(tab.events("listening")).toHaveLength(1);
+    expect(bridge.reply({ text: "" }).error.code).toBe("BAD_ARGUMENTS");
+    expect(bridge.reply({ text: "Lost", to: "msg_9" }).error.code).toBe("NOT_FOUND");
+  });
+
+  it("is stopping from the person's Stop until the agent reads it", async () => {
+    const { bridge, address } = await bridgeOn();
+    const { tab } = await paired(bridge, address);
+    expect(bridge.stopping()).toBe(false);
+    await tab.send({ stop: true });
+    expect(bridge.stopping()).toBe(true);
+    expect(bridge.inbox().result.messages).toMatchObject([{ id: "msg_1", stop: true }]);
+    expect(bridge.stopping()).toBe(false);
+  });
+
+  it("tells who listens for messages each one, the stop included", async () => {
+    const { bridge, address } = await bridgeOn();
+    const { tab } = await paired(bridge, address);
+    const heard = [];
+    const stop = bridge.onMessage(message => heard.push(message.id));
+    await tab.send({ text: "one" });
+    await tab.send({ stop: true });
+    stop();
+    await tab.send({ text: "three" });
+    expect(heard).toEqual(["msg_1", "msg_2"]);
+  });
+
+  it("answers as the other calls do when no tab is paired", async () => {
+    const { bridge } = await bridgeOn();
+    expect((await bridge.wait(1)).error.code).toBe("EDITOR_GONE");
+    expect(bridge.inbox().error.code).toBe("EDITOR_GONE");
+    expect(bridge.reply({ text: "hi" }).error.code).toBe("EDITOR_GONE");
+    expect(bridge.unread()).toBe(0);
+    expect(bridge.stopping()).toBe(false);
+  });
+});

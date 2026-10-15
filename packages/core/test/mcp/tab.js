@@ -82,6 +82,13 @@ export function fakeTab(address, { origin = "http://localhost:5173", answer } = 
     },
     closed: () => closedStream,
     confirm: (id, accept) => post("/confirm", { id, accept }),
+    /** Write to the agent (collaboration spec §3.2): `{ status, body }`. */
+    async send(body) {
+      const response = await post("/messages", body);
+      return { status: response.status, body: await response.json().catch(() => null) };
+    },
+    /** The events of a kind this tab has seen, their data in order. */
+    events: kind => seen.filter(message => message.event === kind).map(message => message.data),
     disconnect: () => fetch(`${base}/pair`, { method: "DELETE", headers: headers() }),
     /** Close the tab: every request it has open ends. */
     close: () => stopped.abort()
