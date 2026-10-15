@@ -28,6 +28,46 @@ const TRIES = 10;
 const MAX_BODY = 64 * 1024 * 1024;
 /** The largest registration: a code, from a page that needs no token to send it. */
 const MAX_CODE_BODY = 1024;
+/** How long editor_ask waits unless told (collaboration spec §6.1). */
+const ASK_SECONDS = 120;
+
+/**
+ * Why a question cannot be shown, or null: a question of 1–500 characters; at most 8 options, each a label of 1–80
+ * characters and a value of its own; `pick` only "elements"; 1–600 seconds.
+ */
+function questionRefusal({ question, options, multiple, pick, seconds }) {
+  const no = (message, path) => ({ message, details: { path } });
+  if (typeof question !== "string" || !question.trim() || question.length > 500) {
+    return no("question must say something, in at most 500 characters", "question");
+  }
+  if (options !== undefined) {
+    if (!Array.isArray(options) || options.length > 8) return no("options must be a list of at most 8", "options");
+    const values = new Set();
+    for (const [index, option] of options.entries()) {
+      const { label, value, point, description } = option ?? {};
+      if (typeof label !== "string" || !label.trim() || label.length > 80) {
+        return no("each option's label must say something, in at most 80 characters", `options.${index}.label`);
+      }
+      if (typeof value !== "string" || values.has(value)) {
+        return no("each option needs a value of its own", `options.${index}.value`);
+      }
+      values.add(value);
+      if (point !== undefined && !(Array.isArray(point) && point.every(id => typeof id === "string"))) {
+        return no("an option's point must be a list of IDs", `options.${index}.point`);
+      }
+      if (description !== undefined && typeof description !== "string") {
+        return no("an option's description must be text", `options.${index}.description`);
+      }
+    }
+  }
+  if (multiple !== undefined && typeof multiple !== "boolean") return no("multiple must be true or false", "multiple");
+  if (pick !== undefined && pick !== "elements") return no('pick can only be "elements"', "pick");
+  if (!Number.isInteger(seconds) || seconds < 1 || seconds > 600) {
+    return no("seconds must be a whole number from 1 to 600", "seconds");
+  }
+  return null;
+}
+
 /** The largest message from the person (collaboration spec §11: "a message is at most 8 MB"). */
 const MAX_MESSAGE = 8 * 1024 * 1024;
 /** How an image of the marks begins: a PNG, as a data URL. */
@@ -119,8 +159,9 @@ export function createBridge({
   let port = null;
   /** Who hears each message the person sends (the MCP server, for the Channel). */
   const messageListeners = new Set();
-  /** Messages are numbered across pairings: an answer to an old one never reads a new one. */
+  /** Messages are numbered across pairings: an answer to an old one never reads a new one. Questions too. */
   let messages = 0;
+  let questions = 0;
 
   const server = createServer({ requestTimeout: 60000 }, (request, response) => {
     handle(request, response).catch(error => {
@@ -146,6 +187,7 @@ export function createBridge({
     gone = reason === "agent" ? null : { reason, agent: ended.agent };
     for (const resolve of ended.calls.values()) resolve(goneOutcome());
     ended.calls.clear();
+    for (const asked of ended.questions.values()) asked.gone?.();
     ended.inbox.close();
     ended.confirming?.resolve("gone");
     if (ended.stream && !ended.stream.writableEnded) {
@@ -195,7 +237,11 @@ export function createBridge({
     const route = `${request.method} ${new URL(request.url, "http://127.0.0.1").pathname}`;
     if (route === "POST /pair") return register(request, response);
     const own = sessionOf(request);
-    if (!["DELETE /pair", "GET /calls", "POST /results", "POST /confirm", "POST /messages"].includes(route)) {
+    if (
+      !["DELETE /pair", "GET /calls", "POST /results", "POST /confirm", "POST /messages", "POST /answers"].includes(
+        route
+      )
+    ) {
       return send(response, 404, { error: "unknown" });
     }
     if (!own) return send(response, 401, { error: "Not paired, or paired no more" });
@@ -208,6 +254,7 @@ export function createBridge({
     if (body === TOO_LARGE) return send(response, 413, { error: "Too large" });
     if (!isObject(body)) return send(response, 400, { error: "Not a JSON object" });
     if (route === "POST /messages") return message(own, body, response);
+    if (route === "POST /answers") return answerQuestion(own, body, response);
     if (route === "POST /results") {
       const resolve = own.calls.get(body.id);
       if (!resolve) return send(response, 404, { error: "No call is waiting with this id" });
@@ -246,6 +293,26 @@ export function createBridge({
       ...(stop === true ? { stop: true } : {})
     });
     return send(response, 202, { id });
+  }
+
+  /**
+   * The person answers the agent's question (collaboration spec §6.1): the call waiting gets it, or, once the call has
+   * stopped waiting, the agent finds it in the inbox.
+   */
+  function answerQuestion(own, body, response) {
+    const asked = own.questions.get(body.id);
+    if (!asked || asked.answered) return send(response, 404, { error: "No question waits for this answer" });
+    const { values, text, elements } = body;
+    const answer = {
+      ...(Array.isArray(values) && values.every(value => typeof value === "string") && values.length ? { values } : {}),
+      ...(typeof text === "string" && text.trim() ? { text } : {}),
+      ...(Array.isArray(elements) && elements.every(isObject) && elements.length ? { elements } : {})
+    };
+    if (!Object.keys(answer).length) return send(response, 400, { error: "An answer has values, text or elements" });
+    asked.answered = true;
+    if (asked.resolve) asked.resolve(answer);
+    else own.inbox.add({ answers: { question: body.id, ...answer } });
+    return send(response, 204);
   }
 
   /** Tell the tab whether the agent listens: waiting for a message, or reached by the Channel. */
@@ -431,7 +498,8 @@ export function createBridge({
         channel: false,
         handed: new Set(),
         replies: 0,
-        waiting: new Set()
+        waiting: new Set(),
+        questions: new Map()
       };
       own.inbox = inboxOf(own);
       session = own;
@@ -522,6 +590,54 @@ export function createBridge({
       if (own.waits === 0) sayListening(own);
       for (const read of taken) own.handed.add(read.id);
       return { ok: true, result: { messages: taken } };
+    },
+
+    /**
+     * Ask the person (`editor_ask`, collaboration spec §6.1): the tab shows the question; the answer comes back as
+     * soon as they give it, `{ answered: false }` when the time is up or the client cancels (the question stays open,
+     * and a later answer is a message), `EDITOR_GONE` when the tab goes.
+     * @param {{ question?: unknown, options?: unknown, multiple?: unknown, pick?: unknown, seconds?: unknown }} args
+     * @param {AbortSignal} [signal]
+     */
+    ask(args, signal) {
+      const own = session;
+      if (!own?.stream) return Promise.resolve(goneOutcome());
+      const { question, options, multiple, pick, seconds = ASK_SECONDS } = args ?? {};
+      const refused = questionRefusal({ question, options, multiple, pick, seconds });
+      if (refused)
+        return Promise.resolve(
+          fail("BAD_ARGUMENTS", `Invalid arguments for editor_ask: ${refused.message}`, refused.details)
+        );
+      questions += 1;
+      const id = `qst_${questions}`;
+      const asked = { answered: false, resolve: null, gone: null };
+      own.questions.set(id, asked);
+      emit("ask", {
+        id,
+        question,
+        ...(options !== undefined ? { options } : {}),
+        ...(multiple !== undefined ? { multiple } : {}),
+        ...(pick !== undefined ? { pick } : {})
+      });
+      return new Promise(resolve => {
+        const stop = new AbortController();
+        own.waiting.add(stop);
+        const finish = outcome => {
+          clearTimeout(timer);
+          own.waiting.delete(stop);
+          signal?.removeEventListener("abort", unanswered);
+          asked.resolve = null;
+          asked.gone = null;
+          resolve(outcome);
+        };
+        const unanswered = () => finish({ ok: true, result: { answered: false, question: id } });
+        const timer = setTimeout(unanswered, seconds * 1000);
+        stop.signal.addEventListener("abort", unanswered, { once: true });
+        signal?.addEventListener("abort", unanswered, { once: true });
+        if (signal?.aborted) return unanswered();
+        asked.resolve = answer => finish({ ok: true, result: { answered: true, question: id, ...answer } });
+        asked.gone = () => finish(goneOutcome());
+      });
     },
 
     /** The person's unread messages, now read (`editor_inbox`). */

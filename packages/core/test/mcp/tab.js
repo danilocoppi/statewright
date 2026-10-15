@@ -82,6 +82,8 @@ export function fakeTab(address, { origin = "http://localhost:5173", answer } = 
     },
     closed: () => closedStream,
     confirm: (id, accept) => post("/confirm", { id, accept }),
+    /** Answer the agent's question (collaboration spec §6.1): the status. */
+    answer: async (id, body) => (await post("/answers", { id, ...body })).status,
     /** Write to the agent (collaboration spec §3.2): `{ status, body }`. */
     async send(body) {
       const response = await post("/messages", body);

@@ -4,7 +4,7 @@
 
 /**
  * @typedef {{ id: string, at: string, text?: string, action?: string, context?: object, marks?: object[],
- *   image?: string, stop?: true }} Message `marks`: what the person marked, read (collaboration spec §5.4); `image`: a
+ *   image?: string, answers?: object, stop?: true }} Message `answers`: a late answer to the agent's question. `marks`: what the person marked, read (collaboration spec §5.4); `image`: a
  *   PNG of the marks, as a data URL.
  */
 
@@ -40,7 +40,7 @@ export function createInbox({ now = () => new Date(), number } = {}) {
     /** Put a message in: `{ text?, action?, context?, stop? }`. */
     add(body) {
       next += 1;
-      const { text, action, context, marks, image, stop } = body;
+      const { text, action, context, marks, image, answers, stop } = body;
       /** @type {Message} */
       const message = {
         id: `msg_${number ? number() : next}`,
@@ -50,6 +50,7 @@ export function createInbox({ now = () => new Date(), number } = {}) {
         ...(context !== undefined ? { context } : {}),
         ...(marks !== undefined ? { marks } : {}),
         ...(image !== undefined ? { image } : {}),
+        ...(answers !== undefined ? { answers } : {}),
         ...(stop ? { stop: true } : {})
       };
       unread.push(message);

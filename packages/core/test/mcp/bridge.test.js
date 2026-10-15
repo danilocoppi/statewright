@@ -494,3 +494,81 @@ describe("messages from the person (collaboration spec §3.2)", () => {
     expect((await tab.send({ text: "here", marks: ["x"] })).status).toBe(400);
   });
 });
+
+describe("the agent asks the person (collaboration spec §6.1)", () => {
+  const options = [
+    { label: "From the payer", value: "payer" },
+    { label: "From the bank", value: "bank", point: ["nod_bank"] }
+  ];
+
+  it("shows the question in the tab and answers the agent as soon as the person does", async () => {
+    const { bridge, address } = await bridgeOn();
+    const { tab } = await paired(bridge, address);
+    const asking = bridge.ask({ question: "Where does it come from?", options, seconds: 30 });
+    await settle();
+    expect(tab.events("ask")).toEqual([{ id: "qst_1", question: "Where does it come from?", options }]);
+    expect(await tab.answer("qst_1", { values: ["bank"] })).toBe(204);
+    expect(await asking).toEqual({ ok: true, result: { answered: true, question: "qst_1", values: ["bank"] } });
+    expect(bridge.inbox().result.messages).toEqual([]);
+    expect(await tab.answer("qst_1", { values: ["payer"] })).toBe(404);
+  });
+
+  it("says the time is up, then brings a late answer as a message", async () => {
+    const { bridge, address } = await bridgeOn();
+    const { tab } = await paired(bridge, address);
+    expect(await bridge.ask({ question: "Which states?", pick: "elements", seconds: 1 })).toEqual({
+      ok: true,
+      result: { answered: false, question: "qst_1" }
+    });
+    const elements = [{ id: "nod_a", name: "a", level: "cnv_l" }];
+    expect(await tab.answer("qst_1", { elements })).toBe(204);
+    expect(bridge.inbox().result.messages).toMatchObject([{ answers: { question: "qst_1", elements } }]);
+    expect(await tab.answer("qst_1", { text: "again" })).toBe(404);
+  });
+
+  it("answers each question its own, whatever the order", async () => {
+    const { bridge, address } = await bridgeOn();
+    const { tab } = await paired(bridge, address);
+    const first = bridge.ask({ question: "First?", seconds: 30 });
+    const second = bridge.ask({ question: "Second?", seconds: 30 });
+    await settle();
+    await tab.answer("qst_2", { text: "two" });
+    await tab.answer("qst_1", { text: "one" });
+    expect((await first).result).toEqual({ answered: true, question: "qst_1", text: "one" });
+    expect((await second).result).toEqual({ answered: true, question: "qst_2", text: "two" });
+  });
+
+  it("ends a question at once when the tab goes, and when the client cancels", async () => {
+    const { bridge, address } = await bridgeOn();
+    const { tab } = await paired(bridge, address);
+    const cancel = new AbortController();
+    const cancelled = bridge.ask({ question: "Still there?", seconds: 600 }, cancel.signal);
+    cancel.abort();
+    expect((await cancelled).result).toEqual({ answered: false, question: "qst_1" });
+    const asking = bridge.ask({ question: "And now?", seconds: 600 });
+    await settle();
+    await tab.disconnect();
+    expect(await asking).toMatchObject({ ok: false, error: { code: "EDITOR_GONE" } });
+  });
+
+  it("refuses a question it cannot show, and an answer without one", async () => {
+    const { bridge, address } = await bridgeOn();
+    const { tab } = await paired(bridge, address);
+    const bad = async args => (await bridge.ask({ seconds: 5, ...args })).error?.code;
+    expect(await bad({ question: "" })).toBe("BAD_ARGUMENTS");
+    expect(await bad({ question: "x".repeat(501) })).toBe("BAD_ARGUMENTS");
+    const many = Array.from({ length: 9 }, (_, index) => ({ label: `o${index}`, value: `v${index}` }));
+    expect(await bad({ question: "?", options: many })).toBe("BAD_ARGUMENTS");
+    expect(await bad({ question: "?", options: [options[0], { label: "Again", value: "payer" }] })).toBe(
+      "BAD_ARGUMENTS"
+    );
+    expect(await bad({ question: "?", pick: "levels" })).toBe("BAD_ARGUMENTS");
+    expect(await bad({ question: "?", seconds: 0 })).toBe("BAD_ARGUMENTS");
+    const asking = bridge.ask({ question: "Fine?", seconds: 30 });
+    await settle();
+    expect(await tab.answer("qst_9", { text: "x" })).toBe(404);
+    expect(await tab.answer("qst_1", {})).toBe(400);
+    await tab.answer("qst_1", { text: "yes" });
+    await asking;
+  });
+});
