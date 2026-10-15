@@ -19,6 +19,9 @@ import { editorStore, useEditor } from "@/store/editor";
 import { chipsOf, contextOf } from "./context";
 import { answerWords } from "./answers";
 import { QUICK } from "./quick";
+import { ProposalCard } from "@/proposals/ProposalCard";
+import { useProposals } from "@/proposals/store";
+
 import { Question } from "./Question";
 import { WORKING_MS, conversationStore, statusOf, useConversation } from "./store";
 
@@ -155,6 +158,20 @@ function Status({ status }) {
   );
 }
 
+/** A proposal in the history: its title and what became of it. */
+function ProposalLine({ id, agent }) {
+  const { t } = useTranslation("agent");
+  const proposal = useProposals(state => state.list.find(item => item.id === id));
+  if (!proposal) return null;
+  return (
+    <li data-testid="conversation-line" data-kind="proposal" className="grid gap-0.5 py-1.5">
+      <span className="text-label font-medium text-accent">{agent}</span>
+      <span className="text-read text-ink">{proposal.title}</span>
+      <span className="text-label text-sub">{t(`proposal.state.${proposal.state}`)}</span>
+    </li>
+  );
+}
+
 /** One line of the conversation. */
 function Line({ line, agent, status, onNavigate }) {
   const { t } = useTranslation("agent");
@@ -189,6 +206,7 @@ function Line({ line, agent, status, onNavigate }) {
       </li>
     );
   }
+  if (line.kind === "proposal") return <ProposalLine id={line.id} agent={agent} />;
   if (line.kind === "question") {
     return (
       <li data-testid="conversation-line" data-kind="question" className="grid gap-0.5 py-1.5">
@@ -271,6 +289,7 @@ export function ConversationBar({ onNavigate }) {
   const selection = useEditor(state => state.view.selections[state.canvasId]);
   const lines = useConversation(state => state.lines);
   const draft = useConversation(state => state.draft);
+  const proposals = useProposals(state => state.list);
   const action = useConversation(state => state.action);
   const historyOpen = useConversation(state => state.historyOpen);
   const listening = useConversation(state => state.listening);
@@ -394,6 +413,12 @@ export function ConversationBar({ onNavigate }) {
           ))}
         </ol>
       )}
+      {/* The agent's proposals waiting, and those that no longer apply, stand above the field (spec §7). */}
+      {proposals
+        .filter(proposal => proposal.state === "waiting" || proposal.state === "stale")
+        .map(proposal => (
+          <ProposalCard key={proposal.id} proposal={proposal} agent={agent} onNavigate={onNavigate} />
+        ))}
       {/* The agent's open questions stand above the field (collaboration spec §6.1). */}
       {lines
         .filter(line => line.kind === "question" && line.state === "open")

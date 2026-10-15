@@ -150,5 +150,37 @@
       "label": "Suggest names",
       "words": "Suggest clearer names for these."
     }
+  },
+  "proposal": {
+    "label": "Proposal from {{agent}}",
+    "forced": "Proposed because it removes {{names}}.",
+    "new_one": "{{count}} new",
+    "new_other": "{{count}} new",
+    "removed_one": "{{count}} removed",
+    "removed_other": "{{count}} removed",
+    "changed_one": "{{count}} changed",
+    "changed_other": "{{count}} changed",
+    "levels_one": "on {{count}} level",
+    "levels_other": "on {{count}} levels",
+    "show": "Show",
+    "hide": "Hide",
+    "previous": "Previous change",
+    "next": "Next change",
+    "step": "{{index}} of {{count}}",
+    "accept": "Accept",
+    "reject": "Reject",
+    "reason": "Why not? (optional)",
+    "rejectIt": "Reject it",
+    "stale": "No longer applies: {{reason}}",
+    "dismiss": "Dismiss",
+    "allowDeletes": "Let {{agent}} delete without asking",
+    "state": {
+      "waiting": "waiting",
+      "accepted": "accepted",
+      "rejected": "rejected",
+      "stale": "no longer applies",
+      "dismissed": "dismissed"
+    },
+    "refused": "Not now: {{reason}}"
   }
 }

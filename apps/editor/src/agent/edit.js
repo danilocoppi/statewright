@@ -7,6 +7,7 @@ import { isSimulating } from "@/simulate/store";
 import { editorStore } from "@/store/editor";
 import { layoutClient } from "@/workers";
 
+import { conversationStore } from "@/conversation/store";
 import { diffOf, removes } from "@/proposals/diff";
 import { proposalsStore } from "@/proposals/store";
 
@@ -75,6 +76,8 @@ function applyOrPropose(context, { commands, label, propose, title, why }) {
     diff,
     ...(forced ? { forced: "deletes" } : {})
   });
+  // A line of the conversation keeps it in the history (collaboration spec §7).
+  conversationStore.getState().add({ kind: "proposal", id });
   if (!forced) return { proposed: id };
   const names = diff.removed.map(item => item.name).join(", ");
   return {

@@ -150,5 +150,37 @@
       "label": "Sugerir nombres",
       "words": "Sugiere nombres más claros para estos."
     }
+  },
+  "proposal": {
+    "label": "Propuesta de {{agent}}",
+    "forced": "Propuesta porque elimina {{names}}.",
+    "new_one": "{{count}} nuevo",
+    "new_other": "{{count}} nuevos",
+    "removed_one": "{{count}} eliminado",
+    "removed_other": "{{count}} eliminados",
+    "changed_one": "{{count}} cambiado",
+    "changed_other": "{{count}} cambiados",
+    "levels_one": "en {{count}} nivel",
+    "levels_other": "en {{count}} niveles",
+    "show": "Ver",
+    "hide": "Ocultar",
+    "previous": "Cambio anterior",
+    "next": "Cambio siguiente",
+    "step": "{{index}} de {{count}}",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "reason": "¿Por qué no? (opcional)",
+    "rejectIt": "Rechazarla",
+    "stale": "Ya no se aplica: {{reason}}",
+    "dismiss": "Descartar",
+    "allowDeletes": "Dejar que {{agent}} elimine sin preguntar",
+    "state": {
+      "waiting": "esperando",
+      "accepted": "aceptada",
+      "rejected": "rechazada",
+      "stale": "ya no se aplica",
+      "dismissed": "descartada"
+    },
+    "refused": "Ahora no: {{reason}}"
   }
 }

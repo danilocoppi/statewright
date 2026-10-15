@@ -11,7 +11,7 @@ import { editorStore } from "@/store/editor";
 /**
  * @typedef {{ id: string, title: string, why?: string, label: string, agent: string | null,
  *   commands: object[], diff: ReturnType<typeof import("./diff").diffOf>, forced?: "deletes" | "locked",
- *   state: "waiting" | "accepted" | "rejected" | "stale", stale?: string }} Proposal
+ *   state: "waiting" | "accepted" | "rejected" | "stale" | "dismissed", stale?: string }} Proposal
  */
 
 /** Tell the agent, through the pairing (loaded when needed: the pairing loads this store too). */
@@ -84,6 +84,11 @@ export function createProposalsStore({ send = tellAgent } = {}) {
         update(id, { state: "rejected", ...(reason ? { reason } : {}) });
         set({ shown: nextShown(id) });
         await answer(proposal, { accepted: false, ...(reason ? { reason } : {}) });
+      },
+      /** The person put a proposal that no longer applies away. */
+      dismiss: id => {
+        update(id, { state: "dismissed" });
+        set({ shown: nextShown(id) });
       },
       /** Draw a proposal on the canvas, or none. */
       show: id => set({ shown: id }),
