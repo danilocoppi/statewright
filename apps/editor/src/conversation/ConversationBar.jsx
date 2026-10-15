@@ -8,7 +8,10 @@ import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Island } from "@/components/ui/Island";
 import { cn } from "@/lib/cn";
+import { imageOf } from "@/marks/image";
 import { MarkTools } from "@/marks/MarkTools";
+import { marksOf, summaryOf } from "@/marks/payload";
+import { marksStore, useMarksState } from "@/marks/store";
 import { indexOf } from "@/lib/derived";
 import { isSimulating } from "@/simulate/store";
 import { editorStore, useEditor } from "@/store/editor";
@@ -170,6 +173,15 @@ function Line({ line, agent, status, onNavigate }) {
             </span>
           ))}
           <span>{t(`conversation.state.${state}`)}</span>
+          {(line.drawn?.marks.length > 0 || line.drawn?.forAI.length > 0) && (
+            <button
+              type="button"
+              onClick={() => marksStore.getState().show(line.drawn)}
+              className="font-medium text-accent hover:underline"
+            >
+              {t("marks.show")}
+            </button>
+          )}
         </span>
       </li>
     );
@@ -268,7 +280,24 @@ export function ConversationBar({ onNavigate }) {
     () => (doc ? contextOf(doc, canvasId, selection ?? [], { leave }) : null),
     [doc, canvasId, selection, leave]
   );
-  const chips = context ? chipsOf(context, t) : [];
+  const drawnMarks = useMarksState(state => state.marks);
+  const drawnForAI = useMarksState(state => state.forAI);
+  // What is marked goes with the message too, unless the person leaves it out (collaboration spec §5.3).
+  const summary = summaryOf({ marks: drawnMarks, forAI: drawnForAI });
+  const chips = [
+    ...(context ? chipsOf(context, t) : []),
+    ...(summary.elements && !leave.has("elements") ?
+      [
+        {
+          key: "elements",
+          label: t("marks.chips.elements", { count: summary.elements, levels: summary.levels })
+        }
+      ]
+    : []),
+    ...(summary.marks && !leave.has("marks") ?
+      [{ key: "marks", label: t("marks.chips.marks", { count: summary.marks }) }]
+    : [])
+  ];
   const last = [...lines].reverse().find(line => line.kind === "agent" || line.kind === "change");
   const lastSaid = [...lines].reverse().find(line => line.kind === "agent");
   const stopping = status === "working" && !draft.trim();
@@ -281,15 +310,28 @@ export function ConversationBar({ onNavigate }) {
   const send = async () => {
     const text = draft.trim();
     if (!text || !context) return;
+    const drawn = {
+      marks: leave.has("marks") ? [] : drawnMarks,
+      forAI: leave.has("elements") ? [] : drawnForAI
+    };
+    const marks = marksOf(drawn, doc);
     const talk = conversationStore.getState();
-    const key = talk.add({ kind: "person", text, chips, state: "sending" });
+    const key = talk.add({ kind: "person", text, chips, state: "sending", drawn });
     talk.setDraft("");
     setLeft({ key: selectionKey, set: new Set() });
-    const answer = await connection.send({ text, context });
+    // The image is of the level shown; marks on other levels travel in words (collaboration spec §5.4).
+    const image = marks.length ? await imageOf(doc, canvasId, drawn).catch(() => null) : null;
+    const answer = await connection.send({
+      text,
+      context,
+      ...(marks.length ? { marks } : {}),
+      ...(image ? { image } : {})
+    });
     const after = conversationStore.getState();
     after.update(key, answer.id ? { id: answer.id, state: "sent" } : { state: "failed" });
-    // Not sent: the text comes back to the field, unless the person has started another.
-    if (!answer.id && !after.draft) after.setDraft(text);
+    // Sent, its marks are cleared from the canvas; not sent, they stay, and the text comes back to the field.
+    if (answer.id) marksStore.getState().forget(drawn);
+    else if (!after.draft) after.setDraft(text);
   };
 
   const stop = async () => {

@@ -3,7 +3,7 @@ import "../dom.js";
 import "../flow.js";
 import "../i18n.js";
 
-import { act, render } from "@testing-library/react";
+import { act, fireEvent, render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { Canvas } from "@/canvas/Canvas";
@@ -54,5 +54,18 @@ describe("the marks on the canvas (collaboration spec §5.1)", () => {
     expect(document.querySelector(".sw-canvas").classList.contains("sw-marking")).toBe(false);
     act(() => marksStore.getState().setTool("pencil"));
     expect(document.querySelector(".sw-canvas").classList.contains("sw-marking")).toBe(true);
+  });
+
+  it("shows a sent message's marks again until the person clicks elsewhere", async () => {
+    await show("cnv_lifecycle");
+    const drawn = {
+      marks: [{ id: "m", level: "cnv_lifecycle", kind: "label", colour: "red", at: [0, 0], text: "again" }],
+      forAI: []
+    };
+    act(() => marksStore.getState().show(drawn));
+    expect(document.querySelector('[data-mark="label"]').textContent).toBe("again");
+    fireEvent.pointerDown(document.body);
+    expect(marksStore.getState().shown).toBeNull();
+    expect(document.querySelector('[data-mark="label"]')).toBeNull();
   });
 });

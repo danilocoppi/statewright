@@ -64,6 +64,17 @@ export function createMarksStore() {
       });
       return taken;
     },
+    /** Forget what was sent: those marks and those elements (the ones left out stay). */
+    forget: ({ marks, forAI }) =>
+      set(state => {
+        const marksSent = new Set(marks.map(mark => mark.id));
+        const forAISent = new Set(forAI.map(item => item.id));
+        return {
+          marks: state.marks.filter(mark => !marksSent.has(mark.id)),
+          forAI: state.forAI.filter(item => !forAISent.has(item.id)),
+          shown: null
+        };
+      }),
     /** Everything erased (sent, or the eraser's Shift+click); the tool and the colour stay. */
     clear: () => set({ marks: [], forAI: [], shown: null }),
     /** Show a sent message's marks again, or stop showing them. */

@@ -179,6 +179,17 @@ export function MarksLayer({ canvasId }) {
     };
   }, [tool, domNode, flow, canvasId]);
 
+  // A sent message's marks, shown again, go once the person clicks anywhere but the conversation.
+  useEffect(() => {
+    if (!shown) return undefined;
+    const leave = event => {
+      if (event.target.closest?.('[data-testid="conversation-bar"]')) return;
+      marksStore.getState().show(null);
+    };
+    document.addEventListener("pointerdown", leave, true);
+    return () => document.removeEventListener("pointerdown", leave, true);
+  }, [shown]);
+
   const keepLabel = () => {
     if (label?.text.trim()) {
       marksStore.getState().add({

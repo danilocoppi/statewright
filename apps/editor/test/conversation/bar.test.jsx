@@ -6,9 +6,12 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/marks/image", () => ({ imageOf: vi.fn(async () => "data:image/png;base64,AAAA") }));
+
 import { connection } from "@/agent/connection";
 import { ConversationBar } from "@/conversation/ConversationBar";
 import { conversationStore } from "@/conversation/store";
+import { marksStore } from "@/marks/store";
 import { editorStore } from "@/store/editor";
 
 import { readExample } from "../fixtures.js";
@@ -35,6 +38,7 @@ afterEach(() => {
   act(() => {
     connection.store.setState({ status: "off", agent: null });
     conversationStore.getState().clear();
+    marksStore.getState().clear();
     editorStore.getState().close();
   });
 });
@@ -139,5 +143,40 @@ describe("the conversation bar (collaboration spec §4)", () => {
     act(() => editorStore.getState().select(["nod_complianceHold"], "cnv_lifecycle"));
     await user.type(field(), "this one{Enter}");
     expect(sent[0].context.selection).toMatchObject([{ id: "nod_complianceHold" }]);
+  });
+
+  it("sends the marks and their image, and clears them once the bridge took the message", async () => {
+    const user = userEvent.setup();
+    act(() => {
+      marksStore.getState().add({ level: "cnv_lifecycle", kind: "label", colour: "amber", at: [0, 0], text: "why?" });
+      marksStore.getState().toggleForAI("nod_expiryClock", "cnv_lifecycle");
+    });
+    expect(within(bar()).getByText("1 mark")).toBeTruthy();
+    expect(within(bar()).getByText("1 marked on 1 level")).toBeTruthy();
+    await user.type(field(), "look{Enter}");
+    await vi.waitFor(() => expect(sent).toHaveLength(1));
+    expect(sent[0].marks).toHaveLength(2);
+    expect(sent[0].image).toBe("data:image/png;base64,AAAA");
+    await vi.waitFor(() => expect(marksStore.getState()).toMatchObject({ marks: [], forAI: [] }));
+    await user.click(within(bar()).getByRole("button", { name: "Conversation history" }));
+    await user.click(within(bar()).getByRole("button", { name: "Show marks" }));
+    expect(marksStore.getState().shown.marks).toHaveLength(1);
+  });
+
+  it("keeps the marks when the message could not be sent, and those the person left out", async () => {
+    const user = userEvent.setup();
+    act(() =>
+      marksStore.getState().add({ level: "cnv_lifecycle", kind: "label", colour: "red", at: [0, 0], text: "x" })
+    );
+    connection.send.mockImplementationOnce(async () => ({ error: "unreachable" }));
+    await user.type(field(), "first{Enter}");
+    await vi.waitFor(() => expect(field().value).toBe("first"));
+    expect(marksStore.getState().marks).toHaveLength(1);
+    await user.click(within(bar()).getByRole("button", { name: "Leave out 1 mark" }));
+    await user.clear(field());
+    await user.type(field(), "second{Enter}");
+    await vi.waitFor(() => expect(sent.at(-1).text).toBe("second"));
+    expect(sent.at(-1)).not.toHaveProperty("marks");
+    expect(marksStore.getState().marks).toHaveLength(1);
   });
 });
