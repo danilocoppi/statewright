@@ -97,6 +97,8 @@
     "empty": "Todavía no hay nada en este nivel.",
     "placeFailed": "No se pudo organizar este nivel.",
     "retry": "Reintentar",
+    "goTo": "Ir a {{name}}",
+    "refMissing": "Lo que indicaba este enlace ya no está en el proyecto.",
     "openHint": "Doble clic o <key>↵</key> para abrir",
     "shown": "{{level}} en pantalla",
     "selected": "Seleccionado: {{names}}"

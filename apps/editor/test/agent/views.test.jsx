@@ -3,11 +3,12 @@ import "../dom.js";
 import "../flow.js";
 import "../i18n.js";
 
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { createEditorHost } from "@/agent/host";
 import { noticeStore } from "@/agent/notice";
+import { beaconStore } from "@/canvas/beacon";
 import { Canvas } from "@/canvas/Canvas";
 import { editingStore } from "@/editing/state";
 import { Card } from "@/simulate/parts";
@@ -26,6 +27,7 @@ afterEach(() =>
   act(() => {
     editorStore.getState().close();
     noticeStore.setState({ marked: null, pointed: null });
+    beaconStore.setState({ asked: null, lit: null });
     document.body.replaceChildren();
   })
 );
@@ -50,6 +52,7 @@ describe("navigating and showing (AI interface spec §4.2)", () => {
     expect(editorStore.getState().view.selections.cnv_expiryClock).toEqual(["nod_running", "nod_paused"]);
     expect((await call("view.reveal", { id: "nod_payingOut" })).result).toEqual({ canvas: "cnv_crossBorderSend" });
     expect(editorStore.getState().view.reveal).toEqual({ canvasId: "cnv_crossBorderSend", id: "nod_payingOut" });
+    expect(beaconStore.getState().asked).toEqual({ canvasId: "cnv_crossBorderSend", ids: ["nod_payingOut"] });
     const before = editingStore.getState().view?.id ?? 0;
     expect((await call("view.fit")).result).toEqual({ canvas: "cnv_crossBorderSend" });
     expect(editingStore.getState().view).toEqual({ action: "fit", id: before + 1 });
@@ -137,5 +140,15 @@ describe("pointing elements out (AI interface spec §4.2: view.point)", () => {
     await call("view.point", { ids: ["nod_paused"] });
     expect([...container.querySelectorAll(".sw-pointed")].map(element => element.dataset.id)).toEqual(["nod_paused"]);
     expect(screen.queryByRole("note")).toBeNull();
+  });
+  it("rings them for a moment with the beacon, as a link's target is shown", async () => {
+    const { container } = render(<Canvas />);
+    await call("view.point", { ids: ["nod_running", "edg_runningPaused"] });
+    await waitFor(() =>
+      expect([...container.querySelectorAll(".sw-beacon")].map(element => element.dataset.id).sort()).toEqual([
+        "edg_runningPaused",
+        "nod_running"
+      ])
+    );
   });
 });

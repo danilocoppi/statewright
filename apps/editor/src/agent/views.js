@@ -1,9 +1,11 @@
 // The Editor host's navigating and showing (AI interface spec §4.2: navigate and show; §7.3): the level shown, the
 // selection, an element brought into view, the level framed, elements pointed out with a note. They move what the
-// person sees, so they wait while a dialog of the person's is open (BUSY), and never take the focus.
+// person sees, so they wait while a dialog of the person's is open (BUSY), and never take the focus. What is brought
+// into view or pointed out rings for a moment, as what a link leads to does (canvas/beacon.js).
 import { buildIndex } from "statewright";
 import { AgentError } from "statewright/agent";
 
+import { beacon } from "@/canvas/beacon";
 import { editingStore } from "@/editing/state";
 import { editorStore } from "@/store/editor";
 
@@ -68,6 +70,7 @@ export const viewOperations = {
     busy();
     const canvas = show(sharedLevel([id]));
     editorStore.getState().reveal(canvas, id);
+    beacon(canvas, [id]);
     return { canvas };
   },
   "view.fit": () => {
@@ -79,6 +82,7 @@ export const viewOperations = {
     busy();
     const canvas = show(sharedLevel(ids));
     noticeStore.setState({ pointed: { canvasId: canvas, ids, ...(note ? { note } : {}) } });
+    beacon(canvas, ids);
     return { canvas };
   }
 };

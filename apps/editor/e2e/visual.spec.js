@@ -154,6 +154,8 @@ for (const theme of ["light", "dark"]) {
           note: "Verification pauses the clock here"
         })
       );
+      // What is pointed out rings for 2 s (the beacon), then keeps its still glow: that is the picture.
+      await expect(page.locator(".sw-beacon")).toHaveCount(0, { timeout: 4000 });
       await page.mouse.move(8, 892);
       await settled(page);
       await expect(page).toHaveScreenshot(`agent-note-${theme}.png`, { maxDiffPixelRatio: 0.001 });

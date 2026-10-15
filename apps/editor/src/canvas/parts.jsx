@@ -5,6 +5,7 @@ import { use } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
 import { Kbd } from "@/components/ui/Chip";
+import { Icon } from "@/components/ui/Icon";
 import { Rename } from "@/editing/Rename";
 import { useEditing } from "@/editing/state";
 import { cn } from "@/lib/cn";
@@ -13,6 +14,7 @@ import { useSimulation } from "@/simulate/store";
 import { pathName } from "@/simulate/words";
 import { useEditor } from "@/store/editor";
 
+import { followRef } from "./follow";
 import { MarkActions } from "./marks";
 import { ProblemMarker } from "./ProblemMarker";
 
@@ -42,6 +44,7 @@ export function NoteNode({ data, selected }) {
     <>
       <PartSvg part={data.part} />
       {renaming && <Rename part={data.part} note />}
+      {data.beacon && <Beacon key={data.beacon} ring="rounded-[6px]" />}
       {selected && (
         <span
           aria-hidden="true"
@@ -88,8 +91,10 @@ export function FigureNode({ data, selected }) {
         />
       )}
       {data.mark && <RunMark mark={data.mark} id={part.id} ring={ring} round={ROUND.has(part.shape)} />}
+      {data.beacon && <Beacon key={data.beacon} ring={ring} />}
       <ProblemMarker element={part.id} className="-right-2 -top-2" />
       {data.uses !== undefined && <InstanceBadge uses={data.uses} />}
+      {data.follow && <FollowMark id={part.id} name={data.follow.name} />}
       {selected && alone && part.interior && !part.within.length && !renaming && <OpenHint />}
       {renaming && <Rename part={part} />}
     </>
@@ -174,6 +179,35 @@ function RunMark({ mark, id, ring, round }) {
         {names.length === 1 ? names[0] : t("marks.active", { count: mark.leaves.length })}
       </span>
     </>
+  );
+}
+
+/** Around what a link led to, or an agent shows: the beacon's ring (beacon.js; globals.css pulses it). */
+function Beacon({ ring }) {
+  return <span aria-hidden="true" className={cn("sw-beacon-ring pointer-events-none absolute -inset-[3px]", ring)} />;
+}
+
+/**
+ * On a link: that it can be followed, and where it leads. A link is followed from the keyboard (Enter) and with a
+ * double-click, so the mark is the pointer's way there, not a stop of its own. On the top edge, left of where a
+ * Problem's marker sits.
+ */
+function FollowMark({ id, name }) {
+  const { t } = useTranslation("editor");
+  return (
+    <span
+      aria-hidden="true"
+      data-follow
+      title={name === null ? t("canvas.refMissing") : t("canvas.goTo", { name })}
+      onClick={event => {
+        event.stopPropagation();
+        followRef(id);
+      }}
+      onDoubleClick={event => event.stopPropagation()}
+      className="nodrag nopan absolute -top-2 right-5 z-10 grid size-[18px] cursor-pointer place-items-center rounded-full border border-island-border bg-surface text-sub shadow-sm hover:border-accent hover:bg-accent-soft hover:text-accent"
+    >
+      <Icon name="arrow-up-right" size={12} />
+    </span>
   );
 }
 
