@@ -70,9 +70,15 @@ Run them from the repository's root.
 | `npm run readme:build`                      | Builds `packages/core/README.md` from `docs/guide/README.md`                                |
 | `npm run examples:normalize`                | Writes the examples in canonical form and signs them                                        |
 | `npm run examples:render`                   | Renders the examples into `examples/rendered/`                                              |
+| `npm run examples:airport`                  | Builds the airport example from `scripts/airport/`, then normalizes and renders it          |
+| `node scripts/bench-core.js`                | Times Core's hot paths on large documents (`sys`, `mach`, `levels`, `airport`)              |
 | `npm run build:schema -w statewright`       | Builds `packages/core/schema/1.2.json` from the schemas                                     |
 | `npm run editor:dev`                        | The Editor on http://localhost:5173                                                         |
 | `npm run editor:build`                      | Builds the Editor into `apps/editor/dist`                                                   |
+
+Performance: the "budgets" project of `npm run e2e` holds the Editor's targets, the airport at four times slower among
+them. To see where time goes, `npx playwright test -c playwright.audit.config.js` (in `apps/editor`) times the airport
+at 1×, 4× and 6× slower and prints a table; `RATES=1,4` chooses the rates, `AUDIT_URL` a build already served.
 
 Before you say a change is done: `npm test`, `npm run lint`, `npm run format:check` and
 `npm run i18n:check -w @statewright/editor` pass, and `npm run e2e` too when the Editor changed.
@@ -93,12 +99,13 @@ Before you say a change is done: `npm test`, `npm run lint`, `npm run format:che
 
 Never edit these by hand; change their source and run the command.
 
-| File                            | Source, and the command that builds it                                                  |
-| ------------------------------- | --------------------------------------------------------------------------------------- |
-| `packages/core/README.md`       | `docs/guide/README.md` and the code behind its generated blocks: `npm run readme:build` |
-| `examples/rendered/`            | `examples/*.sttw`: `npm run examples:render`                                            |
-| `packages/core/schema/1.2.json` | `packages/core/src/schema`: `npm run build:schema -w statewright`                       |
-| `examples/*.sttw`               | Signed documents: change them through commands, then `npm run examples:normalize`       |
+| File                               | Source, and the command that builds it                                                  |
+| ---------------------------------- | --------------------------------------------------------------------------------------- |
+| `packages/core/README.md`          | `docs/guide/README.md` and the code behind its generated blocks: `npm run readme:build` |
+| `examples/rendered/`               | `examples/*.sttw`: `npm run examples:render`                                            |
+| `packages/core/schema/1.2.json`    | `packages/core/src/schema`: `npm run build:schema -w statewright`                       |
+| `examples/*.sttw`                  | Signed documents: change them through commands, then `npm run examples:normalize`       |
+| `examples/airport-operations.sttw` | `scripts/airport/*.js`: `npm run examples:airport`                                      |
 
 ### How work is done here
 
