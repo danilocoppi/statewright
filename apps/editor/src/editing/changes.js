@@ -1,6 +1,7 @@
 // The changes the canvas makes (spec §7.2–§7.3), as Core command batches: add a box or a note where the person
 // clicks, move, nudge, remove, rename, align and distribute, and make a region of selected states. Pure functions of
 // the document; the editor dispatches what they return as one change.
+import { figureFor } from "@/canvas/figures";
 import { applyBatch, buildIndex, figureOf, homeKind, isGuest, prefixOf, stepText } from "statewright";
 
 import { idsFor } from "./ids";
@@ -40,7 +41,7 @@ export function keepBoxes(doc, canvasId, figure) {
  * @returns {Map<string, Box>}
  */
 export const boxesOf = (doc, canvasId) =>
-  drawn.get(doc)?.get(canvasId) ?? keepBoxes(doc, canvasId, figureOf(doc, canvasId));
+  drawn.get(doc)?.get(canvasId) ?? keepBoxes(doc, canvasId, figureFor(doc, canvasId));
 
 /** The size Core gives a node, before it is added (on a machine with regions, probed in one: the size is the same). */
 /**
@@ -77,7 +78,7 @@ const distance = (box, point) =>
   );
 
 /** The level's own regions as its figure draws them. */
-const drawnRegions = (doc, canvasId) => figureOf(doc, canvasId).regions.filter(part => !part.within.length);
+const drawnRegions = (doc, canvasId) => figureFor(doc, canvasId).regions.filter(part => !part.within.length);
 
 /**
  * On a machine with regions, the region a point is in, or the nearest one drawn (spec §8.2: placement is

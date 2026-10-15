@@ -1,8 +1,7 @@
 // What the marks say in a message (collaboration spec §5.4): each mark read on its own level — the elements it
 // encloses, touches or joins, the box a label stands by — with its colour and what the colour means, and the elements
 // marked for the AI by name and kind. The level's geometry is Core's figure, which the canvas draws.
-import { figureOf } from "statewright";
-
+import { figureFor } from "@/canvas/figures";
 import { itemOf } from "@/conversation/context";
 import { indexOf } from "@/lib/derived";
 
@@ -20,7 +19,7 @@ export function geometryOf(doc, level) {
   if (!levels) figures.set(doc, (levels = new Map()));
   if (!levels.has(level)) {
     const empty = { nodes: [], frames: [], regions: [], edges: [], associations: [] };
-    const figure = doc.canvases[level] ? figureOf(doc, level, {}) : empty;
+    const figure = doc.canvases[level] ? figureFor(doc, level) : empty;
     const own = part => part.within.length === 0;
     const index = indexOf(doc);
     // What the canvas shows a part as: its own name, else the figure's title (a step, a participant).

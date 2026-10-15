@@ -1,11 +1,12 @@
 // The canvas projection (spec §4.3): the figure Core draws for a level, as React Flow nodes and edges. Every part
 // keeps Core's position, size and markup, so the canvas shows exactly the exported figure; the canvas adds only what
 // interaction needs (selection, focus, moving, markers, the heading).
-import { figureHeading, figureOf } from "statewright";
+import { figureHeading } from "statewright";
 
 import { keepBoxes } from "@/editing/changes";
 import { instanceCounts } from "@/reuse/definitions";
 
+import { draw, remember } from "./figures";
 import { paint } from "./palette";
 
 /** The marker IDs the canvas's edges refer to (see DiagramDefs). */
@@ -47,7 +48,10 @@ export function projectLevel(source, canvasId, { hidden = [], nameOf = () => und
       }
     : source;
   // The canvas shows a badge's findings itself (FindingPopover), so its badges leave out the browser's tooltip.
-  const figure = figureOf(doc, canvasId, { paint, idPrefix: MARKER_PREFIX, tooltips: false });
+  const figure = draw(doc, canvasId, { paint, idPrefix: MARKER_PREFIX, tooltips: false });
+  // The layers over the canvas read their geometry from this figure (figures.js) — when it is the whole figure: hidden
+  // layers leave notes out.
+  if (doc === source) remember(source, canvasId, figure);
   // An edit on this level finds its boxes drawn (only the whole figure has every box and note).
   if (doc === source) keepBoxes(doc, canvasId, figure);
   const heading = figureHeading(doc.canvases[canvasId]);
