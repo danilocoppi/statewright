@@ -1,7 +1,7 @@
 // The changes the canvas makes (spec §7.2–§7.3), as Core command batches: add a box or a note where the person
 // clicks, move, nudge, remove, rename, align and distribute, and make a region of selected states. Pure functions of
 // the document; the editor dispatches what they return as one change.
-import { applyBatch, buildIndex, figureOf, isGuest, prefixOf, stepText } from "statewright";
+import { applyBatch, buildIndex, figureOf, homeKind, isGuest, prefixOf, stepText } from "statewright";
 
 import { idsFor } from "./ids";
 import { NAME_REQUIRED } from "./tools";
@@ -43,11 +43,18 @@ export const boxesOf = (doc, canvasId) =>
   drawn.get(doc)?.get(canvasId) ?? keepBoxes(doc, canvasId, figureOf(doc, canvasId));
 
 /** The size Core gives a node, before it is added (on a machine with regions, probed in one: the size is the same). */
+/**
+ * Whether a node takes a region: every node of a machine level; on a mixed level, a machine's nodes and shortcuts
+ * (mixed levels spec §5), not a flow's steps or a system's boxes.
+ */
+export const takesRegion = (kind, node) =>
+  kind === "machine" || (kind === "mixed" && ["machine", null].includes(homeKind("mixed", node)));
+
 export function sizeOf(doc, canvasId, node) {
   const probe = "nod_sizeProbe";
   const { kind, regions } = doc.canvases[canvasId];
   const value =
-    kind === "machine" && regions && node.region === undefined ?
+    takesRegion(kind, node) && regions && node.region === undefined ?
       { ...node, region: Object.keys(regions).sort()[0] }
     : node;
   const { doc: probed } = applyBatch(doc, [
@@ -78,7 +85,7 @@ const drawnRegions = (doc, canvasId) => figureOf(doc, canvasId).regions.filter(p
  */
 export function regionAt(doc, canvasId, point) {
   const canvas = doc.canvases[canvasId];
-  if (canvas.kind !== "machine" || !canvas.regions) return {};
+  if (!["machine", "mixed"].includes(canvas.kind) || !canvas.regions) return {};
   const nearest = drawnRegions(doc, canvasId).reduce(
     (best, part) => (!best || distance(part, point) < distance(best, point) ? part : best),
     null
@@ -97,7 +104,8 @@ export function regionAt(doc, canvasId, point) {
  * @returns {{ id: string, commands: Command[] }}
  */
 export function addNode(doc, canvasId, node, point, ids = idsFor(doc)) {
-  const value = { ...regionAt(doc, canvasId, point), ...node };
+  const kind = doc.canvases[canvasId].kind;
+  const value = { ...(takesRegion(kind, node) ? regionAt(doc, canvasId, point) : {}), ...node };
   const id = ids.take("nod", value.name ?? value.kind);
   const { w, h } = sizeOf(doc, canvasId, value);
   const at = { x: Math.round(point.x - w / 2), y: Math.round(point.y - h / 2) };
@@ -134,7 +142,7 @@ export function moveCommands(doc, canvasId, moves) {
   const deltas = new Map();
   // A box dropped inside another region's outline joins that region, in the same change.
   const canvas = doc.canvases[canvasId];
-  const regions = canvas.kind === "machine" && canvas.regions ? drawnRegions(doc, canvasId) : [];
+  const regions = ["machine", "mixed"].includes(canvas.kind) && canvas.regions ? drawnRegions(doc, canvasId) : [];
   const boxes = regions.length ? boxesOf(doc, canvasId) : null;
   for (const [id, point] of moves) {
     const x = Math.round(point.x);
@@ -294,8 +302,8 @@ export function distributeCommands(doc, canvasId, ids, axis) {
  */
 export function regionCommands(doc, canvasId, nodeIds, names, ids = idsFor(doc)) {
   const canvas = doc.canvases[canvasId];
-  const chosen = nodeIds.filter(id => canvas.nodes[id]);
-  if (canvas.kind !== "machine" || !chosen.length) return null;
+  const chosen = nodeIds.filter(id => canvas.nodes[id] && takesRegion(canvas.kind, canvas.nodes[id]));
+  if (!["machine", "mixed"].includes(canvas.kind) || !chosen.length) return null;
   const commands = [];
   if (!canvas.regions) {
     const first = ids.take("rgn", names.first);

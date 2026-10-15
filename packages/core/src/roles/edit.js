@@ -84,10 +84,12 @@ const OFFERED_FIRST = { system: ["system"], human: ["human", "operator"], extern
  * box's party; a box without a party asks for one, and gets it in the same change.
  */
 function drives(doc, canvasId, box, edgeId, choice) {
+  // A transition of a machine framed here, or of a mixed level's machine part (mixed levels spec §4.5).
   const machine = figureCanvases(doc, canvasId)
     .slice(1)
-    .find(id => doc.canvases[id].kind === "machine" && doc.canvases[id].edges[edgeId]);
-  const edge = machine && doc.canvases[machine].edges[edgeId];
+    .map(id => (doc.canvases[id].kind === "mixed" ? viewOf(doc.canvases[id], "machine") : doc.canvases[id]))
+    .find(canvas => canvas.kind === "machine" && canvas.edges[edgeId]);
+  const edge = machine?.edges[edgeId];
   if (!edge || edge.kind === "link" || !NEW_PARTY_KIND[box.value.kind]) return { refusal: "noMeaning" };
   const commands = [];
   let party = box.value.party;

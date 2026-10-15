@@ -88,7 +88,8 @@ export async function documentPageOf(doc, { fonts = [], render }) {
   const kinds = [
     counts.levels.machine ? plural(counts.levels.machine, "machine") : null,
     counts.levels.flow ? plural(counts.levels.flow, "flow") : null,
-    counts.levels.system ? plural(counts.levels.system, "system") : null
+    counts.levels.system ? plural(counts.levels.system, "system") : null,
+    counts.levels.mixed ? `${counts.levels.mixed} mixed` : null
   ].filter(Boolean);
   const pills = [
     stage ? ["Stage", stage] : null,

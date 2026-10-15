@@ -66,7 +66,7 @@ function bindGuards(doc, guards) {
  * @returns {Promise<{ content: string, machine: (key: string) => ReturnType<typeof machineOf> }>}
  */
 export async function createRuntime(doc, { guards = {}, expect } = {}) {
-  doc = typedView(doc);
+  // Checked and hashed as written; run as the typed levels its mixed ones run as (mixed levels spec §4.5).
   const errors = check(doc).filter(problem => problem.severity === "error");
   if (errors.length) {
     throw new RuntimeError(
@@ -76,6 +76,7 @@ export async function createRuntime(doc, { guards = {}, expect } = {}) {
     );
   }
   const { content } = await computeHashes(doc);
+  doc = typedView(doc);
   if (expect !== undefined && expect !== content) {
     throw new RuntimeError(
       "expect",

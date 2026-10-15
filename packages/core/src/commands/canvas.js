@@ -35,6 +35,9 @@ export default [
       }
       canvas.kind = "mixed";
       validate(Canvas, clone(canvas), ["canvases", id]);
+      // A reusable part whose body this is is mixed too.
+      for (const definition of Object.values(ctx.doc.definitions))
+        if (definition.canvas === id) definition.kind = "mixed";
     }
   },
   {

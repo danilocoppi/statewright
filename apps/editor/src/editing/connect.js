@@ -164,6 +164,10 @@ export function placeRefusal(doc, canvasId, node, point) {
 /**
  * The tool a drag from a box to empty space uses for the new box (spec §7.2: "a new node of the natural kind"): a
  * state on machines, a service on systems, an action on flows.
- * @param {"system" | "machine" | "flow"} kind
+ * @param {"system" | "machine" | "flow" | "mixed"} kind
+ * @param {object} [from] The box the connection comes from: on a mixed level, the new box is of its kind.
  */
-export const naturalTool = kind => ({ system: "service", machine: "state", flow: "action", mixed: "state" })[kind];
+export const naturalTool = (kind, from) =>
+  ({ system: "service", machine: "state", flow: "action" })[
+    homeKind(kind, from) ?? (kind === "mixed" ? "machine" : kind)
+  ];

@@ -149,15 +149,15 @@ Roles (derived; change the field that holds them):
 - `edg_returnRefund` is for `nod_returnsPayments` — `party` of `act_refundCard`
 - `nod_returnsCustomer` sends `edg_returnAsk` — `source` of `evt_returnRequested`
 
-| Edge | From | To | Kind | References |
-| --- | --- | --- | --- | --- |
-| `edg_approveCheck` | `nod_approveStart` | `nod_checkReturn` |  |  |
-| `edg_approveEnd` | `nod_approve` | `nod_approveDone` |  |  |
-| `edg_approveNo` | `nod_checkReturn` | `nod_approveRefused` | false |  |
-| `edg_approveYes` | `nod_checkReturn` | `nod_approve` | true |  |
-| `edg_returnAsk` | `nod_returnNew` | `nod_returnRequested` | transition |  |
-| `edg_returnRefund` | `nod_returnRequested` | `nod_returnRefunded` | transition |  |
-| `edg_returnStart` | `nod_returnInit` | `nod_returnNew` | transition |  |
+| Edge | From | To | Triggers | Guard | Effects |
+| --- | --- | --- | --- | --- | --- |
+| `edg_approveCheck` | `nod_approveStart` | `nod_checkReturn` | flow |  |  |
+| `edg_approveEnd` | `nod_approve` | `nod_approveDone` | flow |  |  |
+| `edg_approveNo` | `nod_checkReturn` | `nod_approveRefused` | false |  |  |
+| `edg_approveYes` | `nod_checkReturn` | `nod_approve` | true |  |  |
+| `edg_returnAsk` | `nod_returnNew` | `nod_returnRequested` | on:evt_returnRequested |  |  |
+| `edg_returnRefund` | `nod_returnRequested` | `nod_returnRefunded` | on:evt_returnApproved |  | action:act_refundCard |
+| `edg_returnStart` | `nod_returnInit` | `nod_returnNew` | (none) |  |  |
 
 ## Findings
 

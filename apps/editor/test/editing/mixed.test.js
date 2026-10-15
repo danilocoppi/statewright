@@ -100,3 +100,48 @@ describe("a new box dragged out of a mixed level's box", () => {
     expect(toolById("mixed", naturalTool("mixed"))?.id).toBe("state");
   });
 });
+
+describe("M5 review in the Editor", () => {
+  it("offers / on a mixed level: every kind's tools, flow steps and the parts that fit, without breaking", async () => {
+    const { insertables } = await import("@/editing/insertables");
+    const withPart = applyBatch(doc, [
+      { type: "definition.create", args: { id: "def_part", kind: "machine", name: "Part" } }
+    ]).doc;
+    const ids = insertables(withPart, doc.root, key => key).map(item => item.id);
+    expect(ids).toEqual(expect.arrayContaining(["tool:state", "tool:service", "tool:if", "step:start"]));
+  });
+
+  it("drafts a box of the source's own kind when a connection is dragged to empty space", async () => {
+    const { naturalTool } = await import("@/editing/connect");
+    const nodes = doc.canvases[doc.root].nodes;
+    expect(naturalTool("mixed", nodes.nod_call)).toBe("action");
+    expect(naturalTool("mixed", nodes.nod_web)).toBe("service");
+    expect(naturalTool("mixed", nodes.nod_open)).toBe("state");
+  });
+
+  it("unsets a case's value when a mixed level's branch becomes the default", async () => {
+    const { kindCommands } = await import("@/editing/triggers");
+    const flowDoc = applyBatch(doc, [
+      { type: "node.add", args: { canvas: doc.root, id: "nod_switch", node: { kind: "switch" } } },
+      {
+        type: "edge.add",
+        args: { canvas: doc.root, id: "edg_case", edge: { from: "nod_switch", to: "nod_end", kind: "case", case: "a" } }
+      }
+    ]).doc;
+    expect(kindCommands(flowDoc, "edg_case", "default")[0].args.unset).toEqual(["case"]);
+  });
+});
+
+describe("regions on a mixed level", () => {
+  it("are made from the machine's nodes selected, the steps and boxes left out", async () => {
+    const { regionCommands } = await import("@/editing/changes");
+    const { commands } = regionCommands(doc, doc.root, ["nod_open", "nod_call"], {
+      first: "Region 1",
+      next: "Region 2"
+    });
+    const after = applyBatch(doc, commands).doc;
+    const nodes = after.canvases[doc.root].nodes;
+    expect(nodes.nod_open.region).toBeDefined();
+    expect(nodes.nod_call.region).toBeUndefined();
+  });
+});

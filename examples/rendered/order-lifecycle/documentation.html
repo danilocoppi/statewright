@@ -414,7 +414,7 @@ tr:target td { background: var(--accent-soft); }
 <header class="cover" id="cover">
 <p class="kicker">system</p>
 <h1>Order lifecycle</h1>
-<p class="pills"><span class="pill"><span>Levels</span><strong>1 machine · 2 flows · 1 system</strong></span><span class="pill"><span>Written by</span><strong>Statewright 0.1.5</strong></span></p>
+<p class="pills"><span class="pill"><span>Levels</span><strong>1 machine · 2 flows · 1 system · 1 mixed</strong></span><span class="pill"><span>Written by</span><strong>Statewright 0.1.5</strong></span></p>
 <ul class="stats"><li class="stat"><strong class="number">5</strong><span class="label">levels</span></li><li class="stat"><strong class="number">4</strong><span class="label">states</span></li><li class="stat"><strong class="number">5</strong><span class="label">transitions</span></li><li class="stat"><strong class="number">3</strong><span class="label">scenarios</span></li></ul>
 </header>
 <section class="section" id="map" aria-labelledby="map-title">
@@ -567,15 +567,15 @@ tr:target td { background: var(--accent-soft); }
 </table></div>
 <h4>Connections</h4>
 <div class="table"><table class="connections">
-<thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col">What</th></tr></thead>
+<thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col">Trigger</th><th scope="col">Guard</th><th scope="col">Effects</th></tr></thead>
 <tbody>
-<tr><td>start</td><td>if</td><td></td></tr>
-<tr><td>Approve the return</td><td>Approved</td><td></td></tr>
-<tr><td>if</td><td>Refused</td><td>false</td></tr>
-<tr><td>if</td><td>Approve the return</td><td>true</td></tr>
-<tr><td>new</td><td>requested</td><td>return.requested</td></tr>
-<tr><td>requested</td><td>refunded</td><td>return.approved</td></tr>
-<tr><td>initial</td><td>new</td><td></td></tr>
+<tr><td>start</td><td>if</td><td></td><td></td><td></td></tr>
+<tr><td>Approve the return</td><td>Approved</td><td></td><td></td><td></td></tr>
+<tr><td>if</td><td>Refused</td><td>false</td><td></td><td></td></tr>
+<tr><td>if</td><td>Approve the return</td><td>true</td><td></td><td></td></tr>
+<tr><td>new</td><td>requested</td><td><a class="chip" href="#catalog-evt_returnRequested"><code>return.requested</code></a></td><td></td><td></td></tr>
+<tr><td>requested</td><td>refunded</td><td><a class="chip" href="#catalog-evt_returnApproved"><code>return.approved</code></a></td><td></td><td>action <a class="chip" href="#catalog-act_refundCard"><code>Refund card</code></a></td></tr>
+<tr><td>initial</td><td>new</td><td></td><td></td><td></td></tr>
 </tbody>
 </table></div>
 <h4>Roles</h4>

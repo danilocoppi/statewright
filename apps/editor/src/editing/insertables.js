@@ -1,13 +1,15 @@
 // What `/` can insert on a level (spec §7.2: "a search of everything insertable — tools, definitions, catalog-backed
 // steps such as Emit psp.refund"): the level's tools, the flow steps the dock leaves out, one step per catalog item
 // that a flow step can use, and the project's reusable parts that fit here.
-import { toolsFor } from "./tools";
+import { DOCK_TABS, toolsFor } from "./tools";
 
 /** The box that holds an instance of a definition, by kind of level, and the kinds of definition it may hold. */
 const CONTAINER = {
   system: { kind: "service", holds: ["system", "machine", "flow"] },
   machine: { kind: "state", holds: ["machine"] },
-  flow: { kind: "subflow", holds: ["flow"] }
+  flow: { kind: "subflow", holds: ["flow"] },
+  // A mixed level holds any part as a system's box does (mixed levels spec §5).
+  mixed: { kind: "service", holds: ["system", "machine", "flow", "mixed"] }
 };
 
 /** Flow steps with no tool of their own. */
@@ -25,7 +27,9 @@ const MORE_STEPS = ["start", "forEach", "join", "assign", "subflow", "call"];
  */
 export function insertables(doc, canvasId, t) {
   const kind = doc.canvases[canvasId].kind;
-  const tools = toolsFor(kind)
+  // On a mixed level, every tab's tools (mixed levels spec §6), each once.
+  const tabs = kind === "mixed" ? DOCK_TABS.flatMap(tab => toolsFor(kind, tab)) : toolsFor(kind);
+  const tools = [...new Map(tabs.map(tool => [tool.id, tool])).values()]
     .filter(tool => tool.id !== "select")
     .map(tool => ({ id: `tool:${tool.id}`, label: t(`tools.${tool.id}`), meta: t("insert.tool"), tool }));
   const named = (collection, prefix, label, meta, node) =>
@@ -36,7 +40,7 @@ export function insertables(doc, canvasId, t) {
       node: node(id)
     }));
   const steps =
-    kind === "flow" ?
+    kind === "flow" || kind === "mixed" ?
       [
         ...MORE_STEPS.map(step => ({
           id: `step:${step}`,

@@ -177,7 +177,7 @@ export function CanvasMenu({ at, onClose }) {
             : [])
           ]
         },
-        ...(doc.canvases[canvasId].kind === "machine" ?
+        ...(["machine", "mixed"].includes(doc.canvases[canvasId].kind) ?
           [
             {
               items: [

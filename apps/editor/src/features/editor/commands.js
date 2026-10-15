@@ -133,8 +133,12 @@ export function editorCommands({
       () => copy() && deleteSelection(t, t("editing.cut"))
     ),
     ...when(!readOnly && Boolean(lastClip()), "paste", words("paste"), `${command}V`, () => paste(t, lastClip())),
-    ...when(!readOnly && canvas.kind === "machine" && selection.length > 0, "region", words("region"), "R", () =>
-      regionSelection(t)
+    ...when(
+      !readOnly && ["machine", "mixed"].includes(canvas.kind) && selection.length > 0,
+      "region",
+      words("region"),
+      "R",
+      () => regionSelection(t)
     ),
     ...when(Boolean(parent), "up", words("up"), "Esc", () => editorStore.getState().setCanvas(parent?.canvas)),
     ...when(true, "levels", words("levels"), undefined, onLevels),

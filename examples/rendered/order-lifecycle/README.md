@@ -127,15 +127,15 @@ A mixed level: a return's states, the steps that approve it, and who acts — th
 | Customer | actor |  |
 | Payments | service |  |
 
-| From | To | What |
-| --- | --- | --- |
-| start | if |  |
-| Approve the return | Approved |  |
-| if | Refused | false |
-| if | Approve the return | true |
-| new | requested | return.requested |
-| requested | refunded | return.approved |
-| initial | new |  |
+| From | To | Trigger | Guard | Effects |
+| --- | --- | --- | --- | --- |
+| start | if |  |  |  |
+| Approve the return | Approved |  |  |  |
+| if | Refused | false |  |  |
+| if | Approve the return | true |  |  |
+| new | requested | return.requested |  |  |
+| requested | refunded | return.approved |  | action Refund card |
+| initial | new |  |  |  |
 
 | From | Role | To | About |
 | --- | --- | --- | --- |

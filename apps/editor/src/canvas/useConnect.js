@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { isGuest } from "statewright";
+import { homeKind, isGuest } from "statewright";
 
 import { connectBoxes } from "@/editing/actions";
 import { emptyRefusal, naturalTool } from "@/editing/connect";
@@ -100,7 +100,12 @@ export function useConnect(t, flow) {
     // (mixed levels spec §4). Only a role's connector lands on a transition — and inside a frame, the transition under
     // the pointer is meant rather than the frame's box.
     const kind = doc.canvases[canvasId].kind;
-    const roleStart = kind === "system" || isGuest(kind, doc.canvases[canvasId].nodes[source]);
+    const sourceNode = doc.canvases[canvasId].nodes[source];
+    // On a mixed level, a system's box with a party sends a transition as a participant does (mixed levels spec §4.5).
+    const roleStart =
+      kind === "system" ||
+      isGuest(kind, sourceNode) ||
+      (kind === "mixed" && homeKind(kind, sourceNode) === "system" && Boolean(sourceNode?.party));
     const transition = roleStart ? transitionAt(flow.getEdges(), at, { framed: kind === "system" }) : null;
     const frame = target && event.target?.closest?.(".react-flow__node-frame");
     if (transition && (!target || frame)) {
@@ -121,7 +126,9 @@ export function useConnect(t, flow) {
       editingStore.getState().refuse({ reason: refusal, at });
       return;
     }
-    editingStore.getState().open({ type: "draft", tool: naturalTool(doc.canvases[canvasId].kind), at, from: source });
+    const kindHere = doc.canvases[canvasId].kind;
+    const tool = naturalTool(kindHere, doc.canvases[canvasId].nodes[source]);
+    editingStore.getState().open({ type: "draft", tool, at, from: source });
   };
 
   return { from, onConnectStart, onConnect, onConnectEnd };

@@ -13,13 +13,13 @@ const OWN_FIELDS = {
 const ALL_FIELDS = new Set(Object.values(OWN_FIELDS).flat());
 
 /**
- * What a mixed level runs as: a machine when it has states or initial nodes, else a flow when it has a start, else a
- * system.
+ * What a mixed level runs as: a machine when it has states, else a flow when it has a start, else a system.
  * @returns {"machine"|"flow"|"system"}
  */
 export function partOf(canvas) {
   const nodes = Object.values(canvas.nodes);
-  if (nodes.some(node => homeKind("mixed", node) === "machine" && !isGuest("mixed", node))) return "machine";
+  // States make a machine (pseudo-states alone do not): with none left, the steps run as a flow.
+  if (nodes.some(node => node.kind === "state" && !isGuest("mixed", node))) return "machine";
   if (nodes.some(node => node.kind === "start")) return "flow";
   return "system";
 }

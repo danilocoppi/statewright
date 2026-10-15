@@ -1,7 +1,7 @@
 // The trigger editor's model (spec §7.2, mockup 07): find catalog items by what is typed, name new ones the way the
 // format wants them, and turn the person's choice into commands — creating a missing event, guard or timer in the same
 // change, so nobody has to open the catalog first.
-import { buildIndex, EVENT_NAME_PATTERN, toCamel, usagesOf } from "statewright";
+import { buildIndex, EVENT_NAME_PATTERN, toCamel, usagesOf, edgeHome } from "statewright";
 
 import { indexOf } from "@/lib/derived";
 
@@ -142,6 +142,8 @@ export function kindCommands(doc, edgeId, kind, caseValue) {
   if (kind === "case") {
     return [{ type: "edge.update", args: { id: edgeId, set: { kind, case: caseValue.trim() } } }];
   }
-  const flow = doc.canvases[buildIndex(doc).get(edgeId).canvas].kind === "flow";
+  // A flow's edge, on a flow or a mixed level, drops its case value with its kind.
+  const canvas = doc.canvases[buildIndex(doc).get(edgeId).canvas];
+  const flow = (canvas.kind === "mixed" ? edgeHome(canvas, canvas.edges[edgeId]) : canvas.kind) === "flow";
   return [{ type: "edge.update", args: { id: edgeId, set: { kind }, ...(flow && { unset: ["case"] }) } }];
 }

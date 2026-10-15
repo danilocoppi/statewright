@@ -222,7 +222,9 @@ steps, a system's connection between boxes, a link to or from a shortcut — and
 saying why. The roles read as on typed levels; a system's box with a `party` sends and receives as a participant does.
 
 A mixed level runs as a machine when it has states (its states and transitions form one machine; its steps are drawn
-and documented, not run on their own), as a flow when it has steps and no states, and as a system otherwise; rules,
+and documented, not run on their own), as a flow when it has a start and no states, and as a system otherwise; a
+machine's nodes on it may be grouped in regions, and the rule `edge.mixed` reports a connection whose ends do not make
+it what it says it is; rules,
 the simulator, the runtime and the contract read it that way, with every ID kept. In the Editor, the dock's three tabs
 are peers on a mixed level; Change to mixed (the level-kind menu, or the `canvas.mix` command) turns a typed level
 into a mixed one in one undoable change; New project and Create inside offer Mixed. The order-lifecycle example's

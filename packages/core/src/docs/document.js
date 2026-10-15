@@ -4,7 +4,7 @@ import { hierarchy } from "../query/index.js";
 import { check } from "../rules/index.js";
 import { triggersOf } from "../rules/facts.js";
 import { associationsOf } from "../roles/index.js";
-import { isGuest } from "../roles/kinds.js";
+import { edgeHome, isGuest } from "../roles/kinds.js";
 import { createStyle, stepText } from "../style/index.js";
 
 const sortedKeys = map => Object.keys(map ?? {}).sort();
@@ -298,7 +298,7 @@ export function documentModel(doc) {
       return node?.label ?? node?.name ?? node?.kind ?? nodeId;
     };
     const edges =
-      machine ?
+      machine || canvas.kind === "mixed" ?
         {
           headers: ["From", "To", "Trigger", "Guard", "Effects"],
           rows: edgeIds.map(edgeId => {
@@ -575,7 +575,8 @@ export function toAIPack(doc, { guideUrl } = {}) {
       out.push("No edges.", "");
       continue;
     }
-    if (canvas.kind === "machine") {
+    // A mixed level's connections are listed as a machine's transitions are: its other connections by their kind.
+    if (canvas.kind === "machine" || canvas.kind === "mixed") {
       out.push(
         table(
           ["Edge", "From", "To", "Triggers", "Guard", "Effects"],
@@ -595,7 +596,9 @@ export function toAIPack(doc, { guideUrl } = {}) {
               code(edgeId),
               code(edge.from),
               code(edge.to),
-              edge.kind === "link" ? "link" : triggersOf(edge).join(" ") || "(none)",
+              edge.kind === "link" ? "link"
+              : canvas.kind === "mixed" && edgeHome(canvas, edge) !== "machine" ? (edge.kind ?? edgeHome(canvas, edge))
+              : triggersOf(edge).join(" ") || "(none)",
               guard,
               effects.join(" ")
             ];

@@ -668,7 +668,9 @@ function Flow({ onNavigate }) {
       <ProblemPopover container={container} />
       {menu && !menu.anchor && <CanvasMenu at={menu} onClose={() => editingStore.getState().close()} />}
       {tool && !editorOpen && <Ghost tool={tool} />}
-      {connect.from && !hovered && <Ghost tool={toolById(levelKind, naturalTool(levelKind))} />}
+      {connect.from && !hovered && (
+        <Ghost tool={toolById(levelKind, naturalTool(levelKind, doc.canvases[canvasId].nodes[connect.from]))} />
+      )}
       {insert?.at && <InsertPalette key={`${insert.at.x}:${insert.at.y}`} at={insert.at} />}
       {draft && <Draft key={`${draft.tool}:${draft.at.x}:${draft.at.y}`} draft={draft} />}
       {receive && <Receive key={`${receive.from}:${receive.to}`} editor={receive} />}

@@ -121,7 +121,9 @@ function machineRoles(doc, canvas, out) {
 function systemRoles(doc, canvasId, framed, out) {
   const boxes = sortedEntries(doc.canvases[canvasId].nodes).filter(([, node]) => node.kind !== "ref" && node.party);
   for (const machineId of framed) {
-    const machine = doc.canvases[machineId];
+    // A framed mixed level drives by its machine part (mixed levels spec §4.5).
+    const canvas = doc.canvases[machineId];
+    const machine = canvas.kind === "mixed" ? viewOf(canvas, "machine") : canvas;
     if (machine.kind !== "machine") continue;
     for (const [id, element] of startersOf(machine)) {
       const sender = senderOf(doc, id, element);

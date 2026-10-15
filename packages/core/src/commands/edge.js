@@ -54,48 +54,46 @@ export function checkEdgeEnds(canvas, edgeId, edge, nodeOf = nodeId => canvas.no
   }
 }
 
+/** "a state", "an end", "an initial node". */
+const named = kind => `${/^[aeiou]/i.test(kind) ? "an" : "a"} ${kind}`;
+
 /**
- * A connection on a mixed level means what its ends make it (mixed levels spec §4.5): a transition between a machine's
- * nodes, a flow's edge between steps, a system's connection between boxes, a link to or from a shortcut; anything else
- * means nothing and is refused, saying why.
+ * Why a connection on a mixed level means nothing (mixed levels spec §4.5), or null: it means what its ends make it —
+ * a transition between a machine's nodes (saying so with `kind: "transition"`), a flow's edge between steps, a system's
+ * connection between boxes, a link to or from a shortcut. Shared by `edge.add` and the rule `edge.mixed`.
+ * @returns {string | null}
  */
-function checkMixedEnds(canvas, edgeId, edge, from, to) {
+export function mixedEndsProblem(canvas, edge, from, to) {
+  if (!from || !to) return null;
   const touchesRef = from.kind === "ref" || to.kind === "ref";
   if (touchesRef !== (edge.kind === "link")) {
-    fail("NOT_ALLOWED", `Edge "${edgeId}": edges touching a ref node are links (kind "link"), and only they`, {
-      id: edgeId
-    });
+    return 'edges touching a ref node are links (kind "link"), and only they';
   }
-  if (touchesRef) return;
+  if (touchesRef) return null;
   for (const end of [from, to]) {
-    if (isGuest("mixed", end)) {
-      fail(
-        "NOT_ALLOWED",
-        `Edge "${edgeId}": a ${end.kind} takes part in no connection; its role is set by its fields`,
-        {
-          id: edgeId
-        }
-      );
-    }
+    if (isGuest("mixed", end)) return `${named(end.kind)} takes part in no connection; its role is set by its fields`;
   }
   const [a, b] = [homeKind("mixed", from), homeKind("mixed", to)];
+  if (a !== b) return `${named(from.kind)} cannot lead to ${named(to.kind)}: they belong to different kinds of level`;
   // What the connection says it is: its kind, else what its ends are (a transition always says so).
   const is =
     edge.kind !== undefined ? edgeHome(canvas, edge)
     : a === "machine" ? null
     : a;
-  if (a !== b || a !== is) {
-    const what = { machine: "a transition", flow: "a flow's step", system: "a system's connection" };
-    fail(
-      "NOT_ALLOWED",
-      `Edge "${edgeId}": a ${from.kind} cannot lead to a ${to.kind}` +
-        (a === b ? `; between them, a connection is ${what[a]}` : "; they belong to different kinds of level"),
-      { id: edgeId }
-    );
+  if (is !== a) {
+    if (a === "machine")
+      return `between ${named(from.kind)} and ${named(to.kind)} a connection is a transition: give it kind "transition"`;
+    const what = { flow: "a flow's edge", system: "a system's connection" };
+    return `between ${named(from.kind)} and ${named(to.kind)} a connection is ${what[a]}, not kind "${edge.kind}"`;
   }
-  if (a === "machine" && NOT_TARGETS.has(to.kind)) {
-    fail("NOT_ALLOWED", `Edge "${edgeId}": a ${to.kind} node cannot be the target of an edge`, { id: edgeId });
-  }
+  if (a === "machine" && NOT_TARGETS.has(to.kind)) return `${named(to.kind)} node cannot be the target of an edge`;
+  return null;
+}
+
+/** On a mixed level, refuse a connection whose ends mean nothing together. */
+function checkMixedEnds(canvas, edgeId, edge, from, to) {
+  const problem = mixedEndsProblem(canvas, edge, from, to);
+  if (problem) fail("NOT_ALLOWED", `Edge "${edgeId}": ${problem}`, { id: edgeId });
 }
 
 /** Validate an edge as it will be stored in `canvasId`. */

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { RegionDef } from "../schema/canvas.js";
 import { allocateId, applyChange, changeArgs, changed, clone, requireEntry, validate } from "./context.js";
 import { fail } from "./errors.js";
+import { homeKind } from "../roles/kinds.js";
 import { removeElements } from "./remove.js";
 
 /** Region commands (spec §21). */
@@ -18,7 +19,9 @@ export default [
     }),
     run(ctx, { canvas, name, description, id }) {
       const entry = requireEntry(ctx, canvas, ["canvas"]);
-      if (entry.value.kind !== "machine") fail("WRONG_KIND", "Only machine canvases have regions", { id: canvas });
+      if (!["machine", "mixed"].includes(entry.value.kind)) {
+        fail("WRONG_KIND", "Only machine and mixed canvases have regions", { id: canvas });
+      }
       const region = clone(description === undefined ? { name } : { name, description });
       const regionId = allocateId(ctx, "rgn", name, id);
       validate(RegionDef, region, ["canvases", canvas, "regions", regionId]);
@@ -26,7 +29,12 @@ export default [
       const first = target.regions === undefined;
       if (first) target.regions = {};
       target.regions[regionId] = region;
-      if (first) for (const node of Object.values(target.nodes)) node.region = regionId;
+      // On a mixed level, a machine's nodes (and shortcuts) take regions; steps and boxes do not.
+      if (first) {
+        for (const node of Object.values(target.nodes)) {
+          if (target.kind === "machine" || ["machine", null].includes(homeKind("mixed", node))) node.region = regionId;
+        }
+      }
     }
   },
   {

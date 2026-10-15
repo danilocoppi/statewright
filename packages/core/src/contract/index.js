@@ -23,8 +23,10 @@ const CONTRACT_RULES = new Set(["machine.sameName"]);
  * @returns {Promise<{ contract: object, problems: object[] }>}
  */
 export async function toContract(doc) {
-  doc = typedView(doc);
+  // Hashed and checked as written; mixed levels read as the typed levels they run as (mixed levels spec §4.5).
   const { content } = await computeHashes(doc);
+  const problems = check(doc).filter(problem => CONTRACT_RULES.has(problem.code));
+  doc = typedView(doc);
   const { vectors, stale } = vectorsOf(doc);
   const contract = {
     contract: CONTRACT_VERSION,
@@ -34,7 +36,7 @@ export async function toContract(doc) {
     vectors,
     stale
   };
-  return { contract, problems: check(doc).filter(problem => CONTRACT_RULES.has(problem.code)) };
+  return { contract, problems };
 }
 
 /**
