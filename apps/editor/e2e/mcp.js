@@ -38,6 +38,8 @@ export async function startMcp({ agent = "e2e-agent", args = [] } = {}) {
     child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id, method, ...(params ? { params } : {}) })}\n`);
     return answered;
   };
+  /** A tool's whole answer, as MCP gives it: its content (text, images) and structured content. */
+  const raw = async (name, toolArgs = {}) => (await request("tools/call", { name, arguments: toolArgs })).result;
   /** A tool's answer: its result, or `{ error }` when it answered an error. */
   const tool = async (name, toolArgs = {}) => {
     const { result } = await request("tools/call", { name, arguments: toolArgs });
@@ -50,6 +52,7 @@ export async function startMcp({ agent = "e2e-agent", args = [] } = {}) {
     dir,
     address,
     tool,
+    raw,
     stderr: () => stderr,
     notifications: () => [...notifications],
     /** Pair with the tab that shows `code`: tried again until the tab's code has reached the bridge. */

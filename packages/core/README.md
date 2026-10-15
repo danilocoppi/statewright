@@ -907,7 +907,26 @@ too, each with Undo.
   research preview; the flag may change). Messages then arrive as `<channel source="statewright" message="msg_…">`;
   answer them with `editor_reply` all the same. Without it, `editor_wait` is how you listen.
 
-A message reads `{ id, text, context: { project, level, selection } }`. The bar shows the person whether you are
+**What they mark.** At the bar's left the person has Mark for the AI (elements, on any level), a pencil, a rectangle
+and an ellipse in four colours — red _wrong_, amber _question_, green _right_, and neutral — short labels (Alt+click
+with the pencil), and an eraser. What they marked comes with the message as `marks`, each read for you in the level's
+own coordinates:
+
+| Mark                                 | What it says                                                                                               |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `{ kind: "rectangle" \| "ellipse" }` | `encloses`: the boxes whose centres it holds, the edges it holds whole; `touches`: what its border crosses |
+| `{ kind: "stroke" }`, closed         | the same, for the outline drawn                                                                            |
+| `{ kind: "stroke" }`, box to box     | an arrow: `from` → `to`, and `touches` what lies between                                                   |
+| `{ kind: "stroke" }`, open           | `touches`: the boxes and edges it crosses                                                                  |
+| `{ kind: "label", text }`            | `near`: the box it stands by, within 48 units                                                              |
+| `{ kind: "element", element }`       | an element marked for you, by ID, name and kind                                                            |
+
+Each mark has its `level`, `colour` and `meaning`. When there are marks, an image of them on the level shown — its
+figure, cropped to them — comes as an image in the answer of `editor_wait` or `editor_inbox` (the message says
+`image: "attached"`); on the Channel, the marks arrive in words and the image waits in `editor_inbox`.
+
+A message reads `{ id, text, context: { project, level, selection }, marks?, image? }`.
+The bar shows the person whether you are
 working (a call in the last 5 seconds), listening (waiting with `editor_wait`, or reached by the Channel) or away (their
 message waits as _not read yet_). The conversation lasts as long as the pairing: nothing of it goes into the document.
 
@@ -1043,6 +1062,9 @@ edges on the canvas carry `data-id`, the document's ID. `editor_state` (or `stat
 | `conversation-send`           | the conversation: Send, or Stop while the agent works              | yes      |
 | `conversation-history`        | the conversation: its history, open                                | yes      |
 | `conversation-line`           | each line of the conversation (data-kind)                          | per item |
+| `conversation-tool`           | each marking tool of the conversation (data-tool)                  | per item |
+| `marks-colour`                | the marks' colours, a drawing tool in hand                         | yes      |
+| `marks-layer`                 | the canvas: the person's marks for the agent                       | yes      |
 | `simulation-panel`            | the simulation panel                                               | yes      |
 | `simulation-move`             | each move of the run shown                                         | per item |
 | `simulation-step`             | each step of the run                                               | per item |

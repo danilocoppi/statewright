@@ -169,6 +169,10 @@ test("finds every hook on its screen, once where it is unique (§7.5)", async ({
     await page.getByTestId("conversation-field").press("Enter");
     await page.getByRole("button", { name: "Conversation history" }).click();
     await shows("conversation-history", "conversation-line");
+    await shows("conversation-tool", "marks-layer");
+    await page.locator('[data-testid="conversation-tool"][data-tool="rectangle"]').click();
+    await shows("marks-colour");
+    await page.locator('[data-testid="conversation-tool"][data-tool="rectangle"]').click();
     const other = await page.context().newPage();
     await other.goto("/p/prj_payments");
     await other.getByTestId("project-menu").click();

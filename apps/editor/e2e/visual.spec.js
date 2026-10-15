@@ -564,6 +564,47 @@ for (const theme of ["light", "dark"]) {
       }
     });
 
+    test("shows the person's marks for the agent, a drawing tool in hand", async ({ page }) => {
+      await page.goto("/");
+      await page.getByRole("button", { name: /^Payments/ }).click();
+      await expect(page).toHaveURL(/\/p\/prj_payments$/);
+      await page.goto("/p/prj_payments/cnv_expiryClock");
+      await settled(page);
+      const mcp = await startMcp({ agent: "claude-code" });
+      try {
+        await page.getByTestId("project-menu").click();
+        await page.getByTestId("project-menu-connect").click();
+        await page.getByTestId("connect-address").fill(mcp.address);
+        await page.getByTestId("connect-address").press("Enter");
+        await expect(page.getByTestId("connect-status")).toHaveText("Waiting for the agent…");
+        await mcp.pair(await page.getByTestId("connect-code").textContent());
+        await expect(page.getByTestId("connect-dialog")).toBeHidden();
+        const tool = name => page.locator(`[data-testid="conversation-tool"][data-tool="${name}"]`);
+        const box = async id => page.locator(`.react-flow__node[data-id="${id}"]`).boundingBox();
+        const running = await box("nod_running");
+        await tool("ellipse").click();
+        await page.mouse.move(running.x - 24, running.y - 20);
+        await page.mouse.down();
+        await page.mouse.move(running.x + running.width + 24, running.y + running.height + 20, { steps: 6 });
+        await page.mouse.up();
+        await tool("pencil").click();
+        await page.getByTestId("marks-colour").getByRole("radio", { name: "Amber: a question" }).click();
+        const paused = await box("nod_paused");
+        await page.keyboard.down("Alt");
+        await page.mouse.click(paused.x + paused.width + 12, paused.y + paused.height / 2);
+        await page.keyboard.up("Alt");
+        await page.getByRole("textbox", { name: "A label" }).fill("needs a timeout?");
+        await page.getByRole("textbox", { name: "A label" }).press("Enter");
+        await tool("mark").click();
+        await page.locator('.react-flow__node[data-id="nod_elapsed"]').click();
+        await tool("rectangle").click();
+        await page.mouse.move(8, 892);
+        await expect(page).toHaveScreenshot(`marks-${theme}.png`, { maxDiffPixelRatio: 0.001 });
+      } finally {
+        await mcp.stop();
+      }
+    });
+
     test("shows the support popover open above its badge, on the Projects screen", async ({ page }) => {
       await page.goto("/");
       await expect(page.getByRole("button", { name: /^Payments/ })).toBeVisible();
