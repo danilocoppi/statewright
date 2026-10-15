@@ -14,6 +14,7 @@ import { useSimulation } from "@/simulate/store";
 import { pathName } from "@/simulate/words";
 import { useEditor } from "@/store/editor";
 
+import { FarContext, farLook } from "./far";
 import { followRef } from "./follow";
 import { MarkActions } from "./marks";
 import { ProblemMarker } from "./ProblemMarker";
@@ -57,6 +58,23 @@ export function NoteNode({ data, selected }) {
 
 const ROUND = new Set(["dot", "end", "history"]);
 
+/** A box far out: its outline and fill where Core draws it, without its text and markup (far.js). */
+function FarBox({ part }) {
+  const { fill, stroke, radius } = farLook(part);
+  return (
+    <span
+      aria-hidden="true"
+      data-far-box=""
+      className="pointer-events-none absolute inset-0 border"
+      style={{
+        backgroundColor: fill ?? "var(--surface)",
+        borderColor: stroke ?? "var(--hairline)",
+        borderRadius: ROUND.has(part.shape) ? "9999px" : `${radius ?? 8}px`
+      }}
+    />
+  );
+}
+
 /** A box of the level (or a frame showing an interior), selectable and focusable; edges attach to it. */
 export function FigureNode({ data, selected }) {
   const { part } = data;
@@ -64,9 +82,12 @@ export function FigureNode({ data, selected }) {
   const alone = useEditor(state => state.view.selections[state.canvasId]?.length === 1);
   const renaming = useEditing(state => state.editor?.type === "name" && state.editor.id === part.id);
   const ring = ROUND.has(part.shape) ? "rounded-full" : "rounded-[10px]";
+  const far = use(FarContext);
   return (
     <>
-      <PartSvg part={part} />
+      {far ?
+        <FarBox part={part} />
+      : <PartSvg part={part} />}
       <Handle type="target" position={Position.Left} isConnectableStart={false} className="sw-handle" />
       <Handle
         type="source"

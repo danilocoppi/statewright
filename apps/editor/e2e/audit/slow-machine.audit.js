@@ -24,6 +24,14 @@ async function watchLongTasks(page) {
 }
 const longTasks = page => page.evaluate(() => window.__long ?? []);
 
+/** The longest main-thread task since the last call (each step's own). */
+const longestSince = page =>
+  page.evaluate(() => {
+    const tasks = (window.__long ?? []).slice(window.__seen ?? 0);
+    window.__seen = (window.__long ?? []).length;
+    return tasks.length ? Math.max(...tasks) : 0;
+  });
+
 /** Time from a key to the frame after `selector` changes. */
 async function timeKey(page, key, selector) {
   await page.evaluate(selector => {
@@ -136,15 +144,21 @@ for (const rate of RATES) {
     await page.waitForTimeout(1500);
     await watchLongTasks(page);
 
+    await longestSince(page);
     frameReport(rate, "scroll the whole level", await framesDuring(page, scroll(page)));
+    report(rate, "  longest task while scrolling", await longestSince(page));
     frameReport(rate, "zoom the whole level", await framesDuring(page, zoom(page)));
+    report(rate, "  longest task while zooming", await longestSince(page));
     frameReport(rate, "marquee on the whole level", await framesDuring(page, marquee(page)));
+    report(rate, "  longest task in the marquee", await longestSince(page));
     // Near, where names are read: 100 %.
     await page.getByRole("button", { name: "Zoom to 100 %" }).click();
     await page.waitForTimeout(500);
+    report(rate, "  longest task zooming to 100 %", await longestSince(page));
     frameReport(rate, "scroll at 100 %", await framesDuring(page, scroll(page)));
     await page.getByRole("button", { name: "Fit" }).click();
     await page.waitForTimeout(800);
+    report(rate, "  longest task fitting the level", await longestSince(page));
 
     // An edit: nudge a box on screen, from the key to the frame that shows it moved.
     const visible = await page.evaluate(() => {
@@ -166,6 +180,7 @@ for (const rate of RATES) {
     const nudges = [];
     for (let time = 0; time < 5; time += 1) nudges.push(await timeKey(page, "ArrowRight", box));
     report(rate, "nudge a box (edit shown)", median(nudges));
+    report(rate, "  longest task while nudging", await longestSince(page));
 
     // Problems after a change: delete a box whose open comment is a Problem, from the key to the count changing.
     const problems = "[data-area='actions'] button";
@@ -173,6 +188,7 @@ for (const rate of RATES) {
     await page.waitForTimeout(500);
     report(rate, "delete a box → Problems updated", await timeKey(page, "Delete", problems));
     report(rate, "undo → Problems updated", await timeKey(page, "ControlOrMeta+z", problems));
+    report(rate, "  longest task deleting and undoing", await longestSince(page));
 
     // Typing a name in the inspector: each key, to the frame that shows it on the canvas.
     const typed = '.react-flow__node[data-id="nod_mainLineA3"]';
@@ -184,6 +200,7 @@ for (const rate of RATES) {
     const keys = [];
     for (const key of ["x", "y", "z", "w", "v"]) keys.push(await timeKey(page, key, typed));
     report(rate, "type in the name (each key shown)", median(keys));
+    report(rate, "  longest task while typing", await longestSince(page));
 
     const long = await longTasks(page);
     report(rate, "long tasks during the session", long.length, "tasks");

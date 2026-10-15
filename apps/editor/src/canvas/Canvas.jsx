@@ -54,6 +54,7 @@ import { DiagramDefs } from "./DiagramDefs";
 import { AssociationEdge } from "./AssociationEdge";
 import { FigureEdge } from "./FigureEdge";
 import { FindingPopover } from "./FindingPopover";
+import { FAR_ZOOM, FarContext } from "./far";
 import { followRef } from "./follow";
 import { Legend } from "./Legend";
 import { MarkActions } from "./marks";
@@ -69,8 +70,8 @@ import { usePlacement } from "./usePlacement";
 import { clearOfInspector, fitFor, inspectorSpace, ZOOM } from "./viewport";
 import { ZoomIsland } from "./ZoomIsland";
 
-/** Below this zoom a box's 12 px name is under 5 px on screen: unreadable, so not drawn (performance spec §3 P2). */
-export const FAR_ZOOM = 0.4;
+/** Above this many boxes and arrows, only those on screen are mounted. */
+const MANY_PARTS = 150;
 
 const nodeTypes = {
   node: FigureNode,
@@ -139,8 +140,8 @@ function Flow({ onNavigate }) {
   const flow = useReactFlow();
   // A level is framed with room for the tool dock on a narrow canvas (viewport.js).
   const paneWidth = useStore(state => state.width);
-  // Far out, names are too small to read: the canvas says so, and its stylesheet stops drawing text (performance spec
-  // §3 P2), so panning and zooming a large level repaints shapes only. Crossing the line is the only re-render.
+  // Far out, names are too small to read: boxes and arrows draw plain (far.js), and the stylesheet stops drawing what
+  // text is left (performance spec §3 P2). Crossing the line is the only re-render it makes.
   const far = useStore(state => state.transform[2] < FAR_ZOOM);
   // Beside the simulation panel, as wide as the person made the inspector.
   const inspector = useInspectorWidth();
@@ -204,6 +205,9 @@ function Flow({ onNavigate }) {
     () => ({ ...projected, nodes: steadyNodes(projected.nodes), edges: steadyEdges(projected.edges) }),
     [projected, steadyNodes, steadyEdges]
   );
+
+  // A large level mounts only what is on screen (performance spec §3 P2); Tab still reaches every box (onKeyDown).
+  const many = level.nodes.length + level.edges.length > MANY_PARTS;
 
   // The run shown, marked on the level (simulator spec §6.3): where it is, and what can happen from there.
   const marks = useMarks(canvasId);
@@ -461,7 +465,37 @@ function Flow({ onNavigate }) {
     }),
     [open, level]
   );
+  /** Focus a box once it is mounted (a few frames at most after the view moved to it). */
+  const focusWhenMounted = (id, frames = 12) =>
+    requestAnimationFrame(() => {
+      const box = container.current?.querySelector(`.react-flow__node[data-id="${CSS.escape(id)}"]`);
+      if (box) box.focus();
+      else if (frames > 0) focusWhenMounted(id, frames - 1);
+    });
+
+  /**
+   * Tab on a large level, where only what is on screen is mounted: the next box in reading order (Shift: the one
+   * before), brought into view when it is not mounted — as Tab goes through every box of a small level.
+   */
+  const tabFrom = event => {
+    const id = event.target.closest?.(".react-flow__node")?.dataset.id;
+    if (!id) return;
+    const order = level.nodes.filter(node => node.focusable);
+    const at = order.findIndex(node => node.id === id);
+    const next = at < 0 ? undefined : order[at + (event.shiftKey ? -1 : 1)];
+    if (!next) return;
+    event.preventDefault();
+    const mounted = container.current?.querySelector(`.react-flow__node[data-id="${CSS.escape(next.id)}"]`);
+    if (mounted) return void mounted.focus();
+    flow.setCenter(next.position.x + (next.width ?? 0) / 2, next.position.y + (next.height ?? 0) / 2, {
+      zoom: flow.getZoom(),
+      duration: 0
+    });
+    focusWhenMounted(next.id);
+  };
+
   const onKeyDown = event => {
+    if (event.key === "Tab" && many) return tabFrom(event);
     if (event.key !== "Enter") return;
     const id = event.target.closest?.(".react-flow__node")?.dataset.id;
     const node = level.nodes.find(item => item.id === id);
@@ -627,73 +661,82 @@ function Flow({ onNavigate }) {
     >
       <DiagramDefs />
       <MarkActions value={markActions}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          onNodesChange={on.nodesChange}
-          onEdgesChange={on.edgesChange}
-          onNodeDoubleClick={on.nodeDoubleClick}
-          onPaneClick={on.paneClick}
-          onNodeDragStop={on.nodeDragStop}
-          onNodeMouseEnter={on.nodeMouseEnter}
-          onNodeMouseLeave={on.nodeMouseLeave}
-          onConnectStart={on.connectStart}
-          onConnect={on.connect}
-          onConnectEnd={on.connectEnd}
-          isValidConnection={on.validConnection}
-          connectionLineComponent={ConnectionLine}
-          onNodeContextMenu={on.nodeContextMenu}
-          onEdgeContextMenu={on.edgeContextMenu}
-          onEdgeDoubleClick={on.edgeDoubleClick}
-          onPaneContextMenu={on.paneContextMenu}
-          onSelectionContextMenu={on.selectionContextMenu}
-          onMoveEnd={on.moveEnd}
-          nodesDraggable={!locked && !marking}
-          nodesConnectable={!locked}
-          edgesFocusable={false}
-          elevateNodesOnSelect={false}
-          zIndexMode="manual"
-          multiSelectionKeyCode="Shift"
-          selectionOnDrag={!locked && !marking}
-          selectionMode={SelectionMode.Partial}
-          panOnDrag={marking ? false : locked || [1]}
-          disableKeyboardA11y
-          deleteKeyCode={null}
-          zoomOnDoubleClick={false}
-          panOnScroll
-          minZoom={ZOOM.min}
-          maxZoom={ZOOM.max}
-          fitView
-          fitViewOptions={fit}
-          attributionPosition="bottom-center"
-          aria-label={t("canvas.label", { level: doc.canvases[canvasId].name })}
-          className={cn("sw-canvas", tool && "sw-placing", marking && "sw-marking")}
-        >
-          <Background variant={BackgroundVariant.Dots} gap={18} size={1.4} color="var(--dot)" bgColor="var(--canvas)" />
-          {presenting && <StageMotion level={level} marks={marks} play={played ?? -1} />}
-          {!presenting && <Pointer canvasId={canvasId} />}
-          {!presenting && <MarksLayer canvasId={canvasId} />}
-          {!presenting && <ProposalLayer canvasId={canvasId} />}
-          {!presenting && <CommentsLayer canvasId={canvasId} />}
-          {!presenting && <LocksLayer canvasId={canvasId} />}
-          {showMinimap && (
-            <MiniMap
-              pannable
-              zoomable
-              position="bottom-right"
-              ariaLabel={t("minimap")}
-              nodeColor={minimapColor}
-              nodeStrokeColor="transparent"
-              nodeBorderRadius={3}
-              bgColor="var(--surface)"
-              maskColor="color-mix(in srgb, var(--canvas) 72%, transparent)"
-              className="sw-minimap"
-              style={MINIMAP}
+        <FarContext value={far}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            onNodesChange={on.nodesChange}
+            onEdgesChange={on.edgesChange}
+            onNodeDoubleClick={on.nodeDoubleClick}
+            onPaneClick={on.paneClick}
+            onNodeDragStop={on.nodeDragStop}
+            onNodeMouseEnter={on.nodeMouseEnter}
+            onNodeMouseLeave={on.nodeMouseLeave}
+            onConnectStart={on.connectStart}
+            onConnect={on.connect}
+            onConnectEnd={on.connectEnd}
+            isValidConnection={on.validConnection}
+            connectionLineComponent={ConnectionLine}
+            onNodeContextMenu={on.nodeContextMenu}
+            onEdgeContextMenu={on.edgeContextMenu}
+            onEdgeDoubleClick={on.edgeDoubleClick}
+            onPaneContextMenu={on.paneContextMenu}
+            onSelectionContextMenu={on.selectionContextMenu}
+            onMoveEnd={on.moveEnd}
+            onlyRenderVisibleElements={many}
+            nodesDraggable={!locked && !marking}
+            nodesConnectable={!locked}
+            edgesFocusable={false}
+            elevateNodesOnSelect={false}
+            zIndexMode="manual"
+            multiSelectionKeyCode="Shift"
+            selectionOnDrag={!locked && !marking}
+            selectionMode={SelectionMode.Partial}
+            panOnDrag={marking ? false : locked || [1]}
+            disableKeyboardA11y
+            deleteKeyCode={null}
+            zoomOnDoubleClick={false}
+            panOnScroll
+            minZoom={ZOOM.min}
+            maxZoom={ZOOM.max}
+            fitView
+            fitViewOptions={fit}
+            attributionPosition="bottom-center"
+            aria-label={t("canvas.label", { level: doc.canvases[canvasId].name })}
+            className={cn("sw-canvas", tool && "sw-placing", marking && "sw-marking")}
+          >
+            <Background
+              variant={BackgroundVariant.Dots}
+              gap={18}
+              size={1.4}
+              color="var(--dot)"
+              bgColor="var(--canvas)"
             />
-          )}
-        </ReactFlow>
+            {presenting && <StageMotion level={level} marks={marks} play={played ?? -1} />}
+            {!presenting && <Pointer canvasId={canvasId} />}
+            {!presenting && <MarksLayer canvasId={canvasId} />}
+            {!presenting && <ProposalLayer canvasId={canvasId} />}
+            {!presenting && <CommentsLayer canvasId={canvasId} />}
+            {!presenting && <LocksLayer canvasId={canvasId} />}
+            {showMinimap && (
+              <MiniMap
+                pannable
+                zoomable
+                position="bottom-right"
+                ariaLabel={t("minimap")}
+                nodeColor={minimapColor}
+                nodeStrokeColor="transparent"
+                nodeBorderRadius={3}
+                bgColor="var(--surface)"
+                maskColor="color-mix(in srgb, var(--canvas) 72%, transparent)"
+                className="sw-minimap"
+                style={MINIMAP}
+              />
+            )}
+          </ReactFlow>
+        </FarContext>
       </MarkActions>
       {!presenting && <ZoomIsland />}
       {showLegend && (

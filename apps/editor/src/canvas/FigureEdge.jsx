@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useProblems } from "@/problems/store";
 import { useSimulation } from "@/simulate/store";
 
+import { FarContext, farLook } from "./far";
 import { MarkActions } from "./marks";
 import { MARKER_PREFIX } from "./project";
 import { useMarker } from "./useMarker";
@@ -212,8 +213,13 @@ export function FigureEdge({ data, selected, sourceX, sourceY, targetX, targetY 
   const running = useSimulation(state => state.mode === "run");
   const severity = running ? null : marker;
   const highlighted = useProblems(state => state.highlight === part.id);
+  const far = use(FarContext);
   if (data.moving) return <Preview sourceX={sourceX} sourceY={sourceY} targetX={targetX} targetY={targetY} />;
   const d = pathOf(part.points);
+  // Far out, the line alone (far.js).
+  if (far && !selected && !data.mark) {
+    return <path d={d} fill="none" data-far-edge="" stroke={farLook(part).stroke ?? "var(--sub)"} strokeWidth={1.2} />;
+  }
   const [x, y] = markerAt(part, label);
   const badge = badgeIn(part.svg + (label?.svg ?? ""));
   return (

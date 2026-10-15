@@ -35,4 +35,30 @@ describe("far out, boxes draw less (performance spec §3 P2)", () => {
     fireEvent.click(within(zoom).getByRole("button", { name: "Zoom to 100 %" }));
     expect(canvas.dataset.far).toBeUndefined();
   });
+
+  it("draws boxes and arrows plain far out, Core's drawing near", async () => {
+    const motion = vi.spyOn(window, "matchMedia").mockImplementation(query => ({
+      matches: query === "(prefers-reduced-motion: reduce)",
+      media: query,
+      addEventListener() {},
+      removeEventListener() {}
+    }));
+    onTestFinished(() => motion.mockRestore());
+    const doc = await placedExample("payments");
+    act(() => editorStore.getState().open(doc, { canvasId: "cnv_lifecycle" }));
+    render(<Canvas />);
+    const zoom = screen.getByRole("toolbar", { name: "Zoom" });
+    fireEvent.click(within(zoom).getByRole("button", { name: "Zoom to 100 %" }));
+    const [id] = Object.entries(doc.canvases.cnv_lifecycle.nodes).find(([, node]) => node.kind === "state");
+    const box = () => document.querySelector(`.react-flow__node-node[data-id="${id}"]`);
+    expect(box().querySelector("svg g.node")).toBeTruthy();
+    expect(box().querySelector("[data-far-box]")).toBeNull();
+    for (let step = 0; step < 6; step += 1) fireEvent.click(within(zoom).getByRole("button", { name: "Zoom out" }));
+    expect(box().querySelector("svg g.node")).toBeNull();
+    const far = box().querySelector("[data-far-box]");
+    expect(far.style.backgroundColor).not.toBe("");
+    expect(document.querySelector("[data-far-edge]")).toBeTruthy();
+    fireEvent.click(within(zoom).getByRole("button", { name: "Zoom to 100 %" }));
+    expect(box().querySelector("svg g.node")).toBeTruthy();
+  });
 });
