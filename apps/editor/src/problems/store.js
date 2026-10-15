@@ -40,10 +40,15 @@ export function createProblemsStore() {
     ...empty(),
     /** The element a pointer rests on in the Problems panel; the canvas highlights it. */
     highlight: null,
+    /** The element the Problems panel is open on ("Show in Problems", from a marker's details); it marks its lines. */
+    focus: null,
     /** Store the Problems of a document version. */
     set: (version, list) => set({ version, list, byElement: worstByElement(list) }),
-    clear: () => set({ ...empty(), highlight: null }),
-    setHighlight: id => set({ highlight: id })
+    clear: () => set({ ...empty(), highlight: null, focus: null }),
+    setHighlight: id => set({ highlight: id }),
+    /** Open the Problems panel on an element, highlighted on the canvas (EditorPage opens the panel). */
+    showElement: id => set({ focus: id, highlight: id }),
+    setFocus: id => set({ focus: id })
   }));
 }
 

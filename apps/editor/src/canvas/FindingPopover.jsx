@@ -1,5 +1,4 @@
-import { useViewport } from "@xyflow/react";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { BADGE, TONES } from "statewright";
 
@@ -11,13 +10,15 @@ import { indexOf } from "@/lib/derived";
 import { useSimulation } from "@/simulate/store";
 import { editorStore, useEditor } from "@/store/editor";
 
-import { besideBadge, findingStore, findingsOn, useFindings } from "./findings";
+import { findingStore, findingsOn } from "./findings";
+import { CHIP, HoverCard } from "./HoverCard";
 import { paint } from "./palette";
+import { useHoverPopover } from "./useHoverPopover";
 
-/** How long the pointer rests on a badge before its findings show. */
-export const OPEN_MS = 150;
-/** How long they wait for the pointer to come back, crossing from the badge to them or back. */
-const CLOSE_MS = 120;
+/** A box's badge is Core's markup; an edge's is reached through the hit area above the edges (FigureEdge). */
+const BADGES = ".badge, .badge-hit";
+/** What a badge says: its element and the codes of the findings it shows. */
+const readBadge = badge => ({ target: badge.dataset.target, codes: badge.dataset.codes.split(" ") });
 
 /** Each severity in a tone of the diagram's palette, the most severe in the badge's own colours. */
 const SEVERITY = {
@@ -27,10 +28,6 @@ const SEVERITY = {
   low: TONES.info,
   info: TONES.neutral
 };
-
-/** A small mono chip in capitals, as the diagrams' chips are. */
-const CHIP =
-  "inline-flex h-[18px] shrink-0 items-center font-mono text-[9.5px] font-semibold uppercase tracking-[0.04em]";
 
 /** A piece of evidence, or the source of a finding: a code chip. */
 function CodeChip({ children, more }) {
@@ -91,87 +88,15 @@ function FindingBlock({ finding }) {
 /**
  * A finding badge's details (Core draws the badge, marked with its element and codes): once the pointer rests on a
  * badge, its findings show beside it — each with its severity, code and title, its description, its source and where
- * it was seen — and "Show in the inspector". They stay while the pointer is on the badge or on them, so their words
- * can be selected and copied; they go when it leaves both, on Esc, on a press elsewhere and when the view moves.
+ * it was seen — and "Show in the inspector". They stay and go as any details of what the pointer rests on
+ * (useHoverPopover).
  * @param {{ container: import("react").RefObject<HTMLElement> }} props The canvas, whose badges are watched.
  */
 export function FindingPopover({ container }) {
   const { t } = useTranslation("editor");
-  const shown = useFindings(state => state.shown);
+  const { shown, ref, hold } = useHoverPopover({ container, store: findingStore, selector: BADGES, read: readBadge });
   const doc = useEditor(state => state.doc);
-  const canvasId = useEditor(state => state.canvasId);
   const simulating = useSimulation(state => state.mode !== null);
-  const { x, y, zoom } = useViewport();
-  const ref = useRef(null);
-  const timers = useRef({ open: null, close: null });
-
-  /** The pointer has left: the findings go, unless it comes back to the badge or to them. */
-  const leave = () => {
-    clearTimeout(timers.current.close);
-    timers.current.close = setTimeout(() => findingStore.getState().close(), CLOSE_MS);
-  };
-  const stay = () => clearTimeout(timers.current.close);
-
-  // The badges are Core's markup: one listener on the canvas sees the pointer come to rest on any of them.
-  useEffect(() => {
-    const canvas = container.current;
-    if (!canvas) return;
-    const wait = timers.current;
-    // A box's badge is Core's markup; an edge's is reached through the hit area above the edges (FigureEdge).
-    const badgeOf = event => event.target.closest?.(".badge, .badge-hit") ?? null;
-    const onOver = event => {
-      const badge = badgeOf(event);
-      if (!badge || event.pointerType === "touch" || event.buttons) return;
-      clearTimeout(wait.close);
-      if (findingStore.getState().shown?.target === badge.dataset.target) return;
-      clearTimeout(wait.open);
-      wait.open = setTimeout(() => {
-        const { left, top, right, bottom } = badge.getBoundingClientRect();
-        findingStore.getState().show({
-          target: badge.dataset.target,
-          codes: badge.dataset.codes.split(" "),
-          rect: { left, top, right, bottom }
-        });
-      }, OPEN_MS);
-    };
-    const onOut = event => {
-      const badge = badgeOf(event);
-      if (!badge || badge.contains(event.relatedTarget)) return;
-      clearTimeout(wait.open);
-      if (findingStore.getState().shown) {
-        clearTimeout(wait.close);
-        wait.close = setTimeout(() => findingStore.getState().close(), CLOSE_MS);
-      }
-    };
-    canvas.addEventListener("pointerover", onOver);
-    canvas.addEventListener("pointerout", onOut);
-    return () => {
-      canvas.removeEventListener("pointerover", onOver);
-      canvas.removeEventListener("pointerout", onOut);
-      clearTimeout(wait.open);
-      clearTimeout(wait.close);
-    };
-  }, [container]);
-
-  // The view moved, or another level is shown: the badge is no longer where its findings stand.
-  useEffect(() => {
-    clearTimeout(timers.current.open);
-    findingStore.getState().close();
-  }, [x, y, zoom, canvasId]);
-
-  // Open, they go on Esc (EditorPage leaves it to them) and on a press anywhere else.
-  useEffect(() => {
-    if (!shown) return;
-    const close = () => findingStore.getState().close();
-    const onKeyDown = event => event.key === "Escape" && close();
-    const onPointerDown = event => !ref.current?.contains(event.target) && close();
-    addEventListener("keydown", onKeyDown);
-    document.addEventListener("pointerdown", onPointerDown, true);
-    return () => {
-      removeEventListener("keydown", onKeyDown);
-      document.removeEventListener("pointerdown", onPointerDown, true);
-    };
-  }, [shown]);
 
   const findings = shown ? findingsOn(doc, shown.target, shown.codes) : [];
   const gone = Boolean(shown) && !findings.length;
@@ -179,20 +104,6 @@ export function FindingPopover({ container }) {
   useEffect(() => {
     if (gone) findingStore.getState().close();
   }, [gone]);
-
-  // Beside the badge, kept inside the window; measured before it is painted.
-  useLayoutEffect(() => {
-    const box = ref.current;
-    if (!box || !shown) return;
-    const place = besideBadge(
-      shown.rect,
-      { w: box.offsetWidth, h: box.offsetHeight },
-      { w: innerWidth, h: innerHeight }
-    );
-    box.style.left = `${place.left}px`;
-    box.style.top = `${place.top}px`;
-    box.dataset.side = place.side;
-  });
 
   if (!shown || !findings.length) return null;
   const entry = indexOf(doc).get(shown.target);
@@ -205,36 +116,16 @@ export function FindingPopover({ container }) {
     findingStore.getState().close();
   };
   return (
-    <div
+    <HoverCard
       ref={ref}
-      role="dialog"
-      aria-modal="false"
-      aria-label={t("findings.label", { name })}
-      data-testid="canvas-finding"
-      onPointerEnter={stay}
-      onPointerLeave={event => {
-        // Selecting their words may take the pointer out while it is pressed: they wait for it to be released.
-        if (!event.buttons) return leave();
-        document.addEventListener("pointerup", () => !ref.current?.matches(":hover") && leave(), { once: true });
-      }}
-      className="fixed left-0 top-0 z-30 flex w-max max-w-[min(360px,calc(100vw-16px))] select-text flex-col overflow-hidden rounded-island border border-island-border bg-surface text-ink shadow-dialog motion-safe:animate-[fade-in_160ms_var(--ease-soft)]"
+      hold={hold}
+      label={t("findings.label", { name })}
+      testId="canvas-finding"
+      action={simulating ? undefined : { label: t("findings.show"), onClick: inspect }}
     >
-      <ul className="max-h-[min(340px,calc(100vh-72px))] divide-y divide-hairline overflow-y-auto overscroll-contain [scrollbar-color:var(--control-border)_transparent] [scrollbar-width:thin]">
-        {findings.map(finding => (
-          <FindingBlock key={finding.id} finding={finding} />
-        ))}
-      </ul>
-      {!simulating && (
-        <div className="flex justify-end border-t border-hairline px-3.5 py-2">
-          <button
-            type="button"
-            onClick={inspect}
-            className="text-label font-medium text-accent hover:underline focus-visible:underline"
-          >
-            {t("findings.show")}
-          </button>
-        </div>
-      )}
-    </div>
+      {findings.map(finding => (
+        <FindingBlock key={finding.id} finding={finding} />
+      ))}
+    </HoverCard>
   );
 }

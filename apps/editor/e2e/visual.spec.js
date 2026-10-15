@@ -3,8 +3,9 @@
 // open beside it, as it opens and widened from its edge. Plan S3 (simulator spec §10: "visual snapshots of mockups
 // 02–06's states"): the simulation's states of mockups 01 to 04; plan S4, the stage (mockup 05) and a scenario's page
 // (mockup 06); plan D1, the documentation page's cover and a level's part; plan A3, an agent's toast and note (AI
-// interface spec §7.3); plan A4, Connect an AI… (§7.4); a finding badge's details, beside it; the level's kind under
-// the tool dock, its menu open; and the support popover above its badge. After a deliberate change of look, update the pictures with
+// interface spec §7.3); plan A4, Connect an AI… (§7.4); a finding badge's details, beside it; a Problems marker's
+// details, beside it; the level's kind under the tool dock, its menu open; and the support popover above its badge.
+// After a deliberate change of look, update the pictures with
 // `npm run e2e -w @statewright/editor -- e2e/visual.spec.js --update-snapshots=all` and look at every one before
 // committing it.
 import { readFileSync } from "node:fs";
@@ -12,6 +13,7 @@ import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 
 import { getPaidWithFindings } from "./fixtures/findings.js";
+import { paymentsWithProblems } from "./fixtures/problems.js";
 
 const EXAMPLES = [
   {
@@ -198,6 +200,18 @@ for (const theme of ["light", "dark"]) {
       await page.locator('.react-flow__node[data-id="nod_processing"] .badge').hover();
       await expect(page.getByTestId("canvas-finding")).toBeVisible();
       await expect(page).toHaveScreenshot(`finding-popover-${theme}.png`, { maxDiffPixelRatio: 0.001 });
+    });
+
+    test("shows a marker's Problems beside it, saying what incomplete means", async ({ page }) => {
+      // The compliance hold both stuck, on a level that shows only some of its transitions, and to verify.
+      await page.goto("/");
+      await page.getByLabel("Open file…").setInputFiles(await paymentsWithProblems());
+      await expect(page).toHaveURL(/\/p\/prj_payments$/);
+      await page.goto("/p/prj_payments/cnv_lifecycle");
+      await settled(page);
+      await page.locator('.react-flow__node[data-id="nod_complianceHold"] .problem-marker').hover();
+      await expect(page.getByTestId("canvas-problem").getByRole("listitem")).toHaveCount(2);
+      await expect(page).toHaveScreenshot(`problem-popover-${theme}.png`, { maxDiffPixelRatio: 0.001 });
     });
 
     test("shows the support popover open above its badge, on the Projects screen", async ({ page }) => {

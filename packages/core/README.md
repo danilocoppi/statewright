@@ -902,6 +902,7 @@ edges on the canvas carry `data-id`, the document's ID. `editor_state` (or `stat
 | `canvas`                      | the editor: the level shown                                        | yes      |
 | `canvas-point`                | the canvas: an agent's note (view.point)                           | yes      |
 | `canvas-finding`              | the canvas: a badge's findings, the pointer resting on it          | yes      |
+| `canvas-problem`              | the canvas: a marker's Problems, the pointer resting on it         | yes      |
 | `inspector`                   | the editor: the inspector, with something selected                 | yes      |
 | `inspector-field`             | each field of the inspector                                        | per item |
 | `problems-panel`              | the editor: Problems, open                                         | yes      |

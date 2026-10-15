@@ -119,6 +119,11 @@ test("finds every hook on its screen, once where it is unique (§7.5)", async ({
   await shows("canvas-finding");
   await page.keyboard.press("Escape");
 
+  // A marker's Problems, the pointer resting on it.
+  await page.locator('.react-flow__node[data-id="nod_complianceHold"] .problem-marker').hover();
+  await shows("canvas-problem");
+  await page.keyboard.press("Escape");
+
   // The simulation: its moves, its steps, the question it asks; the stage and its card.
   await agent("run.start", { canvas: "cnv_lifecycle", at: "2026-01-05T09:00:00Z" });
   await shows("simulation-panel", "simulation-move", "simulation-stop");

@@ -140,6 +140,15 @@
       "warning": "Warnings",
       "incomplete": "Incomplete"
     },
+    "severity": {
+      "error": "Error",
+      "warning": "Warning",
+      "incomplete": "Incomplete"
+    },
+    "incomplete": {
+      "level": "Not an error: this level shows only some of its transitions, so the rule only reminds you.",
+      "reminder": "Not an error: a reminder of what is still to be decided or specified."
+    },
     "none": "No problems in this project.",
     "noneHere": "None of this kind.",
     "catalog": "Catalog / {{collection}}",
@@ -177,7 +186,10 @@
         "unused": "{{count}} {{collection}} are not used anywhere"
       }
     },
-    "explain": "What {{code}} means"
+    "explain": "What {{code}} means",
+    "on": "Problems on {{name}}",
+    "show": "Show in Problems",
+    "marker": "Problems: {{severity}}"
   },
   "refusals": {
     "elsewhere": "Only boxes on this level can be connected.",

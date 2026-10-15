@@ -49,6 +49,7 @@ export const HOOKS = [
   { id: "canvas", where: "the editor: the level shown", unique: true },
   { id: "canvas-point", where: "the canvas: an agent's note (view.point)", unique: true },
   { id: "canvas-finding", where: "the canvas: a badge's findings, the pointer resting on it", unique: true },
+  { id: "canvas-problem", where: "the canvas: a marker's Problems, the pointer resting on it", unique: true },
   { id: "inspector", where: "the editor: the inspector, with something selected", unique: true },
   { id: "inspector-field", where: "each field of the inspector", unique: false },
   { id: "problems-panel", where: "the editor: Problems, open", unique: true },

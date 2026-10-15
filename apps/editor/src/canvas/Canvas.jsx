@@ -49,6 +49,7 @@ import { FindingPopover } from "./FindingPopover";
 import { Legend } from "./Legend";
 import { MarkActions } from "./marks";
 import { DecorationNode, FigureNode, HeadingNode, NoteNode } from "./parts";
+import { ProblemPopover } from "./ProblemPopover";
 import { LAYERS, projectLevel } from "./project";
 import { StageMotion } from "./StageMotion";
 import { dressedAs, steadier } from "./steady";
@@ -635,6 +636,7 @@ function Flow({ onNavigate }) {
       <Announcer name={doc.canvases[canvasId].name} level={level} selection={selection} />
       <Refusal />
       <FindingPopover container={container} />
+      <ProblemPopover container={container} />
       {menu && !menu.anchor && <CanvasMenu at={menu} onClose={() => editingStore.getState().close()} />}
       {tool && !editorOpen && <Ghost tool={tool} />}
       {connect.from && !hovered && (
