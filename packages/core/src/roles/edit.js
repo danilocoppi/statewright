@@ -128,11 +128,25 @@ function eventsInto(doc, stateId) {
   return [...events].sort();
 }
 
-/** The flow levels, other than this one, whose steps use a catalog item through a field. */
+/**
+ * The levels, other than this one, a catalog item's party also speaks for: flows whose steps use it, and, for an
+ * action, machines that run it (there its party is who receives it).
+ */
 function otherFlowsUsing(doc, canvasId, kind, field, itemId) {
+  const runs = effects => (effects ?? []).some(effect => effect.action === itemId);
   return Object.keys(doc.canvases)
-    .filter(id => id !== canvasId && doc.canvases[id].kind === "flow")
-    .filter(id => Object.values(doc.canvases[id].nodes).some(node => node.kind === kind && node[field] === itemId))
+    .filter(id => id !== canvasId)
+    .filter(id => {
+      const canvas = doc.canvases[id];
+      if (canvas.kind === "flow") {
+        return Object.values(canvas.nodes).some(node => node.kind === kind && node[field] === itemId);
+      }
+      if (canvas.kind !== "machine" || kind !== "action") return false;
+      return (
+        Object.values(canvas.edges).some(edge => runs(edge.actions)) ||
+        Object.values(canvas.nodes).some(node => runs(node.onEntry) || runs(node.onExit))
+      );
+    })
     .sort();
 }
 

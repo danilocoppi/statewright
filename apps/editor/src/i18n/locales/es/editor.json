@@ -466,7 +466,7 @@
     "alsoLose_other": "Otros {{count}} conectores también se van: decían lo mismo.",
     "whichEvent": "¿Qué evento lleva a {{name}}?",
     "eventPlaceholder": "Un evento que lleva allí",
-    "alsoChanges_one": "El webhook o la acción se comparte: otro flujo también cambia.",
-    "alsoChanges_other": "El webhook o la acción se comparte: otros {{count}} flujos también cambian."
+    "alsoChanges_one": "Compartido: otro nivel también cambia.",
+    "alsoChanges_other": "Compartido: otros {{count}} niveles también cambian."
   }
 }

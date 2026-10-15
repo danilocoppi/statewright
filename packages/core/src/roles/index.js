@@ -173,8 +173,8 @@ function effectsOfStep(doc, node) {
   return { emitted, called };
 }
 
-/** The party a flow step names itself: a call's, its webhook's, its action's; with the element that holds it. */
-function ownPartyOf(doc, id, node) {
+/** The party a flow step names itself (exported for the contract, which says a lane's performer only): a call's, its webhook's, its action's; with the element that holds it. */
+export function ownPartyOf(doc, id, node) {
   if (node.kind === "call" && node.party) return { party: node.party, owner: id };
   if (node.kind === "webhook") {
     const party = doc.catalog.webhooks[node.webhook]?.party;

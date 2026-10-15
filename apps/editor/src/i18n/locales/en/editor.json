@@ -466,7 +466,7 @@
     "alsoLose_other": "{{count}} other connectors go too: they said the same.",
     "whichEvent": "Which event leads to {{name}}?",
     "eventPlaceholder": "An event that leads there",
-    "alsoChanges_one": "The webhook or action is shared: {{count}} other flow changes too.",
-    "alsoChanges_other": "The webhook or action is shared: {{count}} other flows change too."
+    "alsoChanges_one": "Shared: {{count}} other level changes too.",
+    "alsoChanges_other": "Shared: {{count}} other levels change too."
   }
 }

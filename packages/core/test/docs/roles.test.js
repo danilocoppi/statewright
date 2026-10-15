@@ -73,7 +73,7 @@ describe("a flow's roles in the example (mixed levels spec §4.4)", () => {
     expect(markdown).toMatch(/\| Authorise payment \| is done by \| Payments \|/);
     const { contract } = await toContract(order());
     const steps = contract.flows.find(flow => flow.id === "cnv_checkout").steps;
-    expect(Object.fromEntries(steps.map(step => [step.id, step.performedBy]))).toMatchObject({
+    expect(Object.fromEntries(steps.map(step => [step.id, step.performedBy ?? step.party]))).toMatchObject({
       nod_payCall: "Payments",
       nod_placeOrder: "Customer"
     });

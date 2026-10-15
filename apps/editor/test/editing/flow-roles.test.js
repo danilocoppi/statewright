@@ -108,3 +108,33 @@ describe("who performs a call, in the simulation's steps", () => {
     expect(line.text).toMatch(/, by Payments$/);
   });
 });
+
+describe("deleting a step selected with its connectors (a rubber band)", () => {
+  it("deletes the step, leaving its connectors to go with it", () => {
+    state().select(["nod_tell", "leadsTo:nod_tell:nod_paidHere"]);
+    deleteSelection(t);
+    expect(state().doc.canvases.cnv_checkout.nodes.nod_tell).toBeUndefined();
+    expect(editingStore.getState().refusal).toBeNull();
+  });
+
+  it("leaves a shared webhook's party alone when its step is deleted with its connector", () => {
+    const doc = applyBatch(state().doc, [
+      {
+        type: "catalog.add",
+        args: {
+          collection: "webhooks",
+          id: "whk_receipt",
+          item: { name: "Receipt", direction: "out", party: "pty_payments" }
+        }
+      },
+      {
+        type: "node.add",
+        args: { canvas: "cnv_checkout", id: "nod_hook", node: { kind: "webhook", webhook: "whk_receipt" } }
+      }
+    ]).doc;
+    editorStore.getState().open(doc, { canvasId: "cnv_checkout" });
+    state().select(["nod_hook", "performs:nod_hook:nod_payments"]);
+    deleteSelection(t);
+    expect(state().doc.catalog.webhooks.whk_receipt.party).toBe("pty_payments");
+  });
+});

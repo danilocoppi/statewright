@@ -98,21 +98,18 @@
           "id": "nod_checkoutDone",
           "kind": "end",
           "name": "Checked out",
-          "outcome": "success",
-          "performedBy": "Customer"
+          "outcome": "success"
         },
         {
           "id": "nod_checkoutStart",
-          "kind": "start",
-          "performedBy": "Customer"
+          "kind": "start"
         },
         {
           "endpoint": "POST /orders/pay",
           "id": "nod_payCall",
           "kind": "call",
           "name": "Authorise payment",
-          "party": "Payments",
-          "performedBy": "Payments"
+          "party": "Payments"
         },
         {
           "event": "order.placed",

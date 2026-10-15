@@ -212,6 +212,8 @@ const LANE_CAPTION = 26;
  * Moving nodes across bands leaves routes behind, so the level's edges are drawn the default way.
  */
 function laneRows(doc, canvasId, block, geometry) {
+  // Only a flow's lanes are rows: a machine's or a system's keep ELK's arrangement and routes.
+  if (doc.canvases[canvasId].kind !== "flow") return;
   const lanes = Object.entries(doc.annotations?.lanes ?? {})
     .filter(([, lane]) => lane.canvas === canvasId)
     .sort(([a], [b]) => (a < b ? -1 : 1));

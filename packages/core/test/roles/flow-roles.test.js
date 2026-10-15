@@ -146,13 +146,13 @@ describe("roles on a flow (mixed levels spec §4.4)", () => {
 });
 
 describe("lanes with a party (mixed levels spec §4.4, R5)", () => {
-  it("say who performs each step in the contract: its own party, else its lane's", async () => {
+  it("say who performs each step in the contract: a lane's performer where the step names none", async () => {
     const doc = checkoutDoc();
     doc.canvases.cnv_checkout.nodes.nod_call.party = "pty_customer";
     const { contract } = await toContract(doc);
     const flow = contract.flows.find(item => item.id === "cnv_checkout");
     const by = Object.fromEntries(flow.steps.map(step => [step.id, step.performedBy]));
-    expect(by).toMatchObject({ nod_call: "Customer", nod_hook: "Payments", nod_tell: "Customer" });
+    expect(by).toMatchObject({ nod_call: undefined, nod_hook: "Payments", nod_tell: "Customer" });
   });
 
   it("caption a lane with its party when the label is not the party's name", async () => {
@@ -190,5 +190,37 @@ describe("lanes laid out as rows (mixed levels spec §7)", () => {
     expect(Math.max(...first.map(item => item.bottom)) + 20).toBeLessThanOrEqual(
       Math.min(...second.map(item => item.top))
     );
+  });
+});
+
+describe("M4 review", () => {
+  it("lays lanes out as rows only on flows: a machine with a lane keeps its routes", async () => {
+    const doc = checkoutDoc();
+    doc.annotations.lanes.lne_states = { canvas: "cnv_order", label: "States", nodes: ["nod_created"] };
+    const commands = await autoLayout(doc, "cnv_order", { scope: "all" });
+    expect(commands.filter(command => command.type === "layout.edge.set").every(command => command.args.points)).toBe(
+      true
+    );
+  });
+
+  it("names a performer in the contract only where 1.1 had none: from a lane, never on start and end", async () => {
+    const doc = checkoutDoc();
+    doc.canvases.cnv_checkout.nodes.nod_call.party = "pty_customer";
+    const { contract } = await toContract(doc);
+    const steps = Object.fromEntries(
+      contract.flows.find(item => item.id === "cnv_checkout").steps.map(step => [step.id, step])
+    );
+    expect(steps.nod_call.performedBy).toBeUndefined();
+    expect(steps.nod_call.party).toBe("Customer");
+    expect(steps.nod_start.performedBy).toBeUndefined();
+    expect(steps.nod_tell.performedBy).toBe("Customer");
+  });
+
+  it("counts the machine levels an action's party changes too", () => {
+    const doc = checkoutDoc();
+    doc.catalog.actions.act_charge = { name: "Charge" };
+    doc.canvases.cnv_checkout.nodes.nod_charge = { kind: "action", action: "act_charge" };
+    doc.canvases.cnv_order.nodes.nod_created.onEntry = [{ action: "act_charge" }];
+    expect(associate(doc, "cnv_checkout", "nod_charge", "nod_paymentsHere").alsoChanges).toEqual(["cnv_order"]);
   });
 });

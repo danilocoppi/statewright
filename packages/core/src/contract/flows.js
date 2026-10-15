@@ -1,7 +1,7 @@
 // A design's flows as structure for code to implement (source-of-truth spec §5, Flows): each step with what it does —
 // the endpoint it calls, the event it emits or waits for, the values it sets, its condition — and the edges between
 // steps with their kind. What is for people only (summaries, provenance, evidence, tags) stays out.
-import { performerOf } from "../roles/index.js";
+import { ownPartyOf, performerOf } from "../roles/index.js";
 import { isGuest } from "../roles/kinds.js";
 import { ownerOf } from "../query/index.js";
 import { sorted } from "../rules/facts.js";
@@ -15,7 +15,10 @@ const bodyOf = inner =>
 
 /** A step as the contract writes it. */
 function stepOf(doc, id, node, canvasId) {
-  const performer = performerOf(doc, canvasId, id);
+  // A lane's performer (format 1.2): a step's own party is already written (a call's `party`, its webhook's or
+  // action's in the catalog); start and end perform nothing.
+  const performer =
+    ownPartyOf(doc, id, node) || ["start", "end"].includes(node.kind) ? null : performerOf(doc, canvasId, id);
   return defined({
     id,
     kind: node.kind,
@@ -37,7 +40,7 @@ function stepOf(doc, id, node, canvasId) {
     party: node.party ? partyName(doc, node.party) : undefined,
     webhook: node.webhook ? viaName(doc, node.webhook) : undefined,
     set: node.set,
-    // Who performs it (mixed levels spec §4.4): its own party, else its lane's.
+    // Who performs it when its lane says so (mixed levels spec §4.4).
     performedBy: performer ? partyName(doc, performer) : undefined
   });
 }

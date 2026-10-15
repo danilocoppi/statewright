@@ -56,14 +56,23 @@ export function deleteSelection(t, label = t("editing.delete")) {
   const { doc, canvasId, selection, readOnly } = current();
   if (!selection.length || readOnly) return;
   // A role's connector is not stored: deleting it clears what it stands for (mixed levels spec §3).
-  const associations = associationsOf(doc, canvasId).filter(item => selection.includes(item.id));
-  // A connector that is what its step is (a leads-to's event) is not deleted on its own: say why.
-  const kept = associations.map(item => dissociateCommands(doc, item).refusal).find(Boolean);
-  if (kept) {
-    editingStore.getState().refuse({ reason: kept, at: centreOf(doc, canvasId, selection) });
+  // A connector one of whose ends is being deleted goes with it (a rubber band selects both): it clears nothing.
+  const associations = associationsOf(doc, canvasId).filter(
+    item => selection.includes(item.id) && !selection.includes(item.from) && !selection.includes(item.to)
+  );
+  // A connector that is what its step is (a leads-to's event) is not deleted on its own: say why when it is all there
+  // is to delete, and leave it otherwise.
+  const kept = associations.filter(item => dissociateCommands(doc, item).refusal);
+  const elements = selection.filter(id => !associationsOf(doc, canvasId).some(item => item.id === id));
+  if (kept.length && !elements.length && kept.length === associations.length) {
+    editingStore
+      .getState()
+      .refuse({ reason: dissociateCommands(doc, kept[0]).refusal, at: centreOf(doc, canvasId, selection) });
     return;
   }
-  const cleared = associations.flatMap(item => dissociateCommands(doc, item).commands);
+  const cleared = associations
+    .filter(item => !kept.includes(item))
+    .flatMap(item => dissociateCommands(doc, item).commands);
   const commands = [...cleared, ...removeCommands(doc, selection)];
   // A connector stands for a field another connector may read too (an event's source, a transition's `by` that two
   // boxes of one party drive): say how many others go with it, with Undo.
