@@ -60,6 +60,24 @@ export function interiorOf(doc, node) {
   return body && doc.canvases[body] ? body : null;
 }
 
+/**
+ * Canvases drawn on one figure: the canvas and, recursively, interiors displayed as frames (each canvas once).
+ * @param {any} doc
+ * @param {string} canvasId
+ * @returns {string[]}
+ */
+export function figureCanvases(doc, canvasId, seen = new Set()) {
+  if (seen.has(canvasId) || !doc.canvases[canvasId]) return [];
+  seen.add(canvasId);
+  const out = [canvasId];
+  const placed = doc.layout?.canvases?.[canvasId]?.nodes ?? {};
+  for (const [nodeId, node] of Object.entries(doc.canvases[canvasId].nodes)) {
+    const interior = interiorOf(doc, node);
+    if (interior && placed[nodeId]?.display === "frame") out.push(...figureCanvases(doc, interior, seen));
+  }
+  return out;
+}
+
 /** Style key of a node (spec §15 precedence: provenance › focus › kind › outcome › category › plain). */
 function nodeKey(canvasKind, node, focused) {
   if (PROVENANCE_KEYS[node.provenance]) return PROVENANCE_KEYS[node.provenance];
@@ -244,19 +262,6 @@ export function createStyle(doc) {
     return index.get(regionId)?.value.name ?? regionId;
   }
 
-  /** Canvases drawn on one figure: the canvas and, recursively, interiors displayed as frames. */
-  function figureCanvases(canvasId, seen = new Set()) {
-    if (seen.has(canvasId) || !doc.canvases[canvasId]) return [];
-    seen.add(canvasId);
-    const out = [canvasId];
-    const placed = doc.layout?.canvases?.[canvasId]?.nodes ?? {};
-    for (const [nodeId, node] of Object.entries(doc.canvases[canvasId].nodes)) {
-      const interior = interiorOf(doc, node);
-      if (interior && placed[nodeId]?.display === "frame") out.push(...figureCanvases(interior, seen));
-    }
-    return out;
-  }
-
   /**
    * Legend of one figure (spec §15): the node styles, edge styles, chips and finding badges actually used, nodes
    * first. Wording comes from `layout.legend.labels`, else the defaults.
@@ -267,7 +272,7 @@ export function createStyle(doc) {
     const edgeKeys = new Set();
     let terminal = false;
     let findings = false;
-    for (const id of figureCanvases(canvasId)) {
+    for (const id of figureCanvases(doc, canvasId)) {
       const canvas = doc.canvases[id];
       const placed = doc.layout?.canvases?.[id]?.nodes ?? {};
       for (const nodeId of Object.keys(canvas.nodes)) {

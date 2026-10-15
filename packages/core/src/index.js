@@ -7,6 +7,7 @@ export { sign, verify, computeHashes, contentOf, sha256Hex } from "./signature.j
 export * from "./query/index.js";
 export * from "./commands/index.js";
 export { check, listRules } from "./rules/index.js";
+export { ROLES, associationsOf, performerOf } from "./roles/index.js";
 export { DOCUMENT_KINDS, createDocument } from "./create.js";
 export { slug } from "./names.js";
 export * from "./docs/index.js";
