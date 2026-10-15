@@ -19,7 +19,7 @@
 
 const SELECT = { id: "select", key: "V", icon: "pointer" };
 const NOTE = { id: "note", key: "N", icon: "note" };
-const LINK = { id: "link", key: "L", icon: "link", node: { kind: "ref" }, needs: "level" };
+const LINK = { id: "link", key: "K", icon: "link", node: { kind: "ref" }, needs: "level" };
 
 /** @type {Record<"system" | "machine" | "flow", Tool[]>} */
 export const TOOLS = {

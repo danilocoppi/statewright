@@ -5,7 +5,7 @@ import { expect, test } from "@playwright/test";
 const focused = page => page.locator(":focus");
 
 /** Press a key until the focus is on what is asked for (at most `limit` times). */
-async function pressUntil(page, key, target, limit = 40) {
+async function pressUntil(page, key, target, limit = 60) {
   for (let step = 0; step < limit; step += 1) {
     if (await target.evaluate(element => element === document.activeElement).catch(() => false)) return;
     await page.keyboard.press(key);

@@ -6,14 +6,15 @@ import { IconButton } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Island } from "@/components/ui/Island";
 import { useSimulation } from "@/simulate/store";
+import { levelsStore } from "@/stores/levels";
 import { currentInspectorWidth } from "@/stores/inspector";
 
 import { MOTION, prefersReducedMotion } from "./useLevelView";
 import { fitFor } from "./viewport";
 
 /**
- * Zoom out, the zoom level (back to 100 %), zoom in, and fit the level (spec §6.1, bottom left); then the catalog,
- * as G opens it — not while simulating, when the catalog is not offered.
+ * Zoom out, the zoom level (back to 100 %), zoom in, and fit the level (spec §6.1, bottom left); then the levels, as L
+ * opens them, and the catalog, as G opens it — not while simulating, when the catalog is not offered.
  */
 export function ZoomIsland() {
   const { t } = useTranslation("editor");
@@ -54,15 +55,26 @@ export function ZoomIsland() {
             duration: prefersReducedMotion() ? 0 : MOTION.zoom
           })
         }
+        title={`${t("zoom.fit")} (⇧F)`}
+        aria-keyshortcuts="Shift+F"
         className="h-8 rounded-control px-2.5 text-ui text-sub hover:bg-subtle hover:text-ink"
       >
         {t("zoom.fit")}
       </button>
+      <span aria-hidden="true" className="mx-1 h-4 border-l border-hairline" />
+      <IconButton
+        label={t("levels.title")}
+        title={`${t("levels.title")} (L)`}
+        aria-keyshortcuts="L"
+        onClick={() => levelsStore.getState().show()}
+      >
+        <Icon name="levels" />
+      </IconButton>
       {!simulating && (
         <>
-          <span aria-hidden="true" className="mx-1 h-4 border-l border-hairline" />
           <IconButton
             label={t("inspector:catalog.label")}
+            title={`${t("inspector:catalog.label")} (G)`}
             aria-keyshortcuts="G"
             onClick={() => catalogStore.getState().show()}
           >

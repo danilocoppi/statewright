@@ -106,6 +106,7 @@ describe("the commands ⌘K lists", () => {
     const list = commands({ onLevels });
     list.find(command => command.id === "tool-queue").run();
     expect(editingStore.getState().tool).toBe("queue");
+    expect(list.find(command => command.id === "levels").keys).toBe("L");
     list.find(command => command.id === "levels").run();
     expect(onLevels).toHaveBeenCalled();
     const open = vi.spyOn(window, "open").mockReturnValue(null);

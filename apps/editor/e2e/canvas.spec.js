@@ -97,10 +97,22 @@ test("finds an element on any level from the Levels map, and shows it selected",
   await expect(box(page, "nod_paused").locator(".sw-selection")).toBeVisible();
 });
 
-test("opens the catalog from its button beside the zoom", async ({ page }) => {
+test("opens the catalog and the levels from their buttons beside the zoom, and the levels with L", async ({ page }) => {
   await openExample(page, "Payments");
-  await page.getByRole("toolbar", { name: "Zoom" }).getByRole("button", { name: "Catalog" }).click();
+  await page.waitForURL(/\/p\/prj_payments$/);
+  const zoom = page.getByRole("toolbar", { name: "Zoom" });
+  await expect(zoom.getByRole("button", { name: "Catalog" })).toHaveAttribute("title", "Catalog (G)");
+  await zoom.getByRole("button", { name: "Catalog" }).click();
   await expect(page.getByTestId("catalog-sheet")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await zoom.getByRole("button", { name: "Levels" }).click();
+  const levels = page.getByRole("dialog", { name: "Levels" });
+  await expect(levels).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(levels).toBeHidden();
+  await page.locator(".react-flow__pane").click({ position: { x: 600, y: 700 } });
+  await page.keyboard.press("l");
+  await expect(levels).toBeVisible();
 });
 
 test("draws the diagram with its light colours, and with its dark ones in the dark theme", async ({ page }) => {

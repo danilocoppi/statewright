@@ -342,7 +342,7 @@ The editor is the platform's web app: it draws each level of a document as its f
 stays in the browser. A double-click or Enter on a box with a second outline opens its level; Esc goes back up. A
 selected box shows in the inspector: what a reviewer needs first, the technical details on request.
 
-A link (a dashed box named `↗` and where it leads; the Link tool, L, adds one) carries a small `↗` mark on its top edge
+A link (a dashed box named `↗` and where it leads; the Link tool, K, adds one) carries a small `↗` mark on its top edge
 that names where it leads ("Go to Paid"). A double-click, Enter or a click on the mark follows it: to a box or an arrow
 on any level — that level opens, as if reached by hand, with the box selected, brought into view and ringed in the
 accent colour for two seconds (a still ring for someone who asks for less motion); to a level, which opens; to a
@@ -357,6 +357,12 @@ only its kind's elements, so the tools cannot switch; under them, the level's ki
 to a level of another kind. Select a box that can hold one (a system's box, a state, a loop or a subflow) and choose
 **Create inside** → Flow, State machine or System, as the inspector's **Interior** adds it: the new level opens, with
 its tools in the dock, and one Undo takes it back. A box that already has a level offers to **Open** it instead.
+
+**Levels…** (L, the project menu, or the layers button beside the zoom) is the project's map: every level from the top
+with its kind and how many elements it has, a level opened to its elements, the flows that implement catalog items,
+the reusable parts with where each is used (or that nothing uses them), and the levels nothing reaches. Its search
+keeps what matches and the way down to it; picking a level shows it, picking an element shows its level with it
+selected. The catalog opens with G, or the button beside it.
 
 Search and commands (⌘K, or Ctrl+K on Windows and Linux) lists every command with its keys: Shift+F fits the level in
 the view (Shift+1 too), Shift+A lays it out again (Shift+L too). These keys act where the focus is:

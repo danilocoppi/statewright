@@ -189,6 +189,16 @@ describe("Editor page", () => {
       '<img src="x" onerror="alert(1)">'
     );
   });
+  it("opens the levels with L", async () => {
+    const repository = keeping();
+    await repository.save(await placedExample("payments"));
+    renderEditor(repository, "/p/prj_payments/cnv_lifecycle");
+    await screen.findByTestId("canvas");
+    expect(screen.queryByRole("dialog", { name: "Levels" })).toBeNull();
+    fireEvent.keyDown(window, { key: "l" });
+    expect(await screen.findByRole("dialog", { name: "Levels" })).toBeTruthy();
+  });
+
   it("goes up a level with Esc, clearing the selection first", async () => {
     const repository = keeping();
     await repository.save(await placedExample("payments"));

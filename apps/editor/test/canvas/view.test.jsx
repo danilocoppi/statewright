@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { Canvas } from "@/canvas/Canvas";
 import { catalogStore } from "@/catalog/state";
 import { editorStore } from "@/store/editor";
+import { levelsStore } from "@/stores/levels";
 import { useView, VIEW_DEFAULTS } from "@/stores/view";
 
 import { placedExample } from "../fixtures.js";
@@ -54,6 +55,13 @@ describe("the canvas's tools", () => {
     const zoom = screen.getByRole("toolbar", { name: "Zoom" });
     const catalog = within(zoom).getByRole("button", { name: "Catalog" });
     expect(catalog.getAttribute("aria-keyshortcuts")).toBe("G");
+    expect(catalog.getAttribute("title")).toBe("Catalog (G)");
+    expect(within(zoom).getByRole("button", { name: "Fit" }).getAttribute("title")).toBe("Fit (⇧F)");
+    const levels = within(zoom).getByRole("button", { name: "Levels" });
+    expect(levels.getAttribute("title")).toBe("Levels (L)");
+    fireEvent.click(levels);
+    expect(levelsStore.getState().open).toBe(true);
+    act(() => levelsStore.getState().close());
     fireEvent.click(catalog);
     expect(catalogStore.getState().open).toBe(true);
     act(() => catalogStore.getState().close());

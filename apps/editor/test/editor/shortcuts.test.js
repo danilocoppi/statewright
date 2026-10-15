@@ -198,6 +198,12 @@ describe("editing keys", () => {
     expect(shortcutFor(press("k", { ctrlKey: true }, inside), pc)).toBeNull();
   });
 
+  it("opens the levels with L, on every kind of level", () => {
+    expect(shortcutFor(press("l"), pc)).toBe("levels");
+    expect(shortcutFor(press("l"), mac)).toBe("levels");
+    expect(shortcutFor(press("l", {}, document.createElement("input")), pc)).toBeNull();
+  });
+
   it("opens the catalog with G, on every kind of level", () => {
     expect(shortcutFor(press("g"), pc)).toBe("catalog");
     expect(shortcutFor(press("G", { shiftKey: true }), pc)).toBeNull();

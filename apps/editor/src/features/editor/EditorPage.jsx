@@ -11,6 +11,7 @@ import { followSelection, returnFromRef, watchFollows } from "@/canvas/follow";
 import { hoverShown } from "@/canvas/hover";
 import { CatalogSheet } from "@/catalog/CatalogSheet";
 import { catalogStore } from "@/catalog/state";
+import { levelsStore } from "@/stores/levels";
 import { PanelBoundary } from "@/components/PanelBoundary";
 import { SupportBadge } from "@/components/SupportBadge";
 import { Banner } from "@/components/ui/Banner";
@@ -184,7 +185,10 @@ export default function EditorPage() {
   const readOnly = useEditor(store => store.readOnly);
   const saveError = useEditor(store => store.status.error);
   const [renaming, setRenaming] = useState(false);
-  const [levels, setLevels] = useState(false);
+  const levels = levelsStore(state => state.open);
+  const setLevels = open => levelsStore.getState()[open ? "show" : "close"]();
+  // The map is the open project's: leaving the editor closes it.
+  useEffect(() => () => levelsStore.getState().close(), []);
   const [problems, setProblems] = useState(false);
   const [palette, setPalette] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -319,6 +323,7 @@ export default function EditorPage() {
       if (action === "palette") return setPalette(true);
       if (action === "nextArea" || action === "previousArea") return void moveToArea(action === "previousArea");
       if (action === "catalog") return catalogStore.getState().show();
+      if (action === "levels") return setLevels(true);
       if (action === "fit" || action === "zoomIn" || action === "zoomOut") return editingStore.getState().zoom(action);
       if (action === "insert") {
         if (editorStore.getState().readOnly) return;

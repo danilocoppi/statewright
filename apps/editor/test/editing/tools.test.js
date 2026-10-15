@@ -22,7 +22,7 @@ describe("tools", () => {
       "store:D",
       "queue:Q",
       "external:X",
-      "link:L",
+      "link:K",
       "note:N"
     ]);
     expect(ids("machine")).toEqual([
@@ -33,7 +33,7 @@ describe("tools", () => {
       "history:H",
       "any:Y",
       "entry:E",
-      "link:L",
+      "link:K",
       "note:N"
     ]);
     expect(ids("flow")).toEqual([

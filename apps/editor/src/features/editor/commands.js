@@ -141,7 +141,7 @@ export function editorCommands({
       () => regionSelection(t)
     ),
     ...when(Boolean(parent), "up", words("up"), "Esc", () => editorStore.getState().setCanvas(parent?.canvas)),
-    ...when(true, "levels", words("levels"), undefined, onLevels),
+    ...when(true, "levels", words("levels"), "L", onLevels),
     ...when(true, "connect", t("agent:pairing.menu"), undefined, onConnect),
     ...when(true, "guide", words("guide"), undefined, () => openGuide()),
     // Once the palette has closed and given the focus back: until then the page outside it is inert.
