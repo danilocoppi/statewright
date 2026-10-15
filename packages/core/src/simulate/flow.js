@@ -2,6 +2,7 @@
 // step goes on until every token has ended, waits, or needs an answer. A token's path is its node's ID, under the
 // `while`, `forEach` and `subflow` nodes whose bodies hold it (simulator spec §4.3).
 import { evaluate } from "../logic/index.js";
+import { performerOf } from "../roles/index.js";
 import { compareText, sorted } from "../rules/facts.js";
 import { canonicalize } from "../serialize/canonical.js";
 import { EngineError, childPath, lastOf, parentOf } from "./model.js";
@@ -370,7 +371,9 @@ function visit(run, token) {
         type: "action",
         ...(node.endpoint ? { endpoint: node.endpoint } : {}),
         ...(node.request ? { request: node.request } : {}),
-        ...(node.party ? { party: node.party } : {}),
+        ...(performerOf(run.doc, run.model.canvasAt(at), lastOf(at)) ?
+          { party: performerOf(run.doc, run.model.canvasAt(at), lastOf(at)) }
+        : {}),
         at
       });
       return onward(run, token);

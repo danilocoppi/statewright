@@ -1,6 +1,7 @@
 // Drawing and deleting a role's connector (mixed levels spec §3): a connector is never stored, so drawing one writes the
 // field that holds its meaning, and deleting one clears it. What a pair of ends means comes from their kinds; a pair
 // that means nothing is refused, in words the Editor can say.
+import { isGuest } from "./kinds.js";
 import { makeId } from "../ids.js";
 import { buildIndex } from "../query/build-index.js";
 import { figureCanvases } from "../style/frames.js";
@@ -115,6 +116,65 @@ function drives(doc, canvasId, box, edgeId, choice) {
   return { role: "drives", commands };
 }
 
+/** The events whose transitions bring a machine into a state (mixed levels spec §4.4), sorted. */
+function eventsInto(doc, stateId) {
+  const machine = Object.values(doc.canvases).find(
+    canvas => canvas.kind === "machine" && canvas.nodes[stateId]?.kind === "state"
+  );
+  const events = new Set();
+  for (const edge of Object.values(machine?.edges ?? {})) {
+    if (edge.kind !== "link" && edge.to === stateId) for (const event of edge.on ?? []) events.add(event);
+  }
+  return [...events].sort();
+}
+
+/** The flow levels, other than this one, whose steps use a catalog item through a field. */
+function otherFlowsUsing(doc, canvasId, kind, field, itemId) {
+  return Object.keys(doc.canvases)
+    .filter(id => id !== canvasId && doc.canvases[id].kind === "flow")
+    .filter(id => Object.values(doc.canvases[id].nodes).some(node => node.kind === kind && node[field] === itemId))
+    .sort();
+}
+
+/**
+ * On a flow (mixed levels spec §4.4): an emit step onto a state guest leads there (R4) — its event becomes one that
+ * moves the machine into that state; a call, webhook or action step onto a participant is performed by its party (R1).
+ */
+function flowRole(doc, canvasId, from, to, choice) {
+  const canvas = doc.canvases[canvasId];
+  const step = canvas.nodes[from];
+  const target = canvas.nodes[to];
+  if (!step || !target || isGuest("flow", step)) return { refusal: "noMeaning" };
+  if (target.kind === "state") {
+    if (step.kind !== "emit") return { refusal: "noMeaning" };
+    const events = eventsInto(doc, target.target);
+    if (!events.length) return { refusal: "noLeadingEvent" };
+    const event = choice.event ?? (events.length === 1 ? events[0] : undefined);
+    if (event === undefined) return { needs: "event", events };
+    if (!events.includes(event)) return { refusal: "noLeadingEvent" };
+    if (step.event === event) return { refusal: "already" };
+    return { role: "leadsTo", commands: [{ type: "node.update", args: { id: from, set: { event } } }] };
+  }
+  if (target.kind !== "participant") return { refusal: "noMeaning" };
+  const party = target.party;
+  if (step.kind === "call") {
+    if (step.party === party) return { refusal: "already" };
+    return { role: "performs", commands: [{ type: "node.update", args: { id: from, set: { party } } }] };
+  }
+  const [collection, field] =
+    step.kind === "webhook" ? ["webhooks", "webhook"]
+    : step.kind === "action" ? ["actions", "action"]
+    : [];
+  const item = collection && doc.catalog[collection][step[field]];
+  if (!item) return { refusal: "noMeaning" };
+  if (item.party === party) return { refusal: "already" };
+  return {
+    role: "performs",
+    commands: [{ type: "catalog.update", args: { id: step[field], set: { party } } }],
+    alsoChanges: otherFlowsUsing(doc, canvasId, step.kind, field, step[field])
+  };
+}
+
 /**
  * What drawing a connector from one element of a level to another means, and the commands that write it: on a machine,
  * sends, receives and runs; on a system, a box driving a transition of a lifecycle framed there.
@@ -129,6 +189,7 @@ function drives(doc, canvasId, box, edgeId, choice) {
  */
 export function associate(doc, canvasId, from, to, choice = {}) {
   const canvas = doc.canvases[canvasId];
+  if (canvas?.kind === "flow") return flowRole(doc, canvasId, from, to, choice);
   if (canvas?.kind === "system") {
     const box = canvas.nodes[from];
     return box ? drives(doc, canvasId, { id: from, value: box }, to, choice) : { refusal: "noMeaning" };
@@ -197,6 +258,17 @@ export function dissociateCommands(doc, association) {
   }
   if (role === "receives") {
     return { commands: owners.map(id => ({ type: "catalog.update", args: { id, unset: ["party"] } })), alsoLoses: [] };
+  }
+  // A step's event is what the step is: its leads-to connector goes when the step or the state guest goes.
+  if (role === "leadsTo") return { commands: [], alsoLoses: [], refusal: "isTheStep" };
+  if (role === "performs") {
+    const commands = owners.map(id => {
+      const node = elementOf(doc, id);
+      return node ?
+          { type: "node.update", args: { id, unset: ["party"] } }
+        : { type: "catalog.update", args: { id, unset: ["party"] } };
+    });
+    return { commands, alsoLoses: [] };
   }
   if (role === "runs") {
     const place = elementOf(doc, association.from);

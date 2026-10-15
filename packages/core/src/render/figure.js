@@ -230,7 +230,9 @@ function buildScene(doc, geometry, canvasId) {
       const members = lane.canvas === id ? lane.nodes.map(nodeId => rects.get(nodeId)).filter(Boolean) : [];
       if (!members.length) continue;
       const box = bounds(members);
-      const caption = lane.label.toUpperCase();
+      // A lane that belongs to a party says so when its label does not (mixed levels spec §4.4).
+      const party = lane.party && doc.catalog.parties[lane.party]?.name;
+      const caption = (party && party !== lane.label ? `${lane.label} · ${party}` : lane.label).toUpperCase();
       scene.lanes.push({
         laneId,
         canvasId: id,

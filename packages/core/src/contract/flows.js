@@ -1,6 +1,7 @@
 // A design's flows as structure for code to implement (source-of-truth spec §5, Flows): each step with what it does —
 // the endpoint it calls, the event it emits or waits for, the values it sets, its condition — and the edges between
 // steps with their kind. What is for people only (summaries, provenance, evidence, tags) stays out.
+import { performerOf } from "../roles/index.js";
 import { isGuest } from "../roles/kinds.js";
 import { ownerOf } from "../query/index.js";
 import { sorted } from "../rules/facts.js";
@@ -13,7 +14,8 @@ const bodyOf = inner =>
   : undefined;
 
 /** A step as the contract writes it. */
-function stepOf(doc, id, node) {
+function stepOf(doc, id, node, canvasId) {
+  const performer = performerOf(doc, canvasId, id);
   return defined({
     id,
     kind: node.kind,
@@ -34,7 +36,9 @@ function stepOf(doc, id, node) {
     request: node.request,
     party: node.party ? partyName(doc, node.party) : undefined,
     webhook: node.webhook ? viaName(doc, node.webhook) : undefined,
-    set: node.set
+    set: node.set,
+    // Who performs it (mixed levels spec §4.4): its own party, else its lane's.
+    performedBy: performer ? partyName(doc, performer) : undefined
   });
 }
 
@@ -55,7 +59,7 @@ export function flowsOf(doc) {
         id,
         name: canvas.name,
         owner: owner && owner.type !== "root" ? owner.id : null,
-        steps: steps.map(([stepId, node]) => stepOf(doc, stepId, node)),
+        steps: steps.map(([stepId, node]) => stepOf(doc, stepId, node, id)),
         edges: sorted(canvas.edges)
           .filter(([, edge]) => edge.kind !== "link" && running.has(edge.from) && running.has(edge.to))
           .map(([edgeId, edge]) =>
