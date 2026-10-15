@@ -1053,7 +1053,8 @@
             "enum": [
               "system",
               "machine",
-              "flow"
+              "flow",
+              "mixed"
             ]
           },
           "name": {
@@ -4304,6 +4305,2773 @@
             ],
             "additionalProperties": false,
             "description": "A procedure: steps, branches and loops.",
+            "patternProperties": {
+              "^x-": {}
+            }
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "mixed"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "code": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9.-]+$"
+              },
+              "kicker": {
+                "type": "string",
+                "minLength": 1
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "caption": {
+                "type": "string",
+                "minLength": 1
+              },
+              "stage": {
+                "type": "string",
+                "enum": [
+                  "target",
+                  "as-built",
+                  "reference"
+                ]
+              },
+              "subject": {
+                "type": "string",
+                "minLength": 1
+              },
+              "context": {
+                "type": "string",
+                "pattern": "^(typ)_[A-Za-z0-9]+$"
+              },
+              "vars": {
+                "type": "string",
+                "pattern": "^(typ)_[A-Za-z0-9]+$"
+              },
+              "regions": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^(rgn)_[A-Za-z0-9]+$"
+                },
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "description": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^x-": {}
+                  }
+                }
+              },
+              "transitions": {
+                "type": "string",
+                "enum": [
+                  "complete",
+                  "partial",
+                  "unknown"
+                ]
+              },
+              "nodes": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^(nod)_[A-Za-z0-9]+$"
+                },
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "initial"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "region": {
+                          "type": "string",
+                          "pattern": "^(rgn)_[A-Za-z0-9]+$"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "entry"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "region": {
+                          "type": "string",
+                          "pattern": "^(rgn)_[A-Za-z0-9]+$"
+                        },
+                        "via": {
+                          "type": "string",
+                          "pattern": "^(ept|whk)_[A-Za-z0-9]+$"
+                        },
+                        "on": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^(evt)_[A-Za-z0-9]+$"
+                          }
+                        },
+                        "by": {
+                          "type": "string",
+                          "pattern": "^(pty)_[A-Za-z0-9]+$"
+                        },
+                        "guard": {
+                          "$ref": "#/$defs/Condition"
+                        },
+                        "effective": {
+                          "$ref": "#/$defs/Effective"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "A named creation path.",
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "state"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "region": {
+                          "type": "string",
+                          "pattern": "^(rgn)_[A-Za-z0-9]+$"
+                        },
+                        "category": {
+                          "type": "string",
+                          "enum": [
+                            "waiting",
+                            "processing",
+                            "hold"
+                          ]
+                        },
+                        "outcome": {
+                          "type": "string",
+                          "enum": [
+                            "success",
+                            "failure",
+                            "stopped"
+                          ]
+                        },
+                        "terminal": {
+                          "type": "boolean"
+                        },
+                        "statuses": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^(sts)_[A-Za-z0-9]+$"
+                          }
+                        },
+                        "onEntry": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Effect"
+                          }
+                        },
+                        "onExit": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Effect"
+                          }
+                        },
+                        "sla": {
+                          "type": "string",
+                          "pattern": "^(tmr)_[A-Za-z0-9]+$"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "inner": {
+                          "$ref": "#/$defs/Inner"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "A state; `outcome` colours it, `terminal` forbids exits.",
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "choice"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "region": {
+                          "type": "string",
+                          "pattern": "^(rgn)_[A-Za-z0-9]+$"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "history"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "region": {
+                          "type": "string",
+                          "pattern": "^(rgn)_[A-Za-z0-9]+$"
+                        },
+                        "depth": {
+                          "type": "string",
+                          "enum": [
+                            "shallow",
+                            "deep"
+                          ]
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "any"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "region": {
+                          "type": "string",
+                          "pattern": "^(rgn)_[A-Za-z0-9]+$"
+                        },
+                        "except": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^(nod)_[A-Za-z0-9]+$"
+                          }
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "participant"
+                        },
+                        "party": {
+                          "type": "string",
+                          "pattern": "^(pty)_[A-Za-z0-9]+$"
+                        },
+                        "region": {
+                          "type": "string",
+                          "pattern": "^(rgn)_[A-Za-z0-9]+$"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "party"
+                      ],
+                      "additionalProperties": false,
+                      "description": "A party on the level (role R1): it sends, receives or performs what its party does.",
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "steps"
+                        },
+                        "action": {
+                          "type": "string",
+                          "pattern": "^(act|ept|whk)_[A-Za-z0-9]+$"
+                        },
+                        "region": {
+                          "type": "string",
+                          "pattern": "^(rgn)_[A-Za-z0-9]+$"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "action"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The flow of an action, endpoint or webhook, drawn where it runs (role R2).",
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "ref"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "target": {
+                          "type": "string",
+                          "pattern": "^(prj|cnv|nod|edg|rgn|def|typ|evt|act|grd|ept|whk|tmr|sts|pty|fnd|nte|lne|scn)_[A-Za-z0-9]+$"
+                        },
+                        "region": {
+                          "type": "string",
+                          "pattern": "^(rgn)_[A-Za-z0-9]+$"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "target"
+                      ],
+                      "additionalProperties": false,
+                      "description": "A shortcut to another canvas, node, definition or catalog item.",
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "start"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "end"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "outcome": {
+                          "type": "string",
+                          "enum": [
+                            "success",
+                            "failure"
+                          ]
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "action"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "action": {
+                          "type": "string",
+                          "pattern": "^(act)_[A-Za-z0-9]+$"
+                        },
+                        "args": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "$ref": "#/$defs/__schema5"
+                          }
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "action"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "if"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "condition": {
+                          "$ref": "#/$defs/Condition"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "switch"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "on": {
+                          "$ref": "#/$defs/__schema6"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "while"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "condition": {
+                          "$ref": "#/$defs/Condition"
+                        },
+                        "inner": {
+                          "$ref": "#/$defs/Inner"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "forEach"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "items": {
+                          "$ref": "#/$defs/__schema7"
+                        },
+                        "as": {
+                          "type": "string",
+                          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                        },
+                        "inner": {
+                          "$ref": "#/$defs/Inner"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "parallel"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "join"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "emit"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "event": {
+                          "type": "string",
+                          "pattern": "^(evt)_[A-Za-z0-9]+$"
+                        },
+                        "payload": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "$ref": "#/$defs/__schema5"
+                          }
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "event"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "wait"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "on": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^(evt)_[A-Za-z0-9]+$"
+                          }
+                        },
+                        "after": {
+                          "type": "string",
+                          "pattern": "^(tmr)_[A-Za-z0-9]+$"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "call"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "endpoint": {
+                          "type": "string",
+                          "pattern": "^(ept)_[A-Za-z0-9]+$"
+                        },
+                        "request": {
+                          "type": "object",
+                          "properties": {
+                            "method": {
+                              "type": "string",
+                              "enum": [
+                                "GET",
+                                "POST",
+                                "PUT",
+                                "PATCH",
+                                "DELETE"
+                              ]
+                            },
+                            "url": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "method",
+                            "url"
+                          ],
+                          "additionalProperties": false,
+                          "patternProperties": {
+                            "^x-": {}
+                          }
+                        },
+                        "party": {
+                          "type": "string",
+                          "pattern": "^(pty)_[A-Za-z0-9]+$"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "webhook"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "webhook": {
+                          "type": "string",
+                          "pattern": "^(whk)_[A-Za-z0-9]+$"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "webhook"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "assign"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "set": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "pattern": "^(vars|context)\\.[A-Za-z0-9_.]+$"
+                          },
+                          "additionalProperties": {
+                            "$ref": "#/$defs/__schema8"
+                          }
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "subflow"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "inner": {
+                          "$ref": "#/$defs/Inner"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "state"
+                        },
+                        "target": {
+                          "type": "string",
+                          "pattern": "^(nod)_[A-Za-z0-9]+$"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "target"
+                      ],
+                      "additionalProperties": false,
+                      "description": "A state of a machine level, which steps lead to (role R4).",
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "actor"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "party": {
+                          "type": "string",
+                          "pattern": "^(pty)_[A-Za-z0-9]+$"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "inner": {
+                          "$ref": "#/$defs/Inner"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "service"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "party": {
+                          "type": "string",
+                          "pattern": "^(pty)_[A-Za-z0-9]+$"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "inner": {
+                          "$ref": "#/$defs/Inner"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "store"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "party": {
+                          "type": "string",
+                          "pattern": "^(pty)_[A-Za-z0-9]+$"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "inner": {
+                          "$ref": "#/$defs/Inner"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "queue"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "party": {
+                          "type": "string",
+                          "pattern": "^(pty)_[A-Za-z0-9]+$"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "inner": {
+                          "$ref": "#/$defs/Inner"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "external"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "party": {
+                          "type": "string",
+                          "pattern": "^(pty)_[A-Za-z0-9]+$"
+                        },
+                        "summary": {
+                          "type": "string"
+                        },
+                        "inner": {
+                          "$ref": "#/$defs/Inner"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "additionalProperties": false,
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    }
+                  ]
+                }
+              },
+              "edges": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^(edg)_[A-Za-z0-9]+$"
+                },
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "transition"
+                        },
+                        "from": {
+                          "type": "string",
+                          "pattern": "^(nod)_[A-Za-z0-9]+$"
+                        },
+                        "to": {
+                          "type": "string",
+                          "pattern": "^(nod)_[A-Za-z0-9]+$"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "on": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^(evt)_[A-Za-z0-9]+$"
+                          }
+                        },
+                        "onMatch": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^(\\*|[a-z][A-Za-z0-9_]*)(\\.(\\*|[a-z][A-Za-z0-9_]*))*$"
+                          }
+                        },
+                        "after": {
+                          "type": "string",
+                          "pattern": "^(tmr)_[A-Za-z0-9]+$"
+                        },
+                        "always": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "done": {
+                          "anyOf": [
+                            {
+                              "type": "boolean",
+                              "const": true
+                            },
+                            {
+                              "type": "string",
+                              "pattern": "^(rgn)_[A-Za-z0-9]+$"
+                            }
+                          ]
+                        },
+                        "via": {
+                          "type": "string",
+                          "pattern": "^(ept|whk)_[A-Za-z0-9]+$"
+                        },
+                        "by": {
+                          "type": "string",
+                          "pattern": "^(pty)_[A-Za-z0-9]+$"
+                        },
+                        "guard": {
+                          "$ref": "#/$defs/Condition"
+                        },
+                        "else": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "actions": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Effect"
+                          }
+                        },
+                        "internal": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "intent": {
+                          "type": "string",
+                          "enum": [
+                            "happy",
+                            "failure"
+                          ]
+                        },
+                        "retry": {
+                          "$ref": "#/$defs/RetryPolicy"
+                        },
+                        "effective": {
+                          "$ref": "#/$defs/Effective"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "from",
+                        "to"
+                      ],
+                      "additionalProperties": false,
+                      "description": "A transition on a mixed level (kind transition).",
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "link"
+                        },
+                        "from": {
+                          "type": "string",
+                          "pattern": "^(nod)_[A-Za-z0-9]+$"
+                        },
+                        "to": {
+                          "type": "string",
+                          "pattern": "^(nod)_[A-Za-z0-9]+$"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "on": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^(evt)_[A-Za-z0-9]+$"
+                          }
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "from",
+                        "to"
+                      ],
+                      "additionalProperties": false,
+                      "description": "A non-executable link to or from a ref node.",
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "pattern": "^(nod)_[A-Za-z0-9]+$"
+                        },
+                        "to": {
+                          "type": "string",
+                          "pattern": "^(nod)_[A-Za-z0-9]+$"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "next",
+                            "true",
+                            "false",
+                            "case",
+                            "default",
+                            "error",
+                            "link"
+                          ]
+                        },
+                        "case": {
+                          "$ref": "#/$defs/__schema9"
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "to"
+                      ],
+                      "additionalProperties": false,
+                      "description": "A flow edge; `case` is required exactly when kind is case.",
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                          "pattern": "^(nod)_[A-Za-z0-9]+$"
+                        },
+                        "to": {
+                          "type": "string",
+                          "pattern": "^(nod)_[A-Za-z0-9]+$"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "command",
+                            "event",
+                            "webhook",
+                            "stream",
+                            "data",
+                            "link"
+                          ]
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "events": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^(evt)_[A-Za-z0-9]+$"
+                          }
+                        },
+                        "endpoint": {
+                          "type": "string",
+                          "pattern": "^(ept)_[A-Za-z0-9]+$"
+                        },
+                        "webhook": {
+                          "type": "string",
+                          "pattern": "^(whk)_[A-Za-z0-9]+$"
+                        },
+                        "by": {
+                          "type": "string",
+                          "pattern": "^(pty)_[A-Za-z0-9]+$"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "provenance": {
+                          "type": "string",
+                          "enum": [
+                            "built",
+                            "proposed",
+                            "fix",
+                            "defect",
+                            "legacy",
+                            "documented",
+                            "implied"
+                          ],
+                          "description": "Relation of the element to reality (spec §9.1)."
+                        },
+                        "confidence": {
+                          "type": "string",
+                          "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                          ],
+                          "description": "Default high; low is shown dimmed."
+                        },
+                        "evidence": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Evidence"
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/$defs/Tag"
+                          }
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "to"
+                      ],
+                      "additionalProperties": false,
+                      "description": "An interaction between system elements.",
+                      "patternProperties": {
+                        "^x-": {}
+                      }
+                    }
+                  ]
+                }
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string"
+              },
+              "provenance": {
+                "type": "string",
+                "enum": [
+                  "built",
+                  "proposed",
+                  "fix",
+                  "defect",
+                  "legacy",
+                  "documented",
+                  "implied"
+                ],
+                "description": "Relation of the element to reality (spec §9.1)."
+              },
+              "confidence": {
+                "type": "string",
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ],
+                "description": "Default high; low is shown dimmed."
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Evidence"
+                }
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Tag"
+                }
+              }
+            },
+            "required": [
+              "kind",
+              "name",
+              "nodes",
+              "edges"
+            ],
+            "additionalProperties": false,
+            "description": "Elements of every kind on one level; each connection means what its ends make it.",
             "patternProperties": {
               "^x-": {}
             }

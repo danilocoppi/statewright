@@ -765,6 +765,7 @@ Every change to a document is a command `{ "type": "node.add", "args": { … } }
 | `catalog.add` | `collection`, `item`, `id?` | Add a type, event, action, guard, endpoint, webhook, timer, status or party to the catalog. |
 | `catalog.update` | `id`, `set?`, `unset?` | Change fields of a catalog item. References to it keep working because they use its ID. |
 | `catalog.remove` | `id`, `cascade?` | Remove a catalog item. Fails with IN_USE while it is referenced, unless cascade is true. |
+| `canvas.mix` | `id` | Make a level mixed (mixed levels spec §4.5): it then takes elements of every kind; its transitions say they are transitions (kind transition). Its elements and their meaning are kept. |
 | `canvas.create` | `kind`, `name`, `owner?`, `id?`, … | Create an empty canvas. With owner, it becomes that element's interior (the owner must not have one yet). Other canvas fields (code, kicker, title, caption, stage, subject, context, transitions, vars, …) may be given. |
 | `canvas.update` | `id`, `set?`, `unset?` | Change canvas fields such as name, title, caption, stage or transitions (not kind or contents). |
 | `canvas.remove` | `id`, `cascade?` | Remove a canvas with everything in it and its nested interiors. The root canvas and definition bodies cannot be removed this way. |
@@ -2539,7 +2540,7 @@ A reusable canvas; elements whose inner points here are instances (spec §11).
 
 | Field | Type |
 | --- | --- |
-| `kind` | "system" \| "machine" \| "flow" |
+| `kind` | "system" \| "machine" \| "flow" \| "mixed" |
 | `name` | string |
 | `canvas` | cnv_* |
 
@@ -2603,6 +2604,29 @@ A procedure: steps, branches and loops.
 | `vars?` | typ_* |
 | `nodes` | map nod_* → Flow node |
 | `edges` | map edg_* → Flow edge |
+
+Also accepts the [common fields](#common-fields).
+
+#### Canvas: `mixed`
+
+Elements of every kind on one level; each connection means what its ends make it.
+
+| Field | Type |
+| --- | --- |
+| `kind` | "mixed" |
+| `name` | string |
+| `code?` | short code (P01) |
+| `kicker?` | string |
+| `title?` | string |
+| `caption?` | string |
+| `stage?` | "target" \| "as-built" \| "reference" |
+| `subject?` | string |
+| `context?` | typ_* |
+| `vars?` | typ_* |
+| `regions?` | map rgn_* → Region |
+| `transitions?` | "complete" \| "partial" \| "unknown" |
+| `nodes` | map nod_* → { kind, name?, region?, summary? } \| { kind, name, region?, via?, on?, by?, guard?, effective?, summary? } \| { kind, name, region?, category?, outcome?, terminal?, statuses?, onEntry?, onExit?, sla?, summary?, inner? } \| { kind, name?, region?, summary? } \| { kind, name?, region?, depth?, summary? } \| { kind, name?, region?, except?, summary? } \| { kind, party, region?, summary? } \| { kind, action, region?, summary? } \| { kind, name?, target, region?, summary? } \| { kind, name?, summary? } \| { kind, name?, outcome?, summary? } \| { kind, name?, action, args?, summary? } \| { kind, name?, condition?, summary? } \| { kind, name?, on?, summary? } \| { kind, name?, condition?, inner?, summary? } \| { kind, name?, items?, as?, inner?, summary? } \| { kind, name?, summary? } \| { kind, name?, summary? } \| { kind, name?, event, payload?, summary? } \| { kind, name?, on?, after?, summary? } \| { kind, name?, endpoint?, request?, party?, summary? } \| { kind, name?, webhook, summary? } \| { kind, name?, set?, summary? } \| { kind, name?, inner?, summary? } \| { kind, target, summary? } \| { kind, name?, party?, summary?, inner? } \| { kind, name?, party?, summary?, inner? } \| { kind, name?, party?, summary?, inner? } \| { kind, name?, party?, summary?, inner? } \| { kind, name?, party?, summary?, inner? } |
+| `edges` | map edg_* → { kind, from, to, name?, on?, onMatch?, after?, always?, done?, via?, by?, guard?, else?, actions?, internal?, intent?, retry?, effective? } \| { kind, from, to, name?, on? } \| Flow edge \| System edge |
 
 Also accepts the [common fields](#common-fields).
 

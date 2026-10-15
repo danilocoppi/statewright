@@ -123,15 +123,15 @@ export function createRefCollector() {
     /** Canvas-level references only (nodes and edges have their own methods). */
     canvas(id, canvas) {
       const base = ["canvases", id];
-      if (canvas.kind === "machine") one(id, base, "context", canvas.context, ["typ"]);
-      if (canvas.kind === "flow") one(id, base, "vars", canvas.vars, ["typ"]);
+      if (canvas.kind === "machine" || canvas.kind === "mixed") one(id, base, "context", canvas.context, ["typ"]);
+      if (canvas.kind === "flow" || canvas.kind === "mixed") one(id, base, "vars", canvas.vars, ["typ"]);
     },
 
     /** Node of a canvas of kind `canvasKind` (spec §12). */
     node(canvasKind, canvasId, id, node) {
       const base = ["canvases", canvasId, "nodes", id];
       inner(id, base, node.inner);
-      if (canvasKind === "machine") one(id, base, "region", node.region, ["rgn"]);
+      if (canvasKind === "machine" || canvasKind === "mixed") one(id, base, "region", node.region, ["rgn"]);
       switch (node.kind) {
         case "ref":
           one(id, base, "target", node.target, null, "element");
@@ -198,13 +198,20 @@ export function createRefCollector() {
       one(id, base, "from", edge.from, ["nod"], "element");
       one(id, base, "to", edge.to, ["nod"], "element");
       many(id, base, "on", edge.on, ["evt"]);
-      if (canvasKind === "system") {
+      // On a mixed level, a transition says it is one; any other connection holds a system's references or none.
+      const kind =
+        canvasKind === "mixed" ?
+          edge.kind === "transition" ?
+            "machine"
+          : "system"
+        : canvasKind;
+      if (kind === "system") {
         many(id, base, "events", edge.events, ["evt"]);
         one(id, base, "endpoint", edge.endpoint, ["ept"]);
         one(id, base, "webhook", edge.webhook, ["whk"]);
         one(id, base, "by", edge.by, ["pty"]);
       }
-      if (canvasKind === "machine") {
+      if (kind === "machine") {
         one(id, base, "after", edge.after, ["tmr"]);
         if (edge.done !== true) one(id, base, "done", edge.done, ["rgn"]);
         one(id, base, "via", edge.via, ["ept", "whk"]);

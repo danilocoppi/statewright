@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FlowEdge, MachineEdge, SystemEdge } from "../schema/canvas.js";
+import { FlowEdge, MachineEdge, MixedEdge, SystemEdge } from "../schema/canvas.js";
 import {
   allocateId,
   applyChange,
@@ -13,9 +13,9 @@ import {
 } from "./context.js";
 import { fail } from "./errors.js";
 import { removeElements } from "./remove.js";
-import { isGuest } from "../roles/kinds.js";
+import { edgeHome, homeKind, isGuest } from "../roles/kinds.js";
 
-const SCHEMAS = { system: SystemEdge, machine: MachineEdge, flow: FlowEdge };
+const SCHEMAS = { system: SystemEdge, machine: MachineEdge, flow: FlowEdge, mixed: MixedEdge };
 const NOT_TARGETS = new Set(["initial", "entry", "any"]);
 
 /**
@@ -30,6 +30,7 @@ export function checkEdgeEnds(canvas, edgeId, edge, nodeOf = nodeId => canvas.no
   if (canvas.kind === "system") return;
   const from = nodeOf(edge.from);
   const to = nodeOf(edge.to);
+  if (canvas.kind === "mixed") return checkMixedEnds(canvas, edgeId, edge, from, to);
   const touchesRef = from.kind === "ref" || to.kind === "ref";
   if (touchesRef !== (edge.kind === "link")) {
     fail(
@@ -49,6 +50,50 @@ export function checkEdgeEnds(canvas, edgeId, edge, nodeOf = nodeId => canvas.no
     );
   }
   if (canvas.kind === "machine" && NOT_TARGETS.has(to.kind)) {
+    fail("NOT_ALLOWED", `Edge "${edgeId}": a ${to.kind} node cannot be the target of an edge`, { id: edgeId });
+  }
+}
+
+/**
+ * A connection on a mixed level means what its ends make it (mixed levels spec §4.5): a transition between a machine's
+ * nodes, a flow's edge between steps, a system's connection between boxes, a link to or from a shortcut; anything else
+ * means nothing and is refused, saying why.
+ */
+function checkMixedEnds(canvas, edgeId, edge, from, to) {
+  const touchesRef = from.kind === "ref" || to.kind === "ref";
+  if (touchesRef !== (edge.kind === "link")) {
+    fail("NOT_ALLOWED", `Edge "${edgeId}": edges touching a ref node are links (kind "link"), and only they`, {
+      id: edgeId
+    });
+  }
+  if (touchesRef) return;
+  for (const end of [from, to]) {
+    if (isGuest("mixed", end)) {
+      fail(
+        "NOT_ALLOWED",
+        `Edge "${edgeId}": a ${end.kind} takes part in no connection; its role is set by its fields`,
+        {
+          id: edgeId
+        }
+      );
+    }
+  }
+  const [a, b] = [homeKind("mixed", from), homeKind("mixed", to)];
+  // What the connection says it is: its kind, else what its ends are (a transition always says so).
+  const is =
+    edge.kind !== undefined ? edgeHome(canvas, edge)
+    : a === "machine" ? null
+    : a;
+  if (a !== b || a !== is) {
+    const what = { machine: "a transition", flow: "a flow's step", system: "a system's connection" };
+    fail(
+      "NOT_ALLOWED",
+      `Edge "${edgeId}": a ${from.kind} cannot lead to a ${to.kind}` +
+        (a === b ? `; between them, a connection is ${what[a]}` : "; they belong to different kinds of level"),
+      { id: edgeId }
+    );
+  }
+  if (a === "machine" && NOT_TARGETS.has(to.kind)) {
     fail("NOT_ALLOWED", `Edge "${edgeId}": a ${to.kind} node cannot be the target of an edge`, { id: edgeId });
   }
 }

@@ -34,7 +34,7 @@ export const Project = obj({ id: idOf("prj"), name: Name, description: z.string(
 
 export const Definition = obj(
   {
-    kind: z.enum(["system", "machine", "flow"]),
+    kind: z.enum(["system", "machine", "flow", "mixed"]),
     name: Name,
     canvas: idOf("cnv"),
     ...common

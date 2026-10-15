@@ -226,7 +226,16 @@ const CANVAS_FIELDS = {
     basics("transitions", "choice", { default: "unknown", label: "completeness" }),
     basics("regions", "regions")
   ],
-  flow: [...HEADING, details("vars", "type")]
+  flow: [...HEADING, details("vars", "type")],
+  // A mixed level (mixed levels spec §4.5): a machine's heading fields for its states, a flow's variables for its steps.
+  mixed: [
+    ...HEADING,
+    details("subject", "text"),
+    details("context", "type"),
+    basics("transitions", "choice", { default: "unknown", label: "completeness" }),
+    basics("regions", "regions"),
+    details("vars", "type")
+  ]
 };
 
 const nullable = { extra: "null" };

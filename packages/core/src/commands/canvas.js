@@ -21,13 +21,30 @@ const STRUCTURE = ["kind", "nodes", "edges", "regions"];
 /** Canvas commands (spec §21). */
 export default [
   {
+    type: "canvas.mix",
+    description:
+      "Make a level mixed (mixed levels spec §4.5): it then takes elements of every kind; its transitions say they are " +
+      "transitions (kind transition). Its elements and their meaning are kept.",
+    args: z.strictObject({ id: z.string() }),
+    run(ctx, { id }) {
+      const entry = requireEntry(ctx, id, ["canvas"]);
+      const canvas = entry.value;
+      if (canvas.kind === "mixed") fail("NOT_ALLOWED", `"${id}" is mixed already`, { id });
+      if (canvas.kind === "machine") {
+        for (const edge of Object.values(canvas.edges)) if (edge.kind !== "link") edge.kind = "transition";
+      }
+      canvas.kind = "mixed";
+      validate(Canvas, clone(canvas), ["canvases", id]);
+    }
+  },
+  {
     type: "canvas.create",
     description:
       "Create an empty canvas. With owner, it becomes that element's interior (the owner must not have one yet). " +
       "Other canvas fields (code, kicker, title, caption, stage, subject, context, transitions, vars, …) may be given.",
     args: z
       .object({
-        kind: z.enum(["system", "machine", "flow"]),
+        kind: z.enum(["system", "machine", "flow", "mixed"]),
         name: z.string().min(1),
         owner: z.string().optional().describe("Node or catalog item that gets this canvas as interior."),
         id: z.string().optional()

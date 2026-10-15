@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FlowNode, MachineNode, SystemNode } from "../schema/canvas.js";
+import { FlowNode, MachineNode, MixedNode, SystemNode } from "../schema/canvas.js";
 import {
   allocateId,
   applyChange,
@@ -17,7 +17,7 @@ import { fail } from "./errors.js";
 import { checkInner, keepOwnInterior } from "./inner.js";
 import { removeElements } from "./remove.js";
 
-const SCHEMAS = { system: SystemNode, machine: MachineNode, flow: FlowNode };
+const SCHEMAS = { system: SystemNode, machine: MachineNode, flow: FlowNode, mixed: MixedNode };
 
 /**
  * Validate a node as it will be stored in `canvasId`: shape for the canvas kind, region membership, references

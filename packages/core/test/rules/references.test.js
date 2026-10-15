@@ -43,7 +43,7 @@ describe("ref.kind", () => {
     doc.canvases.cnv_body = { kind: "flow", name: "Body", nodes: {}, edges: {} };
     expect(problems(doc, "ref.kind").map(problem => [problem.target, problem.data])).toEqual([
       ["def_mixed", { canvas: "cnv_body", kind: "flow" }],
-      ["nod_busy", { interior: "cnv_sub", kind: "flow", allowed: ["machine"] }]
+      ["nod_busy", { interior: "cnv_sub", kind: "flow", allowed: ["machine", "mixed"] }]
     ]);
   });
 

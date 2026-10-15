@@ -8,6 +8,7 @@ describe("listCommands", () => {
       "catalog.add",
       "catalog.update",
       "catalog.remove",
+      "canvas.mix",
       "canvas.create",
       "canvas.update",
       "canvas.remove",

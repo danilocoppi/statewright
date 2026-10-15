@@ -5,7 +5,7 @@ import { Project } from "./schema/document.js";
 const NOTHING_TAKEN = { has: () => false };
 
 /** The kinds of root level a new document can have. */
-export const DOCUMENT_KINDS = ["system", "machine", "flow"];
+export const DOCUMENT_KINDS = ["system", "machine", "flow", "mixed"];
 
 /**
  * A root level's starting elements, without errors (editor spec §6.2): a machine's initial node leading to a first
@@ -41,7 +41,7 @@ export function createDocument({ name, id, kind = "system", names = {} }) {
   if (!result.success) {
     throw new TypeError(`Invalid project: ${result.error.issues.map(issue => issue.message).join("; ")}`);
   }
-  if (!DOCUMENT_KINDS.includes(kind)) throw new TypeError(`Invalid kind: ${kind} (system, machine or flow)`);
+  if (!DOCUMENT_KINDS.includes(kind)) throw new TypeError(`Invalid kind: ${kind} (system, machine, flow or mixed)`);
   const root = makeId("cnv", name, NOTHING_TAKEN);
   const starting = skeleton(kind, { state: "First state", end: "Done", ...names });
   return {

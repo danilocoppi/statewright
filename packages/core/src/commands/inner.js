@@ -1,4 +1,5 @@
 import { ownersOf } from "../query/index.js";
+import { homeKind } from "../roles/kinds.js";
 import { fail } from "./errors.js";
 
 const SYSTEM_ELEMENTS = new Set(["actor", "service", "store", "queue", "external"]);
@@ -12,12 +13,13 @@ const IMPLEMENTED = new Set(["actions", "endpoints", "webhooks"]);
  * @param {any} [value] The element value to judge (defaults to the stored one, e.g. a pending update).
  */
 export function allowedInteriors(doc, entry, value = entry.value) {
-  if (entry.type === "catalog") return IMPLEMENTED.has(entry.collection) ? ["flow"] : null;
+  if (entry.type === "catalog") return IMPLEMENTED.has(entry.collection) ? ["flow", "mixed"] : null;
   if (entry.type !== "node") return null;
-  const canvasKind = doc.canvases[entry.canvas].kind;
-  if (canvasKind === "system" && SYSTEM_ELEMENTS.has(value.kind)) return ["system", "machine", "flow"];
-  if (canvasKind === "machine" && value.kind === "state") return ["machine"];
-  if (canvasKind === "flow" && FLOW_CONTAINERS.has(value.kind)) return ["flow"];
+  // On a mixed level, an element takes the interiors its own kind's do; a mixed level fits wherever its part does.
+  const canvasKind = homeKind(doc.canvases[entry.canvas].kind, value);
+  if (canvasKind === "system" && SYSTEM_ELEMENTS.has(value.kind)) return ["system", "machine", "flow", "mixed"];
+  if (canvasKind === "machine" && value.kind === "state") return ["machine", "mixed"];
+  if (canvasKind === "flow" && FLOW_CONTAINERS.has(value.kind)) return ["flow", "mixed"];
   return null;
 }
 

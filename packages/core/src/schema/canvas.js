@@ -129,36 +129,36 @@ export const MachineNode = z.discriminatedUnion("kind", [
   refNode(true)
 ]);
 
-const Transition = obj(
-  {
-    from: idOf("nod"),
-    to: idOf("nod"),
-    name: OptionalName,
-    on: Events.optional(),
-    onMatch: z.array(z.string().regex(EVENT_GLOB_PATTERN, "Expected an event-name glob such as leg.*")).optional(),
-    after: idOf("tmr").optional(),
-    always: z.literal(true).optional(),
-    done: z.union([z.literal(true), idOf("rgn")]).optional(),
-    via: idOf("ept", "whk").optional(),
-    by: idOf("pty").optional(),
-    guard: Condition.optional(),
-    else: z.literal(true).optional(),
-    actions: z.array(Effect).optional(),
-    internal: z.literal(true).optional(),
-    intent: z.enum(["happy", "failure"]).optional(),
-    retry: RetryPolicy.optional(),
-    effective: Effective.optional(),
-    ...common
-  },
-  {
-    description: "A transition between states (no kind key).",
-    check: (value, ctx) => {
-      if (value.internal && value.from !== value.to) {
-        ctx.addIssue({ code: "custom", path: ["internal"], message: "Only self-transitions can be internal" });
-      }
-    }
+/** A transition's fields; on a mixed level it also says it is one (`kind: "transition"`). */
+const transitionShape = {
+  from: idOf("nod"),
+  to: idOf("nod"),
+  name: OptionalName,
+  on: Events.optional(),
+  onMatch: z.array(z.string().regex(EVENT_GLOB_PATTERN, "Expected an event-name glob such as leg.*")).optional(),
+  after: idOf("tmr").optional(),
+  always: z.literal(true).optional(),
+  done: z.union([z.literal(true), idOf("rgn")]).optional(),
+  via: idOf("ept", "whk").optional(),
+  by: idOf("pty").optional(),
+  guard: Condition.optional(),
+  else: z.literal(true).optional(),
+  actions: z.array(Effect).optional(),
+  internal: z.literal(true).optional(),
+  intent: z.enum(["happy", "failure"]).optional(),
+  retry: RetryPolicy.optional(),
+  effective: Effective.optional(),
+  ...common
+};
+const transitionCheck = (value, ctx) => {
+  if (value.internal && value.from !== value.to) {
+    ctx.addIssue({ code: "custom", path: ["internal"], message: "Only self-transitions can be internal" });
   }
-);
+};
+const Transition = obj(transitionShape, {
+  description: "A transition between states (no kind key).",
+  check: transitionCheck
+});
 
 const Link = obj(
   { kind: z.literal("link"), from: idOf("nod"), to: idOf("nod"), name: OptionalName, on: Events.optional(), ...common },
@@ -230,6 +230,35 @@ export const FlowEdge = obj(
   }
 );
 
+// ── Mixed canvas (mixed levels spec §4.5, §5) ─────────────────────────────────
+
+/** The `kind` a node variant of a union stands for. */
+const kindOfOption = option => option.shape.kind.value;
+
+/**
+ * A node of a mixed level: any node of a machine (a `state` with a name), of a flow (a `state` with a `target` is a
+ * state guest) or of a system; participants and shortcuts as on machines.
+ */
+export const MixedNode = z.union([
+  ...MachineNode.options,
+  ...FlowNode.options.filter(option => !["participant", "ref"].includes(kindOfOption(option))),
+  ...SystemNode.options.filter(option => kindOfOption(option) !== "ref")
+]);
+
+/** A connection of a mixed level: a transition (saying so), a link, a flow's edge or a system's connection. */
+export const MixedEdge = z.union([
+  obj(
+    { kind: z.literal("transition"), ...transitionShape },
+    {
+      description: "A transition on a mixed level (kind transition).",
+      check: transitionCheck
+    }
+  ),
+  Link,
+  FlowEdge,
+  SystemEdge
+]);
+
 // ── Canvases ──────────────────────────────────────────────────────────────────
 
 const header = {
@@ -281,5 +310,20 @@ export const Canvas = z.discriminatedUnion("kind", [
       ...common
     },
     { description: "A procedure: steps, branches and loops." }
+  ),
+  obj(
+    {
+      kind: z.literal("mixed"),
+      ...header,
+      subject: z.string().min(1).optional(),
+      context: idOf("typ").optional(),
+      vars: idOf("typ").optional(),
+      regions: mapOf("rgn", RegionDef).optional(),
+      transitions: z.enum(["complete", "partial", "unknown"]).optional(),
+      nodes: mapOf("nod", MixedNode),
+      edges: mapOf("edg", MixedEdge),
+      ...common
+    },
+    { description: "Elements of every kind on one level; each connection means what its ends make it." }
   )
 ]);
