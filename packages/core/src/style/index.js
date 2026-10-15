@@ -1,5 +1,4 @@
 import { buildIndex } from "../query/build-index.js";
-import { isGuest } from "../roles/kinds.js";
 import { CHIP_LABELS, EDGE_STYLES, MUTED, NODE_STYLES, TONES } from "./palette.js";
 
 export {
