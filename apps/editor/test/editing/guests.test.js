@@ -126,9 +126,9 @@ describe("placing a guest", () => {
   });
 });
 
-describe("connecting guests (M1: they take no part in the level's transitions)", () => {
-  it("refuses a connection to or from a guest, and a box dragged out of one", async () => {
-    const { connectRefusal, startRefusal } = await import("@/editing/connect");
+describe("connecting guests", () => {
+  it("judges a machine's guest connections by their role, and keeps flow guests out of the flow's steps", async () => {
+    const { connectRefusal, emptyRefusal, startRefusal } = await import("@/editing/connect");
     const doc = project("machine");
     const placed = placeCommands(doc, doc.root, toolById("machine", "participantActor"), at, {
       party: { name: "Customer" }
@@ -137,9 +137,20 @@ describe("connecting guests (M1: they take no part in the level's transitions)",
     const state = Object.keys(after.canvases[doc.root].nodes).find(
       id => after.canvases[doc.root].nodes[id].kind === "state"
     );
-    expect(connectRefusal(after, doc.root, placed.id, state)).toBe("guest");
-    expect(connectRefusal(after, doc.root, state, placed.id)).toBe("guest");
-    expect(startRefusal(after, doc.root, placed.id)).toBe("guest");
+    expect(connectRefusal(after, doc.root, placed.id, state)).toBe("noMeaning");
+    expect(connectRefusal(after, doc.root, state, placed.id)).toBe("nothingToReceive");
+    expect(startRefusal(after, doc.root, placed.id)).toBeNull();
+    expect(emptyRefusal(after, doc.root, placed.id)).toBe("guest");
+    const flow = project("flow");
+    const buyer = placeCommands(flow, flow.root, toolById("flow", "participantActor"), at, {
+      party: { name: "Buyer" }
+    });
+    const withBuyer = run(flow, buyer.commands);
+    const start = Object.keys(withBuyer.canvases[flow.root].nodes).find(
+      id => withBuyer.canvases[flow.root].nodes[id].kind === "start"
+    );
+    expect(connectRefusal(withBuyer, flow.root, start, buyer.id)).toBe("guest");
+    expect(startRefusal(withBuyer, flow.root, buyer.id)).toBe("guest");
   });
 });
 

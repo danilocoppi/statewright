@@ -12,7 +12,13 @@ const CANVAS = [
   "secondInitial",
   "wrongKind",
   "missingLevel",
-  "arrangeFailed"
+  "arrangeFailed",
+  // A guest's connections, and a role's connector (mixed levels spec §3).
+  "guest",
+  "noMeaning",
+  "already",
+  "notRun",
+  "nothingToReceive"
 ];
 
 const KNOWN = new Set([...CANVAS, ...ERROR_CODES, "READ_ONLY"]);

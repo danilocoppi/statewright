@@ -118,6 +118,7 @@
     "targets": "Sobre",
     "source": "Origem",
     "connections": "Vai para",
+    "roles": "Papéis",
     "findings": "Achados",
     "focus": "Olhe aqui",
     "display": "Mostrar como",
@@ -600,5 +601,31 @@
     }
   },
   "kindNeeds": "{{kind}} — defina {{field}} antes",
-  "kindRefused": "{{kind}} — não é possível aqui"
+  "kindRefused": "{{kind}} — não é possível aqui",
+  "roles": {
+    "sends": {
+      "from": "Envia",
+      "to": "Enviado por"
+    },
+    "receives": {
+      "from": "Para",
+      "to": "Recebe"
+    },
+    "runs": {
+      "from": "Executa os passos",
+      "to": "Rodam em"
+    },
+    "drives": {
+      "from": "Conduz",
+      "to": "Conduzido por"
+    },
+    "leadsTo": {
+      "from": "Leva a",
+      "to": "Alcançado por"
+    },
+    "performs": {
+      "from": "Executado por",
+      "to": "Executa"
+    }
+  }
 }

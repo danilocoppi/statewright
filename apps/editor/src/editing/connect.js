@@ -1,12 +1,14 @@
 // Connecting boxes (spec §7.2): what a new edge looks like on each kind of canvas, the box a drag to empty space
 // creates, and what the canvas refuses before Core is asked — what the format forbids, said in plain words.
-import { applyBatch, CommandError, isGuest } from "statewright";
+import { applyBatch, associationRefusal, CommandError, isGuest } from "statewright";
 
 import { regionAt } from "./changes";
 import { idsFor } from "./ids";
 
 /**
- * @typedef {"elsewhere" | "intoStart" | "fromTerminal" | "initialOnce" | "crossRegion" | "secondInitial" | "guest"} Refusal
+ * @typedef {"elsewhere" | "intoStart" | "fromTerminal" | "initialOnce" | "crossRegion" | "secondInitial" | "guest"
+ *   | "noMeaning" | "already" | "notRun" | "nothingToReceive"} Refusal The last four: a role's connector (Core's
+ *   `associate`).
  *   Keys of `editor:refusals` (with Core's error codes for anything else Core refuses).
  */
 
@@ -38,16 +40,32 @@ export function edgeFor(doc, canvasId, from, to) {
 }
 
 /**
+ * Whether a connection between two elements of a level would be a role's connector (mixed levels spec §3): it ends at
+ * a transition, or a guest is at one end (shortcuts link to anything).
+ */
+export function isRolePair(doc, canvasId, from, to) {
+  const canvas = doc.canvases[canvasId];
+  if (canvas.edges[to]) return true;
+  const ends = [canvas.nodes[from], canvas.nodes[to]];
+  if (ends.some(node => node?.kind === "ref")) return false;
+  return ends.some(node => node && isGuest(canvas.kind, node));
+}
+
+/**
  * Why the canvas will not connect two boxes, or null when it will: what the format forbids first (spec §7.2), then
  * anything else Core refuses (its error code).
  * @returns {Refusal | string | null}
  */
 export function connectRefusal(doc, canvasId, from, to) {
   const canvas = doc.canvases[canvasId];
+  // A role's connector writes the field that holds its meaning (mixed levels spec §3): Core judges what it means.
+  if (canvas.kind === "machine" && canvas.nodes[from] && isRolePair(doc, canvasId, from, to)) {
+    return associationRefusal(doc, canvasId, from, to);
+  }
   const source = canvas.nodes[from];
   const target = canvas.nodes[to];
   if (!source || !target) return "elsewhere";
-  // A guest's role comes from its fields (mixed levels spec §3); shortcuts may still link to it.
+  // On other levels, guests take no part in the level's own connections yet; shortcuts may still link to them.
   const linking = source.kind === "ref" || target.kind === "ref";
   if (!linking && (isGuest(canvas.kind, source) || isGuest(canvas.kind, target))) return "guest";
   if (canvas.kind === "machine") {
@@ -72,11 +90,24 @@ export function connectRefusal(doc, canvasId, from, to) {
 export function startRefusal(doc, canvasId, from) {
   const canvas = doc.canvases[canvasId];
   const node = canvas.nodes[from];
-  if (node && isGuest(canvas.kind, node)) return "guest";
+  // On a machine, a participant starts what it sends and embedded steps go where they run (mixed levels spec §4).
+  if (node && isGuest(canvas.kind, node)) return canvas.kind === "machine" ? null : "guest";
   if (canvas.kind !== "machine" || !node) return null;
   if (node.kind === "state" && node.terminal) return "fromTerminal";
   if (node.kind === "initial" && outgoing(canvas, from).length) return "initialOnce";
   return null;
+}
+
+/**
+ * Why nothing can be made in empty space from a box: what stops it starting, or a guest, which has no transition or
+ * step of the level's own to start (spec §7.2: a box of the natural kind, connected from it).
+ * @returns {"fromTerminal" | "initialOnce" | "guest" | null}
+ */
+export function emptyRefusal(doc, canvasId, from) {
+  const canvas = doc.canvases[canvasId];
+  const node = canvas.nodes[from];
+  if (node && isGuest(canvas.kind, node)) return "guest";
+  return startRefusal(doc, canvasId, from);
 }
 
 /**

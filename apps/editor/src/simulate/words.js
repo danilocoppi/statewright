@@ -125,7 +125,11 @@ export function elementOf(details) {
 export function pathName(doc, top, path, t) {
   const places = locate(doc, top, path);
   const last = places?.at(-1);
-  return last ? nodeName(doc, last.canvas, last.node, t) : path;
+  if (last) return nodeName(doc, last.canvas, last.node, t);
+  // A step of an action's flow, run inside a machine's step (mixed levels spec §4.2): its node, wherever it is.
+  const id = path.slice(path.lastIndexOf("/") + 1);
+  const canvas = Object.keys(doc.canvases).find(key => doc.canvases[key].nodes[id]);
+  return canvas ? nodeName(doc, canvas, id, t) : path;
 }
 
 /**
@@ -341,8 +345,11 @@ export function traceLine(doc, top, entry, t) {
   switch (entry.type) {
     case "received":
       return null;
-    case "transition":
-      return { text: t("simulate:trace.transition", { from: name(entry.from), to: name(entry.to) }) };
+    case "transition": {
+      const text = t("simulate:trace.transition", { from: name(entry.from), to: name(entry.to) });
+      const sender = senderOf(doc, entry.edge);
+      return { text: sender ? t("simulate:trace.sentBy", { move: text, party: sender }) : text };
+    }
     case "entered":
       return { text: t("simulate:trace.entered", { state: name(entry.state) }) };
     case "exited":
@@ -352,7 +359,15 @@ export function traceLine(doc, top, entry, t) {
     case "action":
       return {
         text:
-          entry.action ? t("simulate:trace.action", { action: doc.catalog.actions[entry.action]?.name ?? entry.action })
+          entry.action && doc.catalog.actions[entry.action]?.party ?
+            t("simulate:trace.actionFor", {
+              action: doc.catalog.actions[entry.action].name,
+              party:
+                doc.catalog.parties[doc.catalog.actions[entry.action].party]?.name ??
+                doc.catalog.actions[entry.action].party
+            })
+          : entry.action ?
+            t("simulate:trace.action", { action: doc.catalog.actions[entry.action]?.name ?? entry.action })
           : entry.webhook ?
             t("simulate:trace.webhook", { webhook: doc.catalog.webhooks[entry.webhook]?.name ?? entry.webhook })
           : t("simulate:trace.call", {
@@ -402,16 +417,28 @@ export function traceLine(doc, top, entry, t) {
  * 192 times"), in the order each first happened.
  * @returns {Array<{ text: string, warning?: true, times: number }>}
  */
-export function traceLines(doc, top, trace, t) {
-  const lines = new Map();
+export function traceLines(doc, top, trace, t, depth = 0, lines = new Map()) {
   for (const entry of trace) {
     const line = traceLine(doc, top, entry, t);
-    if (!line) continue;
-    const key = `${line.warning ? "!" : ""}${line.text}`;
-    if (lines.has(key)) lines.get(key).times += 1;
-    else lines.set(key, { ...line, times: 1 });
+    if (line) {
+      const key = `${depth}${line.warning ? "!" : ""}${line.text}`;
+      if (lines.has(key)) lines.get(key).times += 1;
+      else lines.set(key, { ...line, times: 1, ...(depth ? { depth } : {}) });
+    }
+    // An action's flow run within the step: its lines under the action's (mixed levels spec §4.2).
+    if (entry.steps) traceLines(doc, top, entry.steps, t, depth + 1, lines);
   }
   return [...lines.values()];
+}
+
+/** Who sent what moved a transition (mixed levels spec §4.1): its `by`, else its event's source; null when nobody. */
+function senderOf(doc, edgeId) {
+  const edge = Object.values(doc.canvases).find(canvas => canvas.edges[edgeId])?.edges[edgeId];
+  const sourced = (edge?.on ?? [])
+    .map(id => doc.catalog.events[id]?.source)
+    .find(source => source && source !== "internal");
+  const party = edge?.by ?? sourced;
+  return party ? (doc.catalog.parties[party]?.name ?? party) : null;
 }
 
 /** A question in plain words (spec §6.2, mockup 03: "Which condition holds in paying_out?"). */

@@ -20,6 +20,7 @@ import { centreOf, startTool } from "@/editing/actions";
 import { CanvasMenu } from "@/editing/CanvasMenu";
 import { connectRefusal, naturalTool, startRefusal } from "@/editing/connect";
 import { Draft } from "@/editing/Draft";
+import { Receive } from "@/editing/Receive";
 import { Ghost } from "@/editing/Ghost";
 import { InsertPalette } from "@/editing/InsertPalette";
 import { TOOL_TYPE } from "@/editing/place";
@@ -45,6 +46,7 @@ import { useView } from "@/stores/view";
 import { lightBeacon, useBeacon } from "./beacon";
 import { ConnectionLine } from "./ConnectionLine";
 import { DiagramDefs } from "./DiagramDefs";
+import { AssociationEdge } from "./AssociationEdge";
 import { FigureEdge } from "./FigureEdge";
 import { FindingPopover } from "./FindingPopover";
 import { followRef } from "./follow";
@@ -70,7 +72,7 @@ const nodeTypes = {
   note: NoteNode,
   heading: HeadingNode
 };
-const edgeTypes = { figure: FigureEdge };
+const edgeTypes = { figure: FigureEdge, association: AssociationEdge };
 
 const NO_SELECTION = [];
 
@@ -467,6 +469,7 @@ function Flow({ onNavigate }) {
   const menu = useEditing(state => (state.editor?.type === "menu" ? state.editor : null));
   const trigger = useEditing(state => (state.editor?.type === "trigger" ? state.editor : null));
   const draft = useEditing(state => (state.editor?.type === "draft" ? state.editor : null));
+  const receive = useEditing(state => (state.editor?.type === "receive" ? state.editor : null));
   const insert = useEditing(state => (state.editor?.type === "insert" ? state.editor : null));
   const editorOpen = useEditing(state => Boolean(state.editor));
   // A keyboard user keeps their place: when what was typed over the level closes (a new box's name, a choice, a trigger)
@@ -668,6 +671,7 @@ function Flow({ onNavigate }) {
       {connect.from && !hovered && <Ghost tool={toolById(levelKind, naturalTool(levelKind))} />}
       {insert?.at && <InsertPalette key={`${insert.at.x}:${insert.at.y}`} at={insert.at} />}
       {draft && <Draft key={`${draft.tool}:${draft.at.x}:${draft.at.y}`} draft={draft} />}
+      {receive && <Receive key={`${receive.from}:${receive.to}`} editor={receive} />}
       {triggerAt && (
         <TriggerEditor edgeId={trigger.edgeId} at={triggerAt} onClose={() => editingStore.getState().close()} />
       )}

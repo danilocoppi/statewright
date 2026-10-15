@@ -23,7 +23,7 @@ function MicroEvents({ point, id }) {
         <li
           key={`${line.warning ? "!" : ""}${line.text}`}
           lang={line.warning ? "en" : undefined}
-          className={cn("text-ui", line.warning ? "text-warning" : "text-sub")}
+          className={cn("text-ui", line.warning ? "text-warning" : "text-sub", line.depth && "ml-3 text-muted")}
         >
           {line.warning && <Icon name="alert" size={12} className="mr-1.5 inline-block align-[-1px]" />}
           {line.text}

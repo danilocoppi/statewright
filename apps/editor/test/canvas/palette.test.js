@@ -101,6 +101,7 @@ describe("the diagram palette", () => {
 
   it("backs an edge's label with the canvas in dark, so a lighter box colour does not show behind it", () => {
     expect(diagramStyles()).toContain(".dark g.label > rect {\n  fill: var(--canvas);\n}");
+    expect(diagramStyles()).toContain(".dark g.association > rect {\n  fill: var(--canvas);\n}");
   });
 
   it("keeps every text at least as legible in dark as in the exported figure, up to AA", () => {

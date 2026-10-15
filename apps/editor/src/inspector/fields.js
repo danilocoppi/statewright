@@ -52,12 +52,18 @@ const REGION = details("region", "region");
 const TARGET = basics("target", "target");
 const NODE_SECTIONS = [
   section("connections", "connections", "basics"),
+  section("roles", "roles", "basics"),
   section("findings", "findings"),
   section("focus", "focus"),
   section("display", "display"),
   section("size", "size")
 ];
-const EDGE_SECTIONS = [section("findings", "findings"), section("focus", "focus"), section("route", "route")];
+const EDGE_SECTIONS = [
+  section("roles", "roles", "basics"),
+  section("findings", "findings"),
+  section("focus", "focus"),
+  section("route", "route")
+];
 
 const name = (required = false) => field("name", "title", "basics", { required });
 // A participant is its party (mixed levels spec §4.1): it has no name of its own, only an optional label.

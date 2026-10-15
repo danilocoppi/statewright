@@ -1,5 +1,7 @@
 // What the editor's keys and menus do to the current level's selection (spec §7.3): select all, delete, nudge,
 // duplicate, copy and paste — each one change, refused where it would happen when Core says no.
+import { associate, associationsOf, dissociateCommands } from "statewright";
+
 import { isSimulating } from "@/simulate/store";
 import { editorStore } from "@/store/editor";
 import { layoutClient } from "@/workers";
@@ -15,7 +17,7 @@ import {
 } from "./changes";
 import { copyOf, duplicateCommands, pasteCommands } from "./clipboard";
 import { idsFor } from "./ids";
-import { asksAfterConnect, connectCommands, connectRefusal, placeRefusal } from "./connect";
+import { asksAfterConnect, connectCommands, connectRefusal, isRolePair, placeRefusal } from "./connect";
 import { placeCommands } from "./place";
 import { change, editingStore } from "./state";
 
@@ -52,7 +54,10 @@ export function selectAll() {
 export function deleteSelection(t, label = t("editing.delete")) {
   const { doc, canvasId, selection, readOnly } = current();
   if (!selection.length || readOnly) return;
-  const { ok } = change(removeCommands(doc, selection), {
+  // A role's connector is not stored: deleting it clears what it stands for (mixed levels spec §3).
+  const associations = associationsOf(doc, canvasId).filter(item => selection.includes(item.id));
+  const cleared = associations.flatMap(item => dissociateCommands(doc, item).commands);
+  const { ok } = change([...cleared, ...removeCommands(doc, selection)], {
     label,
     at: centreOf(doc, canvasId, selection)
   });
@@ -234,6 +239,9 @@ function askAbout(edgeId, boxId) {
 export function connectBoxes(t, from, to, at) {
   const { doc, canvasId, readOnly } = current();
   if (readOnly) return null;
+  if (doc.canvases[canvasId].kind === "machine" && isRolePair(doc, canvasId, from, to)) {
+    return connectRole(t, from, to, at);
+  }
   const refusal = connectRefusal(doc, canvasId, from, to);
   if (refusal) {
     editingStore.getState().refuse({ reason: refusal, at });
@@ -244,6 +252,40 @@ export function connectBoxes(t, from, to, at) {
   if (!ok) return null;
   askAbout(id, null);
   return id;
+}
+
+/**
+ * Draw a role's connector (mixed levels spec §3, §6): write the field it stands for, as one undoable change; when a
+ * place runs several actions, ask which one the participant receives first (the canvas's `receive` editor).
+ * @param {{ action?: string }} [choice]
+ * @returns {string | null} The connector's ID.
+ */
+export function connectRole(t, from, to, at, choice = {}) {
+  const { doc, canvasId, readOnly } = current();
+  if (readOnly) return null;
+  const result = associate(doc, canvasId, from, to, choice);
+  if (result.refusal) {
+    editingStore.getState().refuse({ reason: result.refusal, at });
+    return null;
+  }
+  if (result.needs) {
+    editingStore.getState().open({ type: "receive", from, to, at, actions: result.actions });
+    return null;
+  }
+  const { ok } = change(result.commands, { label: t(`editing.role.${result.role}`), at });
+  if (!ok) return null;
+  // Embedded steps are drawn from the place that runs them.
+  const id = result.role === "runs" ? `runs:${to}:${from}` : `${result.role}:${from}:${to}`;
+  editorStore.getState().select([id]);
+  return id;
+}
+
+/** The action the `receive` editor's participant receives was picked: draw the connector with it. */
+export function receiveWith(t, action) {
+  const editor = editingStore.getState().editor;
+  if (editor?.type !== "receive") return null;
+  editingStore.getState().close();
+  return connectRole(t, editor.from, editor.to, editor.at, { action });
 }
 
 /**

@@ -118,6 +118,7 @@
     "targets": "About",
     "source": "Source",
     "connections": "Goes to",
+    "roles": "Roles",
     "findings": "Findings",
     "focus": "Look here",
     "display": "Show as",
@@ -600,5 +601,31 @@
     }
   },
   "kindNeeds": "{{kind}} — set {{field}} first",
-  "kindRefused": "{{kind}} — not possible here"
+  "kindRefused": "{{kind}} — not possible here",
+  "roles": {
+    "sends": {
+      "from": "Sends",
+      "to": "Sent by"
+    },
+    "receives": {
+      "from": "For",
+      "to": "Receives"
+    },
+    "runs": {
+      "from": "Runs the steps",
+      "to": "Run at"
+    },
+    "drives": {
+      "from": "Drives",
+      "to": "Driven by"
+    },
+    "leadsTo": {
+      "from": "Leads to",
+      "to": "Reached by"
+    },
+    "performs": {
+      "from": "Performed by",
+      "to": "Performs"
+    }
+  }
 }

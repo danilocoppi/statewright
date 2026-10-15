@@ -3,6 +3,7 @@ import { FindingsControl, LanesControl } from "./annotations";
 import { ChoiceControl, KindControl, ToggleControl } from "./choice";
 import { EvidenceControl, TagsControl } from "./common";
 import { ConnectionsControl } from "./connections";
+import { RolesControl } from "./roles";
 import { EffectsControl } from "./effects";
 import { InteriorControl } from "./interior";
 import { NodeControl, NodesControl, NoteTargetControl, RegionControl, TargetControl, TargetsControl } from "./elements";
@@ -23,6 +24,7 @@ export const CONTROLS = {
   toggle: ToggleControl,
   kind: KindControl,
   connections: ConnectionsControl,
+  roles: RolesControl,
   ref: RefControl,
   refs: RefsControl,
   type: TypeControl,

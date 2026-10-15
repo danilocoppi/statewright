@@ -1,9 +1,15 @@
 // How the inspector heads an element (mockup 09): its name, or what stands for it, and what it is, where.
 import { isGuest, stepText } from "statewright";
 
-/** What a node is called on its level: its name, or its kind ("Initial node"). */
-export function nodeName(t, node) {
-  return node?.name ?? t(`inspector:kinds.node.${node?.kind}`);
+/**
+ * What a node is called on its level: its name, or its kind ("Initial node"); a guest, given the document, by what it
+ * stands for (its label, its party, its action, its state).
+ */
+export function nodeName(t, node, doc) {
+  if (node?.name) return node.name;
+  const guest = node?.kind === "participant" || node?.kind === "steps" || (node?.kind === "state" && node.target);
+  if (doc && guest) return node.label ?? stepText(doc, node);
+  return t(`inspector:kinds.node.${node?.kind}`);
 }
 
 /** The words for an element's kind ("State", "Transition", "Event"…). */

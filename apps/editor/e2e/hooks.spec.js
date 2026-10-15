@@ -120,6 +120,20 @@ test("finds every hook on its screen, once where it is unique (§7.5)", async ({
   await shows("canvas-finding");
   await page.keyboard.press("Escape");
 
+  // A role's connector: the client, drawn on the clock, sends what pauses and resumes it.
+  await agent("batch.apply", {
+    label: "The client",
+    commands: [
+      {
+        type: "node.add",
+        args: { canvas: "cnv_expiryClock", id: "nod_clientHere", node: { kind: "participant", party: "pty_client" } }
+      }
+    ]
+  });
+  await agent("view.open", { canvas: "cnv_expiryClock" });
+  await shows("canvas-association");
+  await agent("view.open", { canvas: "cnv_lifecycle" });
+
   // A marker's Problems, the pointer resting on it.
   await page.locator('.react-flow__node[data-id="nod_complianceHold"] .problem-marker').hover();
   await shows("canvas-problem");

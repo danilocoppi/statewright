@@ -27,7 +27,8 @@ const Drawn = ({ children }) => (
 );
 
 /**
- * The legend of the level (spec §6.1, `legendFor`): the node styles, edge styles, chips and findings the figure uses,
+ * The legend of the level (spec §6.1, `legendFor`): the node styles, edge styles, roles' connectors, chips and
+ * findings the figure uses,
  * in the document's own wording — as in the exported figure.
  */
 export function Legend() {
@@ -35,7 +36,8 @@ export function Legend() {
   const doc = useEditor(state => state.doc);
   const canvasId = useEditor(state => state.canvasId);
   const legend = useMemo(() => legendFor(doc, canvasId), [doc, canvasId]);
-  const count = legend.nodes.length + legend.edges.length + legend.chips.length + (legend.findings ? 1 : 0);
+  const count =
+    legend.nodes.length + legend.edges.length + legend.roles.length + legend.chips.length + (legend.findings ? 1 : 0);
   // As wide as what it lists: up to three columns as wide as its longest entry, within 540 px.
   return (
     <Island
@@ -69,6 +71,27 @@ export function Legend() {
             <Entry
               key={item.key}
               swatch={<EdgeSwatch styleKey={item.key} stroke={item.stroke} width={item.width} dash={item.dash} />}
+            >
+              {item.label}
+            </Entry>
+          ))}
+          {legend.roles.map(item => (
+            <Entry
+              key={item.key}
+              swatch={
+                <Drawn>
+                  <line
+                    x1="1"
+                    y1="7"
+                    x2="23"
+                    y2="7"
+                    stroke={paint(item.stroke)}
+                    strokeWidth={item.width}
+                    strokeDasharray={item.dash}
+                  />
+                  <circle cx="23" cy="7" r="2" fill={paint(item.stroke)} />
+                </Drawn>
+              }
             >
               {item.label}
             </Entry>

@@ -203,6 +203,10 @@
     "wrongKind": "Estas caixas pertencem a outro tipo de nível.",
     "missingLevel": "O nível para onde este link leva não está neste projeto.",
     "guest": "Um convidado não participa das transições nem dos passos deste nível.",
+    "noMeaning": "Esses dois não têm papel juntos: um participante envia uma transição ou recebe a ação de um estado; passos rodam numa transição ou num estado.",
+    "already": "Isso já está assim.",
+    "notRun": "Essa ação não roda ali.",
+    "nothingToReceive": "Nada roda ali que alguém possa receber.",
     "arrangeFailed": "Não foi possível organizar este nível. Tente Organizar de novo.",
     "INVALID_ARGS": "O Statewright não consegue fazer essa mudança.",
     "NOT_FOUND": "Algo de que essa mudança precisa não está no projeto.",
@@ -254,7 +258,15 @@
     "levelDetails": "Detalhes do nível",
     "focus": "Olhe aqui",
     "unfocus": "Parar de olhar aqui",
-    "lane": "Fazer uma faixa"
+    "lane": "Fazer uma faixa",
+    "role": {
+      "sends": "Dizer quem envia",
+      "receives": "Dizer quem recebe uma ação",
+      "runs": "Executar os passos aqui",
+      "drives": "Dizer quem conduz",
+      "leadsTo": "Levar a um estado",
+      "performs": "Dizer quem executa"
+    }
   },
   "trigger": {
     "current": "Gatilho atual",
@@ -442,5 +454,9 @@
   "islands": {
     "project": "Projeto",
     "actions": "Problemas e ações"
+  },
+  "roles": {
+    "whichAction": "Qual ação {{name}} recebe?",
+    "actionPlaceholder": "Uma ação que roda aqui"
   }
 }

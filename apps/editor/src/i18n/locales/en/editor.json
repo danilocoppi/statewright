@@ -203,6 +203,10 @@
     "wrongKind": "These boxes belong on another kind of level.",
     "missingLevel": "The level this link leads to is not in this project.",
     "guest": "A guest takes no part in this level's transitions or steps.",
+    "noMeaning": "These two have no role together: a participant sends a transition or receives a state's action; steps run at a transition or a state.",
+    "already": "That is already so.",
+    "notRun": "That action does not run there.",
+    "nothingToReceive": "Nothing runs there that someone could receive.",
     "arrangeFailed": "This level could not be arranged. Try Auto-layout again.",
     "INVALID_ARGS": "Statewright cannot make that change.",
     "NOT_FOUND": "Something this change needs is not in the project.",
@@ -254,7 +258,15 @@
     "levelDetails": "Level details",
     "focus": "Look here",
     "unfocus": "Stop looking here",
-    "lane": "Make a lane"
+    "lane": "Make a lane",
+    "role": {
+      "sends": "Say who sends it",
+      "receives": "Say who receives an action",
+      "runs": "Run the steps here",
+      "drives": "Say who drives it",
+      "leadsTo": "Lead to a state",
+      "performs": "Say who performs it"
+    }
   },
   "trigger": {
     "current": "Current trigger",
@@ -442,5 +454,9 @@
   "islands": {
     "project": "Project",
     "actions": "Problems and actions"
+  },
+  "roles": {
+    "whichAction": "Which action does {{name}} receive?",
+    "actionPlaceholder": "An action run here"
   }
 }

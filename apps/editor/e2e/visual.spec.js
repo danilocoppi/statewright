@@ -4,7 +4,8 @@
 // 02–06's states"): the simulation's states of mockups 01 to 04; plan S4, the stage (mockup 05) and a scenario's page
 // (mockup 06); plan D1, the documentation page's cover and a level's part; plan A3, an agent's toast and note (AI
 // interface spec §7.3); plan A4, Connect an AI… (§7.4); a finding badge's details, beside it; a Problems marker's
-// details, beside it; the level's kind under the tool dock, its menu open; and the support popover above its badge.
+// details, beside it; the level's kind under the tool dock, its menu open; the support popover above its badge; and
+// plan M2, a machine's roles.
 // After a deliberate change of look, update the pictures with
 // `npm run e2e -w @statewright/editor -- e2e/visual.spec.js --update-snapshots=all` and look at every one before
 // committing it.
@@ -22,6 +23,48 @@ const EXAMPLES = [
     levels: ["cnv_runtime", "cnv_lifecycle", "cnv_crossBorderSend", "cnv_complianceHold", "cnv_expiryClock"]
   },
   { button: /^Get paid/, project: "prj_getPaid", levels: ["cnv_transaction", "cnv_open"] }
+];
+
+/** An order's lifecycle with the customer who pays, the payment service that charges, and the charge's steps. */
+const ROLES = canvas => [
+  { type: "catalog.add", args: { collection: "events", id: "evt_pay", item: { name: "order.pay" } } },
+  {
+    type: "catalog.add",
+    args: { collection: "parties", id: "pty_customer", item: { kind: "human", name: "Customer" } }
+  },
+  {
+    type: "catalog.add",
+    args: { collection: "parties", id: "pty_payments", item: { kind: "system", name: "Payments" } }
+  },
+  {
+    type: "catalog.add",
+    args: { collection: "actions", id: "act_charge", item: { name: "Charge card", party: "pty_payments" } }
+  },
+  { type: "canvas.create", args: { kind: "flow", name: "Charge card", owner: "act_charge", id: "cnv_charge" } },
+  { type: "node.add", args: { canvas: "cnv_charge", id: "nod_chargeStart", node: { kind: "start" } } },
+  { type: "node.add", args: { canvas: "cnv_charge", id: "nod_charged", node: { kind: "end", name: "Charged" } } },
+  {
+    type: "edge.add",
+    args: { canvas: "cnv_charge", id: "edg_charge", edge: { from: "nod_chargeStart", to: "nod_charged" } }
+  },
+  { type: "node.add", args: { canvas, id: "nod_paid", node: { kind: "state", name: "Paid", terminal: true } } },
+  { type: "node.add", args: { canvas, id: "nod_customer", node: { kind: "participant", party: "pty_customer" } } },
+  { type: "node.add", args: { canvas, id: "nod_service", node: { kind: "participant", party: "pty_payments" } } },
+  { type: "node.add", args: { canvas, id: "nod_steps", node: { kind: "steps", action: "act_charge" } } },
+  {
+    type: "edge.add",
+    args: {
+      canvas,
+      id: "edg_pay",
+      edge: {
+        from: "nod_firstState",
+        to: "nod_paid",
+        on: ["evt_pay"],
+        by: "pty_customer",
+        actions: [{ action: "act_charge" }]
+      }
+    }
+  }
 ];
 
 /** Wait until the level is drawn and still: arranged and stored, its fonts in, its view no longer moving. */
@@ -191,6 +234,25 @@ for (const theme of ["light", "dark"]) {
       await page.mouse.move(8, 892);
       await settled(page);
       await expect(page).toHaveScreenshot(`level-kind-${theme}.png`, { maxDiffPixelRatio: 0.001 });
+    });
+
+    test("shows a machine's roles: who sends, who receives, the steps an action runs", async ({ page }) => {
+      await page.goto("/");
+      await page.getByRole("button", { name: /^State machine/ }).click();
+      const dialog = page.getByRole("dialog", { name: "New project" });
+      await dialog.getByRole("textbox", { name: "Name" }).fill("Orders");
+      await dialog.getByRole("button", { name: "Create project" }).click();
+      await settled(page);
+      const call = (name, args) =>
+        page.evaluate(([name, args]) => globalThis.statewright.call(name, args), [name, args]);
+      const { canvas } = (await call("editor.state")).result.level;
+      await call("batch.apply", { label: "Roles", commands: ROLES(canvas) });
+      await page.getByRole("button", { name: "Auto-layout" }).click();
+      // What the agent added glows for 2 s: the picture is the level after it.
+      await expect(page.locator(".react-flow__node.sw-ai")).toHaveCount(0, { timeout: 5000 });
+      await page.mouse.move(8, 892);
+      await settled(page);
+      await expect(page).toHaveScreenshot(`roles-${theme}.png`, { maxDiffPixelRatio: 0.001 });
     });
 
     test("shows a badge's findings beside it", async ({ page }) => {

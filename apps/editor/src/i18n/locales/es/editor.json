@@ -203,6 +203,10 @@
     "wrongKind": "Estas cajas pertenecen a otro tipo de nivel.",
     "missingLevel": "El nivel al que lleva este enlace no está en este proyecto.",
     "guest": "Un invitado no participa de las transiciones ni de los pasos de este nivel.",
+    "noMeaning": "Estos dos no tienen un papel juntos: un participante envía una transición o recibe la acción de un estado; los pasos corren en una transición o un estado.",
+    "already": "Ya es así.",
+    "notRun": "Esa acción no corre allí.",
+    "nothingToReceive": "Allí no corre nada que alguien pueda recibir.",
     "arrangeFailed": "No se pudo organizar este nivel. Prueba Ordenar de nuevo.",
     "INVALID_ARGS": "Statewright no puede hacer ese cambio.",
     "NOT_FOUND": "Algo que este cambio necesita no está en el proyecto.",
@@ -254,7 +258,15 @@
     "levelDetails": "Detalles del nivel",
     "focus": "Mira aquí",
     "unfocus": "Dejar de mirar aquí",
-    "lane": "Hacer un carril"
+    "lane": "Hacer un carril",
+    "role": {
+      "sends": "Decir quién lo envía",
+      "receives": "Decir quién recibe una acción",
+      "runs": "Ejecutar los pasos aquí",
+      "drives": "Decir quién lo conduce",
+      "leadsTo": "Llevar a un estado",
+      "performs": "Decir quién lo realiza"
+    }
   },
   "trigger": {
     "current": "Disparador actual",
@@ -442,5 +454,9 @@
   "islands": {
     "project": "Proyecto",
     "actions": "Problemas y acciones"
+  },
+  "roles": {
+    "whichAction": "¿Qué acción recibe {{name}}?",
+    "actionPlaceholder": "Una acción que corre aquí"
   }
 }

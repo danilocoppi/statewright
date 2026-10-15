@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 
 import { connectBoxes } from "@/editing/actions";
-import { naturalTool, startRefusal } from "@/editing/connect";
+import { emptyRefusal, naturalTool } from "@/editing/connect";
 import { editingStore } from "@/editing/state";
 import { editorStore } from "@/store/editor";
 
@@ -10,6 +10,12 @@ const boxUnder = target => {
   const node = target?.closest?.(".react-flow__node-node, .react-flow__node-frame");
   const id = node?.dataset.id;
   return id && !id.includes("/") ? id : null;
+};
+
+/** The transition of the level under a pointer event's target (its route or its label), if any. */
+const transitionUnder = target => {
+  const id = target?.closest?.(".react-flow__edge")?.dataset.id;
+  return id && !id.includes("/") && !id.includes(":") ? id : null;
 };
 
 /** How far the pointer moves before a drag back onto its own box connects the box to itself (not a click). */
@@ -62,12 +68,18 @@ export function useConnect(t, flow) {
       connectBoxes(t, source, target, at);
       return;
     }
+    // Onto a transition: a participant sends it, embedded steps run there (mixed levels spec §4).
+    const transition = transitionUnder(event.target);
+    if (transition) {
+      connectBoxes(t, source, transition, at);
+      return;
+    }
     // Over something drawn that is not a box of this level: a note, or a part inside a frame.
     if (event.target?.closest?.(".react-flow__node")) {
       editingStore.getState().refuse({ reason: "elsewhere", at });
       return;
     }
-    const refusal = startRefusal(doc, canvasId, source);
+    const refusal = emptyRefusal(doc, canvasId, source);
     if (refusal) {
       editingStore.getState().refuse({ reason: refusal, at });
       return;

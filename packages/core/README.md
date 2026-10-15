@@ -943,6 +943,7 @@ edges on the canvas carry `data-id`, the document's ID. `editor_state` (or `stat
 | `zoom-island`                 | the editor: zoom                                                   | yes      |
 | `canvas`                      | the editor: the level shown                                        | yes      |
 | `canvas-point`                | the canvas: an agent's note (view.point)                           | yes      |
+| `canvas-association`          | each role's connector on the canvas (data-role)                    | per item |
 | `canvas-finding`              | the canvas: a badge's findings, the pointer resting on it          | yes      |
 | `canvas-problem`              | the canvas: a marker's Problems, the pointer resting on it         | yes      |
 | `inspector`                   | the editor: the inspector, with something selected                 | yes      |

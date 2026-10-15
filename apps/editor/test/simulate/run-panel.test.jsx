@@ -125,7 +125,7 @@ describe("the run in the panel (simulator spec §6.2)", () => {
     expect(events.map(item => item.textContent)).toEqual([
       "leaves running",
       "cancels timer.expiry",
-      "running → paused",
+      "running → paused, sent by Client",
       "enters paused"
     ]);
     expect(within(run).getByText("The run as it was after step 1 of 3.")).toBeTruthy();

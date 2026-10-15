@@ -177,10 +177,12 @@
   },
   "trace": {
     "transition": "{{from}} → {{to}}",
+    "sentBy": "{{move}}, enviado por {{party}}",
     "entered": "entra en {{state}}",
     "exited": "sale de {{state}}",
     "restored": "vuelve a {{state}}, como lo guardó su historial",
     "action": "ejecuta {{action}}",
+    "actionFor": "ejecuta {{action}}, para {{party}}",
     "webhook": "envía {{webhook}}",
     "call": "llama a {{call}}",
     "emitted": "lanza {{event}}",

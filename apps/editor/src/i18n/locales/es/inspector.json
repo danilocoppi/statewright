@@ -118,6 +118,7 @@
     "targets": "Sobre",
     "source": "Origen",
     "connections": "Va a",
+    "roles": "Papeles",
     "findings": "Hallazgos",
     "focus": "Mira aquí",
     "display": "Mostrar como",
@@ -600,5 +601,31 @@
     }
   },
   "kindNeeds": "{{kind}} — define {{field}} antes",
-  "kindRefused": "{{kind}} — no es posible aquí"
+  "kindRefused": "{{kind}} — no es posible aquí",
+  "roles": {
+    "sends": {
+      "from": "Envía",
+      "to": "Enviado por"
+    },
+    "receives": {
+      "from": "Para",
+      "to": "Recibe"
+    },
+    "runs": {
+      "from": "Ejecuta los pasos",
+      "to": "Corren en"
+    },
+    "drives": {
+      "from": "Conduce",
+      "to": "Conducido por"
+    },
+    "leadsTo": {
+      "from": "Lleva a",
+      "to": "Alcanzado por"
+    },
+    "performs": {
+      "from": "Realizado por",
+      "to": "Realiza"
+    }
+  }
 }

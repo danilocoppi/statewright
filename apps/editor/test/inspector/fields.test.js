@@ -140,7 +140,8 @@ describe("the fields of an element", () => {
       "outcome",
       "terminal",
       "statuses",
-      "connections"
+      "connections",
+      "roles"
     ]);
     expect(basics.find(field => field.key === "category")).toMatchObject({
       control: "choice",
@@ -159,7 +160,8 @@ describe("the fields of an element", () => {
       "on",
       "after",
       "guard",
-      "intent"
+      "intent",
+      "roles"
     ]);
     expect(transition.details.map(field => field.key)).toContain("retry");
     const level = fieldsFor(doc, "cnv_open");
