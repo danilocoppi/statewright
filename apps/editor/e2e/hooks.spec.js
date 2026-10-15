@@ -173,6 +173,16 @@ test("finds every hook on its screen, once where it is unique (§7.5)", async ({
     await page.locator('[data-testid="conversation-tool"][data-tool="rectangle"]').click();
     await shows("marks-colour");
     await page.locator('[data-testid="conversation-tool"][data-tool="rectangle"]').click();
+    const asked = mcp.tool("editor_ask", { question: "Fine?", seconds: 30 });
+    await shows("conversation-question");
+    await page.getByRole("textbox", { name: "Another answer" }).fill("yes");
+    await page.getByRole("textbox", { name: "Another answer" }).press("Enter");
+    await asked;
+    // Something marked for the agent (a simulation runs here, so nothing is selected): the quick requests show.
+    await page.locator('[data-testid="conversation-tool"][data-tool="mark"]').click();
+    await page.locator(".react-flow__node-node").first().click();
+    await shows("conversation-quick");
+    await page.locator('[data-testid="conversation-tool"][data-tool="mark"]').click();
     const other = await page.context().newPage();
     await other.goto("/p/prj_payments");
     await other.getByTestId("project-menu").click();

@@ -306,7 +306,11 @@ describe("the platform guide", () => {
       "inbox: { unread }",
       "editor_reply { text, to, point }",
       "STOPPED",
-      "--dangerously-load-development-channels server:statewright"
+      "--dangerously-load-development-channels server:statewright",
+      "editor_ask { question, options?, multiple?, pick?, seconds? }",
+      "answers: { question, … }",
+      "| `review`    |",
+      "| `fill`      |"
     ]) {
       expect(conversation.ok && conversation.result.text, said).toContain(said);
     }

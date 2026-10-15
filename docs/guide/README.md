@@ -773,6 +773,12 @@ too, each with Undo.
 - **Answer** with `editor_reply { text, to, point }`: `to` is the message you answer (`msg_…`), `point` the IDs of the
   elements you mean, which the person can click to see. Say what you did and what you need; do not guess what they
   meant — ask.
+- **Ask** with `editor_ask { question, options?, multiple?, pick?, seconds? }` whenever you would otherwise guess: a
+  card stands above their field with your options as buttons (each may `point` at the elements it means, which ring
+  while hovered), a free answer always, and with `pick: "elements"` a Mark on the canvas step for them to mark elements
+  and confirm. It answers `{ answered: true, values?, text?, elements? }` as soon as they do. When `seconds` (120 by
+  default) run out it answers `{ answered: false }` and the question stays open: their later answer reaches you as a
+  message with `answers: { question, … }`. Your other calls go on while you wait.
 - **Stop.** When the person presses Stop, every call but the conversation's answers `STOPPED` until you read
   `editor_inbox`; then go on only as they say.
 - **The Channel.** Claude Code can bring each message to you as a turn of its own, even while it waits for the person
@@ -798,7 +804,19 @@ Each mark has its `level`, `colour` and `meaning`. When there are marks, an imag
 figure, cropped to them — comes as an image in the answer of `editor_wait` or `editor_inbox` (the message says
 `image: "attached"`); on the Channel, the marks arrive in words and the image waits in `editor_inbox`.
 
-A message reads `{ id, text, context: { project, level, selection }, marks?, image? }`.
+**What they ask for.** Over what they selected or marked, the person has quick requests; the message then carries
+`action`:
+
+| `action`    | What to do                                                                                                   |
+| ----------- | ------------------------------------------------------------------------------------------------------------ |
+| `explain`   | Read the elements and their levels; say what they do and why, in the person's words, pointing at them.       |
+| `review`    | Start with `problems_list` on them; then gaps and inconsistencies; propose fixes, do not apply them unasked. |
+| `fill`      | Their `spec.unspecified` Problems: fill what the design says, and ask (`editor_ask`) what you do not know.   |
+| `scenarios` | Write scenarios that run through them (`scenario_save`), and show one (`scenario_present`).                  |
+| `detail`    | Detail the box in a level of its own, top-down, as the playbook says; confirm the outline first.             |
+| `names`     | Propose clearer names as options (`editor_ask`); rename only what the person chooses.                        |
+
+A message reads `{ id, text, action?, context: { project, level, selection }, marks?, image?, answers? }`.
 The bar shows the person whether you are
 working (a call in the last 5 seconds), listening (waiting with `editor_wait`, or reached by the Channel) or away (their
 message waits as _not read yet_). The conversation lasts as long as the pairing: nothing of it goes into the document.
@@ -893,6 +911,8 @@ edges on the canvas carry `data-id`, the document's ID. `editor_state` (or `stat
 | `conversation-history`        | the conversation: its history, open                                | yes      |
 | `conversation-line`           | each line of the conversation (data-kind)                          | per item |
 | `conversation-tool`           | each marking tool of the conversation (data-tool)                  | per item |
+| `conversation-question`       | each open question of the agent's (data-question)                  | per item |
+| `conversation-quick`          | each quick request, something selected (data-action)               | per item |
 | `marks-colour`                | the marks' colours, a drawing tool in hand                         | yes      |
 | `marks-layer`                 | the canvas: the person's marks for the agent                       | yes      |
 | `simulation-panel`            | the simulation panel                                               | yes      |

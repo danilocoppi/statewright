@@ -605,6 +605,41 @@ for (const theme of ["light", "dark"]) {
       }
     });
 
+    test("shows the agent's question in the conversation, an option hovered", async ({ page }) => {
+      await page.goto("/");
+      await page.getByRole("button", { name: /^Payments/ }).click();
+      await expect(page).toHaveURL(/\/p\/prj_payments$/);
+      await page.goto("/p/prj_payments/cnv_expiryClock");
+      await settled(page);
+      const mcp = await startMcp({ agent: "claude-code" });
+      try {
+        await page.getByTestId("project-menu").click();
+        await page.getByTestId("project-menu-connect").click();
+        await page.getByTestId("connect-address").fill(mcp.address);
+        await page.getByTestId("connect-address").press("Enter");
+        await expect(page.getByTestId("connect-status")).toHaveText("Waiting for the agent…");
+        await mcp.pair(await page.getByTestId("connect-code").textContent());
+        await expect(page.getByTestId("connect-dialog")).toBeHidden();
+        const asking = mcp.tool("editor_ask", {
+          question: "Where should a late payment go: back to running, or straight to stopped?",
+          options: [
+            { label: "Back to running", value: "running", point: ["nod_running"] },
+            { label: "Straight to stopped", value: "stopped", point: ["nod_stopped"] }
+          ],
+          pick: "elements",
+          seconds: 60
+        });
+        const card = page.getByTestId("conversation-question");
+        await card.getByRole("button", { name: "Back to running" }).hover();
+        await expect(page.getByTestId("marks-layer").locator('[data-hover="nod_running"]')).toBeVisible();
+        await expect(page).toHaveScreenshot(`question-${theme}.png`, { maxDiffPixelRatio: 0.001 });
+        await card.getByRole("button", { name: "Back to running" }).click();
+        await asking;
+      } finally {
+        await mcp.stop();
+      }
+    });
+
     test("shows the support popover open above its badge, on the Projects screen", async ({ page }) => {
       await page.goto("/");
       await expect(page.getByRole("button", { name: /^Payments/ })).toBeVisible();
