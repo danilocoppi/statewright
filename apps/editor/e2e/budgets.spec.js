@@ -200,3 +200,95 @@ test("loads ELK only in the layout worker, and only for a level that needs arran
   expect(workers.some(url => url.includes("layout.worker"))).toBe(true);
   expect(inPage).toEqual([]);
 });
+
+/** Frame gaps during `gesture`: one measure per input, the longer of the two gaps around the frame that first sees it. */
+async function framesDuring(page, gesture) {
+  await page.evaluate(() => {
+    window.__gaps = [];
+    let last = 0;
+    let moved = false;
+    let before = null;
+    const mark = () => (moved = true);
+    addEventListener("wheel", mark, { capture: true, passive: true });
+    window.__stop = false;
+    const frame = () => {
+      const time = performance.now();
+      if (before !== null) window.__gaps.push(Math.max(before, time - last));
+      before = moved && last ? time - last : null;
+      moved = false;
+      last = time;
+      if (!window.__stop) requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  });
+  await gesture();
+  return page.evaluate(() => ((window.__stop = true), window.__gaps));
+}
+
+const p95 = values => [...values].sort((a, b) => a - b)[Math.floor(values.length * 0.95)];
+
+test("edits the airport's belt network, 524 boxes, on a computer four times slower (performance spec §2)", async ({
+  page
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /^Airport operations/ }).click();
+  await page.locator('.react-flow__node[data-id="nod_aodb"]').waitFor();
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+  await page.evaluate(() => {
+    window.__long = [];
+    new PerformanceObserver(list => window.__long.push(...list.getEntries().map(entry => entry.duration))).observe({
+      type: "longtask"
+    });
+  });
+
+  // Opening it from the project.
+  const opened = await page.evaluate(async () => {
+    const start = performance.now();
+    await window.statewright.call("view.open", { canvas: "cnv_beltNetwork" });
+    await new Promise(done => {
+      const wait = () =>
+        document.querySelectorAll(".react-flow__node-node").length > 50 ? done() : requestAnimationFrame(wait);
+      wait();
+    });
+    return performance.now() - start;
+  });
+  expect(opened).toBeLessThan(1500);
+
+  // Scrolling and zooming the whole level.
+  const pane = await page.locator(".react-flow__pane").boundingBox();
+  await page.mouse.move(pane.x + pane.width / 2, pane.y + pane.height / 2);
+  const scrolled = await framesDuring(page, async () => {
+    for (let step = 0; step < 24; step += 1) await page.mouse.wheel(step % 2 ? 60 : 0, step < 12 ? -70 : 70);
+  });
+  const zoomed = await framesDuring(page, async () => {
+    await page.keyboard.down("Control");
+    for (let step = 0; step < 16; step += 1) await page.mouse.wheel(0, step < 8 ? -60 : 60);
+    await page.keyboard.up("Control");
+  });
+  expect(p95(scrolled)).toBeLessThan(50);
+  expect(p95(zoomed)).toBeLessThan(50);
+
+  // An edit, then typing a name: each shown within its budget, no task longer than 200 ms meanwhile.
+  await page.evaluate(() => window.statewright.call("view.reveal", { id: "nod_mainLineA3" }));
+  const box = '.react-flow__node[data-id="nod_mainLineA3"]';
+  await page.locator(box).waitFor();
+  await page.evaluate(() => window.statewright.call("view.select", { ids: ["nod_mainLineA3"] }));
+  await page.waitForTimeout(500);
+  await page.evaluate(() => (window.__long.length = 0));
+  await page.locator(box).focus();
+  for (let time = 0; time < 2; time += 1) await timeKey(page, "ArrowRight", box, "style");
+  const nudges = [];
+  for (let time = 0; time < 5; time += 1) nudges.push(await timeKey(page, "ArrowRight", box, "style"));
+  expect(median(nudges)).toBeLessThan(100);
+  const name = page.getByRole("textbox", { name: "Name", exact: true });
+  await name.click();
+  await name.press("End");
+  for (const key of ["a", "b"]) await timeKey(page, key, box, "any");
+  const keys = [];
+  for (const key of ["c", "d", "e", "f", "g"]) keys.push(await timeKey(page, key, box, "any"));
+  expect(median(keys)).toBeLessThan(150);
+  await page.waitForTimeout(700);
+  const longest = await page.evaluate(() => Math.max(0, ...window.__long));
+  expect(longest).toBeLessThan(200);
+});
