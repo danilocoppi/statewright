@@ -1,6 +1,7 @@
 // The words a contract uses for what a design references by ID (source-of-truth spec §5): code holds names, not IDs.
 // An event is its name (`booking.confirmed`), an endpoint its method and path (`POST /bookings`), a webhook, an
 // action, a party or a guard its name, a timer its name with how it runs.
+import { embeddedFlowOf } from "../simulate/embedded.js";
 
 /** The catalog item `id` of `collection`, or undefined. */
 const itemOf = (doc, collection, id) => doc.catalog?.[collection]?.[id];
@@ -58,6 +59,26 @@ export function effectsOf(doc, effects) {
     if (effect.emit) return [`emit ${eventName(doc, effect.emit)}`];
     return Object.keys(effect.assign ?? {}).map(path => `assign ${path}`);
   });
+}
+
+/**
+ * Who receives the actions of some effects, and the flows that run within the step that calls them (mixed levels spec
+ * §7): `{ receivedBy: { [action]: party }, flows: { [action]: flow level } }`, each key left out when empty.
+ */
+export function actionRolesOf(doc, ...lists) {
+  const receivedBy = {};
+  const flows = {};
+  for (const effect of lists.flat()) {
+    const action = effect?.action && doc.catalog.actions[effect.action];
+    if (!action) continue;
+    if (action.party) receivedBy[action.name] = partyName(doc, action.party);
+    const flow = embeddedFlowOf(doc, effect.action);
+    if (flow) flows[action.name] = doc.canvases[flow].name;
+  }
+  return {
+    receivedBy: Object.keys(receivedBy).length ? receivedBy : undefined,
+    flows: Object.keys(flows).length ? flows : undefined
+  };
 }
 
 /** Keep the keys whose value is defined. */

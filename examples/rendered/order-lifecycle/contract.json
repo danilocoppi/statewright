@@ -1,0 +1,276 @@
+{
+  "contract": "1",
+  "flows": [
+    {
+      "edges": [
+        {
+          "from": "nod_cardAccepted",
+          "id": "edg_chargeAccepted",
+          "kind": "true",
+          "to": "nod_markCharged"
+        },
+        {
+          "from": "nod_chargeStart",
+          "id": "edg_chargeCheck",
+          "to": "nod_cardAccepted"
+        },
+        {
+          "from": "nod_captured",
+          "id": "edg_chargeEnd",
+          "to": "nod_chargeDone"
+        },
+        {
+          "from": "nod_markCharged",
+          "id": "edg_chargeMark",
+          "to": "nod_captured"
+        },
+        {
+          "from": "nod_cardAccepted",
+          "id": "edg_chargeRefused",
+          "kind": "false",
+          "to": "nod_chargeDeclined"
+        }
+      ],
+      "id": "cnv_chargeCard",
+      "name": "Charge card",
+      "owner": "act_chargeCard",
+      "steps": [
+        {
+          "event": "payment.captured",
+          "id": "nod_captured",
+          "kind": "emit"
+        },
+        {
+          "condition": {
+            "text": "the card is accepted"
+          },
+          "id": "nod_cardAccepted",
+          "kind": "if"
+        },
+        {
+          "id": "nod_chargeDeclined",
+          "kind": "end",
+          "name": "Declined",
+          "outcome": "failure"
+        },
+        {
+          "id": "nod_chargeDone",
+          "kind": "end",
+          "name": "Charged",
+          "outcome": "success"
+        },
+        {
+          "id": "nod_chargeStart",
+          "kind": "start"
+        },
+        {
+          "id": "nod_markCharged",
+          "kind": "assign",
+          "set": {
+            "context.charged": true
+          }
+        }
+      ]
+    }
+  ],
+  "machines": [
+    {
+      "completeness": "complete",
+      "id": "cnv_order",
+      "name": "Order",
+      "owner": "nod_orders",
+      "starts": [
+        {
+          "id": "nod_init",
+          "kind": "initial",
+          "to": "created"
+        }
+      ],
+      "states": [
+        {
+          "final": true,
+          "id": "nod_cancelled",
+          "name": "cancelled",
+          "outcome": "stopped"
+        },
+        {
+          "category": "processing",
+          "id": "nod_charging",
+          "name": "charging"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_created",
+          "name": "created"
+        },
+        {
+          "final": true,
+          "id": "nod_paid",
+          "name": "paid",
+          "onEntry": [
+            "Send receipt"
+          ],
+          "outcome": "success",
+          "receivedBy": {
+            "Send receipt": "Customer"
+          }
+        }
+      ],
+      "subject": "order.status",
+      "transitions": [
+        {
+          "from": "charging",
+          "id": "edg_chargingCancelled",
+          "intent": "failure",
+          "on": [
+            "order.cancelled"
+          ],
+          "to": "cancelled"
+        },
+        {
+          "from": "charging",
+          "id": "edg_chargingPaid",
+          "intent": "happy",
+          "on": [
+            "payment.captured"
+          ],
+          "to": "paid"
+        },
+        {
+          "from": "created",
+          "id": "edg_createdCancelled",
+          "on": [
+            "order.cancelled"
+          ],
+          "to": "cancelled"
+        },
+        {
+          "actions": [
+            "Charge card"
+          ],
+          "flows": {
+            "Charge card": "Charge card"
+          },
+          "from": "created",
+          "id": "edg_createdCharging",
+          "intent": "happy",
+          "on": [
+            "order.placed"
+          ],
+          "receivedBy": {
+            "Charge card": "Payments"
+          },
+          "to": "charging"
+        },
+        {
+          "from": "initial:nod_init",
+          "id": "edg_initCreated",
+          "to": "created"
+        }
+      ]
+    }
+  ],
+  "source": {
+    "content": "df1f14c8b3ed4af38404af5061e758b8a532e324c6226924d99bd7ae40bb7eea",
+    "format": "1.2",
+    "name": "Order lifecycle",
+    "project": "prj_orderLifecycle"
+  },
+  "stale": [],
+  "vectors": [
+    {
+      "id": "scn_aDeclinedCard",
+      "kind": "machine",
+      "level": "cnv_order",
+      "name": "A declined card",
+      "start": {
+        "at": "2026-03-02T10:00:00Z",
+        "expect": {
+          "active": [
+            "created"
+          ]
+        },
+        "fired": [
+          "edg_initCreated"
+        ]
+      },
+      "steps": [
+        {
+          "do": {
+            "event": "order.placed"
+          },
+          "expect": {
+            "active": [
+              "charging"
+            ]
+          },
+          "fired": [
+            "edg_createdCharging"
+          ],
+          "given": [
+            {
+              "at": "nod_cardAccepted",
+              "kind": "branch",
+              "value": false
+            }
+          ]
+        },
+        {
+          "do": {
+            "event": "order.cancelled"
+          },
+          "expect": {
+            "active": [
+              "cancelled"
+            ],
+            "ended": "done"
+          },
+          "fired": [
+            "edg_chargingCancelled"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scn_aPaidOrder",
+      "kind": "machine",
+      "level": "cnv_order",
+      "name": "A paid order",
+      "start": {
+        "at": "2026-03-02T10:00:00Z",
+        "expect": {
+          "active": [
+            "created"
+          ]
+        },
+        "fired": [
+          "edg_initCreated"
+        ]
+      },
+      "steps": [
+        {
+          "do": {
+            "event": "order.placed"
+          },
+          "expect": {
+            "active": [
+              "paid"
+            ],
+            "ended": "done"
+          },
+          "fired": [
+            "edg_createdCharging",
+            "edg_chargingPaid"
+          ],
+          "given": [
+            {
+              "at": "nod_cardAccepted",
+              "kind": "branch",
+              "value": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

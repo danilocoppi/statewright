@@ -2,7 +2,7 @@
 // names the code holds, how a record starts, and every transition with its triggers, guard and effects by name.
 import { ownerOf } from "../query/index.js";
 import { sorted } from "../rules/facts.js";
-import { conditionOf, defined, effectsOf, eventName, partyName, timerOf, viaName } from "./names.js";
+import { actionRolesOf, conditionOf, defined, effectsOf, eventName, partyName, timerOf, viaName } from "./names.js";
 
 /** The machine nodes that are not states: where a run starts, branches, resumes or applies everywhere. */
 const STARTS = new Set(["initial", "entry"]);
@@ -68,6 +68,7 @@ function machineOf(doc, id, canvas) {
         statuses: node.statuses?.map(status => doc.catalog?.statuses?.[status]?.name ?? status),
         onEntry: effectsOf(doc, node.onEntry),
         onExit: effectsOf(doc, node.onExit),
+        ...actionRolesOf(doc, node.onEntry ?? [], node.onExit ?? []),
         sla: node.sla ? timerOf(doc, node.sla) : undefined,
         inner: innerOf(node.inner)
       })
@@ -118,6 +119,7 @@ function machineOf(doc, id, canvas) {
       guard: conditionOf(doc, edge.guard),
       else: edge.else,
       actions: effectsOf(doc, edge.actions),
+      ...actionRolesOf(doc, edge.actions ?? []),
       internal: edge.internal,
       intent: edge.intent,
       retry: edge.retry,

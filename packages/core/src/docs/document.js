@@ -3,6 +3,7 @@ import { buildIndex } from "../query/build-index.js";
 import { hierarchy } from "../query/index.js";
 import { check } from "../rules/index.js";
 import { triggersOf } from "../rules/facts.js";
+import { associationsOf } from "../roles/index.js";
 import { isGuest } from "../roles/kinds.js";
 import { createStyle, stepText } from "../style/index.js";
 
@@ -277,8 +278,11 @@ export function documentModel(doc) {
           })
         };
     const edgeIds = sortedKeys(canvas.edges);
-    const end = nodeId =>
-      canvas.nodes[nodeId]?.label ?? canvas.nodes[nodeId]?.name ?? canvas.nodes[nodeId]?.kind ?? nodeId;
+    const end = nodeId => {
+      const node = canvas.nodes[nodeId];
+      if (node && isGuest(canvas.kind, node)) return node.label ?? stepText(doc, node);
+      return node?.label ?? node?.name ?? node?.kind ?? nodeId;
+    };
     const edges =
       machine ?
         {
@@ -317,6 +321,33 @@ export function documentModel(doc) {
             };
           })
         };
+    // The roles' connectors whose ends are both on this level (mixed levels spec §7), when it has any.
+    const ROLE_WORDS = {
+      sends: "sends",
+      receives: "is for",
+      runs: "runs",
+      drives: "drives",
+      leadsTo: "leads to",
+      performs: "is done by"
+    };
+    const endText = elementId => (canvas.edges[elementId] ? style.edgeLabel(elementId) || elementId : end(elementId));
+    const roleRows = associationsOf(doc, id)
+      .filter(item => [item.from, item.to].every(elementId => canvas.nodes[elementId] || canvas.edges[elementId]))
+      .map(item => ({
+        id: item.id,
+        cells: [
+          cellOf(endText(item.from)),
+          cellOf(ROLE_WORDS[item.role]),
+          cellOf(endText(item.to)),
+          cellOf(
+            item.label ?? "",
+            item.owners
+              .filter(owner => !canvas.edges[owner] && !canvas.nodes[owner])
+              .map(owner => ({ id: owner, text: named(owner) }))
+          )
+        ]
+      }));
+    const roles = roleRows.length ? { headers: ["From", "Role", "To", "About"], rows: roleRows } : null;
     return {
       id,
       path: path.map(named),
@@ -330,6 +361,7 @@ export function documentModel(doc) {
       caption: canvas.caption ?? "",
       nodes,
       edges,
+      roles,
       scenarios: scenariosOf(doc, id).map(([scenarioId, scenario]) => ({
         id: scenarioId,
         name: scenario.name,
@@ -402,6 +434,7 @@ export function toMarkdown(doc) {
     if (level.caption) out.push(level.caption, "");
     out.push(table(level.nodes.headers, texts(level.nodes.rows)), "");
     out.push(table(level.edges.headers, texts(level.edges.rows)), "");
+    if (level.roles) out.push(table(level.roles.headers, texts(level.roles.rows)), "");
     for (const scenario of level.scenarios) {
       out.push(`### Scenario: ${scenario.name}`, "");
       if (scenario.description) out.push(scenario.description, "");

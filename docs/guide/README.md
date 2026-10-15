@@ -187,6 +187,18 @@ participant sends what a transition's `by` (or its event's `source`) names, rece
 its party; embedded steps run where their action is called; a step leads to a state guest when the event it emits
 moves that state's machine there.
 
+On a machine level, drawing writes those fields: drag a participant onto a transition (its label or route) and it
+sends it (`by`); drag a state onto a participant and say which of its actions the participant receives (the action's
+`party`); drag embedded steps onto a transition or a state and their action runs there. Select a connector and press
+Delete to clear what it stands for. A pair that means nothing is refused, saying why.
+
+When a transition or a state runs an action whose flow never waits, the simulator runs the action's flow then and
+there: its assigns write the machine's context, the events it emits move the machine, its questions are asked with the
+machine's, and the story says who sends and who receives ("Customer sends order.placed. Payments receives Charge
+card."). A flow that waits runs apart, as before. The contract gives such transitions and states `receivedBy` (each
+action's party) and `flows` (the flow each action runs within the step). `examples/order-lifecycle.sttw` shows all of
+it.
+
 ### Definitions
 
 A definition (`def_*`) is a reusable canvas. Elements whose `inner` is `{ "definition": "def_x" }` are its instances:

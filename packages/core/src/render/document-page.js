@@ -168,6 +168,14 @@ ${sectionHead(numberOf("map"), "map", "Map", "How the levels fit", `${esc(root.p
       level.edges.headers,
       level.edges.rows.map(row => rowOf(row.cells.map(cellHtml)))
     );
+    const roles =
+      level.roles ?
+        tableOf(
+          "roles",
+          level.roles.headers,
+          level.roles.rows.map(row => rowOf(row.cells.map(cellHtml)))
+        )
+      : "";
     const scenarios = level.scenarios.map(scenario => {
       const story = storyOf(doc, doc.annotations.scenarios[scenario.id]);
       const start = story.frames[0];
@@ -222,7 +230,7 @@ ${path}</header>
 ${level.title ? `<p class="figure-title">${esc(level.title)}</p>\n` : ""}${level.caption ? `<p class="caption">${inline(level.caption)}</p>\n` : ""}<figure class="diagram" id="figure-${esc(level.id)}" style="--width: ${width}px">${svg}<a class="close" href="#level-${esc(level.id)}">Close</a></figure>
 <p class="figure-foot"><a href="#figure-${esc(level.id)}">Open full size</a></p>
 </div>
-${nodes ? `<h4>${level.kind === "machine" ? "States" : "Elements"}</h4>\n${nodes}\n` : ""}${edges ? `<h4>${level.kind === "machine" ? "Transitions" : "Connections"}</h4>\n${edges}\n` : ""}${scenarios.length ? `<h4>Scenarios</h4>\n${scenarios.join("\n")}\n` : ""}${findings ? `<h4>Findings</h4>\n${findings}\n` : ""}</article>`);
+${nodes ? `<h4>${level.kind === "machine" ? "States" : "Elements"}</h4>\n${nodes}\n` : ""}${edges ? `<h4>${level.kind === "machine" ? "Transitions" : "Connections"}</h4>\n${edges}\n` : ""}${roles ? `<h4>Roles</h4>\n${roles}\n` : ""}${scenarios.length ? `<h4>Scenarios</h4>\n${scenarios.join("\n")}\n` : ""}${findings ? `<h4>Findings</h4>\n${findings}\n` : ""}</article>`);
   }
   const levels = `<section class="section" id="levels" aria-labelledby="levels-title">
 ${sectionHead(numberOf("levels"), "levels", "Levels", "Every level, in reading order", "Depth first from the top level: each with its diagram and legend, its tables, the scenarios that run it and the findings on it.")}

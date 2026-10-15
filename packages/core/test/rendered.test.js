@@ -12,7 +12,7 @@ import { readExample } from "./helpers.js";
 const rendered = (name, file) =>
   readFileSync(new URL(`../../../examples/rendered/${name}/${file}`, import.meta.url), "utf8");
 
-describe.each(["bookings", "get-paid-as-built", "payments"])("examples/%s", name => {
+describe.each(["bookings", "get-paid-as-built", "order-lifecycle", "payments"])("examples/%s", name => {
   const doc = parse(readExample(`${name}.sttw`)).doc;
 
   it("has no errors", () => {

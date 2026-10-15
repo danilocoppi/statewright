@@ -13,11 +13,23 @@ const validateJsonSchema = new Ajv2020({ strict: false, validateFormats: false }
 describe("the examples", () => {
   it("are .sttw documents, the name Statewright saves under", () => {
     const files = readdirSync(new URL("../../../examples/", import.meta.url)).filter(name => name.includes("."));
-    expect(files).toEqual(["bookings.sttw", "get-paid-as-built.sttw", "payments.sttw", "payout-batch.sttw"]);
+    expect(files).toEqual([
+      "bookings.sttw",
+      "get-paid-as-built.sttw",
+      "order-lifecycle.sttw",
+      "payments.sttw",
+      "payout-batch.sttw"
+    ]);
   });
 });
 
-describe.each(["bookings.sttw", "get-paid-as-built.sttw", "payments.sttw", "payout-batch.sttw"])("%s", name => {
+describe.each([
+  "bookings.sttw",
+  "get-paid-as-built.sttw",
+  "order-lifecycle.sttw",
+  "payments.sttw",
+  "payout-batch.sttw"
+])("%s", name => {
   const text = readExample(name);
   const result = parse(text);
 

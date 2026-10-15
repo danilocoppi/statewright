@@ -1,0 +1,680 @@
+{
+  "statewright": "1.2",
+  "generator": {
+    "name": "statewright",
+    "version": "0.1.5",
+    "channel": "api"
+  },
+  "signature": {
+    "algorithm": "sha256",
+    "content": "df1f14c8b3ed4af38404af5061e758b8a532e324c6226924d99bd7ae40bb7eea",
+    "annotations": "d4151a638dcf4aabffce3017110ee84688b96bd5a14be18c5435882cb137e3ed",
+    "layout": "4deccda654ef1eb011ebdfd053a843015c33a84e37caa40680a4e7b6c881836d",
+    "signedAt": "2026-10-15T12:00:00Z"
+  },
+  "project": {
+    "id": "prj_orderLifecycle",
+    "name": "Order lifecycle"
+  },
+  "root": "cnv_orderLifecycle",
+  "catalog": {
+    "types": {},
+    "events": {
+      "evt_orderCancelled": {
+        "name": "order.cancelled",
+        "payload": null,
+        "source": "pty_customer"
+      },
+      "evt_orderPlaced": {
+        "name": "order.placed",
+        "payload": null,
+        "source": "pty_customer"
+      },
+      "evt_paymentCaptured": {
+        "name": "payment.captured",
+        "payload": null,
+        "source": "internal"
+      }
+    },
+    "actions": {
+      "act_chargeCard": {
+        "name": "Charge card",
+        "emits": [
+          "evt_paymentCaptured"
+        ],
+        "party": "pty_payments",
+        "inner": {
+          "canvas": "cnv_chargeCard"
+        },
+        "description": "Charges the order's total to the customer's card."
+      },
+      "act_sendReceipt": {
+        "name": "Send receipt",
+        "party": "pty_customer"
+      }
+    },
+    "guards": {},
+    "endpoints": {},
+    "webhooks": {},
+    "timers": {},
+    "statuses": {},
+    "parties": {
+      "pty_customer": {
+        "kind": "human",
+        "name": "Customer"
+      },
+      "pty_payments": {
+        "kind": "system",
+        "name": "Payments"
+      }
+    }
+  },
+  "definitions": {},
+  "canvases": {
+    "cnv_chargeCard": {
+      "kind": "flow",
+      "name": "Charge card",
+      "nodes": {
+        "nod_captured": {
+          "kind": "emit",
+          "event": "evt_paymentCaptured"
+        },
+        "nod_cardAccepted": {
+          "kind": "if",
+          "condition": {
+            "text": "the card is accepted"
+          }
+        },
+        "nod_chargeDeclined": {
+          "kind": "end",
+          "name": "Declined",
+          "outcome": "failure"
+        },
+        "nod_chargeDone": {
+          "kind": "end",
+          "name": "Charged",
+          "outcome": "success"
+        },
+        "nod_chargeStart": {
+          "kind": "start"
+        },
+        "nod_markCharged": {
+          "kind": "assign",
+          "set": {
+            "context.charged": true
+          }
+        }
+      },
+      "edges": {
+        "edg_chargeAccepted": {
+          "from": "nod_cardAccepted",
+          "to": "nod_markCharged",
+          "kind": "true"
+        },
+        "edg_chargeCheck": {
+          "from": "nod_chargeStart",
+          "to": "nod_cardAccepted"
+        },
+        "edg_chargeEnd": {
+          "from": "nod_captured",
+          "to": "nod_chargeDone"
+        },
+        "edg_chargeMark": {
+          "from": "nod_markCharged",
+          "to": "nod_captured"
+        },
+        "edg_chargeRefused": {
+          "from": "nod_cardAccepted",
+          "to": "nod_chargeDeclined",
+          "kind": "false"
+        }
+      }
+    },
+    "cnv_order": {
+      "kind": "machine",
+      "name": "Order",
+      "caption": "An order from the moment it is placed: the customer sends what moves it, Payments receives the charge, and the charge's steps run where it is called.",
+      "subject": "order.status",
+      "transitions": "complete",
+      "nodes": {
+        "nod_cancelled": {
+          "kind": "state",
+          "name": "cancelled",
+          "outcome": "stopped",
+          "terminal": true
+        },
+        "nod_chargeSteps": {
+          "kind": "steps",
+          "action": "act_chargeCard"
+        },
+        "nod_charging": {
+          "kind": "state",
+          "name": "charging",
+          "category": "processing"
+        },
+        "nod_created": {
+          "kind": "state",
+          "name": "created",
+          "category": "waiting"
+        },
+        "nod_customerHere": {
+          "kind": "participant",
+          "party": "pty_customer"
+        },
+        "nod_init": {
+          "kind": "initial"
+        },
+        "nod_paid": {
+          "kind": "state",
+          "name": "paid",
+          "outcome": "success",
+          "terminal": true,
+          "onEntry": [
+            {
+              "action": "act_sendReceipt"
+            }
+          ]
+        },
+        "nod_paymentsHere": {
+          "kind": "participant",
+          "party": "pty_payments"
+        }
+      },
+      "edges": {
+        "edg_chargingCancelled": {
+          "from": "nod_charging",
+          "to": "nod_cancelled",
+          "on": [
+            "evt_orderCancelled"
+          ],
+          "intent": "failure"
+        },
+        "edg_chargingPaid": {
+          "from": "nod_charging",
+          "to": "nod_paid",
+          "on": [
+            "evt_paymentCaptured"
+          ],
+          "intent": "happy"
+        },
+        "edg_createdCancelled": {
+          "from": "nod_created",
+          "to": "nod_cancelled",
+          "on": [
+            "evt_orderCancelled"
+          ]
+        },
+        "edg_createdCharging": {
+          "from": "nod_created",
+          "to": "nod_charging",
+          "on": [
+            "evt_orderPlaced"
+          ],
+          "actions": [
+            {
+              "action": "act_chargeCard"
+            }
+          ],
+          "intent": "happy"
+        },
+        "edg_initCreated": {
+          "from": "nod_init",
+          "to": "nod_created"
+        }
+      }
+    },
+    "cnv_orderLifecycle": {
+      "kind": "system",
+      "name": "Order lifecycle",
+      "caption": "A shop's orders: who places them, who charges them, and the order's lifecycle.",
+      "nodes": {
+        "nod_customer": {
+          "kind": "actor",
+          "name": "Customer",
+          "party": "pty_customer"
+        },
+        "nod_orders": {
+          "kind": "store",
+          "name": "Orders",
+          "inner": {
+            "canvas": "cnv_order"
+          }
+        },
+        "nod_payments": {
+          "kind": "service",
+          "name": "Payments",
+          "party": "pty_payments"
+        },
+        "nod_shop": {
+          "kind": "service",
+          "name": "Shop"
+        }
+      },
+      "edges": {
+        "edg_customerShop": {
+          "from": "nod_customer",
+          "to": "nod_shop",
+          "kind": "command",
+          "events": [
+            "evt_orderPlaced"
+          ]
+        },
+        "edg_shopOrders": {
+          "from": "nod_shop",
+          "to": "nod_orders",
+          "kind": "data"
+        },
+        "edg_shopPayments": {
+          "from": "nod_shop",
+          "to": "nod_payments",
+          "kind": "command"
+        }
+      }
+    }
+  },
+  "annotations": {
+    "scenarios": {
+      "scn_aDeclinedCard": {
+        "name": "A declined card",
+        "description": "The card is declined: the order waits in charging until the customer cancels it.",
+        "canvas": "cnv_order",
+        "start": {
+          "at": "2026-03-02T10:00:00Z"
+        },
+        "steps": [
+          {
+            "do": {
+              "event": "evt_orderPlaced"
+            },
+            "answers": [
+              {
+                "kind": "branch",
+                "at": "nod_cardAccepted",
+                "value": false
+              }
+            ],
+            "reached": {
+              "active": [
+                "nod_charging"
+              ]
+            }
+          },
+          {
+            "do": {
+              "event": "evt_orderCancelled"
+            },
+            "reached": {
+              "active": [
+                "nod_cancelled"
+              ],
+              "ended": "done"
+            }
+          }
+        ]
+      },
+      "scn_aPaidOrder": {
+        "name": "A paid order",
+        "description": "The customer places the order; the card is accepted, so the charge's own steps capture the payment and the order is paid.",
+        "canvas": "cnv_order",
+        "start": {
+          "at": "2026-03-02T10:00:00Z"
+        },
+        "steps": [
+          {
+            "do": {
+              "event": "evt_orderPlaced"
+            },
+            "answers": [
+              {
+                "kind": "branch",
+                "at": "nod_cardAccepted",
+                "value": true
+              }
+            ],
+            "caption": "Customer places the order. Payments charges the card: accepted.",
+            "reached": {
+              "active": [
+                "nod_paid"
+              ],
+              "ended": "done"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "layout": {
+    "canvases": {
+      "cnv_chargeCard": {
+        "nodes": {
+          "nod_captured": {
+            "x": 606,
+            "y": 0
+          },
+          "nod_cardAccepted": {
+            "x": 84,
+            "y": 7
+          },
+          "nod_chargeDeclined": {
+            "x": 394,
+            "y": 88
+          },
+          "nod_chargeDone": {
+            "x": 818,
+            "y": 15
+          },
+          "nod_chargeStart": {
+            "x": 0,
+            "y": 26
+          },
+          "nod_markCharged": {
+            "x": 394,
+            "y": 0
+          }
+        },
+        "edges": {
+          "edg_chargeAccepted": {
+            "points": [
+              [
+                212,
+                24
+              ],
+              [
+                394,
+                24
+              ]
+            ],
+            "labelAt": [
+              303,
+              12
+            ]
+          },
+          "edg_chargeCheck": {
+            "points": [
+              [
+                12,
+                32
+              ],
+              [
+                84,
+                32
+              ]
+            ]
+          },
+          "edg_chargeEnd": {
+            "points": [
+              [
+                746,
+                24
+              ],
+              [
+                818,
+                24
+              ]
+            ]
+          },
+          "edg_chargeMark": {
+            "points": [
+              [
+                534,
+                24
+              ],
+              [
+                606,
+                24
+              ]
+            ]
+          },
+          "edg_chargeRefused": {
+            "points": [
+              [
+                212,
+                41
+              ],
+              [
+                232,
+                41
+              ],
+              [
+                232,
+                97
+              ],
+              [
+                394,
+                97
+              ]
+            ],
+            "labelAt": [
+              303,
+              110
+            ]
+          }
+        }
+      },
+      "cnv_order": {
+        "nodes": {
+          "nod_cancelled": {
+            "x": 1364,
+            "y": 45
+          },
+          "nod_chargeSteps": {
+            "x": 424,
+            "y": 242
+          },
+          "nod_charging": {
+            "x": 1746,
+            "y": 45
+          },
+          "nod_created": {
+            "x": 212,
+            "y": 279
+          },
+          "nod_customerHere": {
+            "x": 0,
+            "y": 0
+          },
+          "nod_init": {
+            "x": 128,
+            "y": 305
+          },
+          "nod_paid": {
+            "x": 2134,
+            "y": 37
+          },
+          "nod_paymentsHere": {
+            "x": 424,
+            "y": 154
+          }
+        },
+        "edges": {
+          "edg_chargingCancelled": {
+            "points": [
+              [
+                1746,
+                69
+              ],
+              [
+                1504,
+                69
+              ]
+            ],
+            "labelAt": [
+              1625,
+              82
+            ]
+          },
+          "edg_chargingPaid": {
+            "points": [
+              [
+                1886,
+                69
+              ],
+              [
+                2134,
+                69
+              ]
+            ],
+            "labelAt": [
+              2010,
+              82
+            ]
+          },
+          "edg_createdCancelled": {
+            "points": [
+              [
+                352,
+                288
+              ],
+              [
+                372,
+                288
+              ],
+              [
+                372,
+                69
+              ],
+              [
+                1364,
+                69
+              ]
+            ],
+            "labelAt": [
+              858,
+              82
+            ]
+          },
+          "edg_createdCharging": {
+            "points": [
+              [
+                352,
+                298
+              ],
+              [
+                382,
+                298
+              ],
+              [
+                382,
+                133
+              ],
+              [
+                1694,
+                133
+              ],
+              [
+                1694,
+                81
+              ],
+              [
+                1746,
+                81
+              ]
+            ],
+            "labelAt": [
+              1434,
+              146
+            ]
+          },
+          "edg_initCreated": {
+            "points": [
+              [
+                140,
+                311
+              ],
+              [
+                212,
+                311
+              ]
+            ]
+          }
+        }
+      },
+      "cnv_orderLifecycle": {
+        "nodes": {
+          "nod_customer": {
+            "x": 8,
+            "y": 0
+          },
+          "nod_orders": {
+            "x": 0,
+            "y": 88
+          },
+          "nod_payments": {
+            "x": 8,
+            "y": 184
+          },
+          "nod_shop": {
+            "x": 372,
+            "y": 92
+          }
+        },
+        "edges": {
+          "edg_customerShop": {
+            "points": [
+              [
+                148,
+                24
+              ],
+              [
+                320,
+                24
+              ],
+              [
+                320,
+                104
+              ],
+              [
+                372,
+                104
+              ]
+            ],
+            "labelAt": [
+              260,
+              37
+            ]
+          },
+          "edg_shopOrders": {
+            "points": [
+              [
+                372,
+                116
+              ],
+              [
+                148,
+                116
+              ]
+            ],
+            "labelAt": [
+              260,
+              129
+            ]
+          },
+          "edg_shopPayments": {
+            "points": [
+              [
+                372,
+                128
+              ],
+              [
+                320,
+                128
+              ],
+              [
+                320,
+                208
+              ],
+              [
+                148,
+                208
+              ]
+            ],
+            "labelAt": [
+              260,
+              221
+            ]
+          }
+        }
+      }
+    }
+  }
+}
