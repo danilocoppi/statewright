@@ -22,6 +22,13 @@ test("finds every hook on its screen, once where it is unique (§7.5)", async ({
   };
   const agent = (name, args) => page.evaluate(([name, args]) => globalThis.statewright.call(name, args), [name, args]);
 
+  // Dictation is offered where the browser can listen: a headless browser may not, so it is given one that can.
+  await page.addInitScript(() => {
+    globalThis.SpeechRecognition ??= class {
+      start() {}
+      stop() {}
+    };
+  });
   // The Projects screen, with nothing kept yet; then payments, from its example.
   await page.goto("/");
   await shows("projects-new", "projects-open-file", "projects-connect");
@@ -163,7 +170,7 @@ test("finds every hook on its screen, once where it is unique (§7.5)", async ({
     await expect(page.getByTestId("connect-status")).toHaveText("Waiting for the agent…");
     await mcp.pair(await page.getByTestId("connect-code").textContent());
     await shows("actions-agent", "actions-disconnect");
-    await shows("conversation-bar", "conversation-field", "conversation-send");
+    await shows("conversation-bar", "conversation-field", "conversation-send", "conversation-voice");
     await expect(page.getByTestId("connect-dialog")).toBeHidden();
     await page.getByTestId("conversation-field").fill("hello");
     await page.getByTestId("conversation-field").press("Enter");
@@ -193,6 +200,19 @@ test("finds every hook on its screen, once where it is unique (§7.5)", async ({
     await page.getByTestId("conversation-proposal").getByRole("button", { name: "Reject" }).click();
     await page.getByTestId("conversation-proposal").getByRole("button", { name: "Reject it" }).click();
     await page.locator('[data-testid="conversation-tool"][data-tool="mark"]').click();
+    // A comment on a box, and a lock on it (format 1.3), once the run is over.
+    await agent("run.stop", { discard: true });
+    const box = page.locator(".react-flow__node-node").first();
+    await box.click({ button: "right" });
+    await page.getByRole("menuitem", { name: /Comment/ }).click();
+    await shows("comment-thread");
+    await page.getByTestId("comment-thread").getByRole("textbox", { name: "Comment" }).fill("Why?");
+    await page.getByTestId("comment-thread").getByRole("button", { name: "Comment" }).click();
+    await shows("comment-pin");
+    await page.getByTestId("comment-thread").getByRole("button", { name: "Close" }).click();
+    await agent("view.select", { ids: [await box.getAttribute("data-id")] });
+    await page.getByTestId("inspector-lock").getByRole("checkbox").check();
+    await shows("inspector-lock", "lock-badge");
     const other = await page.context().newPage();
     await other.goto("/p/prj_payments");
     await other.getByTestId("project-menu").click();

@@ -312,6 +312,8 @@ describe("the platform guide", () => {
       "| `review`    |",
       "| `fill`      |",
       "propose: true, title, why",
+      "comment.reply { id, text,",
+      'forced: "locked"',
       'forced: "deletes"'
     ]) {
       expect(conversation.ok && conversation.result.text, said).toContain(said);

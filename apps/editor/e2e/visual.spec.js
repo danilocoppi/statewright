@@ -683,6 +683,52 @@ for (const theme of ["light", "dark"]) {
       }
     });
 
+    test("shows a comment's thread open and a locked box", async ({ page }) => {
+      await page.goto("/");
+      await page.getByRole("button", { name: /^Payments/ }).click();
+      await expect(page).toHaveURL(/\/p\/prj_payments$/);
+      await page.goto("/p/prj_payments/cnv_expiryClock");
+      await settled(page);
+      await page.evaluate(() =>
+        globalThis.statewright.call("batch.apply", {
+          label: "Review",
+          commands: [
+            {
+              type: "comment.add",
+              args: {
+                id: "cmt_why",
+                canvas: "cnv_expiryClock",
+                target: "nod_paused",
+                text: "Should paused stop the clock, or only slow it?",
+                time: "2026-10-15T12:00:00.000Z"
+              }
+            },
+            {
+              type: "comment.reply",
+              args: {
+                id: "cmt_why",
+                text: "It stops it: verify.started pauses it, verify.ended gives the time back.",
+                author: "agent",
+                name: "claude-code",
+                time: "2026-10-15T12:05:00.000Z"
+              }
+            },
+            { type: "lock.add", args: { target: "nod_running" } }
+          ]
+        })
+      );
+      await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+      await page
+        .getByTestId("toast")
+        .getByRole("button", { name: /dismiss|close/i })
+        .click();
+      await expect(page.getByTestId("toast")).toHaveCount(0);
+      await page.locator('[data-testid="comment-pin"][data-comment="cmt_why"]').click();
+      await expect(page.getByTestId("comment-thread")).toBeVisible();
+      await page.mouse.move(8, 892);
+      await expect(page).toHaveScreenshot(`comment-${theme}.png`, { maxDiffPixelRatio: 0.001 });
+    });
+
     test("shows the support popover open above its badge, on the Projects screen", async ({ page }) => {
       await page.goto("/");
       await expect(page.getByRole("button", { name: /^Payments/ })).toBeVisible();

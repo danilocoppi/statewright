@@ -464,6 +464,13 @@ the view (Shift+1 too), Shift+A lays it out again (Shift+L too). These keys act 
 | →              | While a scenario is followed, take its next step.                                                                              |
 | ← →, Space     | On the stage, the step before or after; Page Up and Page Down too, Home and End the first and the last, Esc back to the panel. |
 
+**Comments, locks and voice.** Comment, on the canvas menu, leaves a review comment on an element or at a point; its
+pin opens the thread, where you and the AI answer, resolve or reopen it, and open comments are listed in Problems. In
+the inspector, Don't let the AI change this locks a box, an arrow, a region or the level: the AI then only proposes
+changes to it, while your own edits go through. While an AI is paired, the microphone in the conversation dictates in
+the interface's language; in Chrome the voice goes to Google's speech service, and Statewright asks once before it
+listens.
+
 **Export → Documentation (HTML)** saves the whole project as one page to read, share or print: a cover with its
 numbers, the map of its levels, each level with its diagram, its tables, its scenarios and its findings, the catalog
 and the findings, with the contents on the left marking the part being read. It opens offline and asks for nothing;
@@ -922,6 +929,13 @@ too, each with Undo.
 accepted, reason?, stale? }`; `stale` says it no longer applied to the document as it was then. A batch that removes
   anything is always proposed (`forced: "deletes"`) unless the person lets you delete without asking for the session.
   Proposals need the Editor: on files, `propose` is refused (`NOT_ALLOWED`).
+- **Comments.** The person leaves review comments on elements or points of a level; each open one is a Problem,
+  `comment.open`, with its ID in `data.comment`. Answer in its thread with `batch_apply` and `comment.reply { id, text,
+author: "agent", name }`, change what it asks, and `comment.resolve` it once settled (`comment.add` opens one of
+  yours). Comments live in the file (format 1.3) and never show in the figure or the documentation.
+- **Locks.** What the person locked — `annotations.locks`, on a box, an arrow, a region or a whole level — you may not
+  change directly: a batch that adds, changes or removes anything locked is always proposed (`forced: "locked"`), even
+  when they let you delete without asking. Their own edits are not held.
 - **Stop.** When the person presses Stop, every call but the conversation's answers `STOPPED` until you read
   `editor_inbox`; then go on only as they say.
 - **The Channel.** Claude Code can bring each message to you as a turn of its own, even while it waits for the person
@@ -1101,6 +1115,11 @@ edges on the canvas carry `data-id`, the document's ID. `editor_state` (or `stat
 | `conversation-quick`          | each quick request, something selected (data-action)               | per item |
 | `conversation-proposal`       | each proposal of the agent's waiting (data-proposal)               | per item |
 | `proposal-layer`              | the canvas: the proposal shown, drawn                              | yes      |
+| `conversation-voice`          | the conversation: Dictate, where the browser can listen            | yes      |
+| `comment-pin`                 | each open comment on the canvas (data-comment)                     | per item |
+| `comment-thread`              | the canvas: the comment open, or one being written                 | yes      |
+| `inspector-lock`              | the inspector: Don't let the AI change this                        | yes      |
+| `lock-badge`                  | each locked element on the canvas (data-target)                    | per item |
 | `marks-colour`                | the marks' colours, a drawing tool in hand                         | yes      |
 | `marks-layer`                 | the canvas: the person's marks for the agent                       | yes      |
 | `simulation-panel`            | the simulation panel                                               | yes      |
