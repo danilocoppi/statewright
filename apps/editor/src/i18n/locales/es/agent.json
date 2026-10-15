@@ -189,5 +189,13 @@
     "deletesOn": "{{agent}} puede eliminar sin preguntar",
     "turnOff": "Desactivar",
     "forcedLocked": "Propuesta porque cambia lo que está bloqueado: {{names}}."
+  },
+  "voice": {
+    "dictate": "Dictar",
+    "stop": "Dejar de dictar",
+    "consent": "El dictado usa el reconocimiento de voz del navegador: en Chrome, lo que dices se envía al servicio de voz de Google (Google's speech service) para escribirlo. Aquí no se graba ni se guarda nada.",
+    "allow": "Permitir el dictado",
+    "cancel": "Ahora no",
+    "refused": "Se rechazó el micrófono: permítelo en el navegador para dictar."
   }
 }

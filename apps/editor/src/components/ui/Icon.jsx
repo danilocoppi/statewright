@@ -23,6 +23,7 @@ const PATHS = {
   ellipse: "M8 4.5c3 0 5.5 1.6 5.5 3.5S11 11.5 8 11.5 2.5 9.9 2.5 8 5 4.5 8 4.5z",
   eraser: "M9.5 3 13.5 7l-5.5 5.5h-3L2.5 10.5zM6.5 6l4 4M8 12.5h5.5",
   lock: "M4.5 7.5h7v6h-7zM6 7.5v-2a2 2 0 0 1 4 0v2",
+  mic: "M6 3.5a2 2 0 0 1 4 0v4a2 2 0 0 1-4 0zM3.5 7.5a4.5 4.5 0 0 0 9 0M8 12v2",
   // The levels: one above another, as the project's map shows them.
   levels: "M8 2.5 13.5 5.5 8 8.5 2.5 5.5zM2.5 8 8 11l5.5-3M2.5 10.5 8 13.5l5.5-3",
   // The catalog: a card box, its cards behind it, a label on its front.

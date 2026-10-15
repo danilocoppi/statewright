@@ -189,5 +189,13 @@
     "deletesOn": "{{agent}} may delete without asking",
     "turnOff": "Turn off",
     "forcedLocked": "Proposed because it changes what is locked: {{names}}."
+  },
+  "voice": {
+    "dictate": "Dictate",
+    "stop": "Stop dictating",
+    "consent": "Dictation uses your browser's speech recognition: in Chrome, what you say is sent to Google's speech service to be written. Nothing is recorded or kept here.",
+    "allow": "Allow dictation",
+    "cancel": "Not now",
+    "refused": "The microphone was refused: allow it in the browser to dictate."
   }
 }

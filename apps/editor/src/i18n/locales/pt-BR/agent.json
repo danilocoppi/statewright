@@ -189,5 +189,13 @@
     "deletesOn": "{{agent}} pode apagar sem perguntar",
     "turnOff": "Desligar",
     "forcedLocked": "Proposta porque muda o que está travado: {{names}}."
+  },
+  "voice": {
+    "dictate": "Ditar",
+    "stop": "Parar de ditar",
+    "consent": "O ditado usa o reconhecimento de fala do navegador: no Chrome, o que você diz é enviado ao serviço de fala do Google (Google's speech service) para ser escrito. Nada é gravado nem guardado aqui.",
+    "allow": "Permitir o ditado",
+    "cancel": "Agora não",
+    "refused": "O microfone foi recusado: permita no navegador para ditar."
   }
 }

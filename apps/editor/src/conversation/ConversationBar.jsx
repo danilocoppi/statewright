@@ -23,6 +23,7 @@ import { ProposalCard } from "@/proposals/ProposalCard";
 import { proposalsStore, useProposals } from "@/proposals/store";
 
 import { Question } from "./Question";
+import { Voice } from "./Voice";
 import { WORKING_MS, conversationStore, statusOf, useConversation } from "./store";
 
 /** The bar's widest, and the narrowest it takes in a row before it moves up a row. */
@@ -532,6 +533,9 @@ export function ConversationBar({ onNavigate }) {
               {t("proposal.deletesOn", { agent })} · {t("proposal.turnOff")}
             </button>
           )}
+        </span>
+        <span className="mb-0.5">
+          <Voice />
         </span>
         <Button
           variant={stopping ? "secondary" : "primary"}
