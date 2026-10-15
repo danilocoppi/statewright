@@ -344,9 +344,10 @@ export function documentModel(doc) {
       leadsTo: "leads to",
       performs: "is done by"
     };
-    const endText = elementId => (canvas.edges[elementId] ? style.edgeLabel(elementId) || elementId : end(elementId));
+    const endText = elementId => (canvas.nodes[elementId] ? end(elementId) : style.edgeLabel(elementId) || elementId);
     const roleRows = associationsOf(doc, id)
-      .filter(item => [item.from, item.to].every(elementId => canvas.nodes[elementId] || canvas.edges[elementId]))
+      // A connector belongs to the level of an end it touches (a lifecycle's drivers to the system that frames it).
+      .filter(item => [item.from, item.to].some(elementId => canvas.nodes[elementId] || canvas.edges[elementId]))
       .map(item => ({
         id: item.id,
         cells: [

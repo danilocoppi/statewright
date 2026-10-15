@@ -1,6 +1,9 @@
 // Drawing and deleting a role's connector (mixed levels spec §3): a connector is never stored, so drawing one writes the
 // field that holds its meaning, and deleting one clears it. What a pair of ends means comes from their kinds; a pair
 // that means nothing is refused, in words the Editor can say.
+import { makeId } from "../ids.js";
+import { buildIndex } from "../query/build-index.js";
+import { figureCanvases } from "../style/frames.js";
 
 /**
  * @typedef {"noMeaning" | "already" | "notRun" | "nothingToReceive"} RoleRefusal Why drawing a connector changes
@@ -69,17 +72,67 @@ function runs(steps, place) {
   };
 }
 
+/** The kind of party a system box acts for when it is given a new one (mixed levels spec §4.3). */
+const NEW_PARTY_KIND = { service: "system", store: "system", queue: "system", actor: "human", external: "external" };
+/** The party kinds offered first to a box of each kind. */
+const OFFERED_FIRST = { system: ["system"], human: ["human", "operator"], external: ["external"] };
+
 /**
- * What drawing a connector from one element of a machine level to another means, and the commands that write it.
+ * A system box → a transition of a machine framed on the figure: the box drives it (R3) — the transition's `by` is the
+ * box's party; a box without a party asks for one, and gets it in the same change.
+ */
+function drives(doc, canvasId, box, edgeId, choice) {
+  const machine = figureCanvases(doc, canvasId)
+    .slice(1)
+    .find(id => doc.canvases[id].kind === "machine" && doc.canvases[id].edges[edgeId]);
+  const edge = machine && doc.canvases[machine].edges[edgeId];
+  if (!edge || edge.kind === "link" || !NEW_PARTY_KIND[box.value.kind]) return { refusal: "noMeaning" };
+  const commands = [];
+  let party = box.value.party;
+  if (!party) {
+    const kind = NEW_PARTY_KIND[box.value.kind];
+    if (choice.party === undefined) {
+      const first = OFFERED_FIRST[kind];
+      const parties = Object.entries(doc.catalog.parties)
+        .sort(
+          ([, a], [, b]) =>
+            Number(!first.includes(a.kind)) - Number(!first.includes(b.kind)) || a.name.localeCompare(b.name)
+        )
+        .map(([id]) => id);
+      return { needs: "party", parties };
+    }
+    if ("id" in choice.party) party = choice.party.id;
+    else {
+      party = makeId("pty", choice.party.name, buildIndex(doc));
+      commands.push({
+        type: "catalog.add",
+        args: { collection: "parties", id: party, item: { kind, name: choice.party.name } }
+      });
+    }
+    commands.push({ type: "node.update", args: { id: box.id, set: { party } } });
+  } else if (edge.by === party) return { refusal: "already" };
+  commands.push({ type: "edge.update", args: { id: edgeId, set: { by: party } } });
+  return { role: "drives", commands };
+}
+
+/**
+ * What drawing a connector from one element of a level to another means, and the commands that write it: on a machine,
+ * sends, receives and runs; on a system, a box driving a transition of a lifecycle framed there.
  * @param {any} doc
  * @param {string} canvasId
  * @param {string} from A node or transition ID on the level.
  * @param {string} to A node or transition ID on the level.
- * @param {{ action?: string }} [choice] The action a participant receives, when the place runs several.
- * @returns {{ role: string, commands: object[] } | { refusal: RoleRefusal } | { needs: "action", actions: string[] }}
+ * @param {{ action?: string, party?: { id: string } | { name: string } }} [choice] The action a participant receives,
+ *   when the place runs several; the party a system box acts for, when it has none.
+ * @returns {{ role: string, commands: object[] } | { refusal: RoleRefusal } | { needs: "action", actions: string[] }
+ *   | { needs: "party", parties: string[] }}
  */
 export function associate(doc, canvasId, from, to, choice = {}) {
   const canvas = doc.canvases[canvasId];
+  if (canvas?.kind === "system") {
+    const box = canvas.nodes[from];
+    return box ? drives(doc, canvasId, { id: from, value: box }, to, choice) : { refusal: "noMeaning" };
+  }
   const source = canvas && endOf(canvas, from);
   const target = canvas && endOf(canvas, to);
   if (!source || !target || canvas.kind !== "machine") return { refusal: "noMeaning" };

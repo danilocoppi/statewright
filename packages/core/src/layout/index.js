@@ -2,6 +2,7 @@ import ELK from "elkjs/lib/elk.bundled.js";
 import { applyBatch } from "../commands/engine.js";
 import { associationsOf } from "../roles/index.js";
 import { isGuest } from "../roles/kinds.js";
+import { displayOf, figureCanvases, interiorOf } from "../style/frames.js";
 import { createGeometry, labelSize } from "./geometry.js";
 
 export { BOX, createGeometry, labelLines, labelSize, textWidth } from "./geometry.js";
@@ -63,7 +64,18 @@ const round = value => Math.round(value);
  */
 function roleEdges(doc, canvasId, inside) {
   const canvas = doc.canvases[canvasId];
-  const nodeOf = id => (canvas.nodes[id] ? id : canvas.edges[id]?.from);
+  // A transition inside a lifecycle framed here stands at the box whose frame shows it (mixed levels spec §4.3).
+  const framing = new Map();
+  for (const nodeId of Object.keys(canvas.nodes)) {
+    const interior = interiorOf(doc, canvas.nodes[nodeId]);
+    if (!interior || displayOf(doc, canvasId, nodeId) !== "frame") continue;
+    for (const shown of figureCanvases(doc, interior)) framing.set(shown, nodeId);
+  }
+  const framedAt = id => {
+    for (const [shown, owner] of framing) if (doc.canvases[shown].edges[id]) return owner;
+    return undefined;
+  };
+  const nodeOf = id => (canvas.nodes[id] ? id : (canvas.edges[id]?.from ?? framedAt(id)));
   const seen = new Set();
   return associationsOf(doc, canvasId).flatMap(association => {
     const from = nodeOf(association.from);
@@ -87,7 +99,10 @@ async function runElk(geometry, canvasId, nodeIds) {
   );
   const roles = roleEdges(geometry.doc, canvasId, inside);
   // Guests that start something come first in reading order, so breaking cycles never turns their connectors around.
-  const senders = new Set(roles.flatMap(edge => edge.sources).filter(id => isGuest(canvas.kind, canvas.nodes[id])));
+  // On a system, a box that drives a lifecycle comes before it (ELK turns edges against the model order around).
+  const senders = new Set(
+    roles.flatMap(edge => edge.sources).filter(id => canvas.kind === "system" || isGuest(canvas.kind, canvas.nodes[id]))
+  );
   const order = readingOrder(canvas, nodeIds);
   const graph = {
     id: "root",
