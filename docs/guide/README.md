@@ -161,6 +161,32 @@ canvas — to point elsewhere, use a `ref` node.
   webhook call). Its `guard` is a condition; its `actions` are effects (call an action, emit an event, assign context).
 - `subject` names the field the machine governs (`order.status`): state names are its values.
 
+### Guests: elements of other kinds
+
+A level keeps its kind, and can still show elements of the other kinds as **guests**, each in a role that the format,
+the rules and the figure understand (format 1.2). In the Editor, the tool dock has System, Machine and Flow tabs (keys
+1, 2 and 3): the level's own tab has its tools, the others drop guests.
+
+| Guest               | On      | Stands for                                                      | Field                     |
+| ------------------- | ------- | --------------------------------------------------------------- | ------------------------- |
+| `participant`       | machine | a party: who sends the events, who receives the actions         | `party`                   |
+| `steps`             | machine | the flow of an action, endpoint or webhook, drawn where it runs | `action`                  |
+| `participant`       | flow    | a party: who performs a call or a webhook                       | `party`                   |
+| a `state` on a flow | flow    | a state of a state machine, which the flow's steps lead to      | `target`                  |
+| lifecycle           | system  | a `store` whose interior is a state machine, open as a frame    | `inner`, `display: frame` |
+| procedure           | system  | a `service` whose interior is a flow, open as a frame           | `inner`, `display: frame` |
+
+A participant is drawn in its party's look (actor, operator, service, external); embedded steps show their item's
+flow as a frame; a state guest looks like its state and names its machine. Guests take no part in their level's own
+semantics: a machine's rules and runs ignore its participants and steps, a flow's ignore its participants and state
+guests. Services, stores, queues, actions, endpoints and lanes also take a `party`: who they belong to, who receives
+an action, who performs a lane's steps.
+
+Their connectors are not stored: each is read from the field that holds its meaning, so every view agrees. A
+participant sends what a transition's `by` (or its event's `source`) names, receives the actions whose `party` is
+its party; embedded steps run where their action is called; a step leads to a state guest when the event it emits
+moves that state's machine there.
+
 ### Definitions
 
 A definition (`def_*`) is a reusable canvas. Elements whose `inner` is `{ "definition": "def_x" }` are its instances:

@@ -74,6 +74,8 @@ export function ToolDock() {
               data-testid="tools-tab"
               data-kind={item}
               aria-selected={tab === item}
+              // One stop in the Tab order: the tab shown (the arrows reach the others).
+              tabIndex={tab === item ? 0 : -1}
               aria-label={t(`tools.tabs.${item}`)}
               aria-keyshortcuts={String(index + 1)}
               onClick={() => editingStore.getState().setTab(item)}
@@ -83,7 +85,7 @@ export function ToolDock() {
               onFocus={() => setTip(`tab-${item}`)}
               onBlur={() => setTip(null)}
               className={cn(
-                "relative grid h-6 w-8 place-items-center rounded-[6px] text-muted hover:bg-subtle hover:text-ink",
+                "relative grid h-6 w-8 place-items-center rounded-[6px] text-muted hover:bg-subtle hover:text-ink [@media(max-height:640px)]:h-5",
                 tab === item && "bg-accent-soft text-accent hover:bg-accent-soft hover:text-accent"
               )}
             >
@@ -124,7 +126,8 @@ export function ToolDock() {
               onFocus={() => setTip(tool.id)}
               onBlur={() => setTip(null)}
               className={cn(
-                "grid size-8 place-items-center rounded-control text-sub hover:bg-subtle hover:text-ink",
+                // In a short window the dock tightens, so it stays clear of the islands at the top.
+                "grid size-8 place-items-center rounded-control text-sub hover:bg-subtle hover:text-ink [@media(max-height:640px)]:size-7",
                 current === tool.id &&
                   "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
               )}

@@ -74,7 +74,7 @@ test("points elements out with a note until the person clicks elsewhere, and wai
   await expect(page).toHaveURL(/\/cnv_expiryClock$/);
   await expect(page.getByTestId("canvas-point")).toHaveText("AIThe clock pauses here");
   await expect(page.locator(".react-flow__node.sw-pointed")).toHaveCount(2);
-  await page.locator(".react-flow__pane").click({ position: { x: 40, y: 600 } });
+  await page.locator(".react-flow__pane").click({ position: { x: 120, y: 600 } });
   await expect(page.getByTestId("canvas-point")).toHaveCount(0);
 
   await page.getByTestId("project-menu").click();

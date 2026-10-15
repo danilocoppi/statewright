@@ -16,6 +16,16 @@ import { parse } from "../../src/serialize/parse.js";
 import { readExample } from "../helpers.js";
 
 const source = readFileSync(new URL("../../../../docs/guide/README.md", import.meta.url), "utf8");
+
+/** A section of the guide: from its heading to the next heading of the same or a higher level. */
+function sectionOf(heading) {
+  const start = source.indexOf(`\n${heading}`);
+  if (start < 0) return "";
+  const depth = heading.match(/^#+/)[0].length;
+  const rest = source.slice(start + heading.length + 1);
+  const next = rest.search(new RegExp(`\n#{1,${depth}} `));
+  return next < 0 ? rest : rest.slice(0, next);
+}
 const readme = readFileSync(new URL("../../README.md", import.meta.url), "utf8");
 
 /** The code block that follows a `<!-- checked:name -->` marker in the guide. */
@@ -139,6 +149,22 @@ describe("the platform guide", () => {
       import.meta.url
     );
     expect(existsSync(rendered)).toBe(true);
+  });
+
+  it("tells how a level holds elements of other kinds as guests, and what each stands for (mixed levels spec §3, §6)", () => {
+    const section = sectionOf("### Guests: elements of other kinds");
+    for (const words of [
+      "`participant`",
+      "`steps`",
+      "a `state` on a flow",
+      "lifecycle",
+      "procedure",
+      "System, Machine and Flow tabs",
+      "1, 2 and 3",
+      "format 1.2"
+    ]) {
+      expect(section).toContain(words);
+    }
   });
 
   it("tells where the findings on an edge are drawn (source-of-truth spec §6)", () => {
