@@ -68,4 +68,15 @@ describe("the marks on the canvas (collaboration spec §5.1)", () => {
     expect(marksStore.getState().shown).toBeNull();
     expect(document.querySelector('[data-mark="label"]')).toBeNull();
   });
+
+  it("takes the focus from the conversation's field when a mark is drawn, so its keys reach the marks", async () => {
+    await show("cnv_lifecycle");
+    const field = document.createElement("textarea");
+    document.body.append(field);
+    field.focus();
+    act(() => marksStore.getState().setTool("rectangle"));
+    fireEvent.pointerDown(document.querySelector(".react-flow__pane"), { button: 0, clientX: 300, clientY: 300 });
+    expect(document.activeElement).not.toBe(field);
+    field.remove();
+  });
 });

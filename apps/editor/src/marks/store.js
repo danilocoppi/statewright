@@ -54,13 +54,14 @@ export function createMarksStore() {
         shown: null
       })),
     unmark: id => set(state => ({ forAI: state.forAI.filter(item => item.id !== id) })),
-    /** Take back the last mark drawn: whether there was one. */
-    undo() {
+    /** Take back the last mark drawn on a level (any level without one): whether there was one. */
+    undo(level) {
       let taken = false;
       set(state => {
-        if (!state.marks.length) return {};
+        const at = state.marks.findLastIndex(mark => level === undefined || mark.level === level);
+        if (at < 0) return {};
         taken = true;
-        return { marks: state.marks.slice(0, -1) };
+        return { marks: state.marks.filter((_, index) => index !== at) };
       });
       return taken;
     },
@@ -77,6 +78,8 @@ export function createMarksStore() {
       }),
     /** Everything erased (sent, or the eraser's Shift+click); the tool and the colour stay. */
     clear: () => set({ marks: [], forAI: [], shown: null }),
+    /** The pairing ended: no marks, no tool in hand. */
+    reset: () => set({ marks: [], forAI: [], shown: null, tool: null }),
     /** Show a sent message's marks again, or stop showing them. */
     show: snapshot => set({ shown: snapshot })
   }));

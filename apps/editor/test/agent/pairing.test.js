@@ -12,6 +12,7 @@ import {
 } from "@/agent/pairing";
 
 import { createConversationStore } from "@/conversation/store";
+import { createMarksStore } from "@/marks/store";
 
 import { createBridge } from "../../../../packages/core/src/mcp/bridge.js";
 
@@ -42,7 +43,8 @@ function tab({
   origin,
   storage = memoryStorage(),
   fetch: request = fromPage(origin),
-  conversation = createConversationStore()
+  conversation = createConversationStore(),
+  marks = createMarksStore()
 } = {}) {
   const hellos = [];
   const ends = [];
@@ -55,10 +57,11 @@ function tab({
     fetch: request,
     storage,
     onEnd: (reason, agent) => ends.push({ reason, agent }),
-    conversation
+    conversation,
+    marks
   });
   opened.push(() => pairing.disconnect());
-  return { pairing, hellos, ends, calls, storage, conversation, state: () => pairing.store.getState() };
+  return { pairing, hellos, ends, calls, storage, conversation, marks, state: () => pairing.store.getState() };
 }
 
 /** The agent brings the code the tab shows, once it has reached the bridge. */
@@ -270,8 +273,12 @@ describe("the conversation through the pairing (collaboration spec §3)", () => 
     await bridge.call("document.summary", {});
     expect(talk().lastCall).toBeGreaterThan(0);
     talk().add({ kind: "person", text: "hi", chips: [], state: "sent" });
+    paired.marks.getState().setTool("rectangle");
+    paired.marks.getState().add({ level: "cnv_a", kind: "label", colour: "red", at: [0, 0], text: "x" });
     paired.pairing.disconnect();
     expect(talk().lines).toEqual([]);
+    // The marks and the tool in hand go with the pairing (collaboration spec §5: "until … the pairing ends").
+    expect(paired.marks.getState()).toMatchObject({ tool: null, marks: [], forAI: [], shown: null });
     expect(await paired.pairing.send({ text: "late" })).toEqual({ error: "not paired" });
   });
 });

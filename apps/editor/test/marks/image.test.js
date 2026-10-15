@@ -28,6 +28,8 @@ describe("the image of the marks (collaboration spec §5.4)", () => {
     expect(drawn.svg).toContain('stroke="#b42318"');
     expect(drawn.svg).not.toContain("<ellipse");
     expect(drawn.svg).toContain("running");
+    // The arrows keep their heads: the figure's markers come with it.
+    expect(drawn.svg).toMatch(/<marker id="marks-/);
     expect(drawn.scale).toBeLessThanOrEqual(2);
   });
 

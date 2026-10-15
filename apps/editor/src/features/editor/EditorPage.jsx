@@ -84,6 +84,7 @@ const WAITING = new Set(["undo", "redo", "selectAll", "duplicate"]);
 /** The keys a marking tool in hand keeps from the canvas: they would change the document or take another tool. */
 const MARKING_KEEPS = new Set([
   "up",
+  "layout",
   "undo",
   "redo",
   "delete",
@@ -297,7 +298,7 @@ export default function EditorPage() {
       const marking = marksStore.getState().tool;
       if (marking && MARKING_KEEPS.has(action)) {
         if (action === "up") marksStore.getState().setTool(null);
-        if (action === "undo" && DRAWING.has(marking)) marksStore.getState().undo();
+        if (action === "undo" && DRAWING.has(marking)) marksStore.getState().undo(editorStore.getState().canvasId);
         event.preventDefault();
         event.stopPropagation();
         return;

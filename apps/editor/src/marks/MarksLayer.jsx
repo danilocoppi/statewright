@@ -6,6 +6,7 @@ import { useEditor } from "@/store/editor";
 
 import { beginGesture, eraseAlong, eraseAt } from "./gesture";
 import { geometryOf } from "./payload";
+import { regionAt } from "./read";
 import { DRAWING, INK, marksStore, useMarksState } from "./store";
 
 /** How near the eraser reaches, in screen pixels. */
@@ -94,12 +95,19 @@ export function MarksLayer({ canvasId }) {
     zoomRef.current = zoom;
   }, [zoom]);
 
-  const geometry = useMemo(
-    () => (doc?.canvases[canvasId] ? geometryOf(doc, canvasId) : { boxes: [], lines: [] }),
-    [doc, canvasId]
-  );
   const drawn = (shown?.marks ?? marks).filter(mark => mark.level === canvasId);
   const marked = new Set((shown?.forAI ?? forAI).filter(item => item.level === canvasId).map(item => item.id));
+  // The level's geometry (Core's figure) only while it is needed — a tool in hand, or something marked on it — so an
+  // edit on a large level costs nothing more (spec §9: an edit shown within 50 ms).
+  const needed = Boolean(tool) || marked.size > 0;
+  const geometryRef = useRef(null);
+  const geometry = useMemo(
+    () => (needed && doc?.canvases[canvasId] ? geometryOf(doc, canvasId) : { boxes: [], regions: [], lines: [] }),
+    [needed, doc, canvasId]
+  );
+  useEffect(() => {
+    geometryRef.current = geometry;
+  }, [geometry]);
 
   useEffect(() => {
     if (!tool || !domNode) return undefined;
@@ -127,8 +135,12 @@ export function MarksLayer({ canvasId }) {
       if (event.button !== 0 || !keep(event)) return;
       const store = marksStore;
       const point = pointOf(event);
+      // Drawing takes the focus from the conversation's field, so Ctrl/⌘+Z and Esc reach the marks.
+      const active = document.activeElement;
+      if (active && active !== document.body && !domNode.contains(active)) active.blur?.();
       if (tool === "mark") {
-        const id = elementAt(event.clientX, event.clientY);
+        // A box or an arrow under the pointer; else the region holding the point (regions let the pointer through).
+        const id = elementAt(event.clientX, event.clientY) ?? regionAt(geometryRef.current.regions, point);
         if (id) store.getState().toggleForAI(id, canvasId);
         return;
       }
@@ -213,7 +225,7 @@ export function MarksLayer({ canvasId }) {
           className="pointer-events-none absolute left-0 top-0 overflow-visible"
           aria-hidden="true"
         >
-          {geometry.boxes
+          {[...geometry.boxes, ...geometry.regions]
             .filter(box => marked.has(box.id))
             .map(box => (
               <rect

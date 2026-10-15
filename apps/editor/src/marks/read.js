@@ -185,3 +185,15 @@ export function readMark(mark, geometry) {
   }
   return filled({ touches: readLine(points, geometry) });
 }
+
+/**
+ * The region under a point: the innermost (smallest) of those holding it, or null.
+ * @param {Box[]} regions
+ * @param {[number, number]} point
+ */
+export function regionAt(regions, point) {
+  const holding = regions.filter(region => inBox(point, region));
+  if (!holding.length) return null;
+  return holding.reduce((small, region) => (region.width * region.height < small.width * small.height ? region : small))
+    .id;
+}

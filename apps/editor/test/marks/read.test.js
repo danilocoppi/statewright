@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { closes, readMark } from "@/marks/read";
+import { closes, readMark, regionAt } from "@/marks/read";
 
 // Three boxes in a row and one below; an edge from A to B.
 const boxes = [
@@ -112,5 +112,15 @@ describe("reading a mark (collaboration spec §5.2)", () => {
 
   it("reads nothing from a mark over nothing", () => {
     expect(readMark({ kind: "rectangle", rect: { x: 600, y: 600, width: 10, height: 10 } }, geometry)).toEqual({});
+  });
+
+  it("finds the region under a point, the innermost when regions nest", () => {
+    const regions = [
+      { id: "outer", name: "Outer", x: 0, y: 0, width: 500, height: 500 },
+      { id: "inner", name: "Inner", x: 100, y: 100, width: 100, height: 100 }
+    ];
+    expect(regionAt(regions, [150, 150])).toBe("inner");
+    expect(regionAt(regions, [20, 20])).toBe("outer");
+    expect(regionAt(regions, [900, 20])).toBeNull();
   });
 });

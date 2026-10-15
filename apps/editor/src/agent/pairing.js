@@ -8,6 +8,7 @@ import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 
 import { conversationStore } from "@/conversation/store";
+import { marksStore } from "@/marks/store";
 
 import { APP } from "@/config/app";
 
@@ -96,7 +97,8 @@ export function createPairing({
   storage = globalThis.localStorage,
   random,
   onEnd = () => {},
-  conversation = conversationStore
+  conversation = conversationStore,
+  marks = marksStore
 } = {}) {
   const saved = (() => {
     try {
@@ -131,6 +133,8 @@ export function createPairing({
     store.setState({ status: "off", code: null, agent: null, handover: null });
     // The conversation lives while the pairing does (collaboration spec §4).
     conversation.getState().clear();
+    // The marks too, and the tool in hand: nothing is left to mark for (collaboration spec §5).
+    marks.getState().reset();
     onEnd(reason, own.agent);
   }
 

@@ -212,6 +212,7 @@ describe("Editor page", () => {
     try {
       fireEvent.keyDown(window, { key: "Delete" });
       fireEvent.keyDown(window, { key: "s" });
+      fireEvent.keyDown(window, { key: "L", shiftKey: true });
       expect(editorStore.getState().doc).toBe(before);
       fireEvent.keyDown(window, { key: "z", ctrlKey: true });
       expect(marksStore.getState().marks).toEqual([]);

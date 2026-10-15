@@ -1,6 +1,6 @@
 // The image of the marks (collaboration spec §5.4): the level's figure as Core draws it — in the same coordinates the
 // canvas shows — with the person's marks on it, cropped to them with a margin, at most 1600 px on its longer side.
-import { figureOf } from "statewright";
+import { edgeMarkers, figureOf } from "statewright";
 
 import { FONT_FILES } from "@/design/fonts";
 import { rasterize, svgWithFonts } from "@/files/export";
@@ -60,8 +60,8 @@ function markSvg(mark) {
 export function markedSvg(doc, level, { marks, forAI }) {
   const drawn = marks.filter(mark => mark.level === level);
   const marked = new Set(forAI.filter(item => item.level === level).map(item => item.id));
-  const { boxes, lines } = geometryOf(doc, level);
-  const rings = boxes.filter(box => marked.has(box.id));
+  const { boxes, regions, lines } = geometryOf(doc, level);
+  const rings = [...boxes, ...regions].filter(box => marked.has(box.id));
   const traced = lines.filter(line => marked.has(line.id));
   const all = [
     ...drawn.map(boundsOf),
@@ -87,8 +87,11 @@ export function markedSvg(doc, level, { marks, forAI }) {
         `<polyline points="${line.points.map(point => point.join(",")).join(" ")}" fill="none" stroke="${ACCENT}" stroke-opacity="0.35" stroke-width="8" stroke-linecap="round"/>`
     )
   ].join("");
+  // The arrows' heads, as Core's figure refers to them.
+  const markers = edgeMarkers([...new Set(figure.edges.map(part => part.key))], { idPrefix: "marks" });
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x} ${y} ${width} ${height}" width="${width}" height="${height}">` +
+    `<defs>${markers}</defs>` +
     `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="#ffffff"/>${scene}${ringSvg}${drawn.map(markSvg).join("")}</svg>`;
   return { svg, width, height, scale: Math.min(SCALE, LONGEST / Math.max(width, height)) };
 }

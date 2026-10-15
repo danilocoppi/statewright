@@ -47,4 +47,14 @@ describe("what the marks say in a message (collaboration spec §5.4)", () => {
     expect(lines.length).toBeGreaterThan(0);
     expect(lines[0].points.length).toBeGreaterThan(1);
   });
+
+  it("reads frames, regions and the roles' connectors too, so they can be marked and enclosed", async () => {
+    const payments = await placedExample("payments");
+    const lifecycle = geometryOf(payments, "cnv_lifecycle");
+    expect(lifecycle.regions.map(region => region.id).sort()).toEqual(["rgn_compliance", "rgn_expiry", "rgn_phase"]);
+    const order = await placedExample("order-lifecycle");
+    expect(geometryOf(order, "cnv_order").boxes.map(box => box.id)).toContain("nod_chargeSteps");
+    const steps = geometryOf(order, "cnv_order").boxes.find(box => box.id === "nod_chargeSteps");
+    expect(steps.name).not.toBe("nod_chargeSteps");
+  });
 });

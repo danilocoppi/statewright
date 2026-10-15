@@ -37,4 +37,14 @@ describe("the marks (collaboration spec §5.1)", () => {
     store.getState().clear();
     expect(store.getState()).toMatchObject({ tool: "pencil", colour: "green", marks: [], forAI: [], shown: null });
   });
+
+  it("takes back the last mark of the level shown, not an unseen one of another level", () => {
+    const store = createMarksStore();
+    const here = store.getState().add({ level: "cnv_a", kind: "stroke", colour: "red", points: [[0, 0]] });
+    store.getState().add({ level: "cnv_b", kind: "stroke", colour: "red", points: [[0, 0]] });
+    expect(store.getState().undo("cnv_a")).toBe(true);
+    expect(store.getState().marks.map(mark => mark.level)).toEqual(["cnv_b"]);
+    expect(store.getState().marks.some(mark => mark.id === here)).toBe(false);
+    expect(store.getState().undo("cnv_a")).toBe(false);
+  });
 });

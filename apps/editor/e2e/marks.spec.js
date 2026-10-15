@@ -77,6 +77,9 @@ test("marks go with the message, read as the elements they mean, pictured, and l
     await expect(layer.locator("[data-mark]")).toHaveCount(4);
     await page.keyboard.press("Control+z");
     await expect(layer.locator("[data-mark]")).toHaveCount(3);
+    // Shift+L, which lays the level out, waits while a tool is in hand.
+    await page.keyboard.press("Shift+L");
+    await page.waitForTimeout(500);
     await page.getByTestId("project-menu").click();
     await expect(page.getByTestId("project-menu-undo")).toBeDisabled();
     await page.keyboard.press("Escape");
