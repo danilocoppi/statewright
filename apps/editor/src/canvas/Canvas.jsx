@@ -69,6 +69,9 @@ import { usePlacement } from "./usePlacement";
 import { clearOfInspector, fitFor, inspectorSpace, ZOOM } from "./viewport";
 import { ZoomIsland } from "./ZoomIsland";
 
+/** Below this zoom a box's 12 px name is under 5 px on screen: unreadable, so not drawn (performance spec §3 P2). */
+export const FAR_ZOOM = 0.4;
+
 const nodeTypes = {
   node: FigureNode,
   frame: FigureNode,
@@ -136,6 +139,9 @@ function Flow({ onNavigate }) {
   const flow = useReactFlow();
   // A level is framed with room for the tool dock on a narrow canvas (viewport.js).
   const paneWidth = useStore(state => state.width);
+  // Far out, names are too small to read: the canvas says so, and its stylesheet stops drawing text (performance spec
+  // §3 P2), so panning and zooming a large level repaints shapes only. Crossing the line is the only re-render.
+  const far = useStore(state => state.transform[2] < FAR_ZOOM);
   // Beside the simulation panel, as wide as the person made the inspector.
   const inspector = useInspectorWidth();
   const fit = useMemo(
@@ -565,6 +571,7 @@ function Flow({ onNavigate }) {
       data-testid="canvas"
       data-canvas={canvasId}
       data-area="canvas"
+      data-far={far || undefined}
       className="absolute inset-0"
       onKeyDown={onKeyDown}
       onPointerMove={event =>

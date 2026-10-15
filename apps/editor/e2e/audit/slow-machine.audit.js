@@ -44,19 +44,22 @@ async function timeKey(page, key, selector) {
   return page.evaluate(() => Promise.race([window.__timed, new Promise(done => setTimeout(() => done(-1), 30000))]));
 }
 
-/** Frame gaps while wheeling and dragging the pane. */
-async function panAndZoom(page) {
-  const pane = await page.locator(".react-flow__pane").boundingBox();
-  const middle = { x: pane.x + pane.width / 2, y: pane.y + pane.height / 2 };
-  // As the budgets do: one measure per input, the longer of the two gaps around the frame that first sees it.
+/**
+ * Frame gaps while `gesture` runs: as the budgets do, one measure per input, the longer of the two gaps around the
+ * frame that first sees it.
+ */
+async function framesDuring(page, gesture) {
   await page.evaluate(() => {
     window.__gaps = [];
     let last = 0;
     let moved = false;
     let before = null;
     const mark = () => (moved = true);
-    addEventListener("wheel", mark, { capture: true, passive: true });
-    addEventListener("pointermove", mark, { capture: true, passive: true });
+    window.__mark ??=
+      (addEventListener("wheel", () => window.__moved?.(), { capture: true, passive: true }),
+      addEventListener("pointermove", () => window.__moved?.(), { capture: true, passive: true }),
+      true);
+    window.__moved = mark;
     window.__stop = false;
     const frame = () => {
       const time = performance.now();
@@ -68,13 +71,41 @@ async function panAndZoom(page) {
     };
     requestAnimationFrame(frame);
   });
-  await page.mouse.move(middle.x, middle.y);
-  for (let step = 0; step < 16; step += 1) await page.mouse.wheel(0, step < 8 ? -80 : 80);
-  await page.mouse.down();
-  await page.mouse.move(middle.x + 400, middle.y + 150, { steps: 40 });
-  await page.mouse.up();
+  await gesture();
   return page.evaluate(() => ((window.__stop = true), window.__gaps));
 }
+
+/** The pane's middle. */
+async function middleOf(page) {
+  const pane = await page.locator(".react-flow__pane").boundingBox();
+  return { x: pane.x + pane.width / 2, y: pane.y + pane.height / 2 };
+}
+
+const scroll = page => async () => {
+  const middle = await middleOf(page);
+  await page.mouse.move(middle.x, middle.y);
+  for (let step = 0; step < 24; step += 1) await page.mouse.wheel(step % 2 ? 60 : 0, step < 12 ? -70 : 70);
+};
+const zoom = page => async () => {
+  const middle = await middleOf(page);
+  await page.mouse.move(middle.x, middle.y);
+  await page.keyboard.down("Control");
+  for (let step = 0; step < 16; step += 1) await page.mouse.wheel(0, step < 8 ? -60 : 60);
+  await page.keyboard.up("Control");
+};
+const marquee = page => async () => {
+  const middle = await middleOf(page);
+  await page.mouse.move(middle.x - 300, middle.y - 200);
+  await page.mouse.down();
+  await page.mouse.move(middle.x + 200, middle.y + 150, { steps: 40 });
+  await page.mouse.up();
+  await page.keyboard.press("Escape");
+};
+
+const frameReport = (rate, what, gaps) => {
+  report(rate, `${what}: median frame`, median(gaps));
+  report(rate, `${what}: 95th percentile frame`, p95(gaps));
+};
 
 for (const rate of RATES) {
   test(`the airport example at ${rate}× slower`, async ({ page }) => {
@@ -105,10 +136,15 @@ for (const rate of RATES) {
     await page.waitForTimeout(1500);
     await watchLongTasks(page);
 
-    const gaps = await panAndZoom(page);
-    report(rate, "pan and zoom: median frame", median(gaps));
-    report(rate, "pan and zoom: 95th percentile frame", p95(gaps));
-    report(rate, "pan and zoom: worst frame", Math.max(...gaps));
+    frameReport(rate, "scroll the whole level", await framesDuring(page, scroll(page)));
+    frameReport(rate, "zoom the whole level", await framesDuring(page, zoom(page)));
+    frameReport(rate, "marquee on the whole level", await framesDuring(page, marquee(page)));
+    // Near, where names are read: 100 %.
+    await page.getByRole("button", { name: "Zoom to 100 %" }).click();
+    await page.waitForTimeout(500);
+    frameReport(rate, "scroll at 100 %", await framesDuring(page, scroll(page)));
+    await page.getByRole("button", { name: "Fit" }).click();
+    await page.waitForTimeout(800);
 
     // An edit: nudge a box on screen, from the key to the frame that shows it moved.
     const visible = await page.evaluate(() => {
@@ -139,13 +175,14 @@ for (const rate of RATES) {
     report(rate, "undo → Problems updated", await timeKey(page, "ControlOrMeta+z", problems));
 
     // Typing a name in the inspector: each key, to the frame that shows it on the canvas.
-    await page.evaluate(id => window.statewright.call("view.select", { ids: [id] }), visible);
+    const typed = '.react-flow__node[data-id="nod_mainLineA3"]';
+    await page.evaluate(() => window.statewright.call("view.select", { ids: ["nod_mainLineA3"] }));
     const name = page.getByRole("textbox", { name: "Name", exact: true });
-    await name.waitFor({ timeout: 60000 });
+    await expect(name).toHaveValue("Main line A3", { timeout: 60000 });
     await name.click();
     await name.press("End");
     const keys = [];
-    for (const key of ["x", "y", "z", "w", "v"]) keys.push(await timeKey(page, key, box));
+    for (const key of ["x", "y", "z", "w", "v"]) keys.push(await timeKey(page, key, typed));
     report(rate, "type in the name (each key shown)", median(keys));
 
     const long = await longTasks(page);

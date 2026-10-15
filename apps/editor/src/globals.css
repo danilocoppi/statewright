@@ -157,6 +157,12 @@
   background-size: 18px 18px;
 }
 
+/* Far out (performance spec §3 P2): text too small to read is not drawn, so a large level repaints shapes only. */
+[data-far] .react-flow__node svg text,
+[data-far] .react-flow__edge svg text {
+  display: none;
+}
+
 /* The canvas (React Flow). The figure's parts carry Core's colours; the canvas adds selection and focus (spec §5.2:
    the accent ring with a 4 px halo at 12 %) and hides the attachment points edges need but nobody uses. */
 .sw-canvas .react-flow__node {
