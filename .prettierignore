@@ -1,0 +1,19 @@
+node_modules
+coverage
+package-lock.json
+dist
+dist-hosted
+test-results
+playwright-report
+# Written by stringify()/build-schema; their exact bytes are tested.
+examples/*.statewright.json
+examples/rendered/
+packages/core/schema/
+# Built by npm run readme:build from docs/guide/README.md; its exact bytes are tested.
+packages/core/README.md
+# Hand-written design docs and the plan-execution workspace are not formatted.
+docs/superpowers/
+.superpowers/
+
+# Vendored as published by the JSON Logic project; kept byte for byte.
+packages/core/test/logic/jsonlogic-tests.json

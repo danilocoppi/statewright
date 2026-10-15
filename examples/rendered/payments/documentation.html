@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="Statewright">
+<title>Payments · Documentation</title>
+<style>
+
+:root {
+  --page: #f6f7fa;
+  --canvas: #fbfbfc;
+  --dot: #d8dbe1;
+  --surface: #ffffff;
+  --faint: #f8f9fb;
+  --subtle: #f1f3f6;
+  --ink: #05060f;
+  --sub: #464849;
+  --muted: #696f72;
+  --hairline: #e6e7ee;
+  --rule: #eceef2;
+  --control-border: #d9dce2;
+  --accent: #0a66c2;
+  --accent-deep: #074a77;
+  --accent-soft: #eef4fb;
+  --warning: #b45309;
+  --warning-soft: #fffbeb;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Consolas, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 24px; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 400 14px/1.55 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-deep); text-decoration: underline; text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+button { font: inherit; color: inherit; }
+code { font-family: var(--mono); }
+
+.shell { display: grid; grid-template-columns: 280px minmax(0, 1fr); }
+
+/* The contents: the sections and their parts, the one in view marked. */
+.contents {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 32px 16px 40px 24px;
+  border-right: 1px solid var(--hairline);
+}
+.brand {
+  display: block;
+  margin: 0 0 20px 10px;
+  font: 500 11px/1.5 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.brand:hover { color: var(--ink); text-decoration: none; }
+.contents ol { margin: 0; padding: 0; list-style: none; }
+.sections > li + li { margin-top: 6px; }
+.contents a:not(.brand) {
+  display: block;
+  padding: 5px 10px;
+  border-radius: 6px;
+  color: var(--sub);
+  font-size: 13.5px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  transition: background-color 160ms var(--ease), color 160ms var(--ease);
+}
+.contents a:not(.brand):hover { background: var(--surface); color: var(--ink); text-decoration: none; }
+.section-link { font-weight: 500; }
+.section-link .number { display: inline-block; min-width: 24px; font: 500 12px/1 var(--mono); color: var(--muted); }
+.contents .parts { margin-top: 2px; }
+.contents .parts a { padding-left: calc(34px + var(--depth, 0) * 12px); font-size: 12.5px; color: var(--muted); }
+.contents a[aria-current] { background: var(--accent-soft); color: var(--accent-deep); }
+.contents a[aria-current] .number { color: var(--accent); }
+.contents-toggle { display: none; }
+
+/* The content: the cover, then each section in its card. */
+.content { width: 100%; max-width: 1140px; margin: 0 auto; padding: 40px 40px 96px; min-width: 0; }
+.cover, .section {
+  margin: 0 0 32px;
+  padding: 40px 44px 44px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgb(5 6 15 / 0.03);
+}
+.kicker, .eyebrow, .figure-eyebrow {
+  margin: 0;
+  font: 500 11.5px/1.5 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.kicker { color: var(--accent); }
+h1 {
+  max-width: 22em;
+  margin: 12px 0 0;
+  font-size: 34px;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.cover .lead { max-width: 52em; margin-top: 14px; font-size: 16px; line-height: 1.6; color: var(--sub); }
+.cover .lead p { margin: 0 0 8px; }
+.lead code, .caption code, .about code, .description code, td code {
+  padding: 1px 5px;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background: var(--faint);
+  font-size: 0.86em;
+  color: var(--ink);
+}
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 0; }
+.pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 11px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: var(--faint);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.pill strong { font-weight: 500; color: var(--ink); }
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 12px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.stat { display: grid; gap: 4px; padding: 14px 16px 15px; border: 1px solid var(--hairline); border-radius: 10px; background: var(--faint); }
+.stat .number { font-size: 26px; line-height: 1.1; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.stat .label { font-size: 12.5px; line-height: 1.4; color: var(--muted); }
+
+.section-head { margin-bottom: 28px; }
+h2 { margin: 8px 0 0; font-size: 26px; line-height: 1.2; font-weight: 600; letter-spacing: -0.015em; }
+.section-head .lead { max-width: 52em; margin: 8px 0 0; font-size: 15px; line-height: 1.6; color: var(--sub); }
+h3 { margin: 0; font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+h4 { margin: 28px 0 10px; font-size: 13px; font-weight: 600; letter-spacing: 0.01em; color: var(--sub); }
+
+/* The map: the top level, then the levels as a tree. */
+.tree { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--rule); }
+.tree ol { margin: 0; padding: 0 0 0 22px; list-style: none; }
+.tree .tree-root { padding: 0; }
+.tree li { margin: 0; }
+.tree li > a { font-weight: 500; }
+.tree ol ol { border-left: 1px solid var(--hairline); margin-left: 6px; padding-left: 16px; }
+.tree li { padding: 4px 0; }
+.tree .kind {
+  margin-left: 8px;
+  font: 500 10.5px/1 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tree .about { display: block; max-width: 60em; font-size: 13px; color: var(--sub); }
+
+/* A level: its heading and path, its diagram in a card, its tables, scenarios and findings. */
+.part + .part { margin-top: 44px; padding-top: 40px; border-top: 1px solid var(--rule); }
+.part > h3 { margin-bottom: 14px; }
+#catalog .part + .part, #findings .part + .part { margin-top: 32px; padding-top: 0; border-top: 0; }
+.part-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-bottom: 16px; }
+.path { margin: 0; font: 400 12px/1.5 var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.path a { color: var(--muted); }
+.path a:hover { color: var(--accent); }
+.path .sep { margin: 0 6px; }
+.figure-card { padding: 20px 22px 14px; border: 1px solid var(--hairline); border-radius: 12px; background: var(--surface); }
+.figure-title { margin: 6px 0 0; font-size: 15px; font-weight: 600; line-height: 1.4; }
+.caption { max-width: 60em; margin: 4px 0 0; font-size: 13.5px; line-height: 1.55; color: var(--sub); }
+.diagram { position: relative; margin: 14px 0 0; }
+.diagram svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+/* Core draws a figure on a white card; in the page's card it needs no second one. */
+.diagram svg > rect:first-of-type { fill: none; stroke: none; }
+.map-figure { margin-top: 0; padding: 12px 0; }
+.diagram .close { display: none; }
+.figure-foot { display: flex; justify-content: flex-end; margin: 6px 0 0; font-size: 12.5px; }
+/* "Open full size": the diagram alone over the page, at its own size, without a script (on screens: paper prints the
+   document). */
+@media screen {
+  .diagram:target {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    margin: 0;
+    padding: 64px 32px 32px;
+    overflow: auto;
+    background-color: var(--canvas);
+    background-image: radial-gradient(circle, var(--dot) 1.2px, transparent 1.4px);
+    background-size: 18px 18px;
+  }
+  .diagram:target svg > rect:first-of-type { fill: var(--surface); stroke: var(--hairline); }
+  .diagram:target svg { flex: none; max-width: none; margin: auto; box-shadow: 0 1px 2px rgb(5 6 15 / 0.06), 0 12px 40px rgb(5 6 15 / 0.08); border-radius: 12px; }
+  .diagram:target .close {
+    position: fixed;
+    top: 16px;
+    right: 20px;
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 14px;
+    border: 1px solid var(--control-border);
+    border-radius: 8px;
+    background: var(--surface);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+}
+
+/* Tables of facts: a faint header row, hairline rules, names as code chips. */
+.table { overflow-x: auto; border: 1px solid var(--hairline); border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.5; }
+th {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--faint);
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sub);
+  white-space: nowrap;
+}
+/* Words stay whole; codes and IDs, often long and unbroken, break anywhere so a table fits its column. */
+td { padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; overflow-wrap: break-word; }
+tbody tr:last-child td { border-bottom: 0; }
+td p { margin: 0; }
+td p + p { margin-top: 6px; }
+td code { display: inline-block; padding: 0 5px; font-size: 11.5px; line-height: 18px; white-space: normal; overflow-wrap: anywhere; }
+a.chip { text-decoration: none; }
+a.chip code { color: var(--accent-deep); }
+a.chip:hover code { border-color: var(--accent); background: var(--accent-soft); }
+tr:target td { background: var(--accent-soft); }
+.catalog-table td:first-child { min-width: 200px; }
+.item { font-weight: 500; }
+.item + .id { display: block; width: fit-content; margin-top: 3px; border: 0; background: none; padding: 0; color: var(--muted); font-size: 11px; }
+.states td:first-child, .elements td:first-child { font-weight: 500; }
+
+/* Scenarios: each step in words, as the scenario page tells it. */
+.scenario { padding: 16px 20px 14px; border: 1px solid var(--hairline); border-radius: 10px; }
+.scenario + .scenario { margin-top: 12px; }
+.scenario-name { margin: 0; font-size: 14.5px; font-weight: 600; }
+.scenario-start { margin: 2px 0 0; font-size: 12.5px; color: var(--muted); }
+.scenario .description { margin-top: 6px; font-size: 13.5px; color: var(--sub); }
+.scenario .description p { margin: 0 0 4px; }
+.steps {
+  display: grid;
+  grid-template-columns: 22px minmax(0, max-content) minmax(0, 1fr);
+  gap: 6px 12px;
+  margin: 12px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--rule);
+  list-style: none;
+}
+.steps li { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: baseline; }
+.steps .number { font: 500 12px/1.5 var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+.steps .input { max-width: 260px; font: 400 12.5px/1.5 var(--mono); overflow-wrap: anywhere; }
+.steps .text { font-size: 13.5px; line-height: 1.5; text-wrap: pretty; }
+.steps .generated { color: var(--sub); }
+.untaken :is(.number, .input, .text) { color: var(--muted); }
+.tag {
+  margin-right: 8px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--warning-soft);
+  font: 500 10.5px/1.5 var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--warning);
+}
+.stopped { margin: 10px 0 0; padding: 8px 12px; border-radius: 8px; background: var(--warning-soft); color: var(--warning); font-size: 13px; }
+
+/* Findings: by severity, each with its detail, where it is and its evidence. */
+.count { margin-left: 6px; font: 500 12px/1 var(--mono); color: var(--muted); vertical-align: 2px; }
+.severity {
+  display: inline-block;
+  padding: 0 8px;
+  border-radius: 999px;
+  font: 500 10.5px/18px var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.severity-critical { background: #BE123C; color: #FFFFFF; }
+.severity-high { background: #FEE4E2; color: #B42318; }
+.severity-medium { background: #FEF3C7; color: #92400E; }
+.severity-low { background: #E8F0FB; color: #0A66C2; }
+.severity-info { background: #F3F4F6; color: #4B5563; }
+.findings td:first-child { width: 30%; }
+.findings td:last-child { width: 28%; }
+.findings .code { margin-right: 6px; }
+.findings .title { display: block; margin-top: 6px; font-weight: 500; }
+.source { color: var(--muted); font-size: 12.5px; }
+.evidence { display: flex; flex-wrap: wrap; gap: 4px; }
+.level-findings td:nth-child(2) { width: 1%; }
+
+.foot { padding: 8px 4px; font-size: 12.5px; color: var(--muted); }
+
+/* Narrow windows: the contents behind a button (with the script), else above the content. */
+@media (max-width: 900px) {
+  .shell { display: block; }
+  .contents { position: static; height: auto; padding: 24px 20px; border-right: 0; border-bottom: 1px solid var(--hairline); }
+  .js .contents {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 30;
+    width: min(320px, 86vw);
+    height: 100vh;
+    height: 100dvh;
+    padding-top: 64px;
+    background: var(--page);
+    border-right: 1px solid var(--hairline);
+    box-shadow: 0 12px 40px rgb(5 6 15 / 0.12);
+    transform: translateX(-102%);
+    visibility: hidden;
+    transition: transform 160ms var(--ease), visibility 0s linear 160ms;
+  }
+  .js.contents-open .contents { transform: none; visibility: visible; transition: transform 160ms var(--ease); }
+  .js .contents-toggle {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 35;
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--control-border);
+    border-radius: 8px;
+    background: var(--surface);
+    box-shadow: 0 1px 2px rgb(5 6 15 / 0.06);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .js .content { padding-top: 60px; }
+  .content { padding: 16px 12px 64px; }
+  .cover, .section { padding: 28px 20px 32px; }
+  h1 { font-size: 28px; }
+  .figure-card { padding: 16px 14px 10px; }
+  .steps { grid-template-columns: 22px minmax(0, 1fr); }
+  .steps .text { grid-column: 2; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .contents a, .js .contents { transition: none !important; }
+}
+
+/* Paper: no contents, cards without shadows, a page break before each level. */
+@page { margin: 16mm 14mm; }
+@media print {
+  body { background: #ffffff; font-size: 12px; }
+  .contents, .contents-toggle, .figure-foot, .diagram .close { display: none !important; }
+  .shell { display: block; }
+  .content { max-width: none; padding: 0; }
+  .cover, .section { margin: 0 0 24px; padding: 0; border: 0; box-shadow: none; border-radius: 0; }
+  .section { break-before: page; }
+  .level { break-before: page; }
+  .section > .level:first-of-type { break-before: avoid; }
+  .part + .part { margin-top: 0; padding-top: 0; border-top: 0; }
+  .figure-card, .scenario, .stat, tr { break-inside: avoid; }
+  .table { overflow: visible; }
+  /* Paper cannot scroll: a long name breaks rather than push a column off the page. */
+  td { overflow-wrap: anywhere; }
+  thead { display: table-header-group; }
+  a { color: inherit; }
+  .diagram svg { max-width: 100%; }
+}
+</style>
+</head>
+<body>
+<button type="button" class="contents-toggle" aria-controls="contents" aria-expanded="false">Contents</button>
+<div class="shell">
+<nav class="contents" id="contents" aria-label="Contents">
+<a class="brand" href="#cover">Payments</a>
+<ol class="sections">
+<li><a class="section-link" href="#map"><span class="number">01</span>Map</a></li>
+<li><a class="section-link" href="#levels"><span class="number">02</span>Levels</a><ol class="parts">
+<li style="--depth: 0"><a href="#level-cnv_runtime">Runtime</a></li>
+<li style="--depth: 1"><a href="#level-cnv_lifecycle">Lifecycle engine</a></li>
+<li style="--depth: 2"><a href="#level-cnv_complianceHold">Compliance hold</a></li>
+<li style="--depth: 2"><a href="#level-cnv_expiryClock">Expiry clock</a></li>
+<li style="--depth: 2"><a href="#level-cnv_crossBorderSend">Cross-border send</a></li>
+</ol></li>
+<li><a class="section-link" href="#catalog"><span class="number">03</span>Catalog</a><ol class="parts">
+<li><a href="#catalog-types">Types</a></li>
+<li><a href="#catalog-events">Events</a></li>
+<li><a href="#catalog-actions">Actions</a></li>
+<li><a href="#catalog-guards">Guards</a></li>
+<li><a href="#catalog-endpoints">Endpoints</a></li>
+<li><a href="#catalog-webhooks">Webhooks</a></li>
+<li><a href="#catalog-timers">Timers</a></li>
+<li><a href="#catalog-statuses">Statuses</a></li>
+<li><a href="#catalog-parties">Parties</a></li>
+</ol></li>
+</ol>
+</nav>
+<main class="content">
+<header class="cover" id="cover">
+<p class="kicker">system · target</p>
+<h1>Payments</h1>
+<div class="lead"><p>Reference project for a payments platform drawn as state machines: runtime architecture, lifecycle engine with orthogonal regions, and three reusable machines.</p></div>
+<p class="pills"><span class="pill"><span>Stage</span><strong>target</strong></span><span class="pill"><span>Levels</span><strong>4 machines · 1 system</strong></span><span class="pill"><span>Written by</span><strong>Statewright 0.1.0</strong></span></p>
+<ul class="stats"><li class="stat"><strong class="number">5</strong><span class="label">levels</span></li><li class="stat"><strong class="number">21</strong><span class="label">states</span></li><li class="stat"><strong class="number">29</strong><span class="label">transitions</span></li><li class="stat"><strong class="number">2</strong><span class="label">scenarios</span></li></ul>
+</header>
+<section class="section" id="map" aria-labelledby="map-title">
+<header class="section-head">
+<p class="eyebrow">01 — Map</p>
+<h2 id="map-title">How the levels fit</h2>
+<p class="lead">Runtime, the top level, as the Editor draws it; then every level, each a link to its part below.</p>
+</header>
+<figure class="diagram map-figure"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1650 337" width="1650" height="337" role="img" aria-label="Runtime: commands, provider facts and timers all enter one engine"><title>Runtime: commands, provider facts and timers all enter one engine</title><defs><marker id="sw-map-m-edge-default" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#5B6170"/></marker></defs><rect x="0.5" y="0.5" width="1649" height="336" rx="12" fill="#FFFFFF" stroke="#E6E7EE"/><g transform="translate(24 31.5)"><path d="M 140 57 L 160 57 L 160 243 L 349 243" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-map-m-edge-default)" data-id="edg_clientsCommandApi"/><path d="M 489 243 L 658 243 L 658 170 L 710 170" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-map-m-edge-default)" data-id="edg_commandApiLifecycleEngine"/><path d="M 504 106 L 658 106 L 658 52 L 710 52" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-map-m-edge-default)" data-id="edg_entityStoreOutboxRelay"/><path d="M 710 141 L 524 141 L 524 140 L 504 140" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-map-m-edge-default)" data-id="edg_lifecycleEngineEntityStore"/><path d="M 710 32 L 140 32" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-map-m-edge-default)" data-id="edg_outboxRelayClients"/><path d="M 850 32 L 1462 32" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-map-m-edge-default)" data-id="edg_outboxRelayProviders"/><path d="M 850 52 L 870 52 L 870 93 L 1044 93" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-map-m-edge-default)" data-id="edg_outboxRelayScheduler"/><path d="M 1062 210 L 870 210 L 870 170 L 850 170" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-map-m-edge-default)" data-id="edg_providerInboxLifecycleEngine"/><path d="M 1462 57 L 1410 57 L 1410 210 L 1202 210" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-map-m-edge-default)" data-id="edg_providersProviderInbox"/><path d="M 1044 113 L 992 113 L 992 141 L 850 141" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-map-m-edge-default)" data-id="edg_schedulerLifecycleEngine"/><g class="label" data-id="edg_clientsCommandApi"><rect x="212" y="248.5" width="50" height="15" rx="2" fill="#FFFFFF"/><text x="237" y="259.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">command</text></g><g class="label" data-id="edg_commandApiLifecycleEngine"><rect x="579" y="248.5" width="56" height="15" rx="2" fill="#FFFFFF"/><text x="607" y="259.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">dispatch</text></g><g class="label" data-id="edg_entityStoreOutboxRelay"><rect x="585" y="111.5" width="44" height="15" rx="2" fill="#FFFFFF"/><text x="607" y="122.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">stream</text></g><g class="label" data-id="edg_lifecycleEngineEntityStore"><rect x="576" y="146.5" width="62" height="15" rx="2" fill="#FFFFFF"/><text x="607" y="157.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">CAS write</text></g><g class="label" data-id="edg_outboxRelayClients"><rect x="334" y="0.5" width="170" height="27" rx="2" fill="#FFFFFF"/><text x="419" y="11.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">lifecycle:transition (WS) ·</text><text x="419" y="23.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">webhooks · e-mail</text></g><g class="label" data-id="edg_outboxRelayProviders"><rect x="1044" y="0.5" width="176" height="27" rx="2" fill="#FFFFFF"/><text x="1132" y="11.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">provider commands · idem-key</text><text x="1132" y="23.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">uid:leg:attempt</text></g><g class="label" data-id="edg_outboxRelayScheduler"><rect x="934" y="98.5" width="26" height="15" rx="2" fill="#FFFFFF"/><text x="947" y="109.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">arm</text></g><g class="label" data-id="edg_providerInboxLifecycleEngine"><rect x="931" y="215.5" width="32" height="15" rx="2" fill="#FFFFFF"/><text x="947" y="226.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">fact</text></g><g class="label" data-id="edg_providersProviderInbox"><rect x="1292" y="215.5" width="98" height="15" rx="2" fill="#FFFFFF"/><text x="1341" y="226.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">Provider events</text></g><g class="label" data-id="edg_schedulerLifecycleEngine"><rect x="922" y="146.5" width="50" height="15" rx="2" fill="#FFFFFF"/><text x="947" y="157.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">timer.*</text></g><g class="node" data-id="nod_clients"><rect x="0" y="7" width="140" height="74" rx="8" fill="#FAFAFC" stroke="#878E91" stroke-width="1" stroke-dasharray="4,3"/><rect x="8" y="14" width="37" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="26.5" y="23.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">ACTOR</text><text x="70" y="40" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Clients</text><text x="70" y="57" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">dashboard · /pay ·</text><text x="70" y="70" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">admin</text></g><g class="node" data-id="nod_commandApi"><rect x="349" y="213" width="140" height="60" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><text x="419" y="232" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Command API</text><text x="419" y="249" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">REST · step-up ·</text><text x="419" y="262" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">idem-key</text></g><g class="node" data-id="nod_entityStore"><rect x="357" y="73" width="147" height="100" rx="8" fill="#F3F5F9" stroke="#5B6170" stroke-width="1"/><rect x="365" y="80" width="37" height="13" rx="2" fill="none" stroke="#5B6170" stroke-opacity="0.5" stroke-width="0.8"/><text x="383.5" y="89.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#5B6170">STORE</text><text x="430.5" y="106" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Entity store</text><text x="430.5" y="123" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">DynamoDB · version</text><text x="430.5" y="136" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">CAS</text><text x="430.5" y="149" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">append-only</text><text x="430.5" y="162" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">transition log</text></g><g class="node" data-id="nod_lifecycleEngine"><rect x="718" y="120" width="140" height="87" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-opacity="0.3"/><rect x="714" y="116" width="140" height="87" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-opacity="0.6"/><rect x="710" y="112" width="140" height="87" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><rect x="718" y="119" width="32" height="13" rx="2" fill="#E8F0FB" stroke="#0A66C2" stroke-opacity="0.5" stroke-width="0.8"/><text x="734" y="128.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#0A66C2">CORE</text><text x="780" y="145" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Lifecycle engine</text><text x="780" y="162" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">spec registry ·</text><text x="780" y="175" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">guards</text><text x="780" y="188" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">run-to-completion</text><g class="interior-mark"><rect x="720" y="192" width="56" height="13" rx="3" fill="#FFFFFF" stroke="#878E91"/><text x="748" y="201.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8.5" text-anchor="middle" fill="#464849">↳ machine</text></g></g><g class="node" data-id="nod_outboxRelay"><rect x="710" y="12" width="140" height="60" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><text x="780" y="31" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Outbox relay</text><text x="780" y="48" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">Streams → WS ·</text><text x="780" y="61" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">hooks · mail</text></g><g class="node" data-id="nod_providerInbox"><rect x="1062" y="173" width="140" height="74" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><rect x="1070" y="180" width="37" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="1088.5" y="189.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">QUEUE</text><text x="1132" y="206" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Provider inbox</text><text x="1132" y="223" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">SQS FIFO · group =</text><text x="1132" y="236" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">uid</text></g><g class="node" data-id="nod_providers"><rect x="1462" y="7" width="140" height="74" rx="8" fill="#FAFAFC" stroke="#878E91" stroke-width="1" stroke-dasharray="4,3"/><rect x="1470" y="14" width="53" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="1496.5" y="23.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">EXTERNAL</text><text x="1532" y="40" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Providers</text><text x="1532" y="57" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">PSP · broker ·</text><text x="1532" y="70" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">Tatum · Turnkey</text></g><g class="node" data-id="nod_scheduler"><rect x="1044" y="73" width="140" height="60" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><text x="1114" y="92" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Scheduler</text><text x="1114" y="109" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">EventBridge one-shot</text><text x="1114" y="122" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">timers</text></g></g></svg></figure>
+<p class="figure-foot"><a href="#figure-cnv_runtime">Open full size</a></p>
+<nav class="tree" aria-label="Levels"><ol class="tree-root"><li><a href="#level-cnv_runtime">Runtime</a><span class="kind">system</span><span class="about">Runtime: commands, provider facts and timers all enter one engine</span><ol><li><a href="#level-cnv_lifecycle">Lifecycle engine</a><span class="kind">machine</span><span class="about">One machine per money movement: a parent phase plus orthogonal regions</span><ol><li><a href="#level-cnv_complianceHold">Compliance hold</a><span class="kind">machine</span><span class="about">Compliance hold: an orthogonal gate on every money-moving transition</span></li><li><a href="#level-cnv_expiryClock">Expiry clock</a><span class="kind">machine</span><span class="about">Expiry clock: a deadline that can pause for payer verification</span></li><li><a href="#level-cnv_crossBorderSend">Cross-border send</a><span class="kind">machine</span><span class="about">Fiat in, stablecoin rail in the middle, fiat out. Legs: srcToHub → hubToDest → payout.</span></li></ol></li></ol></li></ol></nav>
+</section>
+<section class="section" id="levels" aria-labelledby="levels-title">
+<header class="section-head">
+<p class="eyebrow">02 — Levels</p>
+<h2 id="levels-title">Every level, in reading order</h2>
+<p class="lead">Depth first from the top level: each with its diagram and legend, its tables, the scenarios that run it and the findings on it.</p>
+</header>
+<article class="part level" id="level-cnv_runtime" aria-labelledby="level-cnv_runtime-title">
+<header class="part-head">
+<h3 id="level-cnv_runtime-title">Runtime</h3>
+</header>
+<div class="figure-card">
+<p class="figure-eyebrow">system · target</p>
+<p class="figure-title">Runtime: commands, provider facts and timers all enter one engine</p>
+<figure class="diagram" id="figure-cnv_runtime" style="--width: 1650px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1650 405" width="1650" height="405" role="img" aria-label="Runtime: commands, provider facts and timers all enter one engine"><title>Runtime: commands, provider facts and timers all enter one engine</title><defs><marker id="sw-cnv_runtime-m-edge-default" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#5B6170"/></marker></defs><rect x="0.5" y="0.5" width="1649" height="404" rx="12" fill="#FFFFFF" stroke="#E6E7EE"/><g transform="translate(24 31.5)"><path d="M 140 57 L 160 57 L 160 243 L 349 243" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_runtime-m-edge-default)" data-id="edg_clientsCommandApi"/><path d="M 489 243 L 658 243 L 658 170 L 710 170" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_runtime-m-edge-default)" data-id="edg_commandApiLifecycleEngine"/><path d="M 504 106 L 658 106 L 658 52 L 710 52" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_runtime-m-edge-default)" data-id="edg_entityStoreOutboxRelay"/><path d="M 710 141 L 524 141 L 524 140 L 504 140" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_runtime-m-edge-default)" data-id="edg_lifecycleEngineEntityStore"/><path d="M 710 32 L 140 32" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_runtime-m-edge-default)" data-id="edg_outboxRelayClients"/><path d="M 850 32 L 1462 32" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_runtime-m-edge-default)" data-id="edg_outboxRelayProviders"/><path d="M 850 52 L 870 52 L 870 93 L 1044 93" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_runtime-m-edge-default)" data-id="edg_outboxRelayScheduler"/><path d="M 1062 210 L 870 210 L 870 170 L 850 170" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_runtime-m-edge-default)" data-id="edg_providerInboxLifecycleEngine"/><path d="M 1462 57 L 1410 57 L 1410 210 L 1202 210" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_runtime-m-edge-default)" data-id="edg_providersProviderInbox"/><path d="M 1044 113 L 992 113 L 992 141 L 850 141" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_runtime-m-edge-default)" data-id="edg_schedulerLifecycleEngine"/><g class="label" data-id="edg_clientsCommandApi"><rect x="212" y="248.5" width="50" height="15" rx="2" fill="#FFFFFF"/><text x="237" y="259.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">command</text></g><g class="label" data-id="edg_commandApiLifecycleEngine"><rect x="579" y="248.5" width="56" height="15" rx="2" fill="#FFFFFF"/><text x="607" y="259.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">dispatch</text></g><g class="label" data-id="edg_entityStoreOutboxRelay"><rect x="585" y="111.5" width="44" height="15" rx="2" fill="#FFFFFF"/><text x="607" y="122.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">stream</text></g><g class="label" data-id="edg_lifecycleEngineEntityStore"><rect x="576" y="146.5" width="62" height="15" rx="2" fill="#FFFFFF"/><text x="607" y="157.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">CAS write</text></g><g class="label" data-id="edg_outboxRelayClients"><rect x="334" y="0.5" width="170" height="27" rx="2" fill="#FFFFFF"/><text x="419" y="11.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">lifecycle:transition (WS) ·</text><text x="419" y="23.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">webhooks · e-mail</text></g><g class="label" data-id="edg_outboxRelayProviders"><rect x="1044" y="0.5" width="176" height="27" rx="2" fill="#FFFFFF"/><text x="1132" y="11.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">provider commands · idem-key</text><text x="1132" y="23.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">uid:leg:attempt</text></g><g class="label" data-id="edg_outboxRelayScheduler"><rect x="934" y="98.5" width="26" height="15" rx="2" fill="#FFFFFF"/><text x="947" y="109.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">arm</text></g><g class="label" data-id="edg_providerInboxLifecycleEngine"><rect x="931" y="215.5" width="32" height="15" rx="2" fill="#FFFFFF"/><text x="947" y="226.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">fact</text></g><g class="label" data-id="edg_providersProviderInbox"><rect x="1292" y="215.5" width="98" height="15" rx="2" fill="#FFFFFF"/><text x="1341" y="226.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">Provider events</text></g><g class="label" data-id="edg_schedulerLifecycleEngine"><rect x="922" y="146.5" width="50" height="15" rx="2" fill="#FFFFFF"/><text x="947" y="157.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">timer.*</text></g><g class="node" data-id="nod_clients"><rect x="0" y="7" width="140" height="74" rx="8" fill="#FAFAFC" stroke="#878E91" stroke-width="1" stroke-dasharray="4,3"/><rect x="8" y="14" width="37" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="26.5" y="23.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">ACTOR</text><text x="70" y="40" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Clients</text><text x="70" y="57" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">dashboard · /pay ·</text><text x="70" y="70" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">admin</text></g><g class="node" data-id="nod_commandApi"><rect x="349" y="213" width="140" height="60" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><text x="419" y="232" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Command API</text><text x="419" y="249" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">REST · step-up ·</text><text x="419" y="262" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">idem-key</text></g><g class="node" data-id="nod_entityStore"><rect x="357" y="73" width="147" height="100" rx="8" fill="#F3F5F9" stroke="#5B6170" stroke-width="1"/><rect x="365" y="80" width="37" height="13" rx="2" fill="none" stroke="#5B6170" stroke-opacity="0.5" stroke-width="0.8"/><text x="383.5" y="89.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#5B6170">STORE</text><text x="430.5" y="106" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Entity store</text><text x="430.5" y="123" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">DynamoDB · version</text><text x="430.5" y="136" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">CAS</text><text x="430.5" y="149" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">append-only</text><text x="430.5" y="162" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">transition log</text></g><g class="node" data-id="nod_lifecycleEngine"><rect x="718" y="120" width="140" height="87" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-opacity="0.3"/><rect x="714" y="116" width="140" height="87" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-opacity="0.6"/><rect x="710" y="112" width="140" height="87" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><rect x="718" y="119" width="32" height="13" rx="2" fill="#E8F0FB" stroke="#0A66C2" stroke-opacity="0.5" stroke-width="0.8"/><text x="734" y="128.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#0A66C2">CORE</text><text x="780" y="145" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Lifecycle engine</text><text x="780" y="162" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">spec registry ·</text><text x="780" y="175" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">guards</text><text x="780" y="188" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">run-to-completion</text><g class="interior-mark"><rect x="720" y="192" width="56" height="13" rx="3" fill="#FFFFFF" stroke="#878E91"/><text x="748" y="201.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8.5" text-anchor="middle" fill="#464849">↳ machine</text></g></g><g class="node" data-id="nod_outboxRelay"><rect x="710" y="12" width="140" height="60" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><text x="780" y="31" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Outbox relay</text><text x="780" y="48" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">Streams → WS ·</text><text x="780" y="61" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">hooks · mail</text></g><g class="node" data-id="nod_providerInbox"><rect x="1062" y="173" width="140" height="74" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><rect x="1070" y="180" width="37" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="1088.5" y="189.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">QUEUE</text><text x="1132" y="206" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Provider inbox</text><text x="1132" y="223" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">SQS FIFO · group =</text><text x="1132" y="236" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">uid</text></g><g class="node" data-id="nod_providers"><rect x="1462" y="7" width="140" height="74" rx="8" fill="#FAFAFC" stroke="#878E91" stroke-width="1" stroke-dasharray="4,3"/><rect x="1470" y="14" width="53" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="1496.5" y="23.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">EXTERNAL</text><text x="1532" y="40" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Providers</text><text x="1532" y="57" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">PSP · broker ·</text><text x="1532" y="70" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">Tatum · Turnkey</text></g><g class="node" data-id="nod_scheduler"><rect x="1044" y="73" width="140" height="60" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><text x="1114" y="92" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Scheduler</text><text x="1114" y="109" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">EventBridge one-shot</text><text x="1114" y="122" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">timers</text></g></g><line x1="24" y1="324.5" x2="1626" y2="324.5" stroke="#E6E7EE"/><text x="24" y="348.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="9" letter-spacing="0.14em" fill="#878E91">LEGEND</text><rect x="96" y="338.5" width="18" height="13" rx="3" fill="#FAFAFC" stroke="#878E91" stroke-dasharray="4,3"/><text x="120" y="348.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">External system</text><rect x="224.6" y="338.5" width="18" height="13" rx="3" fill="#FAFAFC" stroke="#878E91" stroke-dasharray="4,3"/><text x="248.6" y="348.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Actor</text><rect x="298.8" y="338.5" width="18" height="13" rx="3" fill="#F3F5F9" stroke="#5B6170"/><text x="322.8" y="348.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Data store</text><rect x="398.4" y="338.5" width="18" height="13" rx="3" fill="#FFFFFF" stroke="#3B3F4A"/><text x="422.4" y="348.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Component</text><line x1="96" y1="367" x2="120" y2="367" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_runtime-m-edge-default)"/><text x="128" y="370.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Transition</text></svg><a class="close" href="#level-cnv_runtime">Close</a></figure>
+<p class="figure-foot"><a href="#figure-cnv_runtime">Open full size</a></p>
+</div>
+<h4>Elements</h4>
+<div class="table"><table class="elements">
+<thead><tr><th scope="col">Element</th><th scope="col">Kind</th><th scope="col">Notes</th></tr></thead>
+<tbody>
+<tr><td>Clients</td><td>actor</td><td>dashboard · /pay · admin</td></tr>
+<tr><td>Command API</td><td>service</td><td>REST · step-up · idem-key</td></tr>
+<tr><td>Entity store</td><td>store</td><td>DynamoDB · version CAS
+append-only transition log</td></tr>
+<tr><td><a href="#level-cnv_lifecycle">Lifecycle engine</a></td><td>service</td><td>spec registry · guards
+run-to-completion</td></tr>
+<tr><td>Outbox relay</td><td>service</td><td>Streams → WS · hooks · mail</td></tr>
+<tr><td>Provider inbox</td><td>queue</td><td>SQS FIFO · group = uid</td></tr>
+<tr><td>Providers</td><td>external</td><td>PSP · broker · Tatum · Turnkey</td></tr>
+<tr><td>Scheduler</td><td>service</td><td>EventBridge one-shot timers</td></tr>
+</tbody>
+</table></div>
+<h4>Connections</h4>
+<div class="table"><table class="connections">
+<thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col">What</th></tr></thead>
+<tbody>
+<tr><td>Clients</td><td>Command API</td><td>command</td></tr>
+<tr><td>Command API</td><td>Lifecycle engine</td><td>dispatch</td></tr>
+<tr><td>Entity store</td><td>Outbox relay</td><td>stream</td></tr>
+<tr><td>Lifecycle engine</td><td>Entity store</td><td>CAS write</td></tr>
+<tr><td>Outbox relay</td><td>Clients</td><td>lifecycle:transition (WS) · webhooks · e-mail</td></tr>
+<tr><td>Outbox relay</td><td>Providers</td><td>provider commands · idem-key uid:leg:attempt</td></tr>
+<tr><td>Outbox relay</td><td>Scheduler</td><td>arm</td></tr>
+<tr><td>Provider inbox</td><td>Lifecycle engine</td><td>fact</td></tr>
+<tr><td>Providers</td><td>Provider inbox</td><td><a class="chip" href="#catalog-whk_providerEvents"><code>Provider events</code></a></td></tr>
+<tr><td>Scheduler</td><td>Lifecycle engine</td><td>timer.*</td></tr>
+</tbody>
+</table></div>
+</article>
+<article class="part level" id="level-cnv_lifecycle" aria-labelledby="level-cnv_lifecycle-title">
+<header class="part-head">
+<h3 id="level-cnv_lifecycle-title">Lifecycle engine</h3>
+<p class="path"><a href="#level-cnv_runtime">Runtime</a><span class="sep">›</span><span>Lifecycle engine</span></p></header>
+<div class="figure-card">
+<p class="figure-eyebrow">machine · target · transitions partial</p>
+<p class="figure-title">One machine per money movement: a parent phase plus orthogonal regions</p>
+<figure class="diagram" id="figure-cnv_lifecycle" style="--width: 520px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 450" width="520" height="450" role="img" aria-label="One machine per money movement: a parent phase plus orthogonal regions"><title>One machine per money movement: a parent phase plus orthogonal regions</title><defs><marker id="sw-cnv_lifecycle-m-edge-default" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#5B6170"/></marker></defs><rect x="0.5" y="0.5" width="519" height="449" rx="12" fill="#FFFFFF" stroke="#E6E7EE"/><g transform="translate(148 30)"><rect x="-12" y="2" width="248" height="86" rx="10" fill="none" stroke="#E6E7EE" stroke-dasharray="4,3"/><text x="-2" y="17" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="9.5" letter-spacing="0.14em" fill="#878E91">COMPLIANCE HOLD</text><rect x="-12" y="118" width="248" height="86" rx="10" fill="none" stroke="#E6E7EE" stroke-dasharray="4,3"/><text x="-2" y="133" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="9.5" letter-spacing="0.14em" fill="#878E91">EXPIRY CLOCK</text><rect x="-12" y="234" width="248" height="86" rx="10" fill="none" stroke="#E6E7EE" stroke-dasharray="4,3"/><text x="-2" y="249" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="9.5" letter-spacing="0.14em" fill="#878E91">PHASE</text><path d="M 12 52 L 84 52" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_lifecycle-m-edge-default)" data-id="edg_complianceStart"/><path d="M 12 168 L 84 168" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_lifecycle-m-edge-default)" data-id="edg_expiryStart"/><path d="M 12 284 L 84 284" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_lifecycle-m-edge-default)" data-id="edg_phaseStart"/><g class="node" data-id="nod_complianceHold"><rect x="92" y="36" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-opacity="0.3"/><rect x="88" y="32" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-opacity="0.6"/><rect x="84" y="28" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><text x="154" y="56" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Compliance hold</text><g class="interior-mark"><rect x="94" y="69" width="56" height="13" rx="3" fill="#FFFFFF" stroke="#878E91"/><text x="122" y="78.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8.5" text-anchor="middle" fill="#464849">↳ machine</text></g></g><g class="node" data-id="nod_complianceInitial"><circle cx="6" cy="52" r="6" fill="#05060F"/></g><g class="node" data-id="nod_expiryClock"><rect x="92" y="152" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-opacity="0.3"/><rect x="88" y="148" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-opacity="0.6"/><rect x="84" y="144" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><text x="154" y="172" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Expiry clock</text><g class="interior-mark"><rect x="94" y="185" width="56" height="13" rx="3" fill="#FFFFFF" stroke="#878E91"/><text x="122" y="194.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8.5" text-anchor="middle" fill="#464849">↳ machine</text></g></g><g class="node" data-id="nod_expiryInitial"><circle cx="6" cy="168" r="6" fill="#05060F"/></g><g class="node" data-id="nod_phaseInitial"><circle cx="6" cy="284" r="6" fill="#05060F"/></g><g class="node" data-id="nod_sendCrossBorder"><rect x="92" y="268" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-opacity="0.3"/><rect x="88" y="264" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-opacity="0.6"/><rect x="84" y="260" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><text x="154" y="288" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Cross-border send</text><g class="interior-mark"><rect x="94" y="301" width="56" height="13" rx="3" fill="#FFFFFF" stroke="#878E91"/><text x="122" y="310.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8.5" text-anchor="middle" fill="#464849">↳ machine</text></g></g></g><line x1="24" y1="370" x2="496" y2="370" stroke="#E6E7EE"/><text x="24" y="394" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="9" letter-spacing="0.14em" fill="#878E91">LEGEND</text><rect x="96" y="384" width="18" height="13" rx="3" fill="#FFFFFF" stroke="#3B3F4A"/><text x="120" y="394" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">State</text><line x1="96" y1="412.5" x2="120" y2="412.5" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_lifecycle-m-edge-default)"/><text x="128" y="416" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Transition</text></svg><a class="close" href="#level-cnv_lifecycle">Close</a></figure>
+<p class="figure-foot"><a href="#figure-cnv_lifecycle">Open full size</a></p>
+</div>
+<h4>States</h4>
+<div class="table"><table class="states">
+<thead><tr><th scope="col">State</th><th scope="col">Statuses</th><th scope="col">Outcome</th><th scope="col">Notes</th></tr></thead>
+<tbody>
+<tr><td>Compliance hold</td><td></td><td></td><td>enters <a href="#level-cnv_complianceHold">Compliance hold</a></td></tr>
+<tr><td>Expiry clock</td><td></td><td></td><td>enters <a href="#level-cnv_expiryClock">Expiry clock</a></td></tr>
+<tr><td>Cross-border send</td><td></td><td></td><td>enters <a href="#level-cnv_crossBorderSend">Cross-border send</a></td></tr>
+</tbody>
+</table></div>
+<h4>Transitions</h4>
+<div class="table"><table class="transitions">
+<thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col">Trigger</th><th scope="col">Guard</th><th scope="col">Effects</th></tr></thead>
+<tbody>
+<tr><td>initial</td><td>Compliance hold</td><td></td><td></td><td></td></tr>
+<tr><td>initial</td><td>Expiry clock</td><td></td><td></td><td></td></tr>
+<tr><td>initial</td><td>Cross-border send</td><td></td><td></td><td></td></tr>
+</tbody>
+</table></div>
+<h4>Scenarios</h4>
+<div class="scenario" id="scenario-scn_paysInTime">
+<h5 class="scenario-name">Pays in time</h5>
+<p class="scenario-start">Starts Mon 5 Jan 2026, 09:00</p>
+<div class="description"><p>A cross-border send that is paid, converted and paid out in full before the offer expires.</p></div>
+<ol class="steps">
+<li><span class="number"></span><span class="input">Start</span><span class="text generated">Starts in clear, running and awaiting_funds.</span></li>
+<li><span class="number">1</span><span class="input">payin.detected</span><span class="text">The payer's money is seen: the expiry clock stops.</span></li>
+<li><span class="number">2</span><span class="input">payin.confirmed</span><span class="text">The pay-in is confirmed, and the money is converted.</span></li>
+<li><span class="number">3</span><span class="input">leg.completed</span><span class="text">The conversion leg completes; the payout starts.</span></li>
+<li><span class="number">4</span><span class="input">payout.completed</span><span class="text">The full amount reaches the recipient.</span></li>
+</ol>
+</div>
+<div class="scenario" id="scenario-scn_verificationPausesTheClock">
+<h5 class="scenario-name">Verification pauses the clock</h5>
+<p class="scenario-start">Starts Mon 5 Jan 2026, 09:00</p>
+<div class="description"><p>While the payer verifies their identity, the expiry deadline stops counting.</p></div>
+<ol class="steps">
+<li><span class="number"></span><span class="input">Start</span><span class="text generated">Starts in clear, running and awaiting_funds.</span></li>
+<li><span class="number">1</span><span class="input">verify.started</span><span class="text">The payer starts identity verification. The clock stops.</span></li>
+<li><span class="number">2</span><span class="input">2 days later</span><span class="text">Two days pass; nothing is due while the clock is paused.</span></li>
+<li><span class="number">3</span><span class="input">verify.ended</span><span class="text">Verification ends; the clock runs again, the deadline extended.</span></li>
+</ol>
+</div>
+</article>
+<article class="part level" id="level-cnv_complianceHold" aria-labelledby="level-cnv_complianceHold-title">
+<header class="part-head">
+<h3 id="level-cnv_complianceHold-title">Compliance hold</h3>
+<p class="path"><a href="#level-cnv_runtime">Runtime</a><span class="sep">›</span><a href="#level-cnv_lifecycle">Lifecycle engine</a><span class="sep">›</span><span>Compliance hold</span></p></header>
+<div class="figure-card">
+<p class="figure-eyebrow">machine · target · transitions complete</p>
+<p class="figure-title">Compliance hold: an orthogonal gate on every money-moving transition</p>
+<figure class="diagram" id="figure-cnv_complianceHold" style="--width: 1352px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1352 348" width="1352" height="348" role="img" aria-label="Compliance hold: an orthogonal gate on every money-moving transition"><title>Compliance hold: an orthogonal gate on every money-moving transition</title><defs><marker id="sw-cnv_complianceHold-m-edge-default" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#5B6170"/></marker><marker id="sw-cnv_complianceHold-m-edge-failure" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#B42318"/></marker><marker id="sw-cnv_complianceHold-m-edge-ops" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#B45309"/></marker></defs><rect x="0.5" y="0.5" width="1351" height="347" rx="12" fill="#FFFFFF" stroke="#E6E7EE"/><g transform="translate(24 32)"><path d="M 224 37 L 442 37" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_complianceHold-m-edge-default)" data-id="edg_clearInReview"/><path d="M 12 49 L 84 49" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_complianceHold-m-edge-default)" data-id="edg_complianceHoldStart"/><path d="M 1164 160 L 1112 160 L 1112 195 L 244 195 L 244 61 L 224 61" fill="none" stroke="#B45309" stroke-width="1.2" stroke-dasharray="6,3" marker-end="url(#sw-cnv_complianceHold-m-edge-ops)" data-id="edg_docsInReviewClear"/><path d="M 1164 129 L 1112 129 L 1112 37 L 940 37" fill="none" stroke="#B42318" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#sw-cnv_complianceHold-m-edge-failure)" data-id="edg_docsInReviewRejected"/><path d="M 442 62 L 390 62 L 390 52 L 244 52 L 244 49 L 224 49" fill="none" stroke="#B45309" stroke-width="1.2" stroke-dasharray="6,3" marker-end="url(#sw-cnv_complianceHold-m-edge-ops)" data-id="edg_inReviewClear"/><path d="M 582 37 L 800 37" fill="none" stroke="#B42318" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#sw-cnv_complianceHold-m-edge-failure)" data-id="edg_inReviewRejected"/><path d="M 582 62 L 602 62 L 602 145 L 800 145" fill="none" stroke="#B45309" stroke-width="1.2" stroke-dasharray="6,3" marker-end="url(#sw-cnv_complianceHold-m-edge-ops)" data-id="edg_inReviewRfi"/><path d="M 940 145 L 1164 145" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_complianceHold-m-edge-default)" data-id="edg_rfiDocsInReview"/><g class="label" data-id="edg_clearInReview"><rect x="296" y="17.5" width="74" height="15" rx="2" fill="#FFFFFF"/><text x="333" y="28.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">hold.opened</text></g><g class="label" data-id="edg_docsInReviewClear"><rect x="654" y="200.5" width="74" height="15" rx="2" fill="#FFFFFF"/><text x="691" y="211.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#B45309">ops.approve</text></g><g class="label" data-id="edg_docsInReviewRejected"><rect x="1018" y="42.5" width="68" height="15" rx="2" fill="#FFFFFF"/><text x="1052" y="53.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#B42318">ops.reject</text></g><g class="label" data-id="edg_inReviewClear"><rect x="296" y="57.5" width="74" height="15" rx="2" fill="#FFFFFF"/><text x="333" y="68.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#B45309">ops.approve</text></g><g class="label" data-id="edg_inReviewRejected"><rect x="657" y="42.5" width="68" height="15" rx="2" fill="#FFFFFF"/><text x="691" y="53.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#B42318">ops.reject</text></g><g class="label" data-id="edg_inReviewRfi"><rect x="666" y="149.5" width="50" height="15" rx="2" fill="#FFFFFF"/><text x="691" y="160.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#B45309">ops.rfi</text></g><g class="label" data-id="edg_rfiDocsInReview"><rect x="1012" y="149.5" width="80" height="15" rx="2" fill="#FFFFFF"/><text x="1052" y="160.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">owner.upload</text></g><g class="node" data-id="nod_clear"><rect x="84" y="25" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><text x="154" y="44.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">clear</text><text x="154" y="61.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">money may move</text></g><g class="node" data-id="nod_complianceHoldInitial"><circle cx="6" cy="49" r="6" fill="#05060F"/></g><g class="node" data-id="nod_docsInReview"><rect x="1164" y="114" width="140" height="61" rx="8" fill="#FFFBEB" stroke="#B45309" stroke-width="1"/><rect x="1172" y="121" width="32" height="13" rx="2" fill="none" stroke="#B45309" stroke-opacity="0.5" stroke-width="0.8"/><text x="1188" y="130.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#B45309">HOLD</text><text x="1234" y="147" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">docs_in_review</text><text x="1234" y="164" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">RFI docs received</text></g><g class="node" data-id="nod_inReview"><rect x="442" y="12" width="140" height="74" rx="8" fill="#FFFBEB" stroke="#B45309" stroke-width="1"/><rect x="450" y="19" width="32" height="13" rx="2" fill="none" stroke="#B45309" stroke-opacity="0.5" stroke-width="0.8"/><text x="466" y="28.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#B45309">HOLD</text><text x="512" y="45" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">in_review</text><text x="512" y="62" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">screening ·</text><text x="512" y="75" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">documents</text></g><g class="node" data-id="nod_rejected"><rect x="800" y="0" width="140" height="74" rx="8" fill="#FEF3F2" stroke="#B42318" stroke-width="1"/><rect x="808" y="7" width="37" height="13" rx="2" fill="none" stroke="#B42318" stroke-opacity="0.5" stroke-width="0.8"/><text x="826.5" y="16.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#B42318">FINAL</text><text x="870" y="33" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">rejected</text><text x="870" y="50" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">parent → failed |</text><text x="870" y="63" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">returning</text></g><g class="node" data-id="nod_rfi"><rect x="800" y="114" width="140" height="61" rx="8" fill="#FFFBEB" stroke="#B45309" stroke-width="1"/><rect x="808" y="121" width="32" height="13" rx="2" fill="none" stroke="#B45309" stroke-opacity="0.5" stroke-width="0.8"/><text x="824" y="130.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#B45309">HOLD</text><text x="870" y="147" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">rfi</text><text x="870" y="164" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">more info needed</text></g></g><line x1="24" y1="267.5" x2="1328" y2="267.5" stroke="#E6E7EE"/><text x="24" y="291.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="9" letter-spacing="0.14em" fill="#878E91">LEGEND</text><rect x="96" y="281.5" width="18" height="13" rx="3" fill="#FFFFFF" stroke="#3B3F4A"/><text x="120" y="291.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">State</text><rect x="168.9" y="281.5" width="18" height="13" rx="3" fill="#FEF3F2" stroke="#B42318"/><text x="192.9" y="291.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Outcome · failure</text><rect x="307.7" y="281.5" width="18" height="13" rx="3" fill="#FFFBEB" stroke="#B45309"/><text x="331.7" y="291.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Hold · manual review</text><line x1="96" y1="310" x2="120" y2="310" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_complianceHold-m-edge-default)"/><text x="128" y="313.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Transition</text><line x1="201.8" y1="310" x2="225.8" y2="310" stroke="#B42318" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#sw-cnv_complianceHold-m-edge-failure)"/><text x="233.8" y="313.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Failure · reversal</text><line x1="345.5" y1="310" x2="369.5" y2="310" stroke="#B45309" stroke-width="1.2" stroke-dasharray="6,3" marker-end="url(#sw-cnv_complianceHold-m-edge-ops)"/><text x="377.5" y="313.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Ops action</text><rect x="455.4" y="303.5" width="37" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="473.9" y="313" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">FINAL</text><text x="498.4" y="313.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Terminal · no exits</text></svg><a class="close" href="#level-cnv_complianceHold">Close</a></figure>
+<p class="figure-foot"><a href="#figure-cnv_complianceHold">Open full size</a></p>
+</div>
+<h4>States</h4>
+<div class="table"><table class="states">
+<thead><tr><th scope="col">State</th><th scope="col">Statuses</th><th scope="col">Outcome</th><th scope="col">Notes</th></tr></thead>
+<tbody>
+<tr><td>clear</td><td></td><td></td><td>money may move</td></tr>
+<tr><td>docs_in_review</td><td></td><td></td><td>RFI docs received</td></tr>
+<tr><td>in_review</td><td></td><td></td><td>screening · documents</td></tr>
+<tr><td>rejected</td><td></td><td>failure, terminal</td><td>parent → failed | returning</td></tr>
+<tr><td>rfi</td><td></td><td></td><td>more info needed</td></tr>
+</tbody>
+</table></div>
+<h4>Transitions</h4>
+<div class="table"><table class="transitions">
+<thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col">Trigger</th><th scope="col">Guard</th><th scope="col">Effects</th></tr></thead>
+<tbody>
+<tr><td>clear</td><td>in_review</td><td><a class="chip" href="#catalog-evt_holdOpened"><code>hold.opened</code></a></td><td></td><td></td></tr>
+<tr><td>initial</td><td>clear</td><td></td><td></td><td></td></tr>
+<tr><td>docs_in_review</td><td>clear</td><td><a class="chip" href="#catalog-evt_opsApprove"><code>ops.approve</code></a></td><td></td><td></td></tr>
+<tr><td>docs_in_review</td><td>rejected</td><td><a class="chip" href="#catalog-evt_opsReject"><code>ops.reject</code></a></td><td></td><td></td></tr>
+<tr><td>in_review</td><td>clear</td><td><a class="chip" href="#catalog-evt_opsApprove"><code>ops.approve</code></a></td><td></td><td></td></tr>
+<tr><td>in_review</td><td>rejected</td><td><a class="chip" href="#catalog-evt_opsReject"><code>ops.reject</code></a></td><td></td><td></td></tr>
+<tr><td>in_review</td><td>rfi</td><td><a class="chip" href="#catalog-evt_opsRfi"><code>ops.rfi</code></a></td><td></td><td></td></tr>
+<tr><td>rfi</td><td>docs_in_review</td><td><a class="chip" href="#catalog-evt_ownerUpload"><code>owner.upload</code></a></td><td></td><td></td></tr>
+</tbody>
+</table></div>
+</article>
+<article class="part level" id="level-cnv_expiryClock" aria-labelledby="level-cnv_expiryClock-title">
+<header class="part-head">
+<h3 id="level-cnv_expiryClock-title">Expiry clock</h3>
+<p class="path"><a href="#level-cnv_runtime">Runtime</a><span class="sep">›</span><a href="#level-cnv_lifecycle">Lifecycle engine</a><span class="sep">›</span><span>Expiry clock</span></p></header>
+<div class="figure-card">
+<p class="figure-eyebrow">machine · target · transitions complete</p>
+<p class="figure-title">Expiry clock: a deadline that can pause for payer verification</p>
+<figure class="diagram" id="figure-cnv_expiryClock" style="--width: 1108px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1108 368" width="1108" height="368" role="img" aria-label="Expiry clock: a deadline that can pause for payer verification"><title>Expiry clock: a deadline that can pause for payer verification</title><defs><marker id="sw-cnv_expiryClock-m-edge-default" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#5B6170"/></marker><marker id="sw-cnv_expiryClock-m-edge-timer" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#878E91"/></marker></defs><rect x="0.5" y="0.5" width="1107" height="367" rx="12" fill="#FFFFFF" stroke="#E6E7EE"/><g transform="translate(24 32)"><path d="M 12 55 L 84 55" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_expiryClock-m-edge-default)" data-id="edg_expiryClockStart"/><path d="M 516 134 L 264 134 L 264 49 L 224 49" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_expiryClock-m-edge-default)" data-id="edg_pausedRunning"/><path d="M 656 145 L 920 145" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_expiryClock-m-edge-default)" data-id="edg_pausedStopped"/><path d="M 224 37 L 502 37" fill="none" stroke="#878E91" stroke-width="1.2" stroke-dasharray="2,3" marker-end="url(#sw-cnv_expiryClock-m-edge-timer)" data-id="edg_runningElapsed"/><path d="M 224 61 L 254 61 L 254 149 L 450 149 L 450 155 L 516 155" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_expiryClock-m-edge-default)" data-id="edg_runningPaused"/><path d="M 224 74 L 244 74 L 244 215 L 868 215 L 868 169 L 920 169" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_expiryClock-m-edge-default)" data-id="edg_runningStopped"/><g class="label" data-id="edg_pausedRunning"><rect x="296" y="114.5" width="134" height="15" rx="2" fill="#FFFFFF"/><text x="363" y="125.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">verify.ended (+≤10 d)</text></g><g class="label" data-id="edg_pausedStopped"><rect x="756" y="124.5" width="92" height="15" rx="2" fill="#FFFFFF"/><text x="802" y="135.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">payin.detected</text></g><g class="label" data-id="edg_runningElapsed"><rect x="323" y="42.5" width="80" height="15" rx="2" fill="#FFFFFF"/><text x="363" y="53.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#878E91">timer.expiry</text></g><g class="label" data-id="edg_runningPaused"><rect x="317" y="154.5" width="92" height="15" rx="2" fill="#FFFFFF"/><text x="363" y="165.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">verify.started</text></g><g class="label" data-id="edg_runningStopped"><rect x="502" y="220.5" width="182" height="15" rx="2" fill="#FFFFFF"/><text x="593" y="231.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">payin.detected | parent.final</text></g><g class="node" data-id="nod_elapsed"><rect x="502" y="0" width="140" height="74" rx="8" fill="#F3F4F6" stroke="#6B7280" stroke-width="1"/><rect x="510" y="7" width="37" height="13" rx="2" fill="none" stroke="#6B7280" stroke-opacity="0.5" stroke-width="0.8"/><text x="528.5" y="16.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#6B7280">FINAL</text><text x="572" y="33" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">elapsed</text><text x="572" y="50" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">raises</text><text x="572" y="63" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">expiry.elapsed</text></g><g class="node" data-id="nod_expiryClockInitial"><circle cx="6" cy="55" r="6" fill="#05060F"/></g><g class="node" data-id="nod_paused"><rect x="516" y="114" width="140" height="61" rx="8" fill="#FFFBEB" stroke="#B45309" stroke-width="1"/><rect x="524" y="121" width="32" height="13" rx="2" fill="none" stroke="#B45309" stroke-opacity="0.5" stroke-width="0.8"/><text x="540" y="130.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#B45309">HOLD</text><text x="586" y="147" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">paused</text><text x="586" y="164" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">expiryFrozenAt</text></g><g class="node" data-id="nod_running"><rect x="84" y="25" width="140" height="61" rx="8" fill="#F6F7FA" stroke="#878E91" stroke-width="1"/><rect x="92" y="32" width="37" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="110.5" y="41.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">WAITS</text><text x="154" y="58" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">running</text><text x="154" y="75" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">expiresAt</text></g><g class="node" data-id="nod_stopped"><rect x="920" y="120" width="140" height="74" rx="8" fill="#ECFDF5" stroke="#059669" stroke-width="1"/><rect x="928" y="127" width="37" height="13" rx="2" fill="none" stroke="#059669" stroke-opacity="0.5" stroke-width="0.8"/><text x="946.5" y="136.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#059669">FINAL</text><text x="990" y="153" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">stopped</text><text x="990" y="170" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">pay-in seen · parent</text><text x="990" y="183" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">final</text></g></g><line x1="24" y1="287.5" x2="1084" y2="287.5" stroke="#E6E7EE"/><text x="24" y="311.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="9" letter-spacing="0.14em" fill="#878E91">LEGEND</text><rect x="96" y="301.5" width="18" height="13" rx="3" fill="#ECFDF5" stroke="#059669"/><text x="120" y="311.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Outcome · success</text><rect x="245.1" y="301.5" width="18" height="13" rx="3" fill="#F3F4F6" stroke="#6B7280"/><text x="269.1" y="311.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Outcome · stopped</text><rect x="394" y="301.5" width="18" height="13" rx="3" fill="#F6F7FA" stroke="#878E91"/><text x="418" y="311.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Waiting on another party</text><rect x="568.3" y="301.5" width="18" height="13" rx="3" fill="#FFFBEB" stroke="#B45309"/><text x="592.3" y="311.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Hold · manual review</text><line x1="96" y1="330" x2="120" y2="330" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_expiryClock-m-edge-default)"/><text x="128" y="333.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Transition</text><line x1="201.8" y1="330" x2="225.8" y2="330" stroke="#878E91" stroke-width="1.2" stroke-dasharray="2,3" marker-end="url(#sw-cnv_expiryClock-m-edge-timer)"/><text x="233.8" y="333.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Timer</text><rect x="285.7" y="323.5" width="37" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="304.2" y="333" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">FINAL</text><text x="328.7" y="333.5" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Terminal · no exits</text></svg><a class="close" href="#level-cnv_expiryClock">Close</a></figure>
+<p class="figure-foot"><a href="#figure-cnv_expiryClock">Open full size</a></p>
+</div>
+<h4>States</h4>
+<div class="table"><table class="states">
+<thead><tr><th scope="col">State</th><th scope="col">Statuses</th><th scope="col">Outcome</th><th scope="col">Notes</th></tr></thead>
+<tbody>
+<tr><td>elapsed</td><td></td><td>stopped, terminal</td><td>raises expiry.elapsed</td></tr>
+<tr><td>paused</td><td></td><td></td><td>expiryFrozenAt</td></tr>
+<tr><td>running</td><td></td><td></td><td>expiresAt</td></tr>
+<tr><td>stopped</td><td></td><td>success, terminal</td><td>pay-in seen · parent final</td></tr>
+</tbody>
+</table></div>
+<h4>Transitions</h4>
+<div class="table"><table class="transitions">
+<thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col">Trigger</th><th scope="col">Guard</th><th scope="col">Effects</th></tr></thead>
+<tbody>
+<tr><td>initial</td><td>running</td><td></td><td></td><td></td></tr>
+<tr><td>paused</td><td>running</td><td><a class="chip" href="#catalog-evt_verifyEnded"><code>verify.ended</code></a> (+≤10 d)</td><td></td><td>action <a class="chip" href="#catalog-act_extendExpiry"><code>Extend expiry</code></a></td></tr>
+<tr><td>paused</td><td>stopped</td><td><a class="chip" href="#catalog-evt_payinDetected"><code>payin.detected</code></a></td><td></td><td></td></tr>
+<tr><td>running</td><td>elapsed</td><td><a class="chip" href="#catalog-tmr_expiry"><code>timer.expiry</code></a></td><td></td><td></td></tr>
+<tr><td>running</td><td>paused</td><td><a class="chip" href="#catalog-evt_verifyStarted"><code>verify.started</code></a></td><td></td><td></td></tr>
+<tr><td>running</td><td>stopped</td><td><a class="chip" href="#catalog-evt_payinDetected"><code>payin.detected</code></a> | <a class="chip" href="#catalog-evt_parentFinal"><code>parent.final</code></a></td><td></td><td></td></tr>
+</tbody>
+</table></div>
+</article>
+<article class="part level" id="level-cnv_crossBorderSend" aria-labelledby="level-cnv_crossBorderSend-title">
+<header class="part-head">
+<h3 id="level-cnv_crossBorderSend-title">Cross-border send</h3>
+<p class="path"><a href="#level-cnv_runtime">Runtime</a><span class="sep">›</span><a href="#level-cnv_lifecycle">Lifecycle engine</a><span class="sep">›</span><span>Cross-border send</span></p></header>
+<div class="figure-card">
+<p class="figure-eyebrow">machine · target · subject transaction.status · transitions complete</p>
+<p class="figure-title">Cross-border send (send · crossBorder)</p>
+<p class="caption">Fiat in, stablecoin rail in the middle, fiat out. Legs: srcToHub → hubToDest → payout.</p>
+<figure class="diagram" id="figure-cnv_crossBorderSend" style="--width: 1866px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1866 369" width="1866" height="369" role="img" aria-label="Cross-border send (send · crossBorder)"><title>Cross-border send (send · crossBorder)</title><defs><marker id="sw-cnv_crossBorderSend-m-edge-default" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#5B6170"/></marker><marker id="sw-cnv_crossBorderSend-m-edge-happy" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#0A66C2"/></marker><marker id="sw-cnv_crossBorderSend-m-edge-failure" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#B42318"/></marker><marker id="sw-cnv_crossBorderSend-m-edge-ops" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#B45309"/></marker><marker id="sw-cnv_crossBorderSend-m-edge-timer" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#878E91"/></marker></defs><rect x="0.5" y="0.5" width="1865" height="368" rx="12" fill="#FFFFFF" stroke="#E6E7EE"/><g transform="translate(24 32)"><path d="M 224 103 L 244 103 L 244 24 L 526 24" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_crossBorderSend-m-edge-default)" data-id="edg_awaitingFundsCancelled"/><path d="M 224 119 L 526 119" fill="none" stroke="#0A66C2" stroke-width="1.6" marker-end="url(#sw-cnv_crossBorderSend-m-edge-happy)" data-id="edg_awaitingFundsConverting"/><path d="M 224 134 L 244 134 L 244 213 L 526 213" fill="none" stroke="#878E91" stroke-width="1.2" stroke-dasharray="2,3" marker-end="url(#sw-cnv_crossBorderSend-m-edge-timer)" data-id="edg_awaitingFundsExpired"/><path d="M 131 88 L 131 78 L 177 78 L 177 88" fill="none" stroke="#878E91" stroke-width="1.2" stroke-dasharray="2,3" marker-end="url(#sw-cnv_crossBorderSend-m-edge-timer)" data-id="edg_awaitingFundsRefresh"/><path d="M 666 103 L 686 103 L 686 98 L 878 98" fill="none" stroke="#B42318" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#sw-cnv_crossBorderSend-m-edge-failure)" data-id="edg_convertingOnHold"/><path d="M 666 134 L 686 134 L 686 179 L 1254 179" fill="none" stroke="#0A66C2" stroke-width="1.6" marker-end="url(#sw-cnv_crossBorderSend-m-edge-happy)" data-id="edg_convertingPayingOut"/><path d="M 12 119 L 84 119" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_crossBorderSend-m-edge-default)" data-id="edg_crossBorderSendStart"/><path d="M 878 119 L 666 119" fill="none" stroke="#B45309" stroke-width="1.2" stroke-dasharray="6,3" marker-end="url(#sw-cnv_crossBorderSend-m-edge-ops)" data-id="edg_onHoldConverting"/><path d="M 1018 98 L 1038 98 L 1038 53 L 1254 53" fill="none" stroke="#B45309" stroke-width="1.2" stroke-dasharray="6,3" marker-end="url(#sw-cnv_crossBorderSend-m-edge-ops)" data-id="edg_onHoldFailed"/><path d="M 1394 154 L 1414 154 L 1414 91 L 1648 91" fill="none" stroke="#0A66C2" stroke-width="1.6" marker-end="url(#sw-cnv_crossBorderSend-m-edge-happy)" data-id="edg_payingOutCompleted"/><path d="M 1254 154 L 1202 154 L 1202 119 L 1018 119" fill="none" stroke="#B42318" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#sw-cnv_crossBorderSend-m-edge-failure)" data-id="edg_payingOutOnHold"/><path d="M 1394 179 L 1648 179" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_crossBorderSend-m-edge-default)" data-id="edg_payingOutPartiallyCompleted"/><g class="label" data-id="edg_awaitingFundsCancelled"><rect x="296" y="29.5" width="158" height="15" rx="2" fill="#FFFFFF"/><text x="375" y="40.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">owner.cancel | ops.cancel</text></g><g class="label" data-id="edg_awaitingFundsConverting"><rect x="326" y="123.5" width="98" height="15" rx="2" fill="#FFFFFF"/><text x="375" y="134.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#0A66C2">payin.confirmed</text></g><g class="label" data-id="edg_awaitingFundsExpired"><rect x="335" y="218.5" width="80" height="15" rx="2" fill="#FFFFFF"/><text x="375" y="229.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#878E91">timer.expiry</text></g><g class="label" data-id="edg_awaitingFundsRefresh"><rect x="93" y="59.5" width="122" height="15" rx="2" fill="#FFFFFF"/><text x="154" y="70.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#878E91">quote_ttl · refresh</text></g><g class="label" data-id="edg_convertingOnHold"><rect x="738" y="78.5" width="68" height="15" rx="2" fill="#FFFFFF"/><text x="772" y="89.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#B42318">leg.halted</text></g><g class="label" data-id="edg_convertingPayingOut"><rect x="911" y="183.5" width="74" height="15" rx="2" fill="#FFFFFF"/><text x="948" y="194.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#0A66C2">hubToDest ✓</text></g><g class="label" data-id="edg_onHoldConverting"><rect x="738" y="123.5" width="68" height="15" rx="2" fill="#FFFFFF"/><text x="772" y="134.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#B45309">ops.resume</text></g><g class="label" data-id="edg_onHoldFailed"><rect x="1090" y="57.5" width="92" height="15" rx="2" fill="#FFFFFF"/><text x="1136" y="68.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#B45309">ops.fail(code)</text></g><g class="label" data-id="edg_payingOutCompleted"><rect x="1493" y="70.5" width="56" height="15" rx="2" fill="#FFFFFF"/><text x="1521" y="81.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#0A66C2">payout ✓</text></g><g class="label" data-id="edg_payingOutOnHold"><rect x="1102" y="123.5" width="68" height="15" rx="2" fill="#FFFFFF"/><text x="1136" y="134.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#B42318">leg.halted</text></g><g class="label" data-id="edg_payingOutPartiallyCompleted"><rect x="1466" y="183.5" width="110" height="15" rx="2" fill="#FFFFFF"/><text x="1521" y="194.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">payout ✓ [scaled]</text></g><g class="node" data-id="nod_awaitingFunds"><rect x="84" y="88" width="140" height="61" rx="8" fill="#F6F7FA" stroke="#878E91" stroke-width="1"/><rect x="92" y="95" width="37" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="110.5" y="104.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">WAITS</text><rect x="168" y="95" width="48" height="13" rx="6.5" fill="#FEF3C7"/><text x="192" y="104.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8.5" text-anchor="middle" fill="#92400E">pending</text><text x="154" y="121" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">awaiting_funds</text><text x="154" y="138" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">owner bank transfer</text></g><g class="node" data-id="nod_cancelled"><rect x="526" y="0" width="140" height="48" rx="8" fill="#F3F4F6" stroke="#6B7280" stroke-width="1"/><rect x="534" y="7" width="37" height="13" rx="2" fill="none" stroke="#6B7280" stroke-opacity="0.5" stroke-width="0.8"/><text x="552.5" y="16.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#6B7280">FINAL</text><rect x="600" y="7" width="58" height="13" rx="6.5" fill="#F3F4F6"/><text x="629" y="16.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8.5" text-anchor="middle" fill="#4B5563">cancelled</text><text x="596" y="35" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">cancelled</text></g><g class="node" data-id="nod_completed"><rect x="1648" y="67" width="140" height="48" rx="8" fill="#ECFDF5" stroke="#059669" stroke-width="1"/><rect x="1656" y="74" width="37" height="13" rx="2" fill="none" stroke="#059669" stroke-opacity="0.5" stroke-width="0.8"/><text x="1674.5" y="83.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#059669">FINAL</text><rect x="1722" y="74" width="58" height="13" rx="6.5" fill="#ECFDF5"/><text x="1751" y="83.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8.5" text-anchor="middle" fill="#047857">completed</text><text x="1718" y="102" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">completed</text></g><g class="node" data-id="nod_converting"><rect x="526" y="88" width="140" height="61" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><rect x="534" y="95" width="32" height="13" rx="2" fill="none" stroke="#3B3F4A" stroke-opacity="0.5" stroke-width="0.8"/><text x="550" y="104.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#3B3F4A">LIVE</text><rect x="595" y="95" width="63" height="13" rx="6.5" fill="#E8F0FB"/><text x="626.5" y="104.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8.5" text-anchor="middle" fill="#0A66C2">processing</text><text x="596" y="121" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">converting</text><text x="596" y="138" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">srcToHub · hubToDest</text></g><g class="node" data-id="nod_crossBorderSendInitial"><circle cx="6" cy="119" r="6" fill="#05060F"/></g><g class="node" data-id="nod_expired"><rect x="526" y="189" width="140" height="48" rx="8" fill="#F3F4F6" stroke="#6B7280" stroke-width="1"/><rect x="534" y="196" width="37" height="13" rx="2" fill="none" stroke="#6B7280" stroke-opacity="0.5" stroke-width="0.8"/><text x="552.5" y="205.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#6B7280">FINAL</text><rect x="610" y="196" width="48" height="13" rx="6.5" fill="#FEE4E2"/><text x="634" y="205.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8.5" text-anchor="middle" fill="#B42318">expired</text><text x="596" y="224" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">expired</text></g><g class="node" data-id="nod_failed"><rect x="1254" y="16" width="140" height="74" rx="8" fill="#FEF3F2" stroke="#B42318" stroke-width="1"/><rect x="1262" y="23" width="37" height="13" rx="2" fill="none" stroke="#B42318" stroke-opacity="0.5" stroke-width="0.8"/><text x="1280.5" y="32.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#B42318">FINAL</text><rect x="1343" y="23" width="43" height="13" rx="6.5" fill="#FEE4E2"/><text x="1364.5" y="32.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8.5" text-anchor="middle" fill="#B42318">failed</text><text x="1324" y="49" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">failed</text><text x="1324" y="66" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">failureCode ·</text><text x="1324" y="79" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">fundsAt</text></g><g class="node" data-id="nod_onHold"><rect x="878" y="78" width="140" height="61" rx="8" fill="#FFFBEB" stroke="#B45309" stroke-width="1"/><rect x="886" y="85" width="32" height="13" rx="2" fill="none" stroke="#B45309" stroke-opacity="0.5" stroke-width="0.8"/><text x="902" y="94.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#B45309">HOLD</text><rect x="947" y="85" width="63" height="13" rx="6.5" fill="#E8F0FB"/><text x="978.5" y="94.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8.5" text-anchor="middle" fill="#0A66C2">processing</text><text x="948" y="111" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">on_hold</text><text x="948" y="128" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">ops review · fundsAt</text></g><g class="node" data-id="nod_partiallyCompleted"><rect x="1648" y="155" width="170" height="48" rx="8" fill="#ECFDF5" stroke="#059669" stroke-width="1"/><rect x="1656" y="162" width="37" height="13" rx="2" fill="none" stroke="#059669" stroke-opacity="0.5" stroke-width="0.8"/><text x="1674.5" y="171.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#059669">FINAL</text><rect x="1701" y="162" width="109" height="13" rx="6.5" fill="#ECFDF5"/><text x="1755.5" y="171.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8.5" text-anchor="middle" fill="#047857">partially_completed</text><text x="1733" y="190" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">partially_completed</text></g><g class="node" data-id="nod_payingOut"><rect x="1254" y="130" width="140" height="74" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><rect x="1262" y="137" width="32" height="13" rx="2" fill="none" stroke="#3B3F4A" stroke-opacity="0.5" stroke-width="0.8"/><text x="1278" y="146.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#3B3F4A">LIVE</text><rect x="1323" y="137" width="63" height="13" rx="6.5" fill="#E8F0FB"/><text x="1354.5" y="146.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8.5" text-anchor="middle" fill="#0A66C2">processing</text><text x="1324" y="163" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">paying_out</text><text x="1324" y="180" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">broker → recipient</text><text x="1324" y="193" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">bank</text></g></g><line x1="24" y1="289" x2="1842" y2="289" stroke="#E6E7EE"/><text x="24" y="313" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="9" letter-spacing="0.14em" fill="#878E91">LEGEND</text><rect x="96" y="303" width="18" height="13" rx="3" fill="#ECFDF5" stroke="#059669"/><text x="120" y="313" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Outcome · success</text><rect x="245.1" y="303" width="18" height="13" rx="3" fill="#FEF3F2" stroke="#B42318"/><text x="269.1" y="313" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Outcome · failure</text><rect x="384" y="303" width="18" height="13" rx="3" fill="#F3F4F6" stroke="#6B7280"/><text x="408" y="313" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Outcome · stopped</text><rect x="532.8" y="303" width="18" height="13" rx="3" fill="#F6F7FA" stroke="#878E91"/><text x="556.8" y="313" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Waiting on another party</text><rect x="707.1" y="303" width="18" height="13" rx="3" fill="#FFFBEB" stroke="#B45309"/><text x="731.1" y="313" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Hold · manual review</text><rect x="865.6" y="303" width="18" height="13" rx="3" fill="#FFFFFF" stroke="#3B3F4A"/><text x="889.6" y="313" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Processing</text><line x1="96" y1="331.5" x2="120" y2="331.5" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_crossBorderSend-m-edge-default)"/><text x="128" y="335" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Transition</text><line x1="201.8" y1="331.5" x2="225.8" y2="331.5" stroke="#0A66C2" stroke-width="1.6" marker-end="url(#sw-cnv_crossBorderSend-m-edge-happy)"/><text x="233.8" y="335" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Happy path</text><line x1="315.9" y1="331.5" x2="339.9" y2="331.5" stroke="#B42318" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#sw-cnv_crossBorderSend-m-edge-failure)"/><text x="347.9" y="335" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Failure · reversal</text><line x1="459.6" y1="331.5" x2="483.6" y2="331.5" stroke="#B45309" stroke-width="1.2" stroke-dasharray="6,3" marker-end="url(#sw-cnv_crossBorderSend-m-edge-ops)"/><text x="491.6" y="335" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Ops action</text><line x1="569.5" y1="331.5" x2="593.5" y2="331.5" stroke="#878E91" stroke-width="1.2" stroke-dasharray="2,3" marker-end="url(#sw-cnv_crossBorderSend-m-edge-timer)"/><text x="601.5" y="335" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Timer</text><rect x="653.4" y="325" width="37" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="671.9" y="334.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">FINAL</text><text x="696.4" y="335" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="11" fill="#464849">Terminal · no exits</text></svg><a class="close" href="#level-cnv_crossBorderSend">Close</a></figure>
+<p class="figure-foot"><a href="#figure-cnv_crossBorderSend">Open full size</a></p>
+</div>
+<h4>States</h4>
+<div class="table"><table class="states">
+<thead><tr><th scope="col">State</th><th scope="col">Statuses</th><th scope="col">Outcome</th><th scope="col">Notes</th></tr></thead>
+<tbody>
+<tr><td>awaiting_funds</td><td><a class="chip" href="#catalog-sts_pending"><code>pending</code></a></td><td></td><td>owner bank transfer</td></tr>
+<tr><td>cancelled</td><td><a class="chip" href="#catalog-sts_cancelled"><code>cancelled</code></a></td><td>stopped, terminal</td><td></td></tr>
+<tr><td>completed</td><td><a class="chip" href="#catalog-sts_completed"><code>completed</code></a></td><td>success, terminal</td><td></td></tr>
+<tr><td>converting</td><td><a class="chip" href="#catalog-sts_processing"><code>processing</code></a></td><td></td><td>srcToHub · hubToDest</td></tr>
+<tr><td>expired</td><td><a class="chip" href="#catalog-sts_expired"><code>expired</code></a></td><td>stopped, terminal</td><td></td></tr>
+<tr><td>failed</td><td><a class="chip" href="#catalog-sts_failed"><code>failed</code></a></td><td>failure, terminal</td><td>failureCode · fundsAt</td></tr>
+<tr><td>on_hold</td><td><a class="chip" href="#catalog-sts_processing"><code>processing</code></a></td><td></td><td>ops review · fundsAt</td></tr>
+<tr><td>partially_completed</td><td><a class="chip" href="#catalog-sts_partiallyCompleted"><code>partially_completed</code></a></td><td>success, terminal</td><td></td></tr>
+<tr><td>paying_out</td><td><a class="chip" href="#catalog-sts_processing"><code>processing</code></a></td><td></td><td>broker → recipient bank</td></tr>
+</tbody>
+</table></div>
+<h4>Transitions</h4>
+<div class="table"><table class="transitions">
+<thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col">Trigger</th><th scope="col">Guard</th><th scope="col">Effects</th></tr></thead>
+<tbody>
+<tr><td>awaiting_funds</td><td>cancelled</td><td><a class="chip" href="#catalog-evt_ownerCancel"><code>owner.cancel</code></a> | <a class="chip" href="#catalog-evt_opsCancel"><code>ops.cancel</code></a></td><td></td><td></td></tr>
+<tr><td>awaiting_funds</td><td>converting</td><td><a class="chip" href="#catalog-evt_payinConfirmed"><code>payin.confirmed</code></a></td><td></td><td></td></tr>
+<tr><td>awaiting_funds</td><td>expired</td><td><a class="chip" href="#catalog-tmr_expiry"><code>timer.expiry</code></a></td><td></td><td></td></tr>
+<tr><td>awaiting_funds</td><td>awaiting_funds</td><td><a class="chip" href="#catalog-tmr_quoteTtl"><code>quote_ttl</code></a> · refresh</td><td></td><td>action <a class="chip" href="#catalog-act_refreshQuote"><code>Refresh quote</code></a></td></tr>
+<tr><td>converting</td><td>on_hold</td><td><a class="chip" href="#catalog-evt_legHalted"><code>leg.halted</code></a></td><td></td><td></td></tr>
+<tr><td>converting</td><td>paying_out</td><td>hubToDest ✓</td><td>leg = hubToDest</td><td></td></tr>
+<tr><td>initial</td><td>awaiting_funds</td><td></td><td></td><td></td></tr>
+<tr><td>on_hold</td><td>converting</td><td><a class="chip" href="#catalog-evt_opsResume"><code>ops.resume</code></a></td><td></td><td></td></tr>
+<tr><td>on_hold</td><td>failed</td><td><a class="chip" href="#catalog-evt_opsFail"><code>ops.fail</code></a>(code)</td><td></td><td></td></tr>
+<tr><td>paying_out</td><td>completed</td><td>payout ✓</td><td>full amount</td><td></td></tr>
+<tr><td>paying_out</td><td>on_hold</td><td><a class="chip" href="#catalog-evt_legHalted"><code>leg.halted</code></a></td><td></td><td></td></tr>
+<tr><td>paying_out</td><td>partially_completed</td><td>payout ✓</td><td><a class="chip" href="#catalog-grd_scaledPayout"><code>Scaled payout</code></a></td><td></td></tr>
+</tbody>
+</table></div>
+</article>
+</section>
+<section class="section" id="catalog" aria-labelledby="catalog-title">
+<header class="section-head">
+<p class="eyebrow">03 — Catalog</p>
+<h2 id="catalog-title">What the levels refer to</h2>
+<p class="lead">Declared once and named by the levels: types, events, actions, guards, endpoints, webhooks, timers, statuses, parties.</p>
+</header>
+<div class="part" id="catalog-types">
+<h3>Types</h3>
+<div class="table"><table class="catalog-table">
+<thead><tr><th scope="col">Type</th><th scope="col">Kind</th><th scope="col">Description</th></tr></thead>
+<tbody>
+<tr id="catalog-typ_expiryContext"><td><span class="item">ExpiryContext</span><code class="id">typ_expiryContext</code></td><td>object</td><td></td></tr>
+<tr id="catalog-typ_failure"><td><span class="item">Failure</span><code class="id">typ_failure</code></td><td>object</td><td></td></tr>
+</tbody>
+</table></div>
+</div>
+<div class="part" id="catalog-events">
+<h3>Events</h3>
+<div class="table"><table class="catalog-table">
+<thead><tr><th scope="col">Event</th><th scope="col">Payload</th><th scope="col">Source</th><th scope="col">Description</th></tr></thead>
+<tbody>
+<tr id="catalog-evt_expiryElapsed"><td><span class="item">expiry.elapsed</span><code class="id">evt_expiryElapsed</code></td><td>none</td><td>internal</td><td></td></tr>
+<tr id="catalog-evt_holdOpened"><td><span class="item">hold.opened</span><code class="id">evt_holdOpened</code></td><td></td><td>internal</td><td></td></tr>
+<tr id="catalog-evt_legCompleted"><td><span class="item">leg.completed</span><code class="id">evt_legCompleted</code></td><td></td><td>internal</td><td></td></tr>
+<tr id="catalog-evt_legHalted"><td><span class="item">leg.halted</span><code class="id">evt_legHalted</code></td><td></td><td>internal</td><td></td></tr>
+<tr id="catalog-evt_opsApprove"><td><span class="item">ops.approve</span><code class="id">evt_opsApprove</code></td><td>none</td><td><a class="chip" href="#catalog-pty_ops"><code>Operations</code></a></td><td></td></tr>
+<tr id="catalog-evt_opsCancel"><td><span class="item">ops.cancel</span><code class="id">evt_opsCancel</code></td><td>none</td><td><a class="chip" href="#catalog-pty_ops"><code>Operations</code></a></td><td></td></tr>
+<tr id="catalog-evt_opsFail"><td><span class="item">ops.fail</span><code class="id">evt_opsFail</code></td><td><a class="chip" href="#catalog-typ_failure"><code>Failure</code></a></td><td><a class="chip" href="#catalog-pty_ops"><code>Operations</code></a></td><td></td></tr>
+<tr id="catalog-evt_opsReject"><td><span class="item">ops.reject</span><code class="id">evt_opsReject</code></td><td></td><td><a class="chip" href="#catalog-pty_ops"><code>Operations</code></a></td><td></td></tr>
+<tr id="catalog-evt_opsResume"><td><span class="item">ops.resume</span><code class="id">evt_opsResume</code></td><td>none</td><td><a class="chip" href="#catalog-pty_ops"><code>Operations</code></a></td><td></td></tr>
+<tr id="catalog-evt_opsRfi"><td><span class="item">ops.rfi</span><code class="id">evt_opsRfi</code></td><td></td><td><a class="chip" href="#catalog-pty_ops"><code>Operations</code></a></td><td></td></tr>
+<tr id="catalog-evt_ownerCancel"><td><span class="item">owner.cancel</span><code class="id">evt_ownerCancel</code></td><td>none</td><td><a class="chip" href="#catalog-pty_client"><code>Client</code></a></td><td></td></tr>
+<tr id="catalog-evt_ownerUpload"><td><span class="item">owner.upload</span><code class="id">evt_ownerUpload</code></td><td></td><td><a class="chip" href="#catalog-pty_client"><code>Client</code></a></td><td></td></tr>
+<tr id="catalog-evt_parentFinal"><td><span class="item">parent.final</span><code class="id">evt_parentFinal</code></td><td>none</td><td>internal</td><td></td></tr>
+<tr id="catalog-evt_payinConfirmed"><td><span class="item">payin.confirmed</span><code class="id">evt_payinConfirmed</code></td><td></td><td><a class="chip" href="#catalog-pty_providers"><code>Providers</code></a></td><td></td></tr>
+<tr id="catalog-evt_payinDetected"><td><span class="item">payin.detected</span><code class="id">evt_payinDetected</code></td><td></td><td><a class="chip" href="#catalog-pty_providers"><code>Providers</code></a></td><td></td></tr>
+<tr id="catalog-evt_payoutCompleted"><td><span class="item">payout.completed</span><code class="id">evt_payoutCompleted</code></td><td></td><td><a class="chip" href="#catalog-pty_providers"><code>Providers</code></a></td><td></td></tr>
+<tr id="catalog-evt_verifyEnded"><td><span class="item">verify.ended</span><code class="id">evt_verifyEnded</code></td><td>none</td><td><a class="chip" href="#catalog-pty_client"><code>Client</code></a></td><td></td></tr>
+<tr id="catalog-evt_verifyStarted"><td><span class="item">verify.started</span><code class="id">evt_verifyStarted</code></td><td>none</td><td><a class="chip" href="#catalog-pty_client"><code>Client</code></a></td><td></td></tr>
+</tbody>
+</table></div>
+</div>
+<div class="part" id="catalog-actions">
+<h3>Actions</h3>
+<div class="table"><table class="catalog-table">
+<thead><tr><th scope="col">Action</th><th scope="col">Input</th><th scope="col">Output</th><th scope="col">Description</th></tr></thead>
+<tbody>
+<tr id="catalog-act_extendExpiry"><td><span class="item">Extend expiry</span><code class="id">act_extendExpiry</code></td><td></td><td></td><td>Adds the paused time to expiresAt, at most 10 days.</td></tr>
+<tr id="catalog-act_refreshQuote"><td><span class="item">Refresh quote</span><code class="id">act_refreshQuote</code></td><td></td><td></td><td></td></tr>
+</tbody>
+</table></div>
+</div>
+<div class="part" id="catalog-guards">
+<h3>Guards</h3>
+<div class="table"><table class="catalog-table">
+<thead><tr><th scope="col">Guard</th><th scope="col">Expression</th><th scope="col">Description</th></tr></thead>
+<tbody>
+<tr id="catalog-grd_scaledPayout"><td><span class="item">Scaled payout</span><code class="id">grd_scaledPayout</code></td><td></td><td>The payout was reduced to the funds actually received.</td></tr>
+</tbody>
+</table></div>
+</div>
+<div class="part" id="catalog-endpoints">
+<h3>Endpoints</h3>
+<div class="table"><table class="catalog-table">
+<thead><tr><th scope="col">Endpoint</th><th scope="col">Request</th><th scope="col">Auth</th><th scope="col">Description</th></tr></thead>
+<tbody>
+<tr id="catalog-ept_createPayment"><td><span class="item">Create payment</span><code class="id">ept_createPayment</code></td><td><code>POST /payments</code></td><td></td><td></td></tr>
+</tbody>
+</table></div>
+</div>
+<div class="part" id="catalog-webhooks">
+<h3>Webhooks</h3>
+<div class="table"><table class="catalog-table">
+<thead><tr><th scope="col">Webhook</th><th scope="col">Direction</th><th scope="col">Party</th><th scope="col">Description</th></tr></thead>
+<tbody>
+<tr id="catalog-whk_providerEvents"><td><span class="item">Provider events</span><code class="id">whk_providerEvents</code></td><td>in</td><td><a class="chip" href="#catalog-pty_providers"><code>Providers</code></a></td><td></td></tr>
+</tbody>
+</table></div>
+</div>
+<div class="part" id="catalog-timers">
+<h3>Timers</h3>
+<div class="table"><table class="catalog-table">
+<thead><tr><th scope="col">Timer</th><th scope="col">When</th><th scope="col">Calendar</th><th scope="col">Description</th></tr></thead>
+<tbody>
+<tr id="catalog-tmr_expiry"><td><span class="item">timer.expiry</span><code class="id">tmr_expiry</code></td><td><code>context.expiresAt</code></td><td></td><td></td></tr>
+<tr id="catalog-tmr_quoteTtl"><td><span class="item">quote_ttl</span><code class="id">tmr_quoteTtl</code></td><td><code>PT15M</code></td><td></td><td></td></tr>
+</tbody>
+</table></div>
+</div>
+<div class="part" id="catalog-statuses">
+<h3>Statuses</h3>
+<div class="table"><table class="catalog-table">
+<thead><tr><th scope="col">Status</th><th scope="col">Tone</th><th scope="col">Description</th></tr></thead>
+<tbody>
+<tr id="catalog-sts_cancelled"><td><span class="item">cancelled</span><code class="id">sts_cancelled</code></td><td>neutral</td><td></td></tr>
+<tr id="catalog-sts_completed"><td><span class="item">completed</span><code class="id">sts_completed</code></td><td>success</td><td></td></tr>
+<tr id="catalog-sts_expired"><td><span class="item">expired</span><code class="id">sts_expired</code></td><td>danger</td><td></td></tr>
+<tr id="catalog-sts_failed"><td><span class="item">failed</span><code class="id">sts_failed</code></td><td>danger</td><td></td></tr>
+<tr id="catalog-sts_partiallyCompleted"><td><span class="item">partially_completed</span><code class="id">sts_partiallyCompleted</code></td><td>success</td><td></td></tr>
+<tr id="catalog-sts_pending"><td><span class="item">pending</span><code class="id">sts_pending</code></td><td>warning</td><td></td></tr>
+<tr id="catalog-sts_processing"><td><span class="item">processing</span><code class="id">sts_processing</code></td><td>info</td><td></td></tr>
+</tbody>
+</table></div>
+</div>
+<div class="part" id="catalog-parties">
+<h3>Parties</h3>
+<div class="table"><table class="catalog-table">
+<thead><tr><th scope="col">Party</th><th scope="col">Kind</th><th scope="col">Description</th></tr></thead>
+<tbody>
+<tr id="catalog-pty_client"><td><span class="item">Client</span><code class="id">pty_client</code></td><td>human</td><td></td></tr>
+<tr id="catalog-pty_ops"><td><span class="item">Operations</span><code class="id">pty_ops</code></td><td>operator</td><td></td></tr>
+<tr id="catalog-pty_providers"><td><span class="item">Providers</span><code class="id">pty_providers</code></td><td>external</td><td></td></tr>
+</tbody>
+</table></div>
+</div>
+</section>
+<footer class="foot">Made with Statewright</footer>
+</main>
+</div>
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement;
+  var nav = document.getElementById("contents");
+  var toggle = document.querySelector(".contents-toggle");
+  if (!nav) return;
+  root.classList.add("js");
+
+  var links = Array.from(nav.querySelectorAll('a[href^="#"]:not(.brand)'));
+  var parts = links
+    .map(function (link) {
+      return { link: link, target: document.getElementById(decodeURIComponent(link.getAttribute("href").slice(1))) };
+    })
+    .filter(function (part) {
+      return part.target;
+    });
+  var current = null;
+
+  function line() {
+    return Math.min(window.innerHeight / 3, 240);
+  }
+  function mark() {
+    var next = null;
+    var bottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    parts.forEach(function (part) {
+      var top = part.target.getBoundingClientRect().top;
+      if (top <= line() || (bottom && top < window.innerHeight)) next = part;
+    });
+    if (next === current) return;
+    if (current) current.link.removeAttribute("aria-current");
+    current = next;
+    if (!current) return;
+    current.link.setAttribute("aria-current", "true");
+    // Keep the mark in view in the contents, without moving the page.
+    var link = current.link.getBoundingClientRect();
+    var box = nav.getBoundingClientRect();
+    if (link.top < box.top + 48) nav.scrollTop -= box.top + 48 - link.top;
+    else if (link.bottom > box.bottom - 48) nav.scrollTop += link.bottom - box.bottom + 48;
+  }
+
+  if ("IntersectionObserver" in window) {
+    var observer = new IntersectionObserver(mark, { rootMargin: "0px 0px -66% 0px", threshold: [0, 1] });
+    parts.forEach(function (part) {
+      observer.observe(part.target);
+    });
+  }
+  window.addEventListener("hashchange", mark);
+  mark();
+
+  // Narrow screens: the contents slide over the page from the Contents button.
+  function open(value) {
+    root.classList.toggle("contents-open", value);
+    if (toggle) toggle.setAttribute("aria-expanded", String(value));
+  }
+  if (toggle)
+    toggle.addEventListener("click", function () {
+      open(!root.classList.contains("contents-open"));
+    });
+  nav.addEventListener("click", function (event) {
+    if (event.target.closest("a")) open(false);
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && root.classList.contains("contents-open")) {
+      open(false);
+      if (toggle) toggle.focus();
+    }
+  });
+  document.addEventListener("click", function (event) {
+    if (root.classList.contains("contents-open") && !nav.contains(event.target) && event.target !== toggle)
+      open(false);
+  });
+})();
+</script>
+</body>
+</html>

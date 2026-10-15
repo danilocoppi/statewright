@@ -1,0 +1,704 @@
+{
+  "contract": "1",
+  "flows": [],
+  "machines": [
+    {
+      "completeness": "complete",
+      "definition": "def_complianceHold",
+      "id": "cnv_complianceHold",
+      "name": "Compliance hold",
+      "owner": "def_complianceHold",
+      "stage": "target",
+      "starts": [
+        {
+          "id": "nod_complianceHoldInitial",
+          "kind": "initial",
+          "to": "clear"
+        }
+      ],
+      "states": [
+        {
+          "id": "nod_clear",
+          "name": "clear"
+        },
+        {
+          "category": "hold",
+          "id": "nod_docsInReview",
+          "name": "docs_in_review"
+        },
+        {
+          "category": "hold",
+          "id": "nod_inReview",
+          "name": "in_review"
+        },
+        {
+          "final": true,
+          "id": "nod_rejected",
+          "name": "rejected",
+          "outcome": "failure"
+        },
+        {
+          "category": "hold",
+          "id": "nod_rfi",
+          "name": "rfi"
+        }
+      ],
+      "transitions": [
+        {
+          "from": "clear",
+          "id": "edg_clearInReview",
+          "on": [
+            "hold.opened"
+          ],
+          "to": "in_review"
+        },
+        {
+          "from": "initial:nod_complianceHoldInitial",
+          "id": "edg_complianceHoldStart",
+          "to": "clear"
+        },
+        {
+          "by": "Operations",
+          "from": "docs_in_review",
+          "id": "edg_docsInReviewClear",
+          "on": [
+            "ops.approve"
+          ],
+          "to": "clear"
+        },
+        {
+          "by": "Operations",
+          "from": "docs_in_review",
+          "id": "edg_docsInReviewRejected",
+          "intent": "failure",
+          "on": [
+            "ops.reject"
+          ],
+          "to": "rejected"
+        },
+        {
+          "by": "Operations",
+          "from": "in_review",
+          "id": "edg_inReviewClear",
+          "on": [
+            "ops.approve"
+          ],
+          "to": "clear"
+        },
+        {
+          "by": "Operations",
+          "from": "in_review",
+          "id": "edg_inReviewRejected",
+          "intent": "failure",
+          "on": [
+            "ops.reject"
+          ],
+          "to": "rejected"
+        },
+        {
+          "by": "Operations",
+          "from": "in_review",
+          "id": "edg_inReviewRfi",
+          "on": [
+            "ops.rfi"
+          ],
+          "to": "rfi"
+        },
+        {
+          "by": "Client",
+          "from": "rfi",
+          "id": "edg_rfiDocsInReview",
+          "on": [
+            "owner.upload"
+          ],
+          "to": "docs_in_review"
+        }
+      ]
+    },
+    {
+      "completeness": "complete",
+      "definition": "def_crossBorderSend",
+      "id": "cnv_crossBorderSend",
+      "name": "Cross-border send",
+      "owner": "def_crossBorderSend",
+      "stage": "target",
+      "starts": [
+        {
+          "id": "nod_crossBorderSendInitial",
+          "kind": "initial",
+          "to": "awaiting_funds"
+        }
+      ],
+      "states": [
+        {
+          "category": "waiting",
+          "id": "nod_awaitingFunds",
+          "name": "awaiting_funds",
+          "statuses": [
+            "pending"
+          ]
+        },
+        {
+          "final": true,
+          "id": "nod_cancelled",
+          "name": "cancelled",
+          "outcome": "stopped",
+          "statuses": [
+            "cancelled"
+          ]
+        },
+        {
+          "final": true,
+          "id": "nod_completed",
+          "name": "completed",
+          "outcome": "success",
+          "statuses": [
+            "completed"
+          ]
+        },
+        {
+          "category": "processing",
+          "id": "nod_converting",
+          "name": "converting",
+          "statuses": [
+            "processing"
+          ]
+        },
+        {
+          "final": true,
+          "id": "nod_expired",
+          "name": "expired",
+          "outcome": "stopped",
+          "statuses": [
+            "expired"
+          ]
+        },
+        {
+          "final": true,
+          "id": "nod_failed",
+          "name": "failed",
+          "outcome": "failure",
+          "statuses": [
+            "failed"
+          ]
+        },
+        {
+          "category": "hold",
+          "id": "nod_onHold",
+          "name": "on_hold",
+          "statuses": [
+            "processing"
+          ]
+        },
+        {
+          "final": true,
+          "id": "nod_partiallyCompleted",
+          "name": "partially_completed",
+          "outcome": "success",
+          "statuses": [
+            "partially_completed"
+          ]
+        },
+        {
+          "category": "processing",
+          "id": "nod_payingOut",
+          "name": "paying_out",
+          "statuses": [
+            "processing"
+          ]
+        }
+      ],
+      "subject": "transaction.status",
+      "transitions": [
+        {
+          "from": "awaiting_funds",
+          "id": "edg_awaitingFundsCancelled",
+          "on": [
+            "owner.cancel",
+            "ops.cancel"
+          ],
+          "to": "cancelled"
+        },
+        {
+          "from": "awaiting_funds",
+          "id": "edg_awaitingFundsConverting",
+          "intent": "happy",
+          "on": [
+            "payin.confirmed"
+          ],
+          "to": "converting"
+        },
+        {
+          "after": {
+            "at": "context.expiresAt",
+            "timer": "timer.expiry"
+          },
+          "from": "awaiting_funds",
+          "id": "edg_awaitingFundsExpired",
+          "to": "expired"
+        },
+        {
+          "actions": [
+            "Refresh quote"
+          ],
+          "after": {
+            "duration": "PT15M",
+            "timer": "quote_ttl"
+          },
+          "from": "awaiting_funds",
+          "id": "edg_awaitingFundsRefresh",
+          "internal": true,
+          "to": "awaiting_funds"
+        },
+        {
+          "from": "converting",
+          "id": "edg_convertingOnHold",
+          "intent": "failure",
+          "on": [
+            "leg.halted"
+          ],
+          "to": "on_hold"
+        },
+        {
+          "from": "converting",
+          "guard": {
+            "text": "leg = hubToDest"
+          },
+          "id": "edg_convertingPayingOut",
+          "intent": "happy",
+          "on": [
+            "leg.completed"
+          ],
+          "to": "paying_out"
+        },
+        {
+          "from": "initial:nod_crossBorderSendInitial",
+          "id": "edg_crossBorderSendStart",
+          "to": "awaiting_funds"
+        },
+        {
+          "by": "Operations",
+          "from": "on_hold",
+          "id": "edg_onHoldConverting",
+          "on": [
+            "ops.resume"
+          ],
+          "to": "converting"
+        },
+        {
+          "by": "Operations",
+          "from": "on_hold",
+          "id": "edg_onHoldFailed",
+          "on": [
+            "ops.fail"
+          ],
+          "to": "failed"
+        },
+        {
+          "from": "paying_out",
+          "guard": {
+            "text": "full amount"
+          },
+          "id": "edg_payingOutCompleted",
+          "intent": "happy",
+          "on": [
+            "payout.completed"
+          ],
+          "to": "completed"
+        },
+        {
+          "from": "paying_out",
+          "id": "edg_payingOutOnHold",
+          "intent": "failure",
+          "on": [
+            "leg.halted"
+          ],
+          "to": "on_hold"
+        },
+        {
+          "from": "paying_out",
+          "guard": {
+            "name": "Scaled payout"
+          },
+          "id": "edg_payingOutPartiallyCompleted",
+          "on": [
+            "payout.completed"
+          ],
+          "to": "partially_completed"
+        }
+      ]
+    },
+    {
+      "completeness": "complete",
+      "definition": "def_expiryClock",
+      "id": "cnv_expiryClock",
+      "name": "Expiry clock",
+      "owner": "def_expiryClock",
+      "stage": "target",
+      "starts": [
+        {
+          "id": "nod_expiryClockInitial",
+          "kind": "initial",
+          "to": "running"
+        }
+      ],
+      "states": [
+        {
+          "final": true,
+          "id": "nod_elapsed",
+          "name": "elapsed",
+          "onEntry": [
+            "emit expiry.elapsed"
+          ],
+          "outcome": "stopped"
+        },
+        {
+          "category": "hold",
+          "id": "nod_paused",
+          "name": "paused"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_running",
+          "name": "running"
+        },
+        {
+          "final": true,
+          "id": "nod_stopped",
+          "name": "stopped",
+          "outcome": "success"
+        }
+      ],
+      "transitions": [
+        {
+          "from": "initial:nod_expiryClockInitial",
+          "id": "edg_expiryClockStart",
+          "to": "running"
+        },
+        {
+          "actions": [
+            "Extend expiry"
+          ],
+          "from": "paused",
+          "id": "edg_pausedRunning",
+          "on": [
+            "verify.ended"
+          ],
+          "to": "running"
+        },
+        {
+          "from": "paused",
+          "id": "edg_pausedStopped",
+          "on": [
+            "payin.detected"
+          ],
+          "to": "stopped"
+        },
+        {
+          "after": {
+            "at": "context.expiresAt",
+            "timer": "timer.expiry"
+          },
+          "from": "running",
+          "id": "edg_runningElapsed",
+          "to": "elapsed"
+        },
+        {
+          "from": "running",
+          "id": "edg_runningPaused",
+          "on": [
+            "verify.started"
+          ],
+          "to": "paused"
+        },
+        {
+          "from": "running",
+          "id": "edg_runningStopped",
+          "on": [
+            "payin.detected",
+            "parent.final"
+          ],
+          "to": "stopped"
+        }
+      ]
+    },
+    {
+      "completeness": "partial",
+      "id": "cnv_lifecycle",
+      "name": "Lifecycle engine",
+      "owner": "nod_lifecycleEngine",
+      "regions": [
+        {
+          "id": "rgn_compliance",
+          "name": "Compliance hold"
+        },
+        {
+          "id": "rgn_expiry",
+          "name": "Expiry clock"
+        },
+        {
+          "id": "rgn_phase",
+          "name": "Phase"
+        }
+      ],
+      "stage": "target",
+      "starts": [
+        {
+          "id": "nod_complianceInitial",
+          "kind": "initial",
+          "region": "Compliance hold",
+          "to": "compliance_hold"
+        },
+        {
+          "id": "nod_expiryInitial",
+          "kind": "initial",
+          "region": "Expiry clock",
+          "to": "expiry_clock"
+        },
+        {
+          "id": "nod_phaseInitial",
+          "kind": "initial",
+          "region": "Phase",
+          "to": "send_cross_border"
+        }
+      ],
+      "states": [
+        {
+          "id": "nod_complianceHold",
+          "inner": {
+            "definition": "def_complianceHold"
+          },
+          "name": "compliance_hold",
+          "region": "Compliance hold"
+        },
+        {
+          "id": "nod_expiryClock",
+          "inner": {
+            "definition": "def_expiryClock"
+          },
+          "name": "expiry_clock",
+          "region": "Expiry clock"
+        },
+        {
+          "id": "nod_sendCrossBorder",
+          "inner": {
+            "definition": "def_crossBorderSend"
+          },
+          "name": "send_cross_border",
+          "region": "Phase"
+        }
+      ],
+      "transitions": [
+        {
+          "from": "initial:nod_complianceInitial",
+          "id": "edg_complianceStart",
+          "region": "Compliance hold",
+          "to": "compliance_hold"
+        },
+        {
+          "from": "initial:nod_expiryInitial",
+          "id": "edg_expiryStart",
+          "region": "Expiry clock",
+          "to": "expiry_clock"
+        },
+        {
+          "from": "initial:nod_phaseInitial",
+          "id": "edg_phaseStart",
+          "region": "Phase",
+          "to": "send_cross_border"
+        }
+      ]
+    }
+  ],
+  "source": {
+    "content": "898a58b232dc3b76ee8dae0fe6e274fd1fb1fa9fdf01c40e08b2403b132d55a3",
+    "format": "1.1",
+    "name": "Payments",
+    "project": "prj_payments"
+  },
+  "stale": [],
+  "vectors": [
+    {
+      "id": "scn_paysInTime",
+      "kind": "machine",
+      "level": "cnv_lifecycle",
+      "name": "Pays in time",
+      "start": {
+        "at": "2026-01-05T09:00:00Z",
+        "context": {
+          "nod_expiryClock": {
+            "expiresAt": "2026-01-15T09:00:00Z"
+          }
+        },
+        "expect": {
+          "active": [
+            "compliance_hold/clear",
+            "expiry_clock/running",
+            "send_cross_border/awaiting_funds"
+          ]
+        },
+        "fired": [
+          "edg_complianceStart",
+          "edg_complianceHoldStart",
+          "edg_expiryStart",
+          "edg_expiryClockStart",
+          "edg_phaseStart",
+          "edg_crossBorderSendStart"
+        ]
+      },
+      "steps": [
+        {
+          "do": {
+            "event": "payin.detected"
+          },
+          "expect": {
+            "active": [
+              "compliance_hold/clear",
+              "expiry_clock/stopped",
+              "send_cross_border/awaiting_funds"
+            ]
+          },
+          "fired": [
+            "edg_runningStopped"
+          ]
+        },
+        {
+          "do": {
+            "event": "payin.confirmed"
+          },
+          "expect": {
+            "active": [
+              "compliance_hold/clear",
+              "expiry_clock/stopped",
+              "send_cross_border/converting"
+            ]
+          },
+          "fired": [
+            "edg_awaitingFundsConverting"
+          ]
+        },
+        {
+          "do": {
+            "event": "leg.completed"
+          },
+          "expect": {
+            "active": [
+              "compliance_hold/clear",
+              "expiry_clock/stopped",
+              "send_cross_border/paying_out"
+            ]
+          },
+          "fired": [
+            "edg_convertingPayingOut"
+          ],
+          "given": [
+            {
+              "at": "send_cross_border/converting",
+              "kind": "transition",
+              "value": "edg_convertingPayingOut"
+            }
+          ]
+        },
+        {
+          "do": {
+            "event": "payout.completed"
+          },
+          "expect": {
+            "active": [
+              "compliance_hold/clear",
+              "expiry_clock/stopped",
+              "send_cross_border/completed"
+            ]
+          },
+          "fired": [
+            "edg_payingOutCompleted"
+          ],
+          "given": [
+            {
+              "at": "send_cross_border/paying_out",
+              "kind": "transition",
+              "value": "edg_payingOutCompleted"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scn_verificationPausesTheClock",
+      "kind": "machine",
+      "level": "cnv_lifecycle",
+      "name": "Verification pauses the clock",
+      "start": {
+        "at": "2026-01-05T09:00:00Z",
+        "context": {
+          "nod_expiryClock": {
+            "expiresAt": "2026-01-15T09:00:00Z"
+          }
+        },
+        "expect": {
+          "active": [
+            "compliance_hold/clear",
+            "expiry_clock/running",
+            "send_cross_border/awaiting_funds"
+          ]
+        },
+        "fired": [
+          "edg_complianceStart",
+          "edg_complianceHoldStart",
+          "edg_expiryStart",
+          "edg_expiryClockStart",
+          "edg_phaseStart",
+          "edg_crossBorderSendStart"
+        ]
+      },
+      "steps": [
+        {
+          "do": {
+            "event": "verify.started"
+          },
+          "expect": {
+            "active": [
+              "compliance_hold/clear",
+              "expiry_clock/paused",
+              "send_cross_border/awaiting_funds"
+            ]
+          },
+          "fired": [
+            "edg_runningPaused"
+          ]
+        },
+        {
+          "do": {
+            "until": "2026-01-07T09:00:00Z",
+            "wait": "P2D"
+          },
+          "expect": {
+            "active": [
+              "compliance_hold/clear",
+              "expiry_clock/paused",
+              "send_cross_border/awaiting_funds"
+            ]
+          },
+          "fired": [
+            "edg_awaitingFundsRefresh"
+          ]
+        },
+        {
+          "do": {
+            "event": "verify.ended"
+          },
+          "expect": {
+            "active": [
+              "compliance_hold/clear",
+              "expiry_clock/running",
+              "send_cross_border/awaiting_funds"
+            ]
+          },
+          "fired": [
+            "edg_pausedRunning"
+          ]
+        }
+      ]
+    }
+  ]
+}

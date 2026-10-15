@@ -1,0 +1,63 @@
+{
+  "import": {
+    "invalidTitle": "Este archivo no se puede abrir",
+    "invalidDescription": "{{file}} no es un documento de Statewright, o tiene errores:",
+    "moreErrors": "y {{count}} más",
+    "replacedDamaged": "La copia de {{name}} en este navegador no se pudo leer; este archivo la reemplazó.",
+    "changedTitle": "Este archivo se cambió fuera de Statewright",
+    "changedDescription": "{{file}} se editó después de que Statewright lo guardara por última vez. Revisa qué cambió e impórtalo para que vuelva a ser un documento de Statewright.",
+    "unsignedTitle": "Este archivo no está firmado",
+    "unsignedDescription": "{{file}} no tiene la firma de Statewright, así que no se puede comprobar de dónde viene. Revísalo e impórtalo para firmarlo.",
+    "existsTitle": "Ya tienes este proyecto",
+    "existsDescription": "Este navegador tiene otra versión de {{name}}. Elige si el archivo la reemplaza o entra como copia.",
+    "sections": {
+      "content": "Contenido",
+      "layout": "Diseño",
+      "annotations": "Anotaciones"
+    },
+    "state": {
+      "ok": "Sin cambios",
+      "changed": "Cambiado",
+      "missing": "Sin firma"
+    },
+    "compared": "Comparado con tu copia del {{date}}",
+    "layoutChanges": "Posiciones cambiadas: {{count}}",
+    "moreChanges": "y {{count}} más",
+    "in": "en {{name}}",
+    "types": {
+      "project": "Proyecto",
+      "definition": "Definición",
+      "canvas": "Nivel",
+      "region": "Región",
+      "node": "Caja",
+      "edge": "Flecha",
+      "finding": "Hallazgo",
+      "note": "Nota",
+      "lane": "Carril",
+      "catalog": {
+        "types": "Tipo",
+        "events": "Evento",
+        "actions": "Acción",
+        "guards": "Guard",
+        "endpoints": "Endpoint",
+        "webhooks": "Webhook",
+        "timers": "Temporizador",
+        "statuses": "Estado",
+        "parties": "Parte"
+      }
+    },
+    "cancel": "Cancelar",
+    "asCopy": "Importar como copia",
+    "importAndSign": "Importar y firmar",
+    "close": "Cerrar",
+    "migrated": "Actualizado del formato {{from}} al {{to}}.",
+    "unreadable": "No se pudo leer {{file}}."
+  },
+  "save": {
+    "saved": "Guardado en {{file}}",
+    "copied": "Copia guardada en {{file}}",
+    "downloaded": "{{file}} descargado",
+    "permission": "No se pudo escribir en el archivo, así que se descargó: {{file}}",
+    "failed": "No se pudo guardar el archivo."
+  }
+}

@@ -1,0 +1,738 @@
+{
+  "statewright": "1.1",
+  "generator": {
+    "name": "statewright",
+    "version": "0.1.1",
+    "channel": "api"
+  },
+  "signature": {
+    "algorithm": "sha256",
+    "content": "b201358730d4c8d1e3a61f6e4c0abbe597bac03cca45c4c84ef94effa7c877f5",
+    "annotations": "37451c33880e38f087617a714808a49b65e7f72910ccde56960a1211e74e3053",
+    "layout": "5aa622e4f73a7f26d254b71250e1825b4275da0ce503d675d4a753287ff5e186",
+    "signedAt": "2026-10-14T08:31:23Z"
+  },
+  "project": {
+    "id": "prj_bookings",
+    "name": "Bookings"
+  },
+  "root": "cnv_bookings",
+  "catalog": {
+    "types": {},
+    "events": {
+      "evt_bookingConfirmed": {
+        "name": "booking.confirmed"
+      },
+      "evt_bookingDeclined": {
+        "name": "booking.declined"
+      },
+      "evt_guestArrived": {
+        "name": "guest.arrived"
+      }
+    },
+    "actions": {},
+    "guards": {},
+    "endpoints": {
+      "ept_answer": {
+        "name": "Answer a booking",
+        "method": "POST",
+        "path": "/bookings/{id}/answer"
+      },
+      "ept_book": {
+        "name": "Book a table",
+        "method": "POST",
+        "path": "/bookings"
+      },
+      "ept_sendSms": {
+        "name": "Send an SMS",
+        "method": "POST",
+        "path": "/messages"
+      }
+    },
+    "webhooks": {},
+    "timers": {
+      "tmr_grace": {
+        "name": "grace period",
+        "duration": "PT30M"
+      }
+    },
+    "statuses": {},
+    "parties": {
+      "pty_guest": {
+        "kind": "human",
+        "name": "Guest"
+      },
+      "pty_sms": {
+        "kind": "external",
+        "name": "SMS provider"
+      },
+      "pty_staff": {
+        "kind": "operator",
+        "name": "Restaurant staff"
+      }
+    }
+  },
+  "definitions": {},
+  "canvases": {
+    "cnv_booking": {
+      "kind": "machine",
+      "name": "Booking lifecycle",
+      "stage": "target",
+      "subject": "booking.status",
+      "transitions": "complete",
+      "nodes": {
+        "nod_book": {
+          "kind": "entry",
+          "name": "POST /bookings",
+          "via": "ept_book",
+          "by": "pty_guest"
+        },
+        "nod_confirmed": {
+          "kind": "state",
+          "name": "confirmed"
+        },
+        "nod_declined": {
+          "kind": "state",
+          "name": "declined",
+          "outcome": "failure",
+          "terminal": true
+        },
+        "nod_noShow": {
+          "kind": "state",
+          "name": "no-show",
+          "outcome": "stopped",
+          "terminal": true
+        },
+        "nod_requested": {
+          "kind": "state",
+          "name": "requested",
+          "category": "waiting"
+        },
+        "nod_seated": {
+          "kind": "state",
+          "name": "seated",
+          "outcome": "success",
+          "terminal": true
+        }
+      },
+      "edges": {
+        "edg_confirmedNoShow": {
+          "from": "nod_confirmed",
+          "to": "nod_noShow",
+          "after": "tmr_grace",
+          "intent": "failure"
+        },
+        "edg_confirmedSeated": {
+          "from": "nod_confirmed",
+          "to": "nod_seated",
+          "on": [
+            "evt_guestArrived"
+          ],
+          "intent": "happy"
+        },
+        "edg_postBookingsRequested": {
+          "from": "nod_book",
+          "to": "nod_requested"
+        },
+        "edg_requestedConfirmed": {
+          "from": "nod_requested",
+          "to": "nod_confirmed",
+          "on": [
+            "evt_bookingConfirmed"
+          ],
+          "intent": "happy"
+        },
+        "edg_requestedDeclined": {
+          "from": "nod_requested",
+          "to": "nod_declined",
+          "on": [
+            "evt_bookingDeclined"
+          ],
+          "intent": "failure"
+        }
+      }
+    },
+    "cnv_bookings": {
+      "kind": "system",
+      "name": "Bookings",
+      "nodes": {
+        "nod_bookingApi": {
+          "kind": "service",
+          "name": "Booking API",
+          "inner": {
+            "canvas": "cnv_booking"
+          }
+        },
+        "nod_guest": {
+          "kind": "actor",
+          "name": "Guest",
+          "party": "pty_guest"
+        },
+        "nod_notifier": {
+          "kind": "service",
+          "name": "Notifier",
+          "inner": {
+            "canvas": "cnv_textGuest"
+          }
+        },
+        "nod_sms": {
+          "kind": "external",
+          "name": "SMS provider",
+          "party": "pty_sms"
+        },
+        "nod_staff": {
+          "kind": "actor",
+          "name": "Restaurant staff",
+          "party": "pty_staff"
+        }
+      },
+      "edges": {
+        "edg_bookingApiNotifier": {
+          "from": "nod_bookingApi",
+          "to": "nod_notifier",
+          "kind": "event",
+          "events": [
+            "evt_bookingConfirmed",
+            "evt_bookingDeclined"
+          ]
+        },
+        "edg_guestBookingApi": {
+          "from": "nod_guest",
+          "to": "nod_bookingApi",
+          "kind": "command",
+          "endpoint": "ept_book"
+        },
+        "edg_notifierSmsProvider": {
+          "from": "nod_notifier",
+          "to": "nod_sms",
+          "kind": "command",
+          "endpoint": "ept_sendSms"
+        },
+        "edg_restaurantStaffBookingApi": {
+          "from": "nod_staff",
+          "to": "nod_bookingApi",
+          "kind": "command",
+          "endpoint": "ept_answer"
+        }
+      }
+    },
+    "cnv_textGuest": {
+      "kind": "flow",
+      "name": "Text the guest",
+      "nodes": {
+        "nod_sent": {
+          "kind": "end",
+          "name": "guest told"
+        },
+        "nod_sorry": {
+          "kind": "call",
+          "name": "send an apology",
+          "endpoint": "ept_sendSms"
+        },
+        "nod_start": {
+          "kind": "start"
+        },
+        "nod_welcome": {
+          "kind": "call",
+          "name": "send the confirmation",
+          "endpoint": "ept_sendSms"
+        },
+        "nod_which": {
+          "kind": "if",
+          "name": "confirmed?",
+          "condition": {
+            "expr": {
+              "==": [
+                {
+                  "var": "vars.input.event"
+                },
+                "booking.confirmed"
+              ]
+            },
+            "text": "the restaurant confirmed the booking"
+          }
+        }
+      },
+      "edges": {
+        "edg_confirmedSendAnApology": {
+          "from": "nod_which",
+          "to": "nod_sorry",
+          "kind": "false"
+        },
+        "edg_confirmedSendTheConfirmation": {
+          "from": "nod_which",
+          "to": "nod_welcome",
+          "kind": "true"
+        },
+        "edg_sendAnApologyGuestTold": {
+          "from": "nod_sorry",
+          "to": "nod_sent"
+        },
+        "edg_sendTheConfirmationGuestTold": {
+          "from": "nod_welcome",
+          "to": "nod_sent"
+        },
+        "edg_startConfirmed": {
+          "from": "nod_start",
+          "to": "nod_which"
+        }
+      }
+    }
+  },
+  "annotations": {
+    "scenarios": {
+      "scn_aBookingIsDeclined": {
+        "name": "A booking is declined",
+        "description": "The restaurant has no table: it declines the booking.",
+        "canvas": "cnv_booking",
+        "start": {
+          "at": "2026-01-09T19:00:00Z",
+          "entry": "nod_book"
+        },
+        "steps": [
+          {
+            "do": {
+              "event": "evt_bookingDeclined"
+            },
+            "reached": {
+              "active": [
+                "nod_declined"
+              ],
+              "ended": "done"
+            }
+          }
+        ]
+      },
+      "scn_aConfirmedGuestIsSeated": {
+        "name": "A confirmed guest is seated",
+        "description": "The restaurant confirms the booking, and the guest arrives.",
+        "canvas": "cnv_booking",
+        "start": {
+          "at": "2026-01-09T19:00:00Z",
+          "entry": "nod_book"
+        },
+        "steps": [
+          {
+            "do": {
+              "event": "evt_bookingConfirmed"
+            },
+            "reached": {
+              "active": [
+                "nod_confirmed"
+              ]
+            }
+          },
+          {
+            "do": {
+              "event": "evt_guestArrived"
+            },
+            "reached": {
+              "active": [
+                "nod_seated"
+              ],
+              "ended": "done"
+            }
+          }
+        ]
+      },
+      "scn_aGuestDoesNotCome": {
+        "name": "A guest does not come",
+        "description": "The booking is confirmed, and the guest has not come when the grace period ends.",
+        "canvas": "cnv_booking",
+        "start": {
+          "at": "2026-01-09T19:00:00Z",
+          "entry": "nod_book"
+        },
+        "steps": [
+          {
+            "do": {
+              "event": "evt_bookingConfirmed"
+            },
+            "reached": {
+              "active": [
+                "nod_confirmed"
+              ]
+            }
+          },
+          {
+            "do": {
+              "wait": "next"
+            },
+            "reached": {
+              "active": [
+                "nod_noShow"
+              ],
+              "ended": "done"
+            }
+          }
+        ]
+      },
+      "scn_theGuestIsToldItIsConfirmed": {
+        "name": "The guest is told it is confirmed",
+        "description": "The Notifier hears booking.confirmed and sends the confirmation.",
+        "canvas": "cnv_textGuest",
+        "start": {
+          "at": "2026-01-09T19:00:00Z",
+          "input": {
+            "event": "booking.confirmed"
+          }
+        },
+        "steps": []
+      },
+      "scn_theGuestIsToldItIsDeclined": {
+        "name": "The guest is told it is declined",
+        "description": "The Notifier hears booking.declined and sends an apology.",
+        "canvas": "cnv_textGuest",
+        "start": {
+          "at": "2026-01-09T19:00:00Z",
+          "input": {
+            "event": "booking.declined"
+          }
+        },
+        "steps": []
+      }
+    }
+  },
+  "layout": {
+    "canvases": {
+      "cnv_booking": {
+        "nodes": {
+          "nod_book": {
+            "x": 0,
+            "y": 16
+          },
+          "nod_confirmed": {
+            "x": 606,
+            "y": 8
+          },
+          "nod_declined": {
+            "x": 606,
+            "y": 96
+          },
+          "nod_noShow": {
+            "x": 976,
+            "y": 0
+          },
+          "nod_requested": {
+            "x": 212,
+            "y": 16
+          },
+          "nod_seated": {
+            "x": 976,
+            "y": 88
+          }
+        },
+        "edges": {
+          "edg_confirmedNoShow": {
+            "points": [
+              [
+                746,
+                24
+              ],
+              [
+                976,
+                24
+              ]
+            ],
+            "labelAt": [
+              861,
+              12
+            ]
+          },
+          "edg_confirmedSeated": {
+            "points": [
+              [
+                746,
+                40
+              ],
+              [
+                766,
+                40
+              ],
+              [
+                766,
+                112
+              ],
+              [
+                976,
+                112
+              ]
+            ],
+            "labelAt": [
+              861,
+              125
+            ]
+          },
+          "edg_postBookingsRequested": {
+            "points": [
+              [
+                140,
+                40
+              ],
+              [
+                212,
+                40
+              ]
+            ]
+          },
+          "edg_requestedConfirmed": {
+            "points": [
+              [
+                352,
+                32
+              ],
+              [
+                606,
+                32
+              ]
+            ],
+            "labelAt": [
+              479,
+              20
+            ]
+          },
+          "edg_requestedDeclined": {
+            "points": [
+              [
+                352,
+                48
+              ],
+              [
+                372,
+                48
+              ],
+              [
+                372,
+                120
+              ],
+              [
+                606,
+                120
+              ]
+            ],
+            "labelAt": [
+              479,
+              133
+            ]
+          }
+        }
+      },
+      "cnv_bookings": {
+        "nodes": {
+          "nod_bookingApi": {
+            "x": 0,
+            "y": 12
+          },
+          "nod_guest": {
+            "x": 508,
+            "y": 88
+          },
+          "nod_notifier": {
+            "x": 508,
+            "y": 0
+          },
+          "nod_sms": {
+            "x": 884,
+            "y": 0
+          },
+          "nod_staff": {
+            "x": 508,
+            "y": 176
+          }
+        },
+        "edges": {
+          "edg_bookingApiNotifier": {
+            "points": [
+              [
+                140,
+                24
+              ],
+              [
+                508,
+                24
+              ]
+            ],
+            "labelAt": [
+              324,
+              37
+            ]
+          },
+          "edg_guestBookingApi": {
+            "points": [
+              [
+                508,
+                112
+              ],
+              [
+                170,
+                112
+              ],
+              [
+                170,
+                36
+              ],
+              [
+                140,
+                36
+              ]
+            ],
+            "labelAt": [
+              324,
+              125
+            ]
+          },
+          "edg_notifierSmsProvider": {
+            "points": [
+              [
+                648,
+                24
+              ],
+              [
+                884,
+                24
+              ]
+            ],
+            "labelAt": [
+              766,
+              37
+            ]
+          },
+          "edg_restaurantStaffBookingApi": {
+            "points": [
+              [
+                508,
+                200
+              ],
+              [
+                160,
+                200
+              ],
+              [
+                160,
+                48
+              ],
+              [
+                140,
+                48
+              ]
+            ],
+            "labelAt": [
+              324,
+              213
+            ]
+          }
+        }
+      },
+      "cnv_textGuest": {
+        "nodes": {
+          "nod_sent": {
+            "x": 562,
+            "y": 18
+          },
+          "nod_sorry": {
+            "x": 342,
+            "y": 0
+          },
+          "nod_start": {
+            "x": 0,
+            "y": 26
+          },
+          "nod_welcome": {
+            "x": 334,
+            "y": 88
+          },
+          "nod_which": {
+            "x": 84,
+            "y": 7
+          }
+        },
+        "edges": {
+          "edg_confirmedSendAnApology": {
+            "points": [
+              [
+                152,
+                24
+              ],
+              [
+                342,
+                24
+              ]
+            ],
+            "labelAt": [
+              243,
+              12
+            ]
+          },
+          "edg_confirmedSendTheConfirmation": {
+            "points": [
+              [
+                152,
+                41
+              ],
+              [
+                172,
+                41
+              ],
+              [
+                172,
+                112
+              ],
+              [
+                334,
+                112
+              ]
+            ],
+            "labelAt": [
+              243,
+              125
+            ]
+          },
+          "edg_sendAnApologyGuestTold": {
+            "points": [
+              [
+                482,
+                24
+              ],
+              [
+                562,
+                24
+              ]
+            ]
+          },
+          "edg_sendTheConfirmationGuestTold": {
+            "points": [
+              [
+                490,
+                112
+              ],
+              [
+                510,
+                112
+              ],
+              [
+                510,
+                30
+              ],
+              [
+                562,
+                30
+              ]
+            ]
+          },
+          "edg_startConfirmed": {
+            "points": [
+              [
+                12,
+                32
+              ],
+              [
+                84,
+                32
+              ]
+            ]
+          }
+        }
+      }
+    }
+  }
+}

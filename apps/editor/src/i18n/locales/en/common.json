@@ -1,0 +1,52 @@
+{
+  "theme": {
+    "label": "Theme",
+    "system": "Match the system",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "pt-BR": "Português (Brasil)",
+    "es": "Español"
+  },
+  "actions": {
+    "reload": "Reload",
+    "goHome": "Back to projects",
+    "dismiss": "Dismiss",
+    "close": "Close",
+    "cancel": "Cancel"
+  },
+  "notFound": {
+    "title": "Nothing here",
+    "description": "This address doesn't match a project or a page."
+  },
+  "errorPage": {
+    "title": "Something went wrong",
+    "description": "The app hit an unexpected error. Reload to continue."
+  },
+  "guide": {
+    "title": "Statewright guide",
+    "sections": "Guide sections",
+    "raw": "Raw Markdown",
+    "copyAll": "Copy for an AI agent",
+    "copied": "Copied",
+    "copyCode": "Copy",
+    "inEnglish": "The guide is written in English.",
+    "newTab": "opens in a new tab",
+    "fullSize": "Open the figure at full size",
+    "link": "Guide"
+  },
+  "support": {
+    "badge": "Support",
+    "title": "Support Statewright",
+    "lede": "Statewright is free and open source (MIT). If it helps you, a donation keeps it going.",
+    "wallets": "Wallets",
+    "copy": "Copy",
+    "copyAddress": "Copy the {{network}} address",
+    "copied": "Copied",
+    "note": "Send only on these networks.",
+    "source": "Source on GitHub"
+  }
+}

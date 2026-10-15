@@ -1,0 +1,11 @@
+node_modules/
+coverage/
+*.log
+*.tgz
+.DS_Store
+dist/
+dist-hosted/
+test-results/
+playwright-report/
+.worktrees/
+docs/superpowers/

@@ -1,0 +1,63 @@
+{
+  "import": {
+    "invalidTitle": "Este arquivo não pode ser aberto",
+    "invalidDescription": "{{file}} não é um documento Statewright, ou tem erros:",
+    "moreErrors": "e mais {{count}}",
+    "replacedDamaged": "A cópia de {{name}} neste navegador não pôde ser lida; este arquivo a substituiu.",
+    "changedTitle": "Este arquivo foi alterado fora do Statewright",
+    "changedDescription": "{{file}} foi editado depois que o Statewright o salvou pela última vez. Revise o que mudou e importe para torná-lo um documento Statewright de novo.",
+    "unsignedTitle": "Este arquivo não está assinado",
+    "unsignedDescription": "{{file}} não tem a assinatura do Statewright, então não dá para conferir de onde veio. Revise e importe para assiná-lo.",
+    "existsTitle": "Você já tem este projeto",
+    "existsDescription": "Este navegador tem outra versão de {{name}}. Escolha se o arquivo a substitui ou entra como cópia.",
+    "sections": {
+      "content": "Conteúdo",
+      "layout": "Layout",
+      "annotations": "Anotações"
+    },
+    "state": {
+      "ok": "Sem mudanças",
+      "changed": "Alterado",
+      "missing": "Sem assinatura"
+    },
+    "compared": "Comparado com a sua cópia de {{date}}",
+    "layoutChanges": "Posições alteradas: {{count}}",
+    "moreChanges": "e mais {{count}}",
+    "in": "em {{name}}",
+    "types": {
+      "project": "Projeto",
+      "definition": "Definição",
+      "canvas": "Nível",
+      "region": "Região",
+      "node": "Caixa",
+      "edge": "Seta",
+      "finding": "Achado",
+      "note": "Nota",
+      "lane": "Raia",
+      "catalog": {
+        "types": "Tipo",
+        "events": "Evento",
+        "actions": "Ação",
+        "guards": "Guard",
+        "endpoints": "Endpoint",
+        "webhooks": "Webhook",
+        "timers": "Timer",
+        "statuses": "Status",
+        "parties": "Parte"
+      }
+    },
+    "cancel": "Cancelar",
+    "asCopy": "Importar como cópia",
+    "importAndSign": "Importar e assinar",
+    "close": "Fechar",
+    "migrated": "Atualizado do formato {{from}} para o {{to}}.",
+    "unreadable": "Não foi possível ler {{file}}."
+  },
+  "save": {
+    "saved": "Salvo em {{file}}",
+    "copied": "Cópia salva em {{file}}",
+    "downloaded": "{{file}} baixado",
+    "permission": "Não foi possível gravar no arquivo, então ele foi baixado: {{file}}",
+    "failed": "Não foi possível salvar o arquivo."
+  }
+}

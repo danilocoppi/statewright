@@ -1,0 +1,55 @@
+{
+  "change": {
+    "by": "IA · {{agent}}",
+    "anAgent": "um agente",
+    "undo": "Desfazer",
+    "show": "Mostrar",
+    "change": "{{label}} (IA)",
+    "undoChange": "Desfazer {{label}} (IA)",
+    "redoChange": "Refazer {{label}} (IA)",
+    "undoHeld": "Pare a simulação para desfazer esta alteração.",
+    "undoReadOnly": "Esta aba só lê o projeto: desfaça a alteração na aba que o edita."
+  },
+  "point": {
+    "by": "IA"
+  },
+  "pairing": {
+    "menu": "Conectar uma IA…",
+    "title": "Conectar uma IA",
+    "description": "Passe este código ao seu agente de IA. Ele se conecta a esta aba pelo statewright mcp, rodando no seu computador.",
+    "code": "Código de pareamento",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "copyText": "Conecte-se ao meu Statewright Editor: o código é {{code}}",
+    "valid": "Vale por 5 minutos.",
+    "waiting": "Esperando o agente…",
+    "connected": "Conectado a {{agent}}",
+    "unreachable": "Nada responde em {{address}}.",
+    "unreachableHint": "Configure o statewright mcp no seu agente (npx statewright mcp) e tente de novo.",
+    "refused": "O servidor em {{address}} não aceita este Editor.",
+    "refusedHint": "Inicie-o com --origin {{origin}} e tente de novo.",
+    "invalid": "{{address}} não está neste computador.",
+    "invalidHint": "Digite 127.0.0.1 ou localhost com a porta que o servidor informa.",
+    "expired": "Este código expirou antes que um agente o usasse.",
+    "address": "Endereço do servidor",
+    "allows": "O agente lê e altera este projeto. As alterações dele aparecem no histórico como IA, e você pode desfazê-las.",
+    "network": "O navegador pode pedir para esta página acessar sua rede local: permita, para que o Editor alcance o servidor no seu computador.",
+    "tryAgain": "Tentar de novo",
+    "newCode": "Novo código",
+    "done": "Concluir",
+    "disconnect": "Desconectar",
+    "pairedWith": "Conectado a {{agent}}",
+    "handover": {
+      "title": "Passar para outra aba?",
+      "description": "{{agent}} pede para trabalhar em outra aba do Statewright. Esta aba deixará de receber as chamadas dele.",
+      "keep": "Manter aqui",
+      "give": "Passar"
+    },
+    "ended": {
+      "agent": "{{agent}} se desconectou.",
+      "replaced": "{{agent}} agora trabalha em outra aba.",
+      "server": "O servidor parou: {{agent}} está desconectado.",
+      "lost": "A conexão com {{agent}} caiu."
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "statewright-monorepo",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "test": "npm test -w statewright && npm test -w @statewright/editor",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "examples:normalize": "node scripts/normalize-examples.js",
+    "readme:build": "node scripts/build-readme.js",
+    "examples:render": "node scripts/render-examples.js",
+    "editor:dev": "npm run dev -w @statewright/editor",
+    "editor:build": "npm run build -w @statewright/editor",
+    "e2e": "npm run e2e -w @statewright/editor"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9"
+  }
+}

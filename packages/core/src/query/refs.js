@@ -1,0 +1,299 @@
+import { CATALOG_COLLECTIONS, PRIMITIVE_TYPES } from "../constants.js";
+
+/**
+ * @typedef {object} Ref A reference from one place in the document to an ID.
+ * @property {"content"|"annotations"|"layout"} section
+ * @property {string|null} source ID of the element holding the reference (null for `root`, `focus` and layout keys).
+ * @property {string} field Dotted field name, e.g. "on", "inner.canvas", "guard.guard", "onEntry.action".
+ * @property {Array<string|number>} path Location of the referencing value (for layout keys: the entry).
+ * @property {string} target The referenced ID.
+ * @property {string[]|null} expect Allowed ID prefixes (null = any ID).
+ * @property {"unset"|"splice"|"element"} onRemove What a cascading removal of `target` does:
+ *   delete the key at `removePath`, splice the array item at `removePath`, or remove the `source` element.
+ * @property {Array<string|number>} removePath
+ */
+
+const PRIMITIVES = new Set(PRIMITIVE_TYPES);
+
+/**
+ * Collects references element by element, so callers can inspect one element (commands) or a whole
+ * document (collectRefs). Every method takes the element's ID and value; paths are absolute document paths.
+ */
+export function createRefCollector() {
+  /** @type {Ref[]} */
+  const refs = [];
+  const push = (section, source, field, path, target, expect, onRemove, removePath = path) => {
+    if (typeof target === "string") refs.push({ section, source, field, path, target, expect, onRemove, removePath });
+  };
+  const one = (source, base, field, value, expect, onRemove = "unset") =>
+    push("content", source, field, [...base, ...field.split(".")], value, expect, onRemove);
+  const many = (source, base, field, list, expect) =>
+    (Array.isArray(list) ? list : []).forEach((value, index) =>
+      push("content", source, field, [...base, field, index], value, expect, "splice")
+    );
+  const typeRef = (source, base, field, value) => {
+    if (typeof value === "string" && !PRIMITIVES.has(value)) one(source, base, field, value, ["typ"]);
+  };
+  // `inner` holds exactly one reference, so losing it removes the whole `inner` (an empty one is invalid).
+  const inner = (source, base, value) => {
+    if (!value) return;
+    const removePath = [...base, "inner"];
+    push("content", source, "inner.canvas", [...removePath, "canvas"], value.canvas, ["cnv"], "unset", removePath);
+    push(
+      "content",
+      source,
+      "inner.definition",
+      [...removePath, "definition"],
+      value.definition,
+      ["def"],
+      "unset",
+      removePath
+    );
+  };
+  // A condition needs guard, expr or text: when the guard is all it says, the whole condition goes with it.
+  const condition = (source, base, field, value) => {
+    if (!value) return;
+    const path = [...base, field, "guard"];
+    const guardOnly = value.expr === undefined && value.text === undefined;
+    push("content", source, `${field}.guard`, path, value.guard, ["grd"], "unset", guardOnly ? [...base, field] : path);
+  };
+  const effects = (source, base, field, list) =>
+    (Array.isArray(list) ? list : []).forEach((effect, index) => {
+      const path = [...base, field, index];
+      push("content", source, `${field}.action`, [...path, "action"], effect.action, ["act"], "splice", path);
+      push("content", source, `${field}.emit`, [...path, "emit"], effect.emit, ["evt"], "splice", path);
+    });
+
+  return {
+    refs,
+
+    root(id) {
+      push("content", null, "root", ["root"], id, ["cnv"], "element");
+    },
+
+    /** Catalog item (spec §10). */
+    catalogItem(collection, id, item) {
+      const base = ["catalog", collection, id];
+      switch (collection) {
+        case "types":
+          (Array.isArray(item.fields) ? item.fields : []).forEach((field, index) => {
+            if (typeof field.type === "string" && !PRIMITIVES.has(field.type)) {
+              const fieldPath = [...base, "fields", index];
+              push("content", id, "fields.type", [...fieldPath, "type"], field.type, ["typ"], "splice", fieldPath);
+            }
+          });
+          typeRef(id, base, "of", item.of);
+          break;
+        case "events":
+          typeRef(id, base, "payload", item.payload);
+          if (item.source !== "internal") one(id, base, "source", item.source, ["pty"]);
+          break;
+        case "actions":
+          typeRef(id, base, "input", item.input);
+          typeRef(id, base, "output", item.output);
+          many(id, base, "emits", item.emits, ["evt"]);
+          inner(id, base, item.inner);
+          break;
+        case "endpoints":
+          typeRef(id, base, "request", item.request);
+          for (const [code, type] of Object.entries(item.responses ?? {})) {
+            if (typeof type === "string") one(id, base, `responses.${code}`, type, ["typ"]);
+          }
+          many(id, base, "emits", item.emits, ["evt"]);
+          inner(id, base, item.inner);
+          break;
+        case "webhooks":
+          one(id, base, "party", item.party, ["pty"]);
+          typeRef(id, base, "payload", item.payload);
+          one(id, base, "event", item.event, ["evt"]);
+          inner(id, base, item.inner);
+          break;
+        default:
+          break;
+      }
+    },
+
+    /** Definition (spec §11). */
+    definition(id, definition) {
+      one(id, ["definitions", id], "canvas", definition.canvas, ["cnv"], "element");
+    },
+
+    /** Canvas-level references only (nodes and edges have their own methods). */
+    canvas(id, canvas) {
+      const base = ["canvases", id];
+      if (canvas.kind === "machine") one(id, base, "context", canvas.context, ["typ"]);
+      if (canvas.kind === "flow") one(id, base, "vars", canvas.vars, ["typ"]);
+    },
+
+    /** Node of a canvas of kind `canvasKind` (spec §12). */
+    node(canvasKind, canvasId, id, node) {
+      const base = ["canvases", canvasId, "nodes", id];
+      inner(id, base, node.inner);
+      if (canvasKind === "machine") one(id, base, "region", node.region, ["rgn"]);
+      switch (node.kind) {
+        case "ref":
+          one(id, base, "target", node.target, null, "element");
+          break;
+        case "actor":
+        case "external":
+          one(id, base, "party", node.party, ["pty"]);
+          break;
+        case "entry":
+          one(id, base, "via", node.via, ["ept", "whk"]);
+          many(id, base, "on", node.on, ["evt"]);
+          one(id, base, "by", node.by, ["pty"]);
+          condition(id, base, "guard", node.guard);
+          break;
+        case "state":
+          many(id, base, "statuses", node.statuses, ["sts"]);
+          effects(id, base, "onEntry", node.onEntry);
+          effects(id, base, "onExit", node.onExit);
+          one(id, base, "sla", node.sla, ["tmr"]);
+          break;
+        case "any":
+          many(id, base, "except", node.except, ["nod"]);
+          break;
+        case "action":
+          one(id, base, "action", node.action, ["act"], "element");
+          break;
+        case "if":
+        case "while":
+          condition(id, base, "condition", node.condition);
+          break;
+        case "emit":
+          one(id, base, "event", node.event, ["evt"], "element");
+          break;
+        case "wait":
+          many(id, base, "on", node.on, ["evt"]);
+          one(id, base, "after", node.after, ["tmr"]);
+          break;
+        case "call":
+          one(id, base, "endpoint", node.endpoint, ["ept"]);
+          one(id, base, "party", node.party, ["pty"]);
+          break;
+        case "webhook":
+          one(id, base, "webhook", node.webhook, ["whk"], "element");
+          break;
+        default:
+          break;
+      }
+    },
+
+    /** Edge of a canvas of kind `canvasKind` (spec §12). */
+    edge(canvasKind, canvasId, id, edge) {
+      const base = ["canvases", canvasId, "edges", id];
+      one(id, base, "from", edge.from, ["nod"], "element");
+      one(id, base, "to", edge.to, ["nod"], "element");
+      many(id, base, "on", edge.on, ["evt"]);
+      if (canvasKind === "system") {
+        many(id, base, "events", edge.events, ["evt"]);
+        one(id, base, "endpoint", edge.endpoint, ["ept"]);
+        one(id, base, "webhook", edge.webhook, ["whk"]);
+        one(id, base, "by", edge.by, ["pty"]);
+      }
+      if (canvasKind === "machine") {
+        one(id, base, "after", edge.after, ["tmr"]);
+        if (edge.done !== true) one(id, base, "done", edge.done, ["rgn"]);
+        one(id, base, "via", edge.via, ["ept", "whk"]);
+        one(id, base, "by", edge.by, ["pty"]);
+        condition(id, base, "guard", edge.guard);
+        effects(id, base, "actions", edge.actions);
+      }
+    },
+
+    /** Annotations (spec §13). */
+    finding(id, finding) {
+      (Array.isArray(finding.targets) ? finding.targets : []).forEach((target, index) => {
+        push("annotations", id, "targets", ["annotations", "findings", id, "targets", index], target, null, "splice");
+      });
+    },
+
+    note(id, note) {
+      const base = ["annotations", "notes", id];
+      push("annotations", id, "canvas", [...base, "canvas"], note.canvas, ["cnv"], "element");
+      push("annotations", id, "target", [...base, "target"], note.target, null, "element");
+    },
+
+    focus(list) {
+      (Array.isArray(list) ? list : []).forEach((target, index) =>
+        push("annotations", null, "focus", ["annotations", "focus", index], target, ["nod", "edg"], "splice")
+      );
+    },
+
+    lane(id, lane) {
+      const base = ["annotations", "lanes", id];
+      push("annotations", id, "canvas", [...base, "canvas"], lane.canvas, ["cnv"], "element");
+      (Array.isArray(lane.nodes) ? lane.nodes : []).forEach((target, index) =>
+        push("annotations", id, "nodes", [...base, "nodes", index], target, ["nod"], "splice")
+      );
+    },
+
+    /**
+     * A scenario (simulator spec §4.5): its canvas (the scenario goes with it), its start's entry (forgotten when it
+     * goes) and each step's event or call (the step goes with it). Recorded paths are not references.
+     */
+    scenario(id, scenario) {
+      const base = ["annotations", "scenarios", id];
+      push("annotations", id, "canvas", [...base, "canvas"], scenario.canvas, ["cnv"], "element");
+      push("annotations", id, "start.entry", [...base, "start", "entry"], scenario.start?.entry, ["nod"], "unset");
+      (Array.isArray(scenario.steps) ? scenario.steps : []).forEach((item, index) => {
+        const path = [...base, "steps", index];
+        push("annotations", id, "steps.do.event", [...path, "do", "event"], item?.do?.event, ["evt"], "splice", path);
+        push(
+          "annotations",
+          id,
+          "steps.do.call",
+          [...path, "do", "call"],
+          item?.do?.call,
+          ["ept", "whk"],
+          "splice",
+          path
+        );
+      });
+    },
+
+    /** Layout keys of one canvas (spec §14). */
+    layoutCanvas(canvasId, canvasLayout) {
+      const base = ["layout", "canvases", canvasId];
+      push("layout", null, "canvas", base, canvasId, ["cnv"], "unset");
+      for (const [section, prefix] of [
+        ["nodes", "nod"],
+        ["edges", "edg"],
+        ["notes", "nte"]
+      ]) {
+        for (const id of Object.keys(canvasLayout[section] ?? {})) {
+          push("layout", null, section, [...base, section, id], id, [prefix], "unset");
+        }
+      }
+    }
+  };
+}
+
+/**
+ * Every reference in a document. Pure; ignores values that are not strings (schema validation reports those).
+ * @param {any} doc A valid document.
+ * @returns {Ref[]}
+ */
+export function collectRefs(doc) {
+  const collect = createRefCollector();
+  collect.root(doc.root);
+  for (const collection of Object.keys(CATALOG_COLLECTIONS)) {
+    for (const [id, item] of Object.entries(doc.catalog[collection] ?? {})) collect.catalogItem(collection, id, item);
+  }
+  for (const [id, definition] of Object.entries(doc.definitions)) collect.definition(id, definition);
+  for (const [canvasId, canvas] of Object.entries(doc.canvases)) {
+    collect.canvas(canvasId, canvas);
+    for (const [id, node] of Object.entries(canvas.nodes)) collect.node(canvas.kind, canvasId, id, node);
+    for (const [id, edge] of Object.entries(canvas.edges)) collect.edge(canvas.kind, canvasId, id, edge);
+  }
+  const annotations = doc.annotations ?? {};
+  for (const [id, finding] of Object.entries(annotations.findings ?? {})) collect.finding(id, finding);
+  for (const [id, note] of Object.entries(annotations.notes ?? {})) collect.note(id, note);
+  collect.focus(annotations.focus);
+  for (const [id, lane] of Object.entries(annotations.lanes ?? {})) collect.lane(id, lane);
+  for (const [id, scenario] of Object.entries(annotations.scenarios ?? {})) collect.scenario(id, scenario);
+  for (const [canvasId, canvasLayout] of Object.entries(doc.layout?.canvases ?? {})) {
+    collect.layoutCanvas(canvasId, canvasLayout);
+  }
+  return collect.refs;
+}

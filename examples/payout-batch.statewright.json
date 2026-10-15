@@ -1,0 +1,970 @@
+{
+  "statewright": "1.1",
+  "generator": {
+    "name": "statewright",
+    "version": "0.1.0",
+    "channel": "cli"
+  },
+  "signature": {
+    "algorithm": "sha256",
+    "content": "9594e210ba9c00c67035b9fd241574b2743b3e01b6c4f4c7aed9fba47eecd7ee",
+    "annotations": "353f660bc27cf99fe6b7ba41269ca233fb51c05d338fec1e206a7da99df7e10e",
+    "layout": "c3a4d9dd2dd1bcc63988f76940f59f20a7a77bc340bfc0004120ae3f343a6991",
+    "signedAt": "2026-10-12T12:00:00Z"
+  },
+  "project": {
+    "id": "prj_payoutBatch",
+    "name": "Payout batch",
+    "description": "How a batch of payouts is paid: each payout by its rail, a refused one flagged for review, the batch booked and announced at once, then the bank's confirmation. The implementation of the action Pay out a batch."
+  },
+  "root": "cnv_batch",
+  "catalog": {
+    "types": {},
+    "events": {
+      "evt_bankConfirmed": {
+        "name": "bank.confirmed",
+        "description": "The bank confirms that the batch was settled."
+      },
+      "evt_batchApproved": {
+        "name": "batch.approved",
+        "description": "Someone with the right approved the batch."
+      },
+      "evt_batchPaid": {
+        "name": "batch.paid",
+        "description": "The batch went out: its total and how many were flagged."
+      }
+    },
+    "actions": {
+      "act_flagPayout": {
+        "name": "Flag a payout",
+        "description": "Put a payout the bank refused in the review queue."
+      },
+      "act_payOutBatch": {
+        "name": "Pay out a batch",
+        "inner": {
+          "canvas": "cnv_payOutBatch"
+        }
+      },
+      "act_reviewPayout": {
+        "name": "Review a payout by hand"
+      }
+    },
+    "guards": {},
+    "endpoints": {
+      "ept_ledger": {
+        "name": "Book a batch",
+        "method": "POST",
+        "path": "/ledger/batches"
+      },
+      "ept_pix": {
+        "name": "Send a Pix",
+        "method": "POST",
+        "path": "/pix/transfers"
+      },
+      "ept_ted": {
+        "name": "Send a TED",
+        "method": "POST",
+        "path": "/ted/transfers"
+      }
+    },
+    "webhooks": {},
+    "timers": {
+      "tmr_confirmWindow": {
+        "name": "confirmation window",
+        "duration": "PT4H"
+      }
+    },
+    "statuses": {},
+    "parties": {}
+  },
+  "definitions": {},
+  "canvases": {
+    "cnv_batch": {
+      "kind": "machine",
+      "name": "Payout batch",
+      "nodes": {
+        "nod_init": {
+          "kind": "initial"
+        },
+        "nod_paying": {
+          "kind": "state",
+          "name": "paying out",
+          "onEntry": [
+            {
+              "action": "act_payOutBatch"
+            }
+          ]
+        },
+        "nod_queued": {
+          "kind": "state",
+          "name": "queued"
+        },
+        "nod_settled": {
+          "kind": "state",
+          "name": "settled",
+          "terminal": true
+        }
+      },
+      "edges": {
+        "edg_initQueued": {
+          "from": "nod_init",
+          "to": "nod_queued"
+        },
+        "edg_payingSettled": {
+          "from": "nod_paying",
+          "to": "nod_settled",
+          "on": [
+            "evt_bankConfirmed"
+          ]
+        },
+        "edg_queuedPaying": {
+          "from": "nod_queued",
+          "to": "nod_paying",
+          "on": [
+            "evt_batchApproved"
+          ]
+        }
+      }
+    },
+    "cnv_payOne": {
+      "kind": "flow",
+      "name": "Pay one payout",
+      "nodes": {
+        "nod_count": {
+          "kind": "assign",
+          "name": "count it as flagged",
+          "set": {
+            "vars.flagged": {
+              "+": [
+                {
+                  "var": "vars.flagged"
+                },
+                1
+              ]
+            }
+          }
+        },
+        "nod_flag": {
+          "kind": "action",
+          "name": "flag it",
+          "action": "act_flagPayout",
+          "args": {
+            "payout": {
+              "var": "vars.payout.id"
+            }
+          }
+        },
+        "nod_flagged": {
+          "kind": "end",
+          "name": "flagged"
+        },
+        "nod_manual": {
+          "kind": "action",
+          "name": "review it by hand",
+          "action": "act_reviewPayout",
+          "args": {
+            "payout": {
+              "var": "vars.payout.id"
+            }
+          }
+        },
+        "nod_onePaid": {
+          "kind": "end",
+          "name": "paid"
+        },
+        "nod_oneStart": {
+          "kind": "start"
+        },
+        "nod_pix": {
+          "kind": "call",
+          "name": "send a Pix",
+          "endpoint": "ept_pix"
+        },
+        "nod_rail": {
+          "kind": "switch",
+          "name": "which rail?",
+          "on": {
+            "var": "vars.payout.rail"
+          }
+        },
+        "nod_ted": {
+          "kind": "call",
+          "name": "send a TED",
+          "endpoint": "ept_ted"
+        }
+      },
+      "edges": {
+        "edg_countFlag": {
+          "from": "nod_count",
+          "to": "nod_flag"
+        },
+        "edg_flagFlagged": {
+          "from": "nod_flag",
+          "to": "nod_flagged"
+        },
+        "edg_manualPaid": {
+          "from": "nod_manual",
+          "to": "nod_onePaid"
+        },
+        "edg_oneStartRail": {
+          "from": "nod_oneStart",
+          "to": "nod_rail"
+        },
+        "edg_pixPaid": {
+          "from": "nod_pix",
+          "to": "nod_onePaid"
+        },
+        "edg_pixRefused": {
+          "from": "nod_pix",
+          "to": "nod_count",
+          "kind": "error"
+        },
+        "edg_railManual": {
+          "from": "nod_rail",
+          "to": "nod_manual",
+          "kind": "default"
+        },
+        "edg_railPix": {
+          "from": "nod_rail",
+          "to": "nod_pix",
+          "kind": "case",
+          "case": "pix"
+        },
+        "edg_railTed": {
+          "from": "nod_rail",
+          "to": "nod_ted",
+          "kind": "case",
+          "case": "ted"
+        },
+        "edg_tedPaid": {
+          "from": "nod_ted",
+          "to": "nod_onePaid"
+        },
+        "edg_tedRefused": {
+          "from": "nod_ted",
+          "to": "nod_count",
+          "kind": "error"
+        }
+      }
+    },
+    "cnv_payOutBatch": {
+      "kind": "flow",
+      "name": "Pay out a batch",
+      "nodes": {
+        "nod_announce": {
+          "kind": "emit",
+          "name": "announce it",
+          "event": "evt_batchPaid",
+          "payload": {
+            "flagged": {
+              "var": "vars.flagged"
+            },
+            "total": {
+              "var": "vars.total"
+            }
+          }
+        },
+        "nod_book": {
+          "kind": "call",
+          "name": "book the batch",
+          "endpoint": "ept_ledger"
+        },
+        "nod_both": {
+          "kind": "join",
+          "name": "both done"
+        },
+        "nod_check": {
+          "kind": "if",
+          "name": "all paid?",
+          "condition": {
+            "expr": {
+              "==": [
+                {
+                  "var": "vars.flagged"
+                },
+                0
+              ]
+            },
+            "text": "no payout was flagged"
+          }
+        },
+        "nod_close": {
+          "kind": "parallel",
+          "name": "close the batch"
+        },
+        "nod_confirm": {
+          "kind": "wait",
+          "name": "the bank confirms",
+          "on": [
+            "evt_bankConfirmed"
+          ],
+          "after": "tmr_confirmWindow"
+        },
+        "nod_each": {
+          "kind": "forEach",
+          "name": "each payout",
+          "items": {
+            "var": "vars.input.payouts"
+          },
+          "as": "payout",
+          "inner": {
+            "canvas": "cnv_payOne"
+          }
+        },
+        "nod_paid": {
+          "kind": "end",
+          "name": "all paid"
+        },
+        "nod_review": {
+          "kind": "end",
+          "name": "some to review",
+          "outcome": "failure"
+        },
+        "nod_start": {
+          "kind": "start"
+        },
+        "nod_total": {
+          "kind": "assign",
+          "name": "add up the batch",
+          "set": {
+            "vars.flagged": 0,
+            "vars.total": {
+              "reduce": [
+                {
+                  "var": "vars.input.payouts"
+                },
+                {
+                  "+": [
+                    {
+                      "var": "current.amount"
+                    },
+                    {
+                      "var": "accumulator"
+                    }
+                  ]
+                },
+                0
+              ]
+            }
+          }
+        }
+      },
+      "edges": {
+        "edg_announceBoth": {
+          "from": "nod_announce",
+          "to": "nod_both"
+        },
+        "edg_bookBoth": {
+          "from": "nod_book",
+          "to": "nod_both"
+        },
+        "edg_bothConfirm": {
+          "from": "nod_both",
+          "to": "nod_confirm"
+        },
+        "edg_checkPaid": {
+          "from": "nod_check",
+          "to": "nod_paid",
+          "kind": "true"
+        },
+        "edg_checkReview": {
+          "from": "nod_check",
+          "to": "nod_review",
+          "kind": "false"
+        },
+        "edg_closeAnnounce": {
+          "from": "nod_close",
+          "to": "nod_announce"
+        },
+        "edg_closeBook": {
+          "from": "nod_close",
+          "to": "nod_book"
+        },
+        "edg_confirmCheck": {
+          "from": "nod_confirm",
+          "to": "nod_check"
+        },
+        "edg_eachClose": {
+          "from": "nod_each",
+          "to": "nod_close"
+        },
+        "edg_startTotal": {
+          "from": "nod_start",
+          "to": "nod_total"
+        },
+        "edg_totalEach": {
+          "from": "nod_total",
+          "to": "nod_each"
+        }
+      }
+    }
+  },
+  "annotations": {
+    "scenarios": {
+      "scn_aPayoutIsRefused": {
+        "name": "A payout is refused",
+        "description": "Two payouts: the Pix goes through, the TED is refused by the bank and flagged for review. The batch is booked and announced, and waits for the bank's confirmation.",
+        "canvas": "cnv_payOutBatch",
+        "start": {
+          "at": "2026-01-05T09:00:00Z",
+          "input": {
+            "payouts": [
+              {
+                "amount": 120,
+                "id": "pay_1",
+                "rail": "pix"
+              },
+              {
+                "amount": 80,
+                "id": "pay_2",
+                "rail": "ted"
+              }
+            ]
+          },
+          "answers": [
+            {
+              "kind": "outcome",
+              "at": "nod_each/nod_pix",
+              "value": "ok"
+            },
+            {
+              "kind": "outcome",
+              "at": "nod_each/nod_ted",
+              "value": "error"
+            }
+          ]
+        },
+        "steps": [
+          {
+            "do": {
+              "event": "evt_bankConfirmed"
+            },
+            "caption": "The bank confirms the batch. One payout was refused, so the batch ends with something to review.",
+            "reached": {
+              "active": [],
+              "ended": "failure"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "layout": {
+    "canvases": {
+      "cnv_batch": {
+        "nodes": {
+          "nod_init": {
+            "x": 0,
+            "y": 18
+          },
+          "nod_paying": {
+            "x": 460,
+            "y": 0
+          },
+          "nod_queued": {
+            "x": 84,
+            "y": 0
+          },
+          "nod_settled": {
+            "x": 836,
+            "y": 0
+          }
+        },
+        "edges": {
+          "edg_initQueued": {
+            "points": [
+              [
+                12,
+                24
+              ],
+              [
+                84,
+                24
+              ]
+            ]
+          },
+          "edg_payingSettled": {
+            "points": [
+              [
+                600,
+                24
+              ],
+              [
+                836,
+                24
+              ]
+            ],
+            "labelAt": [
+              718,
+              37
+            ]
+          },
+          "edg_queuedPaying": {
+            "points": [
+              [
+                224,
+                24
+              ],
+              [
+                460,
+                24
+              ]
+            ],
+            "labelAt": [
+              342,
+              37
+            ]
+          }
+        }
+      },
+      "cnv_payOne": {
+        "nodes": {
+          "nod_count": {
+            "x": 674,
+            "y": 4
+          },
+          "nod_flag": {
+            "x": 886,
+            "y": 4
+          },
+          "nod_flagged": {
+            "x": 1098,
+            "y": 19
+          },
+          "nod_manual": {
+            "x": 352,
+            "y": 92
+          },
+          "nod_onePaid": {
+            "x": 564,
+            "y": 107
+          },
+          "nod_oneStart": {
+            "x": 0,
+            "y": 35
+          },
+          "nod_pix": {
+            "x": 352,
+            "y": 4
+          },
+          "nod_rail": {
+            "x": 84,
+            "y": 16
+          },
+          "nod_ted": {
+            "x": 352,
+            "y": 180
+          }
+        },
+        "edges": {
+          "edg_countFlag": {
+            "points": [
+              [
+                814,
+                28
+              ],
+              [
+                886,
+                28
+              ]
+            ]
+          },
+          "edg_flagFlagged": {
+            "points": [
+              [
+                1026,
+                28
+              ],
+              [
+                1098,
+                28
+              ]
+            ]
+          },
+          "edg_manualPaid": {
+            "points": [
+              [
+                492,
+                116
+              ],
+              [
+                564,
+                116
+              ]
+            ]
+          },
+          "edg_oneStartRail": {
+            "points": [
+              [
+                12,
+                41
+              ],
+              [
+                84,
+                41
+              ]
+            ]
+          },
+          "edg_pixPaid": {
+            "points": [
+              [
+                492,
+                36
+              ],
+              [
+                512,
+                36
+              ],
+              [
+                512,
+                112
+              ],
+              [
+                564,
+                112
+              ]
+            ]
+          },
+          "edg_pixRefused": {
+            "points": [
+              [
+                492,
+                20
+              ],
+              [
+                674,
+                20
+              ]
+            ],
+            "labelAt": [
+              583,
+              8
+            ]
+          },
+          "edg_railManual": {
+            "points": [
+              [
+                158,
+                41
+              ],
+              [
+                188,
+                41
+              ],
+              [
+                188,
+                116
+              ],
+              [
+                352,
+                116
+              ]
+            ],
+            "labelAt": [
+              255,
+              129
+            ]
+          },
+          "edg_railPix": {
+            "points": [
+              [
+                158,
+                28
+              ],
+              [
+                352,
+                28
+              ]
+            ],
+            "labelAt": [
+              255,
+              41
+            ]
+          },
+          "edg_railTed": {
+            "points": [
+              [
+                158,
+                53
+              ],
+              [
+                178,
+                53
+              ],
+              [
+                178,
+                204
+              ],
+              [
+                352,
+                204
+              ]
+            ],
+            "labelAt": [
+              255,
+              217
+            ]
+          },
+          "edg_tedPaid": {
+            "points": [
+              [
+                492,
+                196
+              ],
+              [
+                512,
+                196
+              ],
+              [
+                512,
+                121
+              ],
+              [
+                564,
+                121
+              ]
+            ]
+          },
+          "edg_tedRefused": {
+            "points": [
+              [
+                492,
+                212
+              ],
+              [
+                622,
+                212
+              ],
+              [
+                622,
+                36
+              ],
+              [
+                674,
+                36
+              ]
+            ],
+            "labelAt": [
+              583,
+              225
+            ]
+          }
+        }
+      },
+      "cnv_payOutBatch": {
+        "nodes": {
+          "nod_announce": {
+            "x": 588,
+            "y": 0
+          },
+          "nod_book": {
+            "x": 588,
+            "y": 88
+          },
+          "nod_both": {
+            "x": 800,
+            "y": 11
+          },
+          "nod_check": {
+            "x": 1092,
+            "y": 6
+          },
+          "nod_close": {
+            "x": 508,
+            "y": 11
+          },
+          "nod_confirm": {
+            "x": 880,
+            "y": 7
+          },
+          "nod_each": {
+            "x": 296,
+            "y": 7
+          },
+          "nod_paid": {
+            "x": 1336,
+            "y": 13
+          },
+          "nod_review": {
+            "x": 1336,
+            "y": 71
+          },
+          "nod_start": {
+            "x": 0,
+            "y": 25
+          },
+          "nod_total": {
+            "x": 84,
+            "y": 7
+          }
+        },
+        "edges": {
+          "edg_announceBoth": {
+            "points": [
+              [
+                728,
+                24
+              ],
+              [
+                800,
+                24
+              ]
+            ]
+          },
+          "edg_bookBoth": {
+            "points": [
+              [
+                728,
+                112
+              ],
+              [
+                748,
+                112
+              ],
+              [
+                748,
+                37
+              ],
+              [
+                800,
+                37
+              ]
+            ]
+          },
+          "edg_bothConfirm": {
+            "points": [
+              [
+                808,
+                31
+              ],
+              [
+                880,
+                31
+              ]
+            ]
+          },
+          "edg_checkPaid": {
+            "points": [
+              [
+                1154,
+                22
+              ],
+              [
+                1336,
+                22
+              ]
+            ],
+            "labelAt": [
+              1245,
+              10
+            ]
+          },
+          "edg_checkReview": {
+            "points": [
+              [
+                1154,
+                39
+              ],
+              [
+                1174,
+                39
+              ],
+              [
+                1174,
+                80
+              ],
+              [
+                1336,
+                80
+              ]
+            ],
+            "labelAt": [
+              1245,
+              93
+            ]
+          },
+          "edg_closeAnnounce": {
+            "points": [
+              [
+                516,
+                24
+              ],
+              [
+                588,
+                24
+              ]
+            ]
+          },
+          "edg_closeBook": {
+            "points": [
+              [
+                516,
+                37
+              ],
+              [
+                536,
+                37
+              ],
+              [
+                536,
+                112
+              ],
+              [
+                588,
+                112
+              ]
+            ]
+          },
+          "edg_confirmCheck": {
+            "points": [
+              [
+                1020,
+                31
+              ],
+              [
+                1092,
+                31
+              ]
+            ]
+          },
+          "edg_eachClose": {
+            "points": [
+              [
+                436,
+                31
+              ],
+              [
+                508,
+                31
+              ]
+            ]
+          },
+          "edg_startTotal": {
+            "points": [
+              [
+                12,
+                31
+              ],
+              [
+                84,
+                31
+              ]
+            ]
+          },
+          "edg_totalEach": {
+            "points": [
+              [
+                224,
+                31
+              ],
+              [
+                296,
+                31
+              ]
+            ]
+          }
+        }
+      }
+    }
+  }
+}

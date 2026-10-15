@@ -1,0 +1,63 @@
+{
+  "import": {
+    "invalidTitle": "This file can't be opened",
+    "invalidDescription": "{{file}} isn't a Statewright document, or it has errors:",
+    "moreErrors": "and {{count}} more",
+    "replacedDamaged": "The copy of {{name}} in this browser couldn't be read; this file replaced it.",
+    "changedTitle": "This file was changed outside Statewright",
+    "changedDescription": "{{file}} was edited after Statewright last saved it. Review what changed, then import it to make it a Statewright document again.",
+    "unsignedTitle": "This file isn't signed",
+    "unsignedDescription": "{{file}} has no Statewright signature, so where it came from can't be checked. Review it, then import it to sign it.",
+    "existsTitle": "You already have this project",
+    "existsDescription": "This browser has a different version of {{name}}. Choose whether the file replaces it or comes in as a copy.",
+    "sections": {
+      "content": "Content",
+      "layout": "Layout",
+      "annotations": "Annotations"
+    },
+    "state": {
+      "ok": "Unchanged",
+      "changed": "Changed",
+      "missing": "Not signed"
+    },
+    "compared": "Compared with your copy from {{date}}",
+    "layoutChanges": "Positions changed: {{count}}",
+    "moreChanges": "and {{count}} more",
+    "in": "in {{name}}",
+    "types": {
+      "project": "Project",
+      "definition": "Definition",
+      "canvas": "Level",
+      "region": "Region",
+      "node": "Box",
+      "edge": "Arrow",
+      "finding": "Finding",
+      "note": "Note",
+      "lane": "Lane",
+      "catalog": {
+        "types": "Type",
+        "events": "Event",
+        "actions": "Action",
+        "guards": "Guard",
+        "endpoints": "Endpoint",
+        "webhooks": "Webhook",
+        "timers": "Timer",
+        "statuses": "Status",
+        "parties": "Party"
+      }
+    },
+    "cancel": "Cancel",
+    "asCopy": "Import as a copy",
+    "importAndSign": "Import and sign",
+    "close": "Close",
+    "migrated": "Updated from format {{from}} to {{to}}.",
+    "unreadable": "{{file}} couldn't be read."
+  },
+  "save": {
+    "saved": "Saved to {{file}}",
+    "copied": "Saved a copy to {{file}}",
+    "downloaded": "Downloaded {{file}}",
+    "permission": "Couldn't write to the file, so it was downloaded instead: {{file}}",
+    "failed": "Couldn't save the file."
+  }
+}

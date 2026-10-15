@@ -1,0 +1,358 @@
+/* Design tokens (spec §5.2). Components use only these names (bg-island, text-sub, …), never fixed colours, so the
+   light and dark themes are a change of variables. Diagram colours come from Core's style module, not from here. */
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Consolas, monospace;
+
+  --color-canvas: var(--canvas);
+  --color-dot: var(--dot);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-island: var(--island);
+  --color-island-border: var(--island-border);
+  --color-ink: var(--ink);
+  --color-sub: var(--sub);
+  --color-muted: var(--muted);
+  --color-hairline: var(--hairline);
+  --color-control-border: var(--control-border);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-scrim: var(--scrim);
+  --color-heart: var(--heart);
+
+  --text-label: 11px;
+  --text-ui: 12.5px;
+  --text-read: 13.5px;
+  --text-title: 15px;
+  --text-heading: 18px;
+  --text-page: 24px;
+
+  --radius-chip: 4px;
+  --radius-control: 8px;
+  --radius-island: 12px;
+  --radius-dialog: 14px;
+
+  --shadow-island: var(--island-shadow);
+  --shadow-dialog: var(--dialog-shadow);
+
+  --ease-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+:root {
+  --canvas: #fbfbfc;
+  --dot: #d8dbe1;
+  --surface: #ffffff;
+  --subtle: #f1f3f6;
+  --island: rgb(255 255 255 / 0.94);
+  --island-border: rgb(5 6 15 / 0.08);
+  --island-shadow: 0 1px 2px rgb(5 6 15 / 0.06), 0 8px 24px rgb(5 6 15 / 0.07);
+  --dialog-shadow: 0 2px 4px rgb(5 6 15 / 0.08), 0 24px 64px rgb(5 6 15 / 0.24);
+  --ink: #05060f;
+  --sub: #464849;
+  --muted: #696f72;
+  --hairline: #eceef2;
+  --control-border: #d9dce2;
+  --accent: #0a66c2;
+  --accent-soft: #eef4fb;
+  --primary: #05060f;
+  --primary-foreground: #ffffff;
+  --danger: #b42318;
+  --danger-soft: #fef3f2;
+  --warning: #b45309;
+  --warning-soft: #fffbeb;
+  --success: #12805c;
+  --success-soft: #ecfdf5;
+  --scrim: rgb(5 6 15 / 0.28);
+  /* The support badge's heart, its one touch of colour. */
+  --heart: #e11d48;
+}
+
+.dark {
+  --canvas: #121419;
+  --dot: #262a32;
+  --surface: #1b1e25;
+  --subtle: #262a32;
+  --island: rgb(27 30 37 / 0.92);
+  --island-border: rgb(255 255 255 / 0.08);
+  --island-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+  --dialog-shadow: 0 2px 4px rgb(0 0 0 / 0.5), 0 24px 64px rgb(0 0 0 / 0.55);
+  --ink: #e8eaef;
+  --sub: #a9afba;
+  --muted: #8b929e;
+  --hairline: #2a2f38;
+  --control-border: #3a3f49;
+  --accent: #5aa2ff;
+  --accent-soft: #12233a;
+  --primary: #e8eaef;
+  --primary-foreground: #121419;
+  --danger: #f97066;
+  --danger-soft: #2e1513;
+  --warning: #f5a524;
+  --warning-soft: #2a2111;
+  --success: #34d399;
+  --success-soft: #0f2a22;
+  --scrim: rgb(0 0 0 / 0.5);
+  --heart: #fb7185;
+}
+
+/* Entrances of things the person opened (spec §5.2: 160 ms, soft ease); reduced motion skips them (motion-safe). */
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The guide (spec §8.4): what a link points at stops clear of the top; with motion allowed, the page glides there. */
+.sw-guide [id] {
+  scroll-margin-top: 24px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.sw-guide) {
+    scroll-behavior: smooth;
+  }
+}
+
+/* While the inspector's edge is dragged (spec §6.1): nothing on the page is selected on the way, and the pointer stays a
+   resize one wherever it goes. */
+.sw-resizing,
+.sw-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+/* The canvas: dots every 18 px. */
+@utility bg-dots {
+  background-color: var(--canvas);
+  background-image: radial-gradient(var(--dot) 1px, transparent 1.2px);
+  background-size: 18px 18px;
+}
+
+/* The canvas (React Flow). The figure's parts carry Core's colours; the canvas adds selection and focus (spec §5.2:
+   the accent ring with a 4 px halo at 12 %) and hides the attachment points edges need but nobody uses. */
+.sw-canvas .react-flow__node {
+  border-radius: 10px;
+}
+.sw-canvas .react-flow__node:focus-visible {
+  outline: 1.5px solid var(--accent);
+  outline-offset: 3px;
+}
+.sw-selection,
+.sw-canvas .react-flow__node:focus-visible {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.sw-highlight {
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 70%, transparent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+/* A box's handle: drag from it to connect (spec §7.2); shown on the box under the pointer or selected. */
+.sw-canvas .sw-handle {
+  width: 9px;
+  height: 9px;
+  min-width: 0;
+  min-height: 0;
+  border: 1.5px solid var(--accent);
+  background: var(--surface);
+  visibility: hidden;
+}
+.sw-canvas .react-flow__node:hover > .sw-handle.sw-start,
+.sw-canvas .react-flow__node.selected > .sw-handle.sw-start {
+  visibility: visible;
+  cursor: crosshair;
+}
+.sw-canvas .sw-refuse {
+  cursor: not-allowed;
+}
+/* A finding badge (Core's markup) takes the pointer, which shows its findings when it rests there (FindingPopover). */
+.sw-canvas .badge {
+  pointer-events: visiblePainted;
+  cursor: default;
+}
+.sw-connection {
+  stroke: var(--accent);
+  stroke-dasharray: 5 4;
+}
+.sw-edge-halo {
+  stroke-opacity: 0.18;
+}
+/* Selecting by dragging a rectangle, and the box around what it selected. */
+.sw-canvas {
+  --xy-selection-background-color: color-mix(in srgb, var(--accent) 7%, transparent);
+  --xy-selection-border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.sw-canvas .react-flow__nodesselection-rect {
+  border-radius: 8px;
+  border-style: dashed;
+  background: transparent;
+}
+/* While a run is shown (simulator spec §6.3): what is not part of it now recedes; its marks carry the halo of the
+   selection, its edges' labels are pills that take their moves. */
+.sw-canvas .sw-recede {
+  opacity: 0.38;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sw-canvas .react-flow__node,
+  .sw-canvas .react-flow__edge {
+    transition: opacity 160ms var(--ease-soft);
+  }
+}
+.sw-run {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.sw-canvas .sw-pill {
+  cursor: pointer;
+}
+/* On the stage (simulator spec §7.1), a step plays in order: each edge it took pulses along its route while a ring
+   moves to where the run goes, and each mark shows when the motion reaches it. With reduced motion, they cross-fade. */
+.sw-appear {
+  animation: fade-in 160ms var(--ease-soft) both;
+}
+.sw-pulse {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  opacity: 0;
+  animation: sw-pulse 600ms linear both;
+}
+/* The pulse arrives with the ring (StageMotion's TRAVEL), by four fifths of the edge's turn. */
+@keyframes sw-pulse {
+  from {
+    stroke-dashoffset: 28px;
+    opacity: 0.9;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  80%,
+  to {
+    stroke-dashoffset: calc(-1 * var(--len));
+    opacity: 0.9;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sw-appear {
+    animation-duration: 250ms;
+    animation-delay: 0ms !important;
+  }
+  .sw-pulse,
+  .sw-travel {
+    display: none;
+  }
+}
+.sw-canvas .sw-pill:hover rect {
+  fill: var(--accent-soft);
+}
+/* An agent's change (AI interface spec §7.3): what it created or changed glows twice in the accent colour, following
+   each box's and each route's own shape, for 2 s. With reduced motion, a still ring for the same 2 s. */
+.sw-canvas .react-flow__node.sw-ai,
+.sw-canvas .react-flow__edge.sw-ai {
+  animation: sw-ai 2000ms var(--ease-soft) both;
+}
+@keyframes sw-ai {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  22%,
+  64% {
+    filter: drop-shadow(0 0 1px var(--accent)) drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 55%, transparent));
+  }
+  43% {
+    filter: drop-shadow(0 0 0.5px color-mix(in srgb, var(--accent) 40%, transparent));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sw-canvas .react-flow__node.sw-ai,
+  .sw-canvas .react-flow__edge.sw-ai {
+    animation: none;
+    filter: drop-shadow(1.5px 0 0 var(--accent)) drop-shadow(-1.5px 0 0 var(--accent))
+      drop-shadow(0 1.5px 0 var(--accent)) drop-shadow(0 -1.5px 0 var(--accent));
+  }
+}
+/* What an agent points out (view.point): a still glow in the accent colour, until the person clicks elsewhere. */
+.sw-canvas .react-flow__node.sw-pointed,
+.sw-canvas .react-flow__edge.sw-pointed {
+  filter: drop-shadow(0 0 1px var(--accent)) drop-shadow(0 0 7px color-mix(in srgb, var(--accent) 45%, transparent));
+}
+/* Waiting for an agent to bring the code (AI interface spec §7.4): the status's dot breathes, slowly. */
+@keyframes sw-breathe {
+  50% {
+    opacity: 0.35;
+  }
+}
+/* A tool in hand: the canvas places where it is clicked. */
+.sw-placing .react-flow__pane {
+  cursor: crosshair;
+}
+/* An edge being moved with one of its boxes, until Core routes it again. */
+.sw-preview-edge {
+  stroke: var(--muted);
+  stroke-dasharray: 4 3;
+}
+/* Above the support badge (bottom 16 px, 32 px high), 16 px apart, as the legend is above the minimap. */
+.sw-canvas .sw-minimap {
+  margin: 16px 16px 64px;
+  overflow: hidden;
+  border: 1px solid var(--island-border);
+  border-radius: 12px;
+  box-shadow: var(--island-shadow);
+}
+/* React Flow's credit stays, as its authors ask, in the quietest form. */
+.sw-canvas .react-flow__attribution {
+  background: transparent;
+  padding: 2px 10px;
+  font-size: 10px;
+}
+.sw-canvas .react-flow__attribution a {
+  color: var(--muted);
+}
+
+@layer base {
+  * {
+    @apply border-hairline;
+  }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-canvas font-sans text-ui text-ink antialiased;
+  }
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}

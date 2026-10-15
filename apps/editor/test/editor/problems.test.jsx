@@ -1,0 +1,134 @@
+// @vitest-environment jsdom
+import "../dom.js";
+import "../flow.js";
+import "../i18n.js";
+
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter, Route, Routes } from "react-router";
+import { check } from "statewright";
+import { afterEach, describe, expect, it } from "vitest";
+
+import { RepositoryContext } from "@/app/repository";
+import EditorPage from "@/features/editor/EditorPage";
+import { memoryRepository } from "@/persistence/repository";
+import { problemRows } from "@/problems/rows";
+import { problemsStore } from "@/problems/store";
+import { editorStore } from "@/store/editor";
+import { useView, VIEW_DEFAULTS } from "@/stores/view";
+
+import { placedExample } from "../fixtures.js";
+
+async function openPayments(path = "/p/prj_payments") {
+  const repository = { ...memoryRepository(), persistent: true };
+  const doc = await placedExample("payments");
+  await repository.save(doc);
+  render(
+    <RepositoryContext value={repository}>
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route path="/p/:projectId/:canvasId?" element={<EditorPage />} />
+        </Routes>
+      </MemoryRouter>
+    </RepositoryContext>
+  );
+  const problems = check(doc);
+  await screen.findByRole("button", { name: `${problems.length} problems` }, { timeout: 4000 });
+  return { doc, problems };
+}
+
+const box = id => document.querySelector(`.react-flow__node[data-id="${id}"]`);
+
+afterEach(() => act(() => useView.setState(VIEW_DEFAULTS)));
+
+describe("Problems in the editor", () => {
+  it("closes the panel with Esc while its button has the focus, and stays on the level", async () => {
+    const user = userEvent.setup();
+    const { problems } = await openPayments("/p/prj_payments/cnv_lifecycle");
+    const button = screen.getByRole("button", { name: `${problems.length} problems` });
+    await user.click(button);
+    expect(screen.getByRole("dialog", { name: "Problems" })).toBeTruthy();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Problems" })).toBeNull();
+    expect(screen.getByTestId("canvas").dataset.canvas).toBe("cnv_lifecycle");
+    expect(document.activeElement).toBe(button);
+  });
+
+  it("counts the project's Problems and lists them by severity, with a filter for each", async () => {
+    const user = userEvent.setup();
+    const { doc, problems } = await openPayments("/p/prj_payments/cnv_lifecycle");
+    const button = screen.getByRole("button", { name: `${problems.length} problems` });
+    await user.click(button);
+    expect(button.getAttribute("aria-expanded")).toBe("true");
+    const panel = screen.getByRole("dialog", { name: "Problems" });
+    const rows = problemRows(doc, problems);
+    expect(within(panel).getAllByRole("listitem")).toHaveLength(rows.length);
+    const filter = within(panel).getByRole("radiogroup", { name: "Show" });
+    expect(
+      within(filter)
+        .getAllByRole("radio")
+        .map(radio => radio.textContent)
+    ).toEqual([
+      `All ${problems.length}`,
+      `Errors ${problems.filter(problem => problem.severity === "error").length}`,
+      `Warnings ${problems.filter(problem => problem.severity === "warning").length}`,
+      `Incomplete ${problems.filter(problem => problem.severity === "incomplete").length}`
+    ]);
+    const events = rows.find(row => row.kind === "group" && row.collection === "events");
+    expect(within(panel).getByText(`${events.names.length} events do not specify payload`)).toBeTruthy();
+    await user.click(within(filter).getByRole("radio", { name: /^Errors/ }));
+    expect(within(panel).getByText("None of this kind.")).toBeTruthy();
+    fireEvent.keyDown(within(panel).getByRole("radio", { name: /^Errors/ }), { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "Problems" })).toBeNull();
+    expect(document.activeElement).toBe(button);
+    expect(screen.getByTestId("canvas").dataset.canvas).toBe("cnv_lifecycle");
+  });
+
+  it("shows the level of a Problem picked in the panel, with its element selected", async () => {
+    const user = userEvent.setup();
+    await openPayments();
+    await user.click(screen.getByRole("button", { name: /problems$/ }));
+    await user.click(screen.getByRole("button", { name: /^State "compliance_hold" has no way out/ }));
+    await waitFor(() => expect(screen.getByTestId("canvas").dataset.canvas).toBe("cnv_lifecycle"));
+    expect(editorStore.getState().view.selections.cnv_lifecycle).toEqual(["nod_complianceHold"]);
+    await waitFor(() => expect(editorStore.getState().view.reveal).toBeNull());
+  });
+
+  it("links each Problem to what its rule means in the guide, in a new tab", async () => {
+    const user = userEvent.setup();
+    const { doc, problems } = await openPayments("/p/prj_payments/cnv_lifecycle");
+    await user.click(screen.getByRole("button", { name: `${problems.length} problems` }));
+    const panel = screen.getByRole("dialog", { name: "Problems" });
+    const links = within(panel).getAllByRole("link", { name: /^What .* means \(opens in a new tab\)$/ });
+    expect(links).toHaveLength(problemRows(doc, problems).length);
+    const [stuck] = within(panel).getAllByRole("link", { name: "What machine.stuck means (opens in a new tab)" });
+    expect(stuck.getAttribute("href")).toBe("/readme#rule-machine.stuck");
+    expect(stuck.getAttribute("target")).toBe("_blank");
+    expect(stuck.closest("li").textContent).toContain("has no way out");
+    // Core's own words stay English in every interface language, and say so (WCAG 3.1.2).
+    expect(stuck.closest("li").querySelector('[lang="en"]').textContent).toContain("has no way out");
+    // A group of Problems is worded by the editor, in the interface's language.
+    for (const message of panel.querySelectorAll('[lang="en"]')) expect(message.textContent).not.toMatch(/^\d+ /);
+  });
+
+  it("highlights the element on the canvas while the pointer rests on its line", async () => {
+    const user = userEvent.setup();
+    await openPayments("/p/prj_payments/cnv_lifecycle");
+    await user.click(screen.getByRole("button", { name: /problems$/ }));
+    const line = screen.getByRole("button", { name: /^State "compliance_hold"/ });
+    fireEvent.pointerEnter(line);
+    expect(problemsStore.getState().highlight).toBe("nod_complianceHold");
+    await waitFor(() => expect(box("nod_complianceHold").querySelector(".sw-highlight")).toBeTruthy());
+    fireEvent.pointerLeave(line);
+    expect(problemsStore.getState().highlight).toBeNull();
+  });
+
+  it("marks the boxes that have Problems, and hides incomplete markers when asked", async () => {
+    await openPayments("/p/prj_payments/cnv_lifecycle");
+    await waitFor(() => expect(box("nod_complianceHold").querySelector("[data-severity]")).toBeTruthy());
+    expect(box("nod_complianceHold").querySelector("[data-severity]").dataset.severity).toBe("incomplete");
+    expect(box("nod_phaseInitial").querySelector("[data-severity]")).toBeNull();
+    act(() => useView.getState().toggle("incomplete"));
+    expect(box("nod_complianceHold").querySelector("[data-severity]")).toBeNull();
+  });
+});

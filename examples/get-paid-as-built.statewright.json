@@ -1,0 +1,717 @@
+{
+  "statewright": "1.1",
+  "generator": {
+    "name": "statewright",
+    "version": "0.1.3",
+    "channel": "cli"
+  },
+  "signature": {
+    "algorithm": "sha256",
+    "content": "b782a8ca926287e82c18ffb461cee27f7e3921490b6e012b127ab1c3033912f2",
+    "annotations": "a50eb1b0c4061e9d91885669a572ecd750ec49ba51debe0864a5de92612296cc",
+    "layout": "6918e0b4d1294c0a4c304b16b740607f6c587ff96f398f1bbaa85d54d70bda94",
+    "signedAt": "2026-10-14T22:45:28Z"
+  },
+  "project": {
+    "id": "prj_getPaid",
+    "name": "Get paid (as built)"
+  },
+  "root": "cnv_transaction",
+  "catalog": {
+    "types": {},
+    "events": {
+      "evt_adminTrigger": {
+        "name": "admin.trigger",
+        "payload": null,
+        "source": "pty_admin"
+      },
+      "evt_cancel": {
+        "name": "transaction.cancel",
+        "payload": null,
+        "source": "pty_owner"
+      },
+      "evt_custodyOverride": {
+        "name": "custody.override",
+        "payload": null,
+        "source": "pty_admin"
+      },
+      "evt_depositSettled": {
+        "name": "deposit.settles",
+        "payload": null,
+        "source": "pty_psp"
+      },
+      "evt_markFailed": {
+        "name": "admin.markFailed",
+        "payload": null,
+        "source": "pty_admin"
+      },
+      "evt_payerLocked": {
+        "name": "payer.locked",
+        "payload": null,
+        "source": "pty_owner"
+      },
+      "evt_pspPaymentFailed": {
+        "name": "psp.paymentFailed",
+        "payload": null,
+        "source": "pty_psp"
+      },
+      "evt_pspReceived": {
+        "name": "psp.received",
+        "payload": null,
+        "source": "pty_psp"
+      },
+      "evt_settled": {
+        "name": "settled",
+        "payload": null,
+        "source": "internal"
+      },
+      "evt_signingRefused": {
+        "name": "signing.refused",
+        "payload": null,
+        "source": "internal"
+      }
+    },
+    "actions": {},
+    "guards": {},
+    "endpoints": {},
+    "webhooks": {},
+    "timers": {
+      "tmr_deadline": {
+        "name": "deadline sweep",
+        "duration": "PT10M"
+      }
+    },
+    "statuses": {
+      "sts_awaitingPayment": {
+        "name": "awaiting_payment",
+        "tone": "warning"
+      },
+      "sts_cancelled": {
+        "name": "cancelled",
+        "tone": "neutral"
+      },
+      "sts_completed": {
+        "name": "completed",
+        "tone": "success"
+      },
+      "sts_created": {
+        "name": "created",
+        "tone": "warning"
+      },
+      "sts_expired": {
+        "name": "expired",
+        "tone": "danger"
+      },
+      "sts_failed": {
+        "name": "failed",
+        "tone": "danger"
+      },
+      "sts_processing": {
+        "name": "processing",
+        "tone": "info"
+      }
+    },
+    "parties": {
+      "pty_admin": {
+        "kind": "operator",
+        "name": "Admin"
+      },
+      "pty_owner": {
+        "kind": "human",
+        "name": "Owner"
+      },
+      "pty_psp": {
+        "kind": "external",
+        "name": "PSP"
+      }
+    }
+  },
+  "definitions": {},
+  "canvases": {
+    "cnv_open": {
+      "kind": "machine",
+      "name": "Open",
+      "stage": "as-built",
+      "subject": "transaction.status",
+      "transitions": "partial",
+      "nodes": {
+        "nod_awaitingPayment": {
+          "kind": "state",
+          "name": "awaiting_payment",
+          "category": "waiting",
+          "statuses": [
+            "sts_awaitingPayment"
+          ],
+          "summary": "instructions issued"
+        },
+        "nod_created": {
+          "kind": "state",
+          "name": "created",
+          "category": "waiting",
+          "statuses": [
+            "sts_created"
+          ],
+          "summary": "crypto link, no lock"
+        },
+        "nod_openStart": {
+          "kind": "initial"
+        },
+        "nod_otherTypes": {
+          "kind": "entry",
+          "name": "create (other types)"
+        },
+        "nod_underpaid": {
+          "kind": "state",
+          "name": "underpaid",
+          "summary": "same exits as awaiting\nno writer in deployed code",
+          "provenance": "legacy"
+        }
+      },
+      "edges": {
+        "edg_createOtherTypesAwaitingPayment": {
+          "from": "nod_otherTypes",
+          "to": "nod_awaitingPayment"
+        },
+        "edg_createdAwaitingPayment": {
+          "from": "nod_created",
+          "to": "nod_awaitingPayment",
+          "on": [
+            "evt_payerLocked"
+          ],
+          "intent": "happy",
+          "label": "payer lock"
+        },
+        "edg_initialCreated": {
+          "from": "nod_openStart",
+          "to": "nod_created"
+        }
+      }
+    },
+    "cnv_transaction": {
+      "kind": "machine",
+      "name": "Transaction",
+      "kicker": "As built · transaction",
+      "title": "The one transition table every transaction shares",
+      "caption": "Nine statuses, one table (core.js:34-52). Seven of sixteen status updates call it; seven encode the same edges in their own conditions, and advanceStatus trusts its callers.",
+      "stage": "as-built",
+      "subject": "transaction.status",
+      "transitions": "partial",
+      "nodes": {
+        "nod_cancelled": {
+          "kind": "state",
+          "name": "cancelled",
+          "outcome": "stopped",
+          "terminal": true,
+          "statuses": [
+            "sts_cancelled"
+          ],
+          "summary": "owner or admin"
+        },
+        "nod_completed": {
+          "kind": "state",
+          "name": "completed",
+          "outcome": "success",
+          "terminal": true,
+          "statuses": [
+            "sts_completed"
+          ],
+          "summary": "or partially_completed\ncompletionStatusFor"
+        },
+        "nod_expired": {
+          "kind": "state",
+          "name": "expired",
+          "outcome": "stopped",
+          "statuses": [
+            "sts_expired"
+          ]
+        },
+        "nod_failed": {
+          "kind": "state",
+          "name": "failed",
+          "outcome": "failure",
+          "terminal": true,
+          "statuses": [
+            "sts_failed"
+          ],
+          "summary": "failureCode: any string"
+        },
+        "nod_open": {
+          "kind": "state",
+          "name": "open",
+          "summary": "shared exits",
+          "inner": {
+            "canvas": "cnv_open"
+          }
+        },
+        "nod_processing": {
+          "kind": "state",
+          "name": "processing",
+          "statuses": [
+            "sts_processing"
+          ],
+          "summary": "not a confirmation",
+          "provenance": "built",
+          "evidence": [
+            {
+              "kind": "code",
+              "path": "src/core.js",
+              "lines": "34-52"
+            }
+          ]
+        },
+        "nod_start": {
+          "kind": "initial"
+        }
+      },
+      "edges": {
+        "edg_expiredCancelled": {
+          "from": "nod_expired",
+          "to": "nod_cancelled",
+          "on": [
+            "evt_cancel"
+          ],
+          "by": "pty_admin",
+          "label": "owner or admin cancel"
+        },
+        "edg_expiredProcessing": {
+          "from": "nod_expired",
+          "to": "nod_processing",
+          "on": [
+            "evt_custodyOverride"
+          ],
+          "by": "pty_admin",
+          "label": "onChain custody override (off-table)"
+        },
+        "edg_initialOpen": {
+          "from": "nod_start",
+          "to": "nod_open"
+        },
+        "edg_openCancelled": {
+          "from": "nod_open",
+          "to": "nod_cancelled",
+          "on": [
+            "evt_cancel"
+          ],
+          "by": "pty_admin",
+          "label": "owner cancel (admin too)"
+        },
+        "edg_openExpired": {
+          "from": "nod_open",
+          "to": "nod_expired",
+          "after": "tmr_deadline",
+          "label": "deadline: 10-min sweep · lazy read"
+        },
+        "edg_openFailed": {
+          "from": "nod_open",
+          "to": "nod_failed",
+          "on": [
+            "evt_pspPaymentFailed",
+            "evt_signingRefused"
+          ],
+          "intent": "failure"
+        },
+        "edg_openProcessing": {
+          "from": "nod_open",
+          "to": "nod_processing",
+          "on": [
+            "evt_pspReceived",
+            "evt_depositSettled",
+            "evt_adminTrigger"
+          ],
+          "intent": "happy"
+        },
+        "edg_processingCompleted": {
+          "from": "nod_processing",
+          "to": "nod_completed",
+          "on": [
+            "evt_settled"
+          ],
+          "intent": "happy"
+        },
+        "edg_processingFailed": {
+          "from": "nod_processing",
+          "to": "nod_failed",
+          "on": [
+            "evt_markFailed",
+            "evt_pspPaymentFailed"
+          ],
+          "intent": "failure"
+        }
+      }
+    }
+  },
+  "annotations": {
+    "findings": {
+      "fnd_H1": {
+        "code": "H1",
+        "title": "advanceStatus trusts its callers",
+        "severity": "high",
+        "description": "Eight call sites move transactions without checking the table.",
+        "targets": [
+          "nod_processing"
+        ],
+        "source": "audit"
+      },
+      "fnd_H3": {
+        "code": "H3",
+        "title": "failureCode accepts any string",
+        "severity": "medium",
+        "targets": [
+          "nod_failed"
+        ],
+        "source": "audit"
+      }
+    },
+    "scenarios": {
+      "scn_paidBeforeTheSweep": {
+        "name": "Paid before the deadline sweep",
+        "description": "A transaction the payer locks and pays, settled before the sweep can expire it.",
+        "canvas": "cnv_transaction",
+        "start": {
+          "at": "2026-01-05T09:00:00Z"
+        },
+        "steps": [
+          {
+            "do": {
+              "event": "evt_payerLocked"
+            },
+            "caption": "The payer locks the payment; the transaction waits for the money.",
+            "reached": {
+              "active": [
+                "nod_open/nod_awaitingPayment"
+              ]
+            }
+          },
+          {
+            "do": {
+              "event": "evt_pspReceived"
+            },
+            "caption": "The payment provider receives the money.",
+            "reached": {
+              "active": [
+                "nod_processing"
+              ]
+            }
+          },
+          {
+            "do": {
+              "event": "evt_settled"
+            },
+            "caption": "The money settles: the transaction is complete.",
+            "reached": {
+              "active": [
+                "nod_completed"
+              ],
+              "ended": "done"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "layout": {
+    "canvases": {
+      "cnv_open": {
+        "nodes": {
+          "nod_awaitingPayment": {
+            "x": 436,
+            "y": 130
+          },
+          "nod_created": {
+            "x": 84,
+            "y": 120
+          },
+          "nod_openStart": {
+            "x": 0,
+            "y": 145
+          },
+          "nod_otherTypes": {
+            "x": 0,
+            "y": 215
+          },
+          "nod_underpaid": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "edges": {
+          "edg_createOtherTypesAwaitingPayment": {
+            "points": [
+              [
+                12,
+                221
+              ],
+              [
+                384,
+                221
+              ],
+              [
+                384,
+                171
+              ],
+              [
+                436,
+                171
+              ]
+            ],
+            "labelAt": [
+              154,
+              234
+            ]
+          },
+          "edg_createdAwaitingPayment": {
+            "points": [
+              [
+                224,
+                151
+              ],
+              [
+                436,
+                151
+              ]
+            ],
+            "labelAt": [
+              330,
+              138
+            ]
+          },
+          "edg_initialCreated": {
+            "points": [
+              [
+                12,
+                151
+              ],
+              [
+                84,
+                151
+              ]
+            ]
+          }
+        }
+      },
+      "cnv_transaction": {
+        "nodes": {
+          "nod_cancelled": {
+            "x": 1047,
+            "y": 0
+          },
+          "nod_completed": {
+            "x": 2375,
+            "y": 18
+          },
+          "nod_expired": {
+            "x": 1533,
+            "y": 17
+          },
+          "nod_failed": {
+            "x": 1295,
+            "y": 126
+          },
+          "nod_open": {
+            "x": 84,
+            "y": 4,
+            "display": "frame"
+          },
+          "nod_processing": {
+            "x": 2041,
+            "y": 24
+          },
+          "nod_start": {
+            "x": 0,
+            "y": 124
+          }
+        },
+        "edges": {
+          "edg_expiredCancelled": {
+            "points": [
+              [
+                1533,
+                33
+              ],
+              [
+                1187,
+                33
+              ]
+            ],
+            "labelAt": [
+              1378,
+              20
+            ]
+          },
+          "edg_expiredProcessing": {
+            "points": [
+              [
+                1673,
+                41
+              ],
+              [
+                2041,
+                41
+              ]
+            ],
+            "labelAt": [
+              1857,
+              28
+            ]
+          },
+          "edg_initialOpen": {
+            "points": [
+              [
+                12,
+                130
+              ],
+              [
+                84,
+                130
+              ]
+            ]
+          },
+          "edg_openCancelled": {
+            "points": [
+              [
+                715,
+                54
+              ],
+              [
+                735,
+                54
+              ],
+              [
+                735,
+                33
+              ],
+              [
+                1047,
+                33
+              ]
+            ],
+            "labelAt": [
+              863,
+              45
+            ]
+          },
+          "edg_openExpired": {
+            "points": [
+              [
+                715,
+                105
+              ],
+              [
+                1481,
+                105
+              ],
+              [
+                1481,
+                49
+              ],
+              [
+                1533,
+                49
+              ]
+            ],
+            "labelAt": [
+              1117,
+              118
+            ]
+          },
+          "edg_openFailed": {
+            "points": [
+              [
+                715,
+                156
+              ],
+              [
+                735,
+                156
+              ],
+              [
+                735,
+                159
+              ],
+              [
+                1295,
+                159
+              ]
+            ],
+            "labelAt": [
+              863,
+              177
+            ]
+          },
+          "edg_openProcessing": {
+            "points": [
+              [
+                715,
+                206
+              ],
+              [
+                735,
+                206
+              ],
+              [
+                735,
+                231
+              ],
+              [
+                1999,
+                231
+              ],
+              [
+                1999,
+                73
+              ],
+              [
+                2041,
+                73
+              ]
+            ],
+            "labelAt": [
+              1378,
+              256
+            ]
+          },
+          "edg_processingCompleted": {
+            "points": [
+              [
+                2181,
+                57
+              ],
+              [
+                2375,
+                57
+              ]
+            ],
+            "labelAt": [
+              2278,
+              69
+            ]
+          },
+          "edg_processingFailed": {
+            "points": [
+              [
+                2041,
+                57
+              ],
+              [
+                1989,
+                57
+              ],
+              [
+                1989,
+                159
+              ],
+              [
+                1461,
+                159
+              ]
+            ],
+            "labelAt": [
+              1603,
+              140
+            ]
+          }
+        }
+      }
+    }
+  }
+}

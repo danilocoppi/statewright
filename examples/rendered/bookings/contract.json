@@ -1,0 +1,343 @@
+{
+  "contract": "1",
+  "flows": [
+    {
+      "edges": [
+        {
+          "from": "nod_which",
+          "id": "edg_confirmedSendAnApology",
+          "kind": "false",
+          "to": "nod_sorry"
+        },
+        {
+          "from": "nod_which",
+          "id": "edg_confirmedSendTheConfirmation",
+          "kind": "true",
+          "to": "nod_welcome"
+        },
+        {
+          "from": "nod_sorry",
+          "id": "edg_sendAnApologyGuestTold",
+          "to": "nod_sent"
+        },
+        {
+          "from": "nod_welcome",
+          "id": "edg_sendTheConfirmationGuestTold",
+          "to": "nod_sent"
+        },
+        {
+          "from": "nod_start",
+          "id": "edg_startConfirmed",
+          "to": "nod_which"
+        }
+      ],
+      "id": "cnv_textGuest",
+      "name": "Text the guest",
+      "owner": "nod_notifier",
+      "steps": [
+        {
+          "id": "nod_sent",
+          "kind": "end",
+          "name": "guest told"
+        },
+        {
+          "endpoint": "POST /messages",
+          "id": "nod_sorry",
+          "kind": "call",
+          "name": "send an apology"
+        },
+        {
+          "id": "nod_start",
+          "kind": "start"
+        },
+        {
+          "endpoint": "POST /messages",
+          "id": "nod_welcome",
+          "kind": "call",
+          "name": "send the confirmation"
+        },
+        {
+          "condition": {
+            "expr": {
+              "==": [
+                {
+                  "var": "vars.input.event"
+                },
+                "booking.confirmed"
+              ]
+            },
+            "text": "the restaurant confirmed the booking"
+          },
+          "id": "nod_which",
+          "kind": "if",
+          "name": "confirmed?"
+        }
+      ]
+    }
+  ],
+  "machines": [
+    {
+      "completeness": "complete",
+      "id": "cnv_booking",
+      "name": "Booking lifecycle",
+      "owner": "nod_bookingApi",
+      "stage": "target",
+      "starts": [
+        {
+          "by": "Guest",
+          "id": "nod_book",
+          "kind": "entry",
+          "name": "POST /bookings",
+          "to": "requested",
+          "via": "POST /bookings"
+        }
+      ],
+      "states": [
+        {
+          "id": "nod_confirmed",
+          "name": "confirmed"
+        },
+        {
+          "final": true,
+          "id": "nod_declined",
+          "name": "declined",
+          "outcome": "failure"
+        },
+        {
+          "final": true,
+          "id": "nod_noShow",
+          "name": "no-show",
+          "outcome": "stopped"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_requested",
+          "name": "requested"
+        },
+        {
+          "final": true,
+          "id": "nod_seated",
+          "name": "seated",
+          "outcome": "success"
+        }
+      ],
+      "subject": "booking.status",
+      "transitions": [
+        {
+          "after": {
+            "duration": "PT30M",
+            "timer": "grace period"
+          },
+          "from": "confirmed",
+          "id": "edg_confirmedNoShow",
+          "intent": "failure",
+          "to": "no-show"
+        },
+        {
+          "from": "confirmed",
+          "id": "edg_confirmedSeated",
+          "intent": "happy",
+          "on": [
+            "guest.arrived"
+          ],
+          "to": "seated"
+        },
+        {
+          "from": "entry:nod_book",
+          "id": "edg_postBookingsRequested",
+          "to": "requested"
+        },
+        {
+          "from": "requested",
+          "id": "edg_requestedConfirmed",
+          "intent": "happy",
+          "on": [
+            "booking.confirmed"
+          ],
+          "to": "confirmed"
+        },
+        {
+          "from": "requested",
+          "id": "edg_requestedDeclined",
+          "intent": "failure",
+          "on": [
+            "booking.declined"
+          ],
+          "to": "declined"
+        }
+      ]
+    }
+  ],
+  "source": {
+    "content": "b201358730d4c8d1e3a61f6e4c0abbe597bac03cca45c4c84ef94effa7c877f5",
+    "format": "1.1",
+    "name": "Bookings",
+    "project": "prj_bookings"
+  },
+  "stale": [],
+  "vectors": [
+    {
+      "id": "scn_aBookingIsDeclined",
+      "kind": "machine",
+      "level": "cnv_booking",
+      "name": "A booking is declined",
+      "start": {
+        "at": "2026-01-09T19:00:00Z",
+        "entry": "POST /bookings",
+        "expect": {
+          "active": [
+            "requested"
+          ]
+        },
+        "fired": [
+          "edg_postBookingsRequested"
+        ]
+      },
+      "steps": [
+        {
+          "do": {
+            "event": "booking.declined"
+          },
+          "expect": {
+            "active": [
+              "declined"
+            ],
+            "ended": "done"
+          },
+          "fired": [
+            "edg_requestedDeclined"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scn_aConfirmedGuestIsSeated",
+      "kind": "machine",
+      "level": "cnv_booking",
+      "name": "A confirmed guest is seated",
+      "start": {
+        "at": "2026-01-09T19:00:00Z",
+        "entry": "POST /bookings",
+        "expect": {
+          "active": [
+            "requested"
+          ]
+        },
+        "fired": [
+          "edg_postBookingsRequested"
+        ]
+      },
+      "steps": [
+        {
+          "do": {
+            "event": "booking.confirmed"
+          },
+          "expect": {
+            "active": [
+              "confirmed"
+            ]
+          },
+          "fired": [
+            "edg_requestedConfirmed"
+          ]
+        },
+        {
+          "do": {
+            "event": "guest.arrived"
+          },
+          "expect": {
+            "active": [
+              "seated"
+            ],
+            "ended": "done"
+          },
+          "fired": [
+            "edg_confirmedSeated"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scn_aGuestDoesNotCome",
+      "kind": "machine",
+      "level": "cnv_booking",
+      "name": "A guest does not come",
+      "start": {
+        "at": "2026-01-09T19:00:00Z",
+        "entry": "POST /bookings",
+        "expect": {
+          "active": [
+            "requested"
+          ]
+        },
+        "fired": [
+          "edg_postBookingsRequested"
+        ]
+      },
+      "steps": [
+        {
+          "do": {
+            "event": "booking.confirmed"
+          },
+          "expect": {
+            "active": [
+              "confirmed"
+            ]
+          },
+          "fired": [
+            "edg_requestedConfirmed"
+          ]
+        },
+        {
+          "do": {
+            "until": "2026-01-09T19:30:00Z",
+            "wait": "next"
+          },
+          "expect": {
+            "active": [
+              "no-show"
+            ],
+            "ended": "done"
+          },
+          "fired": [
+            "edg_confirmedNoShow"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scn_theGuestIsToldItIsConfirmed",
+      "kind": "flow",
+      "level": "cnv_textGuest",
+      "name": "The guest is told it is confirmed",
+      "start": {
+        "at": "2026-01-09T19:00:00Z",
+        "expect": {
+          "active": [],
+          "ended": "success"
+        },
+        "input": {
+          "event": "booking.confirmed"
+        }
+      },
+      "steps": []
+    },
+    {
+      "id": "scn_theGuestIsToldItIsDeclined",
+      "kind": "flow",
+      "level": "cnv_textGuest",
+      "name": "The guest is told it is declined",
+      "start": {
+        "at": "2026-01-09T19:00:00Z",
+        "expect": {
+          "active": [],
+          "ended": "success"
+        },
+        "input": {
+          "event": "booking.declined"
+        }
+      },
+      "steps": []
+    }
+  ]
+}

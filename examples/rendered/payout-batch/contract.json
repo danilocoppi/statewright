@@ -1,0 +1,440 @@
+{
+  "contract": "1",
+  "flows": [
+    {
+      "edges": [
+        {
+          "from": "nod_count",
+          "id": "edg_countFlag",
+          "to": "nod_flag"
+        },
+        {
+          "from": "nod_flag",
+          "id": "edg_flagFlagged",
+          "to": "nod_flagged"
+        },
+        {
+          "from": "nod_manual",
+          "id": "edg_manualPaid",
+          "to": "nod_onePaid"
+        },
+        {
+          "from": "nod_oneStart",
+          "id": "edg_oneStartRail",
+          "to": "nod_rail"
+        },
+        {
+          "from": "nod_pix",
+          "id": "edg_pixPaid",
+          "to": "nod_onePaid"
+        },
+        {
+          "from": "nod_pix",
+          "id": "edg_pixRefused",
+          "kind": "error",
+          "to": "nod_count"
+        },
+        {
+          "from": "nod_rail",
+          "id": "edg_railManual",
+          "kind": "default",
+          "to": "nod_manual"
+        },
+        {
+          "case": "pix",
+          "from": "nod_rail",
+          "id": "edg_railPix",
+          "kind": "case",
+          "to": "nod_pix"
+        },
+        {
+          "case": "ted",
+          "from": "nod_rail",
+          "id": "edg_railTed",
+          "kind": "case",
+          "to": "nod_ted"
+        },
+        {
+          "from": "nod_ted",
+          "id": "edg_tedPaid",
+          "to": "nod_onePaid"
+        },
+        {
+          "from": "nod_ted",
+          "id": "edg_tedRefused",
+          "kind": "error",
+          "to": "nod_count"
+        }
+      ],
+      "id": "cnv_payOne",
+      "name": "Pay one payout",
+      "owner": "nod_each",
+      "steps": [
+        {
+          "id": "nod_count",
+          "kind": "assign",
+          "name": "count it as flagged",
+          "set": {
+            "vars.flagged": {
+              "+": [
+                {
+                  "var": "vars.flagged"
+                },
+                1
+              ]
+            }
+          }
+        },
+        {
+          "action": "Flag a payout",
+          "args": {
+            "payout": {
+              "var": "vars.payout.id"
+            }
+          },
+          "id": "nod_flag",
+          "kind": "action",
+          "name": "flag it"
+        },
+        {
+          "id": "nod_flagged",
+          "kind": "end",
+          "name": "flagged"
+        },
+        {
+          "action": "Review a payout by hand",
+          "args": {
+            "payout": {
+              "var": "vars.payout.id"
+            }
+          },
+          "id": "nod_manual",
+          "kind": "action",
+          "name": "review it by hand"
+        },
+        {
+          "id": "nod_onePaid",
+          "kind": "end",
+          "name": "paid"
+        },
+        {
+          "id": "nod_oneStart",
+          "kind": "start"
+        },
+        {
+          "endpoint": "POST /pix/transfers",
+          "id": "nod_pix",
+          "kind": "call",
+          "name": "send a Pix"
+        },
+        {
+          "id": "nod_rail",
+          "kind": "switch",
+          "name": "which rail?",
+          "on": {
+            "var": "vars.payout.rail"
+          }
+        },
+        {
+          "endpoint": "POST /ted/transfers",
+          "id": "nod_ted",
+          "kind": "call",
+          "name": "send a TED"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_announce",
+          "id": "edg_announceBoth",
+          "to": "nod_both"
+        },
+        {
+          "from": "nod_book",
+          "id": "edg_bookBoth",
+          "to": "nod_both"
+        },
+        {
+          "from": "nod_both",
+          "id": "edg_bothConfirm",
+          "to": "nod_confirm"
+        },
+        {
+          "from": "nod_check",
+          "id": "edg_checkPaid",
+          "kind": "true",
+          "to": "nod_paid"
+        },
+        {
+          "from": "nod_check",
+          "id": "edg_checkReview",
+          "kind": "false",
+          "to": "nod_review"
+        },
+        {
+          "from": "nod_close",
+          "id": "edg_closeAnnounce",
+          "to": "nod_announce"
+        },
+        {
+          "from": "nod_close",
+          "id": "edg_closeBook",
+          "to": "nod_book"
+        },
+        {
+          "from": "nod_confirm",
+          "id": "edg_confirmCheck",
+          "to": "nod_check"
+        },
+        {
+          "from": "nod_each",
+          "id": "edg_eachClose",
+          "to": "nod_close"
+        },
+        {
+          "from": "nod_start",
+          "id": "edg_startTotal",
+          "to": "nod_total"
+        },
+        {
+          "from": "nod_total",
+          "id": "edg_totalEach",
+          "to": "nod_each"
+        }
+      ],
+      "id": "cnv_payOutBatch",
+      "name": "Pay out a batch",
+      "owner": "act_payOutBatch",
+      "steps": [
+        {
+          "event": "batch.paid",
+          "id": "nod_announce",
+          "kind": "emit",
+          "name": "announce it",
+          "payload": {
+            "flagged": {
+              "var": "vars.flagged"
+            },
+            "total": {
+              "var": "vars.total"
+            }
+          }
+        },
+        {
+          "endpoint": "POST /ledger/batches",
+          "id": "nod_book",
+          "kind": "call",
+          "name": "book the batch"
+        },
+        {
+          "id": "nod_both",
+          "kind": "join",
+          "name": "both done"
+        },
+        {
+          "condition": {
+            "expr": {
+              "==": [
+                {
+                  "var": "vars.flagged"
+                },
+                0
+              ]
+            },
+            "text": "no payout was flagged"
+          },
+          "id": "nod_check",
+          "kind": "if",
+          "name": "all paid?"
+        },
+        {
+          "id": "nod_close",
+          "kind": "parallel",
+          "name": "close the batch"
+        },
+        {
+          "after": {
+            "duration": "PT4H",
+            "timer": "confirmation window"
+          },
+          "id": "nod_confirm",
+          "kind": "wait",
+          "name": "the bank confirms",
+          "on": [
+            "bank.confirmed"
+          ]
+        },
+        {
+          "as": "payout",
+          "body": {
+            "flow": "cnv_payOne"
+          },
+          "id": "nod_each",
+          "items": {
+            "var": "vars.input.payouts"
+          },
+          "kind": "forEach",
+          "name": "each payout"
+        },
+        {
+          "id": "nod_paid",
+          "kind": "end",
+          "name": "all paid"
+        },
+        {
+          "id": "nod_review",
+          "kind": "end",
+          "name": "some to review",
+          "outcome": "failure"
+        },
+        {
+          "id": "nod_start",
+          "kind": "start"
+        },
+        {
+          "id": "nod_total",
+          "kind": "assign",
+          "name": "add up the batch",
+          "set": {
+            "vars.flagged": 0,
+            "vars.total": {
+              "reduce": [
+                {
+                  "var": "vars.input.payouts"
+                },
+                {
+                  "+": [
+                    {
+                      "var": "current.amount"
+                    },
+                    {
+                      "var": "accumulator"
+                    }
+                  ]
+                },
+                0
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "machines": [
+    {
+      "completeness": "partial",
+      "id": "cnv_batch",
+      "name": "Payout batch",
+      "owner": null,
+      "starts": [
+        {
+          "id": "nod_init",
+          "kind": "initial",
+          "to": "queued"
+        }
+      ],
+      "states": [
+        {
+          "id": "nod_paying",
+          "name": "paying out",
+          "onEntry": [
+            "Pay out a batch"
+          ]
+        },
+        {
+          "id": "nod_queued",
+          "name": "queued"
+        },
+        {
+          "final": true,
+          "id": "nod_settled",
+          "name": "settled"
+        }
+      ],
+      "transitions": [
+        {
+          "from": "initial:nod_init",
+          "id": "edg_initQueued",
+          "to": "queued"
+        },
+        {
+          "from": "paying out",
+          "id": "edg_payingSettled",
+          "on": [
+            "bank.confirmed"
+          ],
+          "to": "settled"
+        },
+        {
+          "from": "queued",
+          "id": "edg_queuedPaying",
+          "on": [
+            "batch.approved"
+          ],
+          "to": "paying out"
+        }
+      ]
+    }
+  ],
+  "source": {
+    "content": "9594e210ba9c00c67035b9fd241574b2743b3e01b6c4f4c7aed9fba47eecd7ee",
+    "format": "1.1",
+    "name": "Payout batch",
+    "project": "prj_payoutBatch"
+  },
+  "stale": [],
+  "vectors": [
+    {
+      "id": "scn_aPayoutIsRefused",
+      "kind": "flow",
+      "level": "cnv_payOutBatch",
+      "name": "A payout is refused",
+      "start": {
+        "at": "2026-01-05T09:00:00Z",
+        "expect": {
+          "active": [
+            "the bank confirms"
+          ]
+        },
+        "given": [
+          {
+            "at": "each payout/send a Pix",
+            "kind": "outcome",
+            "value": "ok"
+          },
+          {
+            "at": "each payout/send a TED",
+            "kind": "outcome",
+            "value": "error"
+          }
+        ],
+        "input": {
+          "payouts": [
+            {
+              "amount": 120,
+              "id": "pay_1",
+              "rail": "pix"
+            },
+            {
+              "amount": 80,
+              "id": "pay_2",
+              "rail": "ted"
+            }
+          ]
+        }
+      },
+      "steps": [
+        {
+          "do": {
+            "event": "bank.confirmed"
+          },
+          "expect": {
+            "active": [],
+            "ended": "failure"
+          }
+        }
+      ]
+    }
+  ]
+}

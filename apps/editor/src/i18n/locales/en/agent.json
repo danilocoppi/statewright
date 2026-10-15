@@ -1,0 +1,55 @@
+{
+  "change": {
+    "by": "AI · {{agent}}",
+    "anAgent": "an agent",
+    "undo": "Undo",
+    "show": "Show",
+    "change": "{{label}} (AI)",
+    "undoChange": "Undo {{label}} (AI)",
+    "redoChange": "Redo {{label}} (AI)",
+    "undoHeld": "Stop simulating to undo this change.",
+    "undoReadOnly": "This tab only reads the project: undo the change in the tab that edits it."
+  },
+  "point": {
+    "by": "AI"
+  },
+  "pairing": {
+    "menu": "Connect an AI…",
+    "title": "Connect an AI",
+    "description": "Give this code to your AI agent. It pairs with this tab through statewright mcp, running on your computer.",
+    "code": "Pairing code",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyText": "Pair with my Statewright Editor: the code is {{code}}",
+    "valid": "Valid for 5 minutes.",
+    "waiting": "Waiting for the agent…",
+    "connected": "Connected to {{agent}}",
+    "unreachable": "Nothing answers at {{address}}.",
+    "unreachableHint": "Set up statewright mcp in your agent (npx statewright mcp), then try again.",
+    "refused": "The server at {{address}} does not accept this Editor.",
+    "refusedHint": "Start it with --origin {{origin}}, then try again.",
+    "invalid": "{{address}} is not on this computer.",
+    "invalidHint": "Type 127.0.0.1 or localhost with the port the server gives.",
+    "expired": "This code expired before an agent used it.",
+    "address": "Server address",
+    "allows": "The agent reads and changes this project. Its changes appear in the history as AI, and you can undo them.",
+    "network": "Your browser may ask to let this page reach your local network: allow it, so the Editor can reach the server on your computer.",
+    "tryAgain": "Try again",
+    "newCode": "New code",
+    "done": "Done",
+    "disconnect": "Disconnect",
+    "pairedWith": "Paired with {{agent}}",
+    "handover": {
+      "title": "Hand over to another tab?",
+      "description": "{{agent}} asks to work in another Statewright tab. This tab will stop receiving its calls.",
+      "keep": "Keep here",
+      "give": "Hand over"
+    },
+    "ended": {
+      "agent": "{{agent}} disconnected.",
+      "replaced": "{{agent}} now works in another tab.",
+      "server": "The server stopped: {{agent}} is disconnected.",
+      "lost": "The connection to {{agent}} was lost."
+    }
+  }
+}

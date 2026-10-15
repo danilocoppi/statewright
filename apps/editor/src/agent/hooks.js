@@ -1,0 +1,72 @@
+// The hooks agents testing the Editor find it by (AI interface spec §7.5): `data-testid` values that do not change with
+// the interface's language, named `<area>-<thing>`. Each is shown on one screen or in one state, and is there once
+// (`unique`) or once per row (`unique: false`). The guide lists them (plan A4); e2e/hooks.spec.js walks the screens and
+// checks each.
+
+/** @typedef {{ id: string, where: string, unique: boolean }} Hook */
+
+/** @type {Hook[]} */
+export const HOOKS = [
+  { id: "projects-list", where: "the Projects screen, once a project is kept", unique: true },
+  { id: "projects-card", where: "each project of the Projects screen", unique: false },
+  { id: "projects-new", where: "the Projects screen: New project", unique: true },
+  { id: "projects-open-file", where: "the Projects screen: Open file…", unique: true },
+  { id: "project-island", where: "the editor: the project's island", unique: true },
+  { id: "project-menu", where: "the editor: the project menu's button", unique: true },
+  { id: "project-menu-list", where: "the project menu, open", unique: true },
+  { id: "project-menu-rename", where: "the project menu: Rename…", unique: true },
+  { id: "project-menu-levels", where: "the project menu: Levels…", unique: true },
+  { id: "project-menu-catalog", where: "the project menu: Catalog…", unique: true },
+  { id: "project-menu-save", where: "the project menu: Save to file", unique: true },
+  { id: "project-menu-undo", where: "the project menu: Undo", unique: true },
+  { id: "project-menu-redo", where: "the project menu: Redo", unique: true },
+  { id: "project-menu-connect", where: "the project menu: Connect an AI…", unique: true },
+  {
+    id: "levels-breadcrumb",
+    where: "the editor: the levels down to the one shown (windows from 900 px)",
+    unique: true
+  },
+  { id: "actions-island", where: "the editor: the actions' island", unique: true },
+  { id: "actions-problems", where: "the actions: Problems", unique: true },
+  { id: "actions-undo", where: "the actions: Undo", unique: true },
+  { id: "actions-redo", where: "the actions: Redo", unique: true },
+  { id: "actions-agent", where: "the actions, while an agent is paired: its name", unique: true },
+  { id: "actions-disconnect", where: "the actions, while an agent is paired: Disconnect", unique: true },
+  { id: "actions-layout", where: "the actions: Auto-layout", unique: true },
+  { id: "actions-simulate", where: "the actions: Simulate", unique: true },
+  { id: "actions-export", where: "the actions: the Export menu's button", unique: true },
+  { id: "actions-export-list", where: "the Export menu, open", unique: true },
+  { id: "actions-export-svg", where: "the Export menu: SVG", unique: true },
+  { id: "actions-export-png", where: "the Export menu: PNG", unique: true },
+  { id: "actions-export-markdown", where: "the Export menu: Markdown", unique: true },
+  { id: "actions-export-documentPage", where: "the Export menu: Documentation (HTML)", unique: true },
+  { id: "actions-export-aiPack", where: "the Export menu: AI pack", unique: true },
+  { id: "actions-export-contract", where: "the Export menu: Contract", unique: true },
+  { id: "actions-export-scenarioPage", where: "the Export menu: Scenario page…", unique: true },
+  { id: "tools-dock", where: "the editor: the tools", unique: true },
+  { id: "zoom-island", where: "the editor: zoom", unique: true },
+  { id: "canvas", where: "the editor: the level shown", unique: true },
+  { id: "canvas-point", where: "the canvas: an agent's note (view.point)", unique: true },
+  { id: "canvas-finding", where: "the canvas: a badge's findings, the pointer resting on it", unique: true },
+  { id: "inspector", where: "the editor: the inspector, with something selected", unique: true },
+  { id: "inspector-field", where: "each field of the inspector", unique: false },
+  { id: "problems-panel", where: "the editor: Problems, open", unique: true },
+  { id: "problems-row", where: "each Problem listed", unique: false },
+  { id: "catalog-sheet", where: "the catalog, open", unique: true },
+  { id: "palette", where: "Search and commands (⌘K), open", unique: true },
+  { id: "levels-dialog", where: "Levels…, open", unique: true },
+  { id: "rename-dialog", where: "Rename…, open", unique: true },
+  { id: "connect-dialog", where: "Connect an AI…, open", unique: true },
+  { id: "connect-code", where: "Connect an AI…: the code to give the agent", unique: true },
+  { id: "connect-status", where: "Connect an AI…: waiting, connected, or why it cannot pair", unique: true },
+  { id: "connect-address", where: "Connect an AI…: the address of the agent's server", unique: true },
+  { id: "handover-dialog", where: "another tab asks to take over the agent, open", unique: true },
+  { id: "simulation-panel", where: "the simulation panel", unique: true },
+  { id: "simulation-move", where: "each move of the run shown", unique: false },
+  { id: "simulation-step", where: "each step of the run", unique: false },
+  { id: "simulation-question", where: "the question the run asks", unique: true },
+  { id: "simulation-stop", where: "the actions while running: Stop", unique: true },
+  { id: "stage", where: "a scenario presented", unique: true },
+  { id: "stage-card", where: "the stage: the step's card", unique: true },
+  { id: "toast", where: "each notice at the bottom", unique: false }
+];

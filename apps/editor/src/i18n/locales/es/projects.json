@@ -1,0 +1,63 @@
+{
+  "title": "Proyectos",
+  "lede": "Todo queda en este navegador. No se sube nada.",
+  "actions": {
+    "openFile": "Abrir archivo…",
+    "newProject": "Nuevo proyecto",
+    "open": "Abrir",
+    "rename": "Cambiar nombre…",
+    "saveToFile": "Guardar en archivo",
+    "duplicate": "Duplicar",
+    "delete": "Eliminar",
+    "more": "Más acciones para {{name}}"
+  },
+  "edited": "Editado {{when}}",
+  "stage": {
+    "target": "Objetivo",
+    "as-built": "Tal como está",
+    "reference": "Referencia"
+  },
+  "empty": "Aún no hay proyectos. Empieza uno abajo, abre un archivo o prueba un ejemplo.",
+  "start": {
+    "title": "Empezar algo nuevo",
+    "system": "Sistema",
+    "systemHint": "Servicios, colas, partes",
+    "machine": "Máquina de estados",
+    "machineHint": "Estados y transiciones",
+    "flow": "Flujo",
+    "flowHint": "Pasos, if, while, switch",
+    "drop": "Suelta un .statewright.json",
+    "dropHint": "o haz clic para abrir un archivo"
+  },
+  "examples": {
+    "title": "Ejemplos",
+    "payments": "Payments",
+    "paymentsHint": "Arquitectura, ciclo de vida y la máquina de un proveedor",
+    "getPaid": "Get paid (as built)",
+    "getPaidHint": "Una tabla de transiciones, auditada desde el código",
+    "payoutBatch": "Payout batch",
+    "payoutBatchHint": "Una máquina cuya acción implementa un flujo, con un escenario"
+  },
+  "new": {
+    "title": "Nuevo proyecto",
+    "name": "Nombre",
+    "namePlaceholder": "Checkout",
+    "kind": "Empieza como",
+    "create": "Crear proyecto",
+    "firstState": "Primer estado",
+    "end": "Listo"
+  },
+  "deleted": "{{name}} eliminado",
+  "undo": "Deshacer",
+  "copyName": "{{name}} (copia)",
+  "duplicated": "Duplicado como {{name}}",
+  "storage": "Este navegador no puede guardar proyectos. Usa Guardar en archivo para no perder tu trabajo.",
+  "storeFailed": "No se pudo guardar el proyecto en este navegador ({{reason}}). Elimina los proyectos que ya no necesites y vuelve a intentarlo.",
+  "drop": {
+    "title": "Suelta para abrir",
+    "hint": "Un documento de Statewright (.statewright.json)"
+  },
+  "emptyGuide": "Leer cómo funciona Statewright",
+  "unreadable": "La copia de {{name}} en este navegador no se puede leer. Abre el archivo del proyecto para reemplazarla.",
+  "openElsewhere": "{{name}} está abierto en otra pestaña. Cámbiale el nombre allí."
+}

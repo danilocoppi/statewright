@@ -1,0 +1,53 @@
+{
+  "name": "statewright",
+  "version": "0.1.5",
+  "description": "Layered system specifications (architecture, state machines, flows) as one signed JSON document.",
+  "license": "MIT",
+  "homepage": "https://statewright.cpss.com.br",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danilocoppi/statewright.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/danilocoppi/statewright/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "exports": {
+    ".": "./src/index.js",
+    "./layout": "./src/layout/index.js",
+    "./render": "./src/render/index.js",
+    "./simulate": "./src/simulate/index.js",
+    "./audit": "./src/audit/index.js",
+    "./agent": "./src/agent/index.js",
+    "./contract": "./src/contract/index.js",
+    "./conform": "./src/conform/index.js",
+    "./runtime": "./src/runtime/index.js",
+    "./schema.json": "./schema/1.1.json"
+  },
+  "bin": {
+    "statewright": "src/cli/bin.js"
+  },
+  "files": [
+    "src",
+    "schema",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "build:schema": "node scripts/build-schema.js",
+    "budgets": "vitest run --config vitest.budgets.config.js"
+  },
+  "dependencies": {
+    "elkjs": "^0.12.0",
+    "immer": "^11.1.21",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0",
+    "vitest": "^5.0.3"
+  }
+}

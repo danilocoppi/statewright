@@ -1,0 +1,292 @@
+{
+  "contract": "1",
+  "flows": [],
+  "machines": [
+    {
+      "completeness": "partial",
+      "id": "cnv_open",
+      "name": "Open",
+      "owner": "nod_open",
+      "stage": "as-built",
+      "starts": [
+        {
+          "id": "nod_openStart",
+          "kind": "initial",
+          "to": "created"
+        },
+        {
+          "id": "nod_otherTypes",
+          "kind": "entry",
+          "name": "create (other types)",
+          "to": "awaiting_payment"
+        }
+      ],
+      "states": [
+        {
+          "category": "waiting",
+          "id": "nod_awaitingPayment",
+          "name": "awaiting_payment",
+          "statuses": [
+            "awaiting_payment"
+          ]
+        },
+        {
+          "category": "waiting",
+          "id": "nod_created",
+          "name": "created",
+          "statuses": [
+            "created"
+          ]
+        },
+        {
+          "id": "nod_underpaid",
+          "name": "underpaid"
+        }
+      ],
+      "subject": "transaction.status",
+      "transitions": [
+        {
+          "from": "entry:nod_otherTypes",
+          "id": "edg_createOtherTypesAwaitingPayment",
+          "to": "awaiting_payment"
+        },
+        {
+          "from": "created",
+          "id": "edg_createdAwaitingPayment",
+          "intent": "happy",
+          "on": [
+            "payer.locked"
+          ],
+          "to": "awaiting_payment"
+        },
+        {
+          "from": "initial:nod_openStart",
+          "id": "edg_initialCreated",
+          "to": "created"
+        }
+      ],
+      "within": {
+        "machine": "cnv_transaction",
+        "state": "open"
+      }
+    },
+    {
+      "completeness": "partial",
+      "id": "cnv_transaction",
+      "name": "Transaction",
+      "owner": null,
+      "stage": "as-built",
+      "starts": [
+        {
+          "id": "nod_start",
+          "kind": "initial",
+          "to": "open"
+        }
+      ],
+      "states": [
+        {
+          "final": true,
+          "id": "nod_cancelled",
+          "name": "cancelled",
+          "outcome": "stopped",
+          "statuses": [
+            "cancelled"
+          ]
+        },
+        {
+          "final": true,
+          "id": "nod_completed",
+          "name": "completed",
+          "outcome": "success",
+          "statuses": [
+            "completed"
+          ]
+        },
+        {
+          "id": "nod_expired",
+          "name": "expired",
+          "outcome": "stopped",
+          "statuses": [
+            "expired"
+          ]
+        },
+        {
+          "final": true,
+          "id": "nod_failed",
+          "name": "failed",
+          "outcome": "failure",
+          "statuses": [
+            "failed"
+          ]
+        },
+        {
+          "id": "nod_open",
+          "inner": {
+            "machine": "cnv_open"
+          },
+          "name": "open"
+        },
+        {
+          "id": "nod_processing",
+          "name": "processing",
+          "statuses": [
+            "processing"
+          ]
+        }
+      ],
+      "subject": "transaction.status",
+      "transitions": [
+        {
+          "by": "Admin",
+          "from": "expired",
+          "id": "edg_expiredCancelled",
+          "on": [
+            "transaction.cancel"
+          ],
+          "to": "cancelled"
+        },
+        {
+          "by": "Admin",
+          "from": "expired",
+          "id": "edg_expiredProcessing",
+          "on": [
+            "custody.override"
+          ],
+          "to": "processing"
+        },
+        {
+          "from": "initial:nod_start",
+          "id": "edg_initialOpen",
+          "to": "open"
+        },
+        {
+          "by": "Admin",
+          "from": "open",
+          "id": "edg_openCancelled",
+          "on": [
+            "transaction.cancel"
+          ],
+          "to": "cancelled"
+        },
+        {
+          "after": {
+            "duration": "PT10M",
+            "timer": "deadline sweep"
+          },
+          "from": "open",
+          "id": "edg_openExpired",
+          "to": "expired"
+        },
+        {
+          "from": "open",
+          "id": "edg_openFailed",
+          "intent": "failure",
+          "on": [
+            "psp.paymentFailed",
+            "signing.refused"
+          ],
+          "to": "failed"
+        },
+        {
+          "from": "open",
+          "id": "edg_openProcessing",
+          "intent": "happy",
+          "on": [
+            "psp.received",
+            "deposit.settles",
+            "admin.trigger"
+          ],
+          "to": "processing"
+        },
+        {
+          "from": "processing",
+          "id": "edg_processingCompleted",
+          "intent": "happy",
+          "on": [
+            "settled"
+          ],
+          "to": "completed"
+        },
+        {
+          "from": "processing",
+          "id": "edg_processingFailed",
+          "intent": "failure",
+          "on": [
+            "admin.markFailed",
+            "psp.paymentFailed"
+          ],
+          "to": "failed"
+        }
+      ]
+    }
+  ],
+  "source": {
+    "content": "b782a8ca926287e82c18ffb461cee27f7e3921490b6e012b127ab1c3033912f2",
+    "format": "1.1",
+    "name": "Get paid (as built)",
+    "project": "prj_getPaid"
+  },
+  "stale": [],
+  "vectors": [
+    {
+      "id": "scn_paidBeforeTheSweep",
+      "kind": "machine",
+      "level": "cnv_transaction",
+      "name": "Paid before the deadline sweep",
+      "start": {
+        "at": "2026-01-05T09:00:00Z",
+        "expect": {
+          "active": [
+            "open/created"
+          ]
+        },
+        "fired": [
+          "edg_initialOpen",
+          "edg_initialCreated"
+        ]
+      },
+      "steps": [
+        {
+          "do": {
+            "event": "payer.locked"
+          },
+          "expect": {
+            "active": [
+              "open/awaiting_payment"
+            ]
+          },
+          "fired": [
+            "edg_createdAwaitingPayment"
+          ]
+        },
+        {
+          "do": {
+            "event": "psp.received"
+          },
+          "expect": {
+            "active": [
+              "processing"
+            ]
+          },
+          "fired": [
+            "edg_openProcessing"
+          ]
+        },
+        {
+          "do": {
+            "event": "settled"
+          },
+          "expect": {
+            "active": [
+              "completed"
+            ],
+            "ended": "done"
+          },
+          "fired": [
+            "edg_processingCompleted"
+          ]
+        }
+      ]
+    }
+  ]
+}
