@@ -83,7 +83,11 @@
     "change": "Cambió: {{label}}",
     "undo": "Deshacer",
     "show": "Ver",
-    "empty": "Escribe a {{agent}}: lo que selecciones va con tu mensaje."
+    "empty": "Escribe a {{agent}}: lo que selecciones va con tu mensaje.",
+    "notSent": {
+      "old": "No enviado: el servidor statewright de la IA es más antiguo que este Editor y no recibe mensajes. Actualízalo (npm install -g statewright@latest), reinicia la sesión de la IA y vuelve a conectar.",
+      "other": "No enviado: el servidor de la IA no respondió. Tu texto volvió al campo; inténtalo de nuevo."
+    }
   },
   "marks": {
     "tools": "Herramientas para marcar",

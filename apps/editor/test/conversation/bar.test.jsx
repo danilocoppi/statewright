@@ -136,6 +136,25 @@ describe("the conversation bar (collaboration spec §4)", () => {
     expect(conversationStore.getState().lines).toMatchObject([{ kind: "person", text: "lost?", state: "failed" }]);
   });
 
+  it("says, beside the field, why a message was not sent", async () => {
+    const user = userEvent.setup();
+    connection.send.mockImplementation(async () => ({ error: "unreachable" }));
+    await user.type(field(), "lost?{Enter}");
+    await vi.waitFor(() => expect(within(bar()).getByRole("alert").textContent).toMatch(/Not sent/));
+    connection.send.mockImplementation(async () => ({ id: "msg_1" }));
+    await user.type(field(), "{Enter}");
+    await vi.waitFor(() => expect(within(bar()).queryByRole("alert")).toBeNull());
+  });
+
+  it("says the AI's server is too old to take messages when it does not know them", async () => {
+    const user = userEvent.setup();
+    connection.send.mockImplementation(async () => ({ error: "refused (404)", status: 404 }));
+    await user.type(field(), "hello{Enter}");
+    await vi.waitFor(() =>
+      expect(within(bar()).getByRole("alert").textContent).toMatch(/older than this Editor.*statewright@latest/)
+    );
+  });
+
   it("sends a new selection even after the person left out the one before", async () => {
     const user = userEvent.setup();
     act(() => editorStore.getState().select(["nod_expiryClock"], "cnv_lifecycle"));

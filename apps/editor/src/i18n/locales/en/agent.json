@@ -83,7 +83,11 @@
     "change": "Changed: {{label}}",
     "undo": "Undo",
     "show": "Show",
-    "empty": "Write to {{agent}}: what you select goes with your message."
+    "empty": "Write to {{agent}}: what you select goes with your message.",
+    "notSent": {
+      "old": "Not sent: the AI's statewright server is older than this Editor and does not take messages. Update it (npm install -g statewright@latest), then restart the AI's session and pair again.",
+      "other": "Not sent: the AI's server did not answer. Your text is back in the field; try again."
+    }
   },
   "marks": {
     "tools": "Marking tools",

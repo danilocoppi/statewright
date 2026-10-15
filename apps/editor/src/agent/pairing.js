@@ -252,14 +252,15 @@ export function createPairing({
 
     /**
      * Write to the agent (collaboration spec §3.2): `{ text, context? }`, or `{ stop: true }`.
-     * @returns {Promise<{ id: string } | { error: string }>}
+     * @returns {Promise<{ id: string } | { error: string, status?: number }>}
+     *   `status`: the bridge's answer when it refused (404: a server older than the conversation).
      */
     async send(body) {
       const own = link;
       if (!own) return { error: "not paired" };
       try {
         const response = await post(own, "/messages", body);
-        if (response.status !== 202) return { error: `refused (${response.status})` };
+        if (response.status !== 202) return { error: `refused (${response.status})`, status: response.status };
         return { id: (await response.json()).id };
       } catch {
         return { error: "unreachable" };

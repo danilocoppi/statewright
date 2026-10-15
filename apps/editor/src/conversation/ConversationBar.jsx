@@ -302,6 +302,8 @@ export function ConversationBar({ onNavigate }) {
   // What the person left out of this message; the selection left out comes back once another is selected.
   const selectionKey = `${canvasId}:${(selection ?? []).join(",")}`;
   const [left, setLeft] = useState(() => ({ key: selectionKey, set: new Set() }));
+  // Why the last message was not sent, said beside the field until one is (the history may be closed).
+  const [notSent, setNotSent] = useState(null);
   const leave = useMemo(() => {
     const set = new Set(left.set);
     if (left.key !== selectionKey) set.delete("selection");
@@ -371,6 +373,11 @@ export function ConversationBar({ onNavigate }) {
     });
     const after = conversationStore.getState();
     after.update(key, answer.id ? { id: answer.id, state: "sent" } : { state: "failed" });
+    setNotSent(
+      answer.id ? null
+      : answer.status === 404 ? t("conversation.notSent.old")
+      : t("conversation.notSent.other")
+    );
     // Sent, its marks are cleared from the canvas; not sent, they stay, and the text comes back to the field.
     if (answer.id) marksStore.getState().forget(drawn);
     // Not sent: the text comes back, a quick request's action with it.
@@ -454,6 +461,12 @@ export function ConversationBar({ onNavigate }) {
         <ol className="px-2.5">
           <Line line={last} agent={agent} status={status} onNavigate={onNavigate} />
         </ol>
+      )}
+      {notSent && (
+        <p role="alert" className="flex items-start gap-1.5 px-2.5 pb-1.5 text-label text-danger">
+          <Icon name="alert" size={12} className="mt-0.5 shrink-0" />
+          {notSent}
+        </p>
       )}
       <div className="flex items-end gap-1.5">
         <span className="mb-0.5">

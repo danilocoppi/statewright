@@ -83,7 +83,11 @@
     "change": "Mudou: {{label}}",
     "undo": "Desfazer",
     "show": "Ver",
-    "empty": "Escreva para {{agent}}: o que você selecionar vai junto com a mensagem."
+    "empty": "Escreva para {{agent}}: o que você selecionar vai junto com a mensagem.",
+    "notSent": {
+      "old": "Não enviada: o servidor statewright da IA é mais antigo que este Editor e não recebe mensagens. Atualize-o (npm install -g statewright@latest), reinicie a sessão da IA e conecte de novo.",
+      "other": "Não enviada: o servidor da IA não respondeu. Seu texto voltou ao campo; tente de novo."
+    }
   },
   "marks": {
     "tools": "Ferramentas de marcação",
