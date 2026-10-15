@@ -46,17 +46,52 @@ export function Voice() {
     heard.lang = LANGUAGES[i18n.language] ?? i18n.language;
     heard.interimResults = true;
     heard.continuous = true;
-    const before = conversationStore.getState().draft;
-    const lead = before && !/\s$/.test(before) ? `${before} ` : before;
+    // Only what dictation adds is dictation's: the field's own text, and what the person types meanwhile, stay as
+    // they are; results already written before the person typed are not written again.
+    const after = text => (text && !/\s$/.test(text) ? `${text} ` : text);
+    let lead = after(conversationStore.getState().draft);
+    let written = null;
+    let from = 0;
+    let finals = 0;
+    let done = false;
+    // Sending (or clearing) the message ends dictation: nothing heard later is written.
+    const unsubscribe = conversationStore.subscribe((state, previous) => {
+      if (previous.draft && !state.draft) end();
+    });
+    const end = () => {
+      done = true;
+      unsubscribe();
+      heard.abort?.();
+      setListening(false);
+    };
     heard.onresult = event => {
-      const said = [...event.results].map(result => result[0].transcript).join("");
-      conversationStore.getState().setDraft(`${lead}${said}`.replace(/\s+/g, " "));
+      if (done) return;
+      const results = [...event.results];
+      const draft = conversationStore.getState().draft;
+      if (written !== null && draft !== written) {
+        lead = after(draft);
+        from = finals;
+      }
+      finals = results.findIndex(result => !result.isFinal);
+      if (finals < 0) finals = results.length;
+      const said = results
+        .slice(from)
+        .map(result => result[0].transcript)
+        .join("")
+        .replace(/\s+/g, " ")
+        .trimStart();
+      written = `${lead}${said}`;
+      conversationStore.getState().setDraft(written);
     };
     heard.onerror = event => {
       if (event.error === "not-allowed" || event.error === "service-not-allowed") setRefused(true);
+      unsubscribe();
       setListening(false);
     };
-    heard.onend = () => setListening(false);
+    heard.onend = () => {
+      unsubscribe();
+      setListening(false);
+    };
     recognition.current = heard;
     heard.start();
     setListening(true);

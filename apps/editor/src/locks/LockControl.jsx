@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 
 import { editorStore, useEditor } from "@/store/editor";
+import { toast } from "@/stores/toast";
 
 import { lockOf } from "./locked";
 
@@ -13,12 +14,14 @@ export function LockControl({ id }) {
   const { t } = useTranslation("inspector");
   const lock = useEditor(state => lockOf(state.doc, id));
   const readOnly = useEditor(state => state.readOnly);
-  const toggle = () =>
-    editorStore
+  const toggle = () => {
+    const result = editorStore
       .getState()
       .dispatch(lock ? [{ type: "lock.remove", args: { id: lock } }] : [{ type: "lock.add", args: { target: id } }], {
         label: lock ? t("lock.unlocked") : t("lock.locked")
       });
+    if (!result.ok) toast.error(t("lock.refused", { reason: result.error.message }));
+  };
   return (
     <label className="flex items-center gap-2 text-ui text-sub" data-testid="inspector-lock">
       <input type="checkbox" checked={Boolean(lock)} disabled={readOnly} onChange={toggle} />

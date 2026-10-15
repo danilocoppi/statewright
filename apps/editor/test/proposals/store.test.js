@@ -162,4 +162,26 @@ describe("proposals (collaboration spec §7)", () => {
     expect(apply({ commands: LATE })).toMatchObject({ proposed: "prp_2", forced: "locked" });
     expect(editorStore.getState().dispatch(LATE, { label: "Mine" }).ok).toBe(true);
   });
+
+  it("signs the agent's comments as the agent's, whatever it says", () => {
+    apply({
+      commands: [
+        {
+          type: "comment.add",
+          args: { id: "cmt_a", canvas: "cnv_expiryClock", target: "nod_paused", text: "Mine?", author: "person" }
+        }
+      ]
+    });
+    expect(editorStore.getState().doc.annotations.comments.cmt_a.thread[0]).toMatchObject({
+      author: "agent",
+      name: "claude-code"
+    });
+  });
+
+  it("does not arrange a level the person locked", async () => {
+    editorStore.getState().dispatch([{ type: "lock.add", args: { target: "cnv_expiryClock" } }], { label: "Lock" });
+    await expect(
+      editOperations["layout.arrange"]({ agent: "claude-code" }, { canvas: "cnv_expiryClock" })
+    ).rejects.toThrow(/locked/);
+  });
 });

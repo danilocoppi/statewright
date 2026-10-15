@@ -36,12 +36,35 @@ function placeOf(path) {
   return null;
 }
 
+/** What a batch moves or resizes (the layout): no change of meaning, but a change all the same to what is locked. */
+function movedBy(doc, preview, patches) {
+  const levels = new Set();
+  for (const { path } of patches) {
+    if (path[0] !== "layout" || (path.length > 1 && path[1] !== "canvases")) continue;
+    // A patch of the whole layout (or all its levels) may move anything on any level.
+    const all = [doc, preview].flatMap(each => Object.keys(each.layout?.canvases ?? {}));
+    for (const level of path[2] ? [path[2]] : all) levels.add(level);
+  }
+  const moved = [];
+  for (const level of levels) {
+    const was = doc.layout?.canvases?.[level] ?? {};
+    const is = preview.layout?.canvases?.[level] ?? {};
+    for (const kind of ["nodes", "edges", "notes"]) {
+      const ids = new Set([...Object.keys(was[kind] ?? {}), ...Object.keys(is[kind] ?? {})]);
+      for (const id of ids) {
+        if (JSON.stringify(was[kind]?.[id]) !== JSON.stringify(is[kind]?.[id])) moved.push(id);
+      }
+    }
+  }
+  return moved;
+}
+
 const valueAt = (doc, path) => path.reduce((value, key) => (value == null ? undefined : value[key]), doc);
 
 /**
  * @param {any} doc
  * @param {Array<{ type: string, args?: object }>} commands
- * @returns {{ ok: true, preview: any, added: Item[], removed: Item[], changed: Change[], levels: string[] } |
+ * @returns {{ ok: true, preview: any, added: Item[], removed: Item[], changed: Change[], moved: Item[], levels: string[] } |
  *   { ok: false, error: { code: string, message: string, details?: object, index?: number } }}
  */
 export function diffOf(doc, commands) {
@@ -86,8 +109,11 @@ export function diffOf(doc, commands) {
     });
   }
   const changed = [...fields].map(([id, own]) => ({ ...describe(preview, after, id), fields: [...own.values()] }));
+  const moved = movedBy(doc, preview, applied.patches)
+    .filter(id => after.has(id))
+    .map(id => describe(preview, after, id));
   const levels = [...new Set([...added, ...removed, ...changed].map(item => item.level).filter(Boolean))];
-  return { ok: true, preview, added, removed, changed, levels };
+  return { ok: true, preview, added, removed, changed, moved, levels };
 }
 
 /** Whether a batch removes anything that was there (spec §7: such a batch is always proposed). */

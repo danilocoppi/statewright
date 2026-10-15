@@ -504,6 +504,12 @@
     "replied": "Reply to a comment",
     "resolved": "Resolve a comment",
     "reopened": "Reopen a comment",
-    "removed": "Remove a comment"
+    "removed": "Remove a comment",
+    "pinResolved": "Resolved comment: {{text}}",
+    "refused": "Not saved: {{reason}}",
+    "simulating": "the document is not edited while simulating",
+    "readOnly": "this tab is read-only",
+    "showResolved": "Show resolved comments",
+    "hideResolved": "Hide resolved comments"
   }
 }

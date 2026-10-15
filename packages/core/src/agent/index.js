@@ -11,7 +11,7 @@ export {
 } from "./contract.js";
 export { documentOperations } from "./documents.js";
 export { AGENT_ERROR_CODES, AgentError, failure, success } from "./errors.js";
-export { problemsChange } from "./file/edit.js";
+export { problemsChange, signedBy } from "./file/edit.js";
 export { createFileHost } from "./file-host.js";
 export { memoryFiles } from "./memory-files.js";
 export { CALL_ERRORS, OPERATIONS } from "./operations.js";

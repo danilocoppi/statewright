@@ -18,6 +18,17 @@ export function problemsChange(before, after) {
   };
 }
 
+/**
+ * An agent's batch with its words signed as its own (collaboration spec §8.1): what it says in a comment is the
+ * agent's, under its name, whatever author the command names.
+ */
+export const signedBy = (commands, agent) =>
+  commands.map(command =>
+    command.type === "comment.add" || command.type === "comment.reply" ?
+      { ...command, args: { ...command.args, author: "agent", ...(agent ? { name: agent } : {}) } }
+    : command
+  );
+
 /** Apply commands as one change of the session, kept for undo. */
 export function change(session, commands, label) {
   const before = check(session.doc);
@@ -29,14 +40,14 @@ export function change(session, commands, label) {
 }
 
 export const editOperations = {
-  "batch.apply": (session, { commands, label, propose }) => {
+  "batch.apply": (session, { commands, label, propose }, { agent } = {}) => {
     if (propose) {
       throw new AgentError(
         "NOT_ALLOWED",
         "proposals need the Editor, where the person accepts or rejects them: pair with it, or apply the batch"
       );
     }
-    const { result, problems } = change(session, commands, label);
+    const { result, problems } = change(session, signedBy(commands, agent), label);
     return { created: result.created, problems };
   },
   "history.undo": session => {

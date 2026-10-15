@@ -1,6 +1,6 @@
 // The Editor host's editing (AI interface spec §4.2: edit; §7.3): an agent's batch is one history entry of its own,
 // `origin: "ai"`, made visible on the canvas and in a toast; an agent undoes and redoes only its own entries.
-import { AgentError, problemsChange } from "statewright/agent";
+import { AgentError, problemsChange, signedBy } from "statewright/agent";
 import { applyPatches, check } from "statewright";
 
 import { isSimulating } from "@/simulate/store";
@@ -50,6 +50,15 @@ function ownEntry(entry, agent, word) {
     throw new AgentError("NOT_AI_CHANGE", `The last change to ${word} is not yours: only the person can ${word} it`);
 }
 
+/** Names as the person reads them, a few and then how many more. */
+const namesOf = items =>
+  items.length > 4 ?
+    `${items
+      .slice(0, 4)
+      .map(item => item.name)
+      .join(", ")} and ${items.length - 4} more`
+  : items.map(item => item.name).join(", ");
+
 const paired = () => connection.store.getState().status === "connected";
 
 /** What redoing an entry would remove: the IDs there now and gone after. */
@@ -65,7 +74,8 @@ function removedBy(entry) {
  * An agent's batch while it is paired (collaboration spec §7): kept as a proposal when it asks, or when it removes
  * anything and the person has not let it delete without asking; applied otherwise.
  */
-function applyOrPropose(context, { commands, label, propose, title, why }) {
+function applyOrPropose(context, { commands: asked, label, propose, title, why }) {
+  const commands = signedBy(asked, context.agent);
   const isPaired = paired();
   if (!isPaired) {
     if (propose) {
@@ -104,7 +114,7 @@ function applyOrPropose(context, { commands, label, propose, title, why }) {
     return {
       proposed: id,
       forced,
-      reason: `It changes ${held.map(item => item.name).join(", ")}, which the person locked: it is only proposed`
+      reason: `It changes ${namesOf(held)}, which the person locked: it is only proposed`
     };
   }
   const names = diff.removed.map(item => item.name).join(", ");
@@ -153,6 +163,14 @@ export const editOperations = {
       doc = editorStore.getState().doc;
       commands = await layoutClient().request("layout", { doc, canvasId: id, scope });
     } while (editorStore.getState().doc !== doc);
+    // Moving what the person locked is theirs to do (collaboration spec §8.2).
+    const held = paired() && commands.length ? lockedBy(doc, diffOf(doc, commands)) : [];
+    if (held.length) {
+      throw new AgentError(
+        "NOT_ALLOWED",
+        `Arranging ${level.name} moves ${namesOf(held)}, which the person locked: move the others with batch_apply, or propose it`
+      );
+    }
     if (commands.length) changeAsAgent(commands, `Arrange ${level.name}`, context);
     return { placed: commands.filter(command => command.type === "layout.node.set").map(command => command.args.id) };
   }

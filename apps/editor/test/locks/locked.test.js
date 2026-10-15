@@ -32,4 +32,29 @@ describe("what a batch touches that is locked (collaboration spec §8.2)", () =>
     const elsewhere = diffOf(doc, [{ type: "node.update", args: { id: "nod_complianceHold", set: { name: "x" } } }]);
     expect(lockedBy(doc, elsewhere)).toEqual([]);
   });
+
+  it("holds the locks themselves: removing or changing one is held", () => {
+    const doc = locked("nod_paused");
+    const [lock] = Object.keys(doc.annotations.locks);
+    expect(lockedBy(doc, diffOf(doc, [{ type: "lock.remove", args: { id: lock } }])).map(item => item.id)).toEqual([
+      lock
+    ]);
+  });
+
+  it("holds what stands in a locked region", () => {
+    const doc = locked("rgn_compliance");
+    const inside = Object.entries(doc.canvases.cnv_lifecycle.nodes).find(
+      ([, node]) => node.region === "rgn_compliance"
+    )[0];
+    const diff = diffOf(doc, [{ type: "node.update", args: { id: inside, set: { name: "x" } } }]);
+    expect(lockedBy(doc, diff).map(item => item.id)).toEqual([inside]);
+  });
+
+  it("holds a move on a locked level", () => {
+    const doc = locked("cnv_expiryClock");
+    const diff = diffOf(doc, [
+      { type: "layout.node.set", args: { canvas: "cnv_expiryClock", id: "nod_paused", x: 10, y: 20 } }
+    ]);
+    expect(lockedBy(doc, diff).map(item => item.id)).toEqual(["nod_paused"]);
+  });
 });

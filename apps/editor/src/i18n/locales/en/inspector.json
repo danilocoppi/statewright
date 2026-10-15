@@ -633,6 +633,7 @@
   "lock": {
     "label": "Don't let the AI change this",
     "locked": "Lock against the AI",
-    "unlocked": "Unlock for the AI"
+    "unlocked": "Unlock for the AI",
+    "refused": "The lock was not changed: {{reason}}"
   }
 }

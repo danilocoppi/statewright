@@ -504,6 +504,12 @@
     "replied": "Responder a un comentario",
     "resolved": "Resolver un comentario",
     "reopened": "Reabrir un comentario",
-    "removed": "Eliminar un comentario"
+    "removed": "Eliminar un comentario",
+    "pinResolved": "Comentario resuelto: {{text}}",
+    "refused": "No guardado: {{reason}}",
+    "simulating": "el documento no se edita durante la simulación",
+    "readOnly": "esta pestaña es de solo lectura",
+    "showResolved": "Mostrar comentarios resueltos",
+    "hideResolved": "Ocultar comentarios resueltos"
   }
 }

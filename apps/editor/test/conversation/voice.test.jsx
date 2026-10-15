@@ -23,6 +23,10 @@ class FakeRecognition {
     this.started = false;
     this.onend?.();
   }
+  abort() {
+    this.aborted = true;
+    this.stop();
+  }
   /** Results so far: [text, final?] each. */
   hear(results) {
     const list = results.map(([text, isFinal]) => Object.assign([{ transcript: text }], { isFinal }));
@@ -82,5 +86,38 @@ describe("dictating to the agent (collaboration spec §9)", () => {
     act(() => FakeRecognition.last.onerror?.({ error: "not-allowed" }));
     expect(screen.getByText(/microphone was refused/)).toBeTruthy();
     expect(conversationStore.getState().draft).toBe("Kept.");
+  });
+
+  it("keeps the field's own lines, and what the person types while dictating", async () => {
+    const user = userEvent.setup();
+    globalThis.SpeechRecognition = FakeRecognition;
+    localStorage.setItem("statewright:voice", "allowed");
+    act(() => conversationStore.getState().setDraft("Line one\n\nLine two"));
+    render(<Voice />);
+    await user.click(screen.getByRole("button", { name: "Dictate" }));
+    act(() => FakeRecognition.last.hear([["and  three", true]]));
+    expect(conversationStore.getState().draft).toBe("Line one\n\nLine two and three");
+    act(() => conversationStore.getState().setDraft("Line one\n\nLine two and three. Typed"));
+    act(() =>
+      FakeRecognition.last.hear([
+        ["and  three", true],
+        ["then four", false]
+      ])
+    );
+    expect(conversationStore.getState().draft).toBe("Line one\n\nLine two and three. Typed then four");
+  });
+
+  it("stops listening when the message is sent, and writes nothing after", async () => {
+    const user = userEvent.setup();
+    globalThis.SpeechRecognition = FakeRecognition;
+    localStorage.setItem("statewright:voice", "allowed");
+    render(<Voice />);
+    await user.click(screen.getByRole("button", { name: "Dictate" }));
+    const heard = FakeRecognition.last;
+    act(() => heard.hear([["send this", false]]));
+    act(() => conversationStore.getState().setDraft(""));
+    expect(heard.aborted).toBe(true);
+    act(() => heard.hear([["send this now", true]]));
+    expect(conversationStore.getState().draft).toBe("");
   });
 });

@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { LockControl } from "@/locks/LockControl";
 import { editorStore } from "@/store/editor";
+import { useToastStore } from "@/stores/toast";
 
 import { readExample } from "../fixtures.js";
 
@@ -28,5 +29,16 @@ describe("don't let the AI change this (collaboration spec §8.2)", () => {
     expect(locks()).toEqual([]);
     act(() => editorStore.getState().undo());
     expect(locks()).toEqual([{ target: "nod_paused" }]);
+  });
+
+  it("says why when the lock cannot be changed", async () => {
+    const user = userEvent.setup();
+    act(() => editorStore.getState().open(structuredClone(readExample("payments")), { canvasId: "cnv_expiryClock" }));
+    render(<LockControl id="nod_gone" />);
+    await user.click(screen.getByRole("checkbox", { name: "Don't let the AI change this" }));
+    expect(useToastStore.getState().items.at(-1)).toMatchObject({
+      tone: "error",
+      message: expect.stringMatching(/^The lock was not changed: /)
+    });
   });
 });

@@ -633,6 +633,7 @@
   "lock": {
     "label": "No dejar que la IA cambie esto",
     "locked": "Bloquear para la IA",
-    "unlocked": "Desbloquear para la IA"
+    "unlocked": "Desbloquear para la IA",
+    "refused": "El bloqueo no se cambió: {{reason}}"
   }
 }

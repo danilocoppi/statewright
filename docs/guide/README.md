@@ -795,12 +795,14 @@ accepted, reason?, stale? }`; `stale` says it no longer applied to the document 
   anything is always proposed (`forced: "deletes"`) unless the person lets you delete without asking for the session.
   Proposals need the Editor: on files, `propose` is refused (`NOT_ALLOWED`).
 - **Comments.** The person leaves review comments on elements or points of a level; each open one is a Problem,
-  `comment.open`, with its ID in `data.comment`. Answer in its thread with `batch_apply` and `comment.reply { id, text,
-author: "agent", name }`, change what it asks, and `comment.resolve` it once settled (`comment.add` opens one of
-  yours). Comments live in the file (format 1.3) and never show in the figure or the documentation.
+  `comment.open`, with its ID in `data.comment`. Answer in its thread with `batch_apply` and
+  `comment.reply { id, text }` — what you write is signed as yours, under your name — change what it asks, and
+  `comment.resolve` it once settled (`comment.add` opens one of yours). Comments live in the file (format 1.3) and
+  never show in the figure or the documentation.
 - **Locks.** What the person locked — `annotations.locks`, on a box, an arrow, a region or a whole level — you may not
-  change directly: a batch that adds, changes or removes anything locked is always proposed (`forced: "locked"`), even
-  when they let you delete without asking. Their own edits are not held.
+  change directly: a batch that adds, changes, moves or removes anything locked — on a locked level or in a locked
+  region too — or touches a lock itself is always proposed (`forced: "locked"`), even when they let you delete without
+  asking; `layout_arrange` refuses a level that would move what is locked. Their own edits are not held.
 - **Stop.** When the person presses Stop, every call but the conversation's answers `STOPPED` until you read
   `editor_inbox`; then go on only as they say.
 - **The Channel.** Claude Code can bring each message to you as a turn of its own, even while it waits for the person

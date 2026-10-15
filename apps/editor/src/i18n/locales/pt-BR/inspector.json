@@ -633,6 +633,7 @@
   "lock": {
     "label": "Não deixar a IA mudar isto",
     "locked": "Travar para a IA",
-    "unlocked": "Destravar para a IA"
+    "unlocked": "Destravar para a IA",
+    "refused": "A trava não foi alterada: {{reason}}"
   }
 }

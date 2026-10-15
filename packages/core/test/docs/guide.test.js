@@ -312,7 +312,8 @@ describe("the platform guide", () => {
       "| `review`    |",
       "| `fill`      |",
       "propose: true, title, why",
-      "comment.reply { id, text,",
+      "comment.reply { id, text }",
+      "signed as yours",
       'forced: "locked"',
       'forced: "deletes"'
     ]) {

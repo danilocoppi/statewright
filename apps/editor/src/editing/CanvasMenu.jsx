@@ -214,6 +214,21 @@ export function CanvasMenu({ at, onClose }) {
               () => commentsStore.getState().startDraft({ canvas: canvasId, at: { x: at.point.x, y: at.point.y } }),
               { icon: <Icon name="note" />, disabled: readOnly || !at.point }
             ),
+            // Resolved comments are kept, out of sight until asked for.
+            ...((
+              Object.values(doc.annotations?.comments ?? {}).some(
+                comment => comment.canvas === canvasId && comment.status === "resolved"
+              )
+            ) ?
+              [
+                item(
+                  "resolved-comments",
+                  t(commentsStore.getState().showResolved ? "comments.hideResolved" : "comments.showResolved"),
+                  () => commentsStore.getState().setShowResolved(!commentsStore.getState().showResolved),
+                  { icon: <Icon name="note" /> }
+                )
+              ]
+            : []),
             item("select-all", t("editing.selectAll"), selectAll, {
               icon: <Icon name="select-all" />,
               shortcut: command("A")

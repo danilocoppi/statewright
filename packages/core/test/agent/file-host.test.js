@@ -32,6 +32,21 @@ function payments() {
 describeContract("the file host", async () => payments());
 
 describe("the file host (AI interface spec §4.3)", () => {
+  it("signs the agent's comments as the agent's, whatever it says (collaboration spec §8.1)", async () => {
+    const { call, document } = payments();
+    await call("batch.apply", {
+      label: "Ask",
+      commands: [
+        { type: "comment.add", args: { id: "cmt_a", canvas: "cnv_lifecycle", text: "Why?", author: "person" } },
+        { type: "comment.reply", args: { id: "cmt_a", text: "Because.", author: "person", name: "Ann" } }
+      ]
+    });
+    expect((await document()).annotations.comments.cmt_a.thread.map(entry => [entry.author, entry.name])).toEqual([
+      ["agent", "test-agent"],
+      ["agent", "test-agent"]
+    ]);
+  });
+
   it("refuses a proposal: proposals need the Editor (collaboration spec §7)", async () => {
     const { call, files } = payments();
     const before = files.text(FILE);
