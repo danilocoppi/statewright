@@ -1,3 +1,4 @@
+import { isDeepFrozen } from "../frozen.js";
 import { documentSchema } from "../schema/document.js";
 
 const WRAPPERS = new Set(["optional", "nullable", "default", "readonly", "nonoptional"]);
@@ -85,20 +86,22 @@ function block(open, close, entries, depth) {
 }
 
 /**
- * Texts of frozen values, kept per schema and depth: writing an edited document revisits only the parts it changed
+ * Texts of values frozen all the way down, kept per schema and depth: writing an edited document revisits only the parts it changed
  * (performance spec §3 P3). The text is `JSON.stringify(order(schema, value), null, 2)` at that depth.
  */
 const keptText = new WeakMap();
 
 function write(schema, value, depth) {
   if (value === null || typeof value !== "object") return JSON.stringify(value);
-  if (!Object.isFrozen(value)) return writeFresh(schema, value, depth);
-  let bySchema = keptText.get(value);
-  if (!bySchema) keptText.set(value, (bySchema = new Map()));
-  let byDepth = bySchema.get(schema);
-  if (!byDepth) bySchema.set(schema, (byDepth = new Map()));
-  let text = byDepth.get(depth);
-  if (text === undefined) byDepth.set(depth, (text = writeFresh(schema, value, depth)));
+  const known = keptText.get(value)?.get(schema)?.get(depth);
+  if (known !== undefined) return known;
+  const text = writeFresh(schema, value, depth);
+  if (isDeepFrozen(value)) {
+    if (!keptText.has(value)) keptText.set(value, new Map());
+    const bySchema = keptText.get(value);
+    if (!bySchema.has(schema)) bySchema.set(schema, new Map());
+    bySchema.get(schema).set(depth, text);
+  }
   return text;
 }
 

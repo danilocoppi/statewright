@@ -26,7 +26,7 @@ export function watchProblems({ editor, problems, client, delay = CHECK_DELAY_MS
     running = true;
     try {
       const list = await client.request("check", { doc });
-      if (editor.getState().doc === doc) problems.getState().set(version, list);
+      if (editor.getState().doc === doc) problems.getState().set(version, list, doc);
     } catch {
       // A failed check leaves the last Problems in place; the next change checks again.
     } finally {

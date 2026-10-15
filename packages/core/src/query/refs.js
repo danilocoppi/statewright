@@ -1,4 +1,4 @@
-import { isDraft } from "immer";
+import { isDeepFrozen } from "../frozen.js";
 import { CATALOG_COLLECTIONS, PRIMITIVE_TYPES } from "../constants.js";
 
 /**
@@ -308,8 +308,8 @@ export function createRefCollector() {
  * @returns {Ref[]}
  */
 export function collectRefs(doc) {
-  const frozen = Object.isFrozen(doc) && !isDraft(doc);
-  if (frozen && keptRefs.has(doc)) return keptRefs.get(doc);
+  if (keptRefs.has(doc)) return keptRefs.get(doc);
+  const frozen = isDeepFrozen(doc);
   const refs = refsOf(doc);
   if (frozen) keptRefs.set(doc, Object.freeze(refs));
   return refs;
@@ -388,9 +388,9 @@ const keptParts = new WeakMap();
 
 /** The references `collect` finds in `part`, stored under `id`; kept while the part is frozen. */
 function kept(id, part, collect) {
-  const frozen = Object.isFrozen(part) && !isDraft(part);
-  const known = frozen ? keptParts.get(part) : undefined;
+  const known = keptParts.get(part);
   if (known?.id === id) return known.refs;
+  const frozen = isDeepFrozen(part);
   const each = createRefCollector();
   collect(each);
   if (frozen) keptParts.set(part, { id, refs: Object.freeze(each.refs) });

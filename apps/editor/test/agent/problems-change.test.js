@@ -28,7 +28,7 @@ afterEach(() => {
 describe("an agent's change and its Problems (performance spec §3 P3)", () => {
   it("answers what it added and removed, checked in the Problems worker, not on the page", async () => {
     const before = editorStore.getState().doc;
-    problemsStore.getState().set(editorStore.getState().version, check(before));
+    problemsStore.getState().set(editorStore.getState().version, check(before), before);
     const request = vi.spyOn(problemsClient(), "request");
     const answer = await editOperations["batch.apply"]({ agent: "claude-code" }, { label: "Late", commands: LATE });
     expect(answer.problems).toEqual(problemsChange(check(before), check(editorStore.getState().doc)));
@@ -37,6 +37,20 @@ describe("an agent's change and its Problems (performance spec §3 P3)", () => {
   });
 
   it("checks the document before too when its Problems are not known yet", async () => {
+    const before = editorStore.getState().doc;
+    const request = vi.spyOn(problemsClient(), "request");
+    const answer = await editOperations["batch.apply"]({ agent: "claude-code" }, { label: "Late", commands: LATE });
+    expect(answer.problems).toEqual(problemsChange(check(before), check(editorStore.getState().doc)));
+    expect(request.mock.calls.filter(([type]) => type === "check")).toHaveLength(2);
+  });
+
+  it("does not take the Problems of another document of the same version as those before", async () => {
+    const other = editorStore.getState().doc;
+    problemsStore.getState().set(editorStore.getState().version, check(other), other);
+    // The same project reopened from what another tab stored: a new document, at version 0 again.
+    const stored = structuredClone(readExample("payments"));
+    stored.canvases.cnv_expiryClock.nodes.nod_extra = { kind: "state", name: "extra" };
+    editorStore.getState().open(stored, { canvasId: "cnv_expiryClock" });
     const before = editorStore.getState().doc;
     const request = vi.spyOn(problemsClient(), "request");
     const answer = await editOperations["batch.apply"]({ agent: "claude-code" }, { label: "Late", commands: LATE });

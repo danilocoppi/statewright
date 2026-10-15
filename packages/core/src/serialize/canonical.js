@@ -1,3 +1,5 @@
+import { isDeepFrozen } from "../frozen.js";
+
 /**
  * RFC 8785 (JSON Canonicalization Scheme) form of a JSON value: no whitespace, object keys sorted by
  * UTF-16 code units, numbers and strings serialized as ECMAScript JSON.stringify does.
@@ -6,18 +8,18 @@
  * @returns {string}
  */
 export function canonicalize(value) {
-  if (value !== null && typeof value === "object" && Object.isFrozen(value)) {
+  if (value !== null && typeof value === "object") {
     const known = kept.get(value);
     if (known !== undefined) return known;
     const text = canonicalOf(value);
-    kept.set(value, text);
+    if (isDeepFrozen(value)) kept.set(value, text);
     return text;
   }
   return canonicalOf(value);
 }
 
 /**
- * Canonical forms of frozen objects (what applyBatch returns), kept with them: hashing an edited document revisits
+ * Canonical forms of objects frozen all the way down (what applyBatch returns), kept with them: hashing an edited document revisits
  * only the parts it changed (performance spec §3 P3).
  */
 const kept = new WeakMap();

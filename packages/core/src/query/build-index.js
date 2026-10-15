@@ -1,4 +1,4 @@
-import { isDraft } from "immer";
+import { isDeepFrozen } from "../frozen.js";
 import { CATALOG_COLLECTIONS } from "../constants.js";
 
 /** Indexes of frozen documents (what applyBatch returns): a document that cannot change keeps its index. */
@@ -21,8 +21,8 @@ const kept = new WeakMap();
  * @returns {{ get(id: string): IndexEntry | undefined, has(id: string): boolean, entries: Map<string, IndexEntry>, duplicates: string[] }}
  */
 export function buildIndex(doc) {
-  const frozen = Object.isFrozen(doc) && !isDraft(doc);
-  if (frozen && kept.has(doc)) return kept.get(doc);
+  if (kept.has(doc)) return kept.get(doc);
+  const frozen = isDeepFrozen(doc);
   const index = indexOf(doc);
   if (frozen) kept.set(doc, index);
   return index;
@@ -70,9 +70,9 @@ const keptCanvases = new WeakMap();
 
 /** A canvas's entries: itself, its regions, nodes and edges, as `[id, entry]`. */
 function canvasEntries(canvasId, canvas) {
-  const frozen = Object.isFrozen(canvas) && !isDraft(canvas);
-  const known = frozen ? keptCanvases.get(canvas) : undefined;
+  const known = keptCanvases.get(canvas);
   if (known?.id === canvasId) return known.entries;
+  const frozen = isDeepFrozen(canvas);
   const entries = [[canvasId, { type: "canvas", value: canvas, path: ["canvases", canvasId] }]];
   for (const [id, value] of Object.entries(canvas.regions ?? {})) {
     entries.push([id, { type: "region", canvas: canvasId, value, path: ["canvases", canvasId, "regions", id] }]);

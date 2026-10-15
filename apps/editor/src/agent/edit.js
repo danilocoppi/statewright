@@ -30,11 +30,11 @@ function refusal() {
 
 /**
  * The Problems of a document, from the Problems worker (performance spec §3 P3): those the page shows when they are of
- * this very version, else checked there — never on the page.
+ * this very document, else checked there — never on the page.
  */
 function problemsOf(doc, version) {
   const known = problemsStore.getState();
-  if (known.version === version && editorStore.getState().doc === doc) return known.list;
+  if (known.version === version && known.doc === doc) return known.list;
   return problemsClient().request("check", { doc });
 }
 

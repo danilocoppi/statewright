@@ -33,7 +33,7 @@ export function worstByElement(problems) {
   return worst;
 }
 
-const empty = () => ({ version: null, list: [], byElement: new Map() });
+const empty = () => ({ version: null, doc: null, list: [], byElement: new Map() });
 
 export function createProblemsStore() {
   return createStore(set => ({
@@ -42,8 +42,8 @@ export function createProblemsStore() {
     highlight: null,
     /** The element the Problems panel is open on ("Show in Problems", from a marker's details); it marks its lines. */
     focus: null,
-    /** Store the Problems of a document version. */
-    set: (version, list) => set({ version, list, byElement: worstByElement(list) }),
+    /** Store the Problems of a document version (and the document checked, which an agent's answer compares). */
+    set: (version, list, doc = null) => set({ version, doc, list, byElement: worstByElement(list) }),
     clear: () => set({ ...empty(), highlight: null, focus: null }),
     setHighlight: id => set({ highlight: id }),
     /** Open the Problems panel on an element, highlighted on the canvas (EditorPage opens the panel). */
