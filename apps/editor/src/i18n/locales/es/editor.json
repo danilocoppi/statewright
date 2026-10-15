@@ -357,6 +357,13 @@
     "wait": "Esperar evento o temporizador",
     "parallel": "Paralelo · Unión",
     "end": "Fin",
+    "participantActor": "Actor",
+    "participantService": "Servicio",
+    "participantExternal": "Sistema externo",
+    "steps": "Pasos de una acción",
+    "stateGuest": "Estado de una máquina",
+    "lifecycle": "Ciclo de vida",
+    "procedure": "Procedimiento",
     "defaults": {
       "service": "Nuevo servicio",
       "actor": "Nuevo actor",
@@ -368,17 +375,31 @@
       "if": "Nueva comprobación",
       "switch": "Nueva selección",
       "while": "Nueva repetición",
-      "end": "Hecho"
+      "end": "Hecho",
+      "lifecycle": "Nuevo ciclo de vida",
+      "procedure": "Nuevo procedimiento"
     },
     "pickAction": "¿Qué hace este paso?",
     "actionPlaceholder": "Una acción, como Cobrar la tarjeta",
     "createAction": "Crear acción “{{name}}”",
     "pickLevel": "¿A qué nivel lleva?",
     "levelPlaceholder": "Nombre del nivel",
+    "pickParty": "¿Quién es?",
+    "partyPlaceholder": "Una parte, como Cliente",
+    "createParty": "Crear parte “{{name}}”",
+    "pickState": "¿Qué estado representa?",
+    "statePlaceholder": "El nombre de un estado",
     "kinds": {
       "system": "sistema",
       "machine": "máquina de estados",
       "flow": "flujo"
+    },
+    "tabs": {
+      "label": "Tipos de elemento",
+      "system": "Elementos de sistema",
+      "machine": "Elementos de máquina de estados",
+      "flow": "Elementos de flujo",
+      "own": "{{kind}}: los de este nivel"
     }
   },
   "insert": {

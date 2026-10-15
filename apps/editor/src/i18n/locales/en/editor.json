@@ -357,6 +357,13 @@
     "wait": "Wait for event or timer",
     "parallel": "Parallel · Join",
     "end": "End",
+    "participantActor": "Actor",
+    "participantService": "Service",
+    "participantExternal": "External system",
+    "steps": "Steps of an action",
+    "stateGuest": "State of a machine",
+    "lifecycle": "Lifecycle",
+    "procedure": "Procedure",
     "defaults": {
       "service": "New service",
       "actor": "New actor",
@@ -368,17 +375,31 @@
       "if": "New check",
       "switch": "New switch",
       "while": "New loop",
-      "end": "Done"
+      "end": "Done",
+      "lifecycle": "New lifecycle",
+      "procedure": "New procedure"
     },
     "pickAction": "What does this step do?",
     "actionPlaceholder": "An action, such as Charge the card",
     "createAction": "Create action “{{name}}”",
     "pickLevel": "Which level does it lead to?",
     "levelPlaceholder": "Level name",
+    "pickParty": "Who is it?",
+    "partyPlaceholder": "A party, such as Customer",
+    "createParty": "Create party “{{name}}”",
+    "pickState": "Which state does it stand for?",
+    "statePlaceholder": "A state's name",
     "kinds": {
       "system": "system",
       "machine": "state machine",
       "flow": "flow"
+    },
+    "tabs": {
+      "label": "Kinds of element",
+      "system": "System elements",
+      "machine": "State machine elements",
+      "flow": "Flow elements",
+      "own": "{{kind}}: this level's own"
     }
   },
   "insert": {

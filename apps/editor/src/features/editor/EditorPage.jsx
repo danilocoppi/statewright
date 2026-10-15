@@ -32,7 +32,7 @@ import {
 import { clipFrom, clipText } from "@/editing/clipboard";
 import { editingStore } from "@/editing/state";
 import { ToolDock } from "@/editing/ToolDock";
-import { toolForKey } from "@/editing/tools";
+import { DOCK_TABS, toolForKey } from "@/editing/tools";
 import { hasTrigger } from "@/editing/triggers";
 import { Inspector } from "@/inspector/Inspector";
 import { inspectorStore, toggleInspector, useSubject } from "@/inspector/state";
@@ -326,6 +326,7 @@ export default function EditorPage() {
         editingStore.getState().open({ type: "insert", at: null });
         return;
       }
+      if (action === "tab") return editingStore.getState().setTab(DOCK_TABS[Number(event.key) - 1]);
       if (action === "tool") {
         const { doc, canvasId, readOnly } = editorStore.getState();
         const tool = toolForKey(doc.canvases[canvasId].kind, event.key);

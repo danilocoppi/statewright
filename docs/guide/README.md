@@ -746,6 +746,7 @@ edges on the canvas carry `data-id`, the document's ID. `editor_state` (or `stat
 | `actions-export-contract`     | the Export menu: Contract                                          | yes      |
 | `actions-export-scenarioPage` | the Export menu: Scenario page…                                    | yes      |
 | `tools-dock`                  | the editor: the tools                                              | yes      |
+| `tools-tab`                   | each tab of the tools (data-kind: system, machine, flow)           | per item |
 | `zoom-island`                 | the editor: zoom                                                   | yes      |
 | `canvas`                      | the editor: the level shown                                        | yes      |
 | `canvas-point`                | the canvas: an agent's note (view.point)                           | yes      |

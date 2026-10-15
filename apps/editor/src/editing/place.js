@@ -2,6 +2,8 @@
 // action or the level it needs — or a note. One change; a new action joins the catalog in the same change.
 import { applyBatch } from "statewright";
 
+import { interiorCommands } from "@/reuse/definitions";
+
 import { addNode, addNote, sizeOf } from "./changes";
 import { connectCommands, placeRefusal } from "./connect";
 import { idsFor } from "./ids";
@@ -36,8 +38,9 @@ export function ghostSize(doc, canvasId, tool, name) {
  * @param {import("./tools").Tool} tool
  * @param {{ x: number, y: number }} point
  * @param {{ name?: string, text?: string, action?: { id: string } | { name: string }, target?: string,
- *   from?: string }} choice `name` for named boxes, `text` for notes, `action` (found or new) for flow actions,
- *   `target` for links, `from`: the box a connection dragged to empty space started from (spec §7.2).
+ *   party?: { id: string } | { name: string }, names?: { state?: string, end?: string }, from?: string }} choice `name` for named boxes, `text` for notes,
+ *   `action` (found or new) for flow actions and embedded steps, `target` for links and state guests, `party` (found or
+ *   new) for participants, `names`: the starting elements of a new level inside, `from`: the box a connection dragged to empty space started from (spec §7.2).
  * @returns {{ id: string, edgeId?: string, commands: object[] } | { refusal: string }}
  */
 export function placeCommands(doc, canvasId, tool, point, choice = {}) {
@@ -62,14 +65,76 @@ export function placeCommands(doc, canvasId, tool, point, choice = {}) {
         args: { collection: "actions", id: node.action, item: { name: choice.action.name } }
       });
     }
+    // Embedded steps show the action's flow: an action without one gets it (mixed levels spec §4.2).
+    const action = doc.catalog.actions[node.action];
+    if (node.kind === "steps" && !action?.inner) {
+      before.push(
+        ...levelInside(doc, node.action, "flow", action?.name ?? choice.action.name, choice.names ?? {}, ids)
+      );
+    }
+  }
+  if (choice.party) {
+    if ("id" in choice.party) node.party = choice.party.id;
+    else {
+      node.party = ids.take("pty", choice.party.name);
+      before.push({
+        type: "catalog.add",
+        args: { collection: "parties", id: node.party, item: { kind: tool.partyKind, name: choice.party.name } }
+      });
+    }
   }
   // A node that performs a new action is sized (it shows the action's name) once the action is there.
   const staged = before.length ? applyBatch(doc, before).doc : doc;
   const { id, commands } = addNode(staged, canvasId, node, point, ids);
+  // A lifecycle or a procedure is a box with a new level inside, open on the figure as a frame (spec §4.3).
+  if (tool.interior) {
+    const placed = applyBatch(staged, commands).doc;
+    const inside = levelInside(placed, id, tool.interior, node.name ?? id, choice.names ?? {}, ids);
+    const { at } = commands[0].args;
+    commands.push(...inside, {
+      type: "layout.node.set",
+      args: { canvas: canvasId, id, x: at.x, y: at.y, display: "frame" }
+    });
+  }
   if (!choice.from) return { id, commands: [...before, ...commands] };
   const placed = applyBatch(staged, commands).doc;
   const edge = connectCommands(placed, canvasId, choice.from, id, ids);
   return { id, edgeId: edge.id, commands: [...before, ...commands, ...edge.commands] };
+}
+
+/**
+ * A new level's starting elements, as a new project's (spec §6.2): a machine's initial node leading to a first state,
+ * a flow's start leading to an end — so a guest's new level has no errors and shows something in its frame.
+ * @param {{ state?: string, end?: string }} names In the person's language.
+ */
+function startingCommands(canvasId, kind, names, ids) {
+  const add = (id, node) => ({ type: "node.add", args: { canvas: canvasId, id, node } });
+  const edge = (from, to) => ({
+    type: "edge.add",
+    args: { canvas: canvasId, id: ids.take("edg", `${from} ${to}`), edge: { from, to } }
+  });
+  if (kind === "machine") {
+    const initial = ids.take("nod", "initial");
+    const first = ids.take("nod", names.state ?? "First state");
+    return [
+      add(initial, { kind: "initial" }),
+      add(first, { kind: "state", name: names.state ?? "First state" }),
+      edge(initial, first)
+    ];
+  }
+  const start = ids.take("nod", "start");
+  const end = ids.take("nod", names.end ?? "Done");
+  return [
+    add(start, { kind: "start" }),
+    add(end, { kind: "end", name: names.end ?? "Done", outcome: "success" }),
+    edge(start, end)
+  ];
+}
+
+/** A new level inside an element, with its starting elements. */
+function levelInside(doc, ownerId, kind, name, names, ids) {
+  const { id, commands } = interiorCommands(doc, ownerId, kind, name, ids);
+  return [...commands, ...startingCommands(id, kind, names, ids)];
 }
 
 /** The drag data that carries a tool from the dock to the canvas. */

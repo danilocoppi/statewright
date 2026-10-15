@@ -1,4 +1,5 @@
 // How the inspector heads an element (mockup 09): its name, or what stands for it, and what it is, where.
+import { isGuest, stepText } from "statewright";
 
 /** What a node is called on its level: its name, or its kind ("Initial node"). */
 export function nodeName(t, node) {
@@ -53,5 +54,8 @@ export function headingOf(t, doc, entry) {
     (type === "lane" ? value.label
     : type === "finding" ? value.title
     : value.name) ?? "";
+  // A guest is what it stands for (mixed levels spec §6): its party, its action, its state.
+  if (type === "node" && isGuest(level.kind, value))
+    return { title, stand: value.label ?? stepText(doc, value), subtitle };
   return { title, stand: t("inspector:unnamed", { kind: kind.toLowerCase() }), subtitle };
 }

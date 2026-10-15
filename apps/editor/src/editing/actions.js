@@ -173,7 +173,8 @@ export function placeTool(t, tool, at, choice = {}) {
   const { doc, canvasId, readOnly } = current();
   editingStore.getState().close();
   if (readOnly) return null;
-  const result = placeCommands(doc, canvasId, tool, at, choice);
+  const names = { state: t("projects:new.firstState"), end: t("projects:new.end") };
+  const result = placeCommands(doc, canvasId, tool, at, { names, ...choice });
   if ("refusal" in result) {
     editingStore.getState().refuse({ reason: result.refusal, at });
     return null;

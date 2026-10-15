@@ -17,8 +17,10 @@ let refusals = 0;
 let requests = 0;
 
 const initial = () => ({
-  /** The tool in hand: "select", or the ID of a tool of the level's kind. */
+  /** The tool in hand: "select", or the ID of a tool of the level (on any tab of the dock). */
   tool: "select",
+  /** @type {"system" | "machine" | "flow" | null} The dock's tab (mixed levels spec §6); null: the level's own. */
+  tab: null,
   /** The editor open on the canvas, if any: `{ type, ... }`. */
   editor: null,
   /** @type {Refusal | null} */
@@ -37,6 +39,8 @@ export const editingStore = createStore(set => ({
   setCentre: centre => set({ centre }),
   /** Take a tool; Select puts any other down. */
   setTool: tool => set({ tool }),
+  /** Show a tab of the dock; the tool in hand is put down. */
+  setTab: tab => set({ tab, tool: "select" }),
   /** Open an editor on the canvas (closing any other). */
   open: editor => set({ editor, refusal: null }),
   close: () => set({ editor: null }),

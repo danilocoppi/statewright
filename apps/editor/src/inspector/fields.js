@@ -1,6 +1,8 @@
 // What the inspector edits for each element (spec §7.4): its fields in two layers — Basics, what a reviewer understands
 // without the format, and Details — each with the control that edits it. Every key of format 1.0 is a field here or
 // is listed in ELSEWHERE with the place it is edited (spec §13, E4: "every field of format 1.0 is editable somewhere").
+import { isGuest } from "statewright";
+
 import { indexOf } from "@/lib/derived";
 
 import { choicesOf, schemaOf } from "./schema";
@@ -318,7 +320,9 @@ const OTHER_FIELDS = {
 export function fieldsOfKind(type, { canvasKind, kind, collection } = {}) {
   if (type === "node") {
     const own = NODE_FIELDS[canvasKind][kind];
-    return [own[0], ...common(...own.slice(1)), ...NODE_SECTIONS];
+    // Guests take no part in the level's transitions or steps, so they have no connections section.
+    const sections = isGuest(canvasKind, { kind }) ? NODE_SECTIONS.slice(1) : NODE_SECTIONS;
+    return [own[0], ...common(...own.slice(1)), ...sections];
   }
   if (type === "edge") {
     const own = EDGE_FIELDS[canvasKind === "machine" ? kind : canvasKind];

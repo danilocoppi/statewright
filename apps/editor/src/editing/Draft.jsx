@@ -10,19 +10,77 @@ import { NameEditor } from "./NameEditor";
 import { ghostSize } from "./place";
 import { editingStore } from "./state";
 import { useInside } from "./useInside";
-import { toolsFor } from "./tools";
+import { toolById } from "./tools";
 import { matches } from "./triggers";
 
 /** The room the draft's label ("New state") takes above its box, at 100 %. */
 const LABEL = 20;
 
-/** The choice a flow action or a link needs before it is added: the action it performs, the level it leads to. */
+/** The parties a participant tool offers: the parties of its kind (operators with people), by name. */
+const PARTY_KINDS = { human: ["human", "operator"], system: ["system"], external: ["external"] };
+
+/** The `editor:tools` keys of what a tool asks before its box is added, and of the field's placeholder. */
+const ASKS = {
+  action: ["pickAction", "actionPlaceholder"],
+  level: ["pickLevel", "levelPlaceholder"],
+  party: ["pickParty", "partyPlaceholder"],
+  state: ["pickState", "statePlaceholder"]
+};
+
+/** The parties of a participant tool's kind that match what is typed, then a new one named so. */
+function partyOptions(t, doc, tool, onPick) {
+  return query => {
+    const typed = query.trim();
+    const kinds = PARTY_KINDS[tool.partyKind] ?? [];
+    const found = Object.entries(doc.catalog.parties)
+      .filter(([, party]) => kinds.includes(party.kind) && party.name.toLowerCase().includes(typed.toLowerCase()))
+      .sort(([, a], [, b]) => a.name.localeCompare(b.name))
+      .slice(0, 6);
+    const known = Object.values(doc.catalog.parties).some(party => party.name === typed);
+    return [
+      ...(typed && !known ?
+        [
+          {
+            id: "create",
+            create: true,
+            label: t("tools.createParty", { name: typed }),
+            onPick: () => onPick({ party: { name: typed } })
+          }
+        ]
+      : []),
+      ...found.map(([id, party]) => ({ id, label: party.name, onPick: () => onPick({ party: { id } }) }))
+    ];
+  };
+}
+
+/** The states of the document's state machines that match what is typed, each with its level's name. */
+function stateOptions(doc, onPick) {
+  return query => {
+    const typed = query.trim().toLowerCase();
+    return Object.values(doc.canvases)
+      .filter(canvas => canvas.kind === "machine")
+      .flatMap(canvas =>
+        Object.entries(canvas.nodes)
+          .filter(([, node]) => node.kind === "state" && node.name.toLowerCase().includes(typed))
+          .map(([id, node]) => ({ id, label: node.name, meta: canvas.name, onPick: () => onPick({ target: id }) }))
+      )
+      .slice(0, 8);
+  };
+}
+
+/**
+ * The choice a box needs before it is added: the action a flow step performs (or embedded steps show), the level a
+ * link leads to, the party a participant is, the state a state guest stands for.
+ */
 function Choose({ tool, onPick }) {
   const { t } = useTranslation("editor");
   const doc = useEditor(state => state.doc);
   const canvasId = useEditor(state => state.canvasId);
+  const [label, placeholder] = ASKS[tool.needs];
   const options =
-    tool.needs === "action" ?
+    tool.needs === "party" ? partyOptions(t, doc, tool, onPick)
+    : tool.needs === "state" ? stateOptions(doc, onPick)
+    : tool.needs === "action" ?
       query => {
         const typed = query.trim();
         const known = Object.values(doc.catalog.actions).some(item => item.name === typed);
@@ -57,13 +115,7 @@ function Choose({ tool, onPick }) {
             onPick: () => onPick({ target: id })
           }));
       };
-  return (
-    <CatalogPicker
-      label={t(tool.needs === "action" ? "tools.pickAction" : "tools.pickLevel")}
-      placeholder={t(tool.needs === "action" ? "tools.actionPlaceholder" : "tools.levelPlaceholder")}
-      options={options}
-    />
-  );
+  return <CatalogPicker label={t(`tools.${label}`)} placeholder={t(`tools.${placeholder}`)} options={options} />;
 }
 
 /**
@@ -79,7 +131,7 @@ export function Draft({ draft }) {
   const { x, y, zoom } = useViewport();
   const chooser = useRef(null);
   useInside(chooser);
-  const tool = toolsFor(doc.canvases[canvasId].kind).find(item => item.id === draft.tool);
+  const tool = toolById(doc.canvases[canvasId].kind, draft.tool);
 
   // A choice is dropped by a click elsewhere (a name being typed is kept, as when its field loses the focus).
   useEffect(() => {
@@ -143,7 +195,7 @@ export function Draft({ draft }) {
           ref={chooser}
           role="dialog"
           aria-modal="false"
-          aria-label={t(tool.needs === "action" ? "tools.pickAction" : "tools.pickLevel")}
+          aria-label={t(`tools.${ASKS[tool.needs][0]}`)}
           onKeyDown={event => {
             if (event.key !== "Escape") return;
             event.stopPropagation();
@@ -153,7 +205,7 @@ export function Draft({ draft }) {
           data-above={top - LABEL * zoom - 10}
           className="nodrag nopan nowheel absolute z-40 w-[280px] -translate-x-1/2 rounded-island border border-island-border bg-island p-3 shadow-island backdrop-blur-md motion-safe:animate-[menu-in_160ms_var(--ease-soft)]"
         >
-          <p className="mb-2 text-ui text-sub">{t(tool.needs === "action" ? "tools.pickAction" : "tools.pickLevel")}</p>
+          <p className="mb-2 text-ui text-sub">{t(`tools.${ASKS[tool.needs][0]}`)}</p>
           <Choose tool={tool} onPick={place} />
         </section>
       )}

@@ -43,7 +43,7 @@ const onCanvas = target =>
  *   §6.3); "arrow": nudge the selection, or move to a connected box (spec §7.3, §9); "select": Space on a box;
  *   "menu": the canvas's context menu (the menu key, Shift+F10); "region": R, selected states become a region;
  *   "rename": F2, the selected or focused box is renamed in place; "trigger": Enter in the canvas, the selected
- *   edge's trigger editor opens (with no edge selected, Enter on a box opens it); "tool": a letter, the tool with that key on this kind of level (spec §7.1); "insert":
+ *   edge's trigger editor opens (with no edge selected, Enter on a box opens it); "tool": a letter, the tool with that key on this kind of level (spec §7.1); "tab": 1, 2 or 3, the dock's System, Machine or Flow tab (mixed levels spec §6); "insert":
  *   `/`, insert anything by name (spec §7.2); "layout": ⇧A or ⇧L, lay the level out again; "fit": ⇧F or ⇧1;
  *   "zoomIn", "zoomOut": ⌘+ and ⌘− (spec §7.3); "inspector": ⇧I, show or hide the inspector (the level's details with nothing selected);
  *   "catalog": G, the catalog sheet (spec §7.5); "palette": ⌘K, search and commands (spec §7.8), also from a field; "nextArea", "previousArea": F6 and ⇧F6, the focus moves
@@ -85,6 +85,7 @@ export function shortcutFor(event, { mac }) {
   if (key === "enter" && !event.shiftKey && onCanvas(event.target)) return "trigger";
   if (key === "g" && !event.shiftKey) return "catalog";
   if (/^[a-z]$/.test(key) && !event.shiftKey) return "tool";
+  if (/^[1-3]$/.test(key) && !event.shiftKey) return "tab";
   if (key === "/") return "insert";
   return null;
 }

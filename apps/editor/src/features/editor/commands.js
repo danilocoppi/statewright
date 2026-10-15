@@ -17,7 +17,7 @@ import {
 } from "@/editing/actions";
 import { clipText } from "@/editing/clipboard";
 import { editingStore } from "@/editing/state";
-import { toolsFor } from "@/editing/tools";
+import { DOCK_TABS, toolsFor } from "@/editing/tools";
 import { openGuide } from "@/guide/links";
 import { hasTrigger } from "@/editing/triggers";
 import { setLanguage } from "@/i18n/language";
@@ -142,14 +142,15 @@ export function editorCommands({
     ...when(true, "guide", words("guide"), undefined, () => openGuide()),
     // Once the palette has closed and given the focus back: until then the page outside it is inert.
     ...when(true, "nextArea", words("nextArea"), "F6", () => requestAnimationFrame(() => moveToArea())),
-    ...toolsFor(canvas.kind).flatMap(tool =>
-      when(
-        !readOnly,
-        `tool-${tool.id}`,
-        t("inspector:palette.commands.tool", { tool: t(`editor:tools.${tool.id}`) }),
-        tool.key,
-        () => editingStore.getState().setTool(tool.id)
-      )
+    ...[...new Map(DOCK_TABS.flatMap(tab => toolsFor(canvas.kind, tab)).map(tool => [tool.id, tool])).values()].flatMap(
+      tool =>
+        when(
+          !readOnly,
+          `tool-${tool.id}`,
+          t("inspector:palette.commands.tool", { tool: t(`editor:tools.${tool.id}`) }),
+          tool.key,
+          () => editingStore.getState().setTool(tool.id)
+        )
     ),
     ...layers.flatMap(layer =>
       when(

@@ -42,6 +42,7 @@ test("finds every hook on its screen, once where it is unique (§7.5)", async ({
     "actions-simulate",
     "actions-export",
     "tools-dock",
+    "tools-tab",
     "zoom-island",
     "canvas"
   );

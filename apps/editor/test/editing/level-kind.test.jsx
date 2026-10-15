@@ -163,12 +163,13 @@ describe("the level's kind, under the dock's tools", () => {
   it("is reached along the dock with the arrows, opened with Enter, and closed with Esc back on it", async () => {
     const user = userEvent.setup();
     dock(readExample("payments"), "cnv_runtime", ["nod_scheduler"]);
-    const select = screen.getByRole("button", { name: "Select" });
-    act(() => select.focus());
+    // The dock starts with its tabs: up from the first one is the level's kind, at the bottom.
+    const first = screen.getByRole("tab", { name: "System elements" });
+    act(() => first.focus());
     await user.keyboard("{ArrowUp}");
     expect(document.activeElement).toBe(control());
     await user.keyboard("{ArrowDown}");
-    expect(document.activeElement).toBe(select);
+    expect(document.activeElement).toBe(first);
     await user.keyboard("{ArrowUp}{Enter}");
     expect(document.activeElement).toBe(screen.getByRole("menuitem", { name: /^Flow/ }));
     await user.keyboard("{Escape}");

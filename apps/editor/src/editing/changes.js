@@ -53,7 +53,9 @@ export function sizeOf(doc, canvasId, node) {
   const { doc: probed } = applyBatch(doc, [
     { type: "node.add", args: { canvas: canvasId, id: probe, node: value, at: { x: 0, y: 0 } } }
   ]);
-  const part = figureOf(probed, canvasId).nodes.find(item => item.id === probe && !item.within.length);
+  const figure = figureOf(probed, canvasId);
+  // Embedded steps are drawn as a frame of their flow until the person says otherwise.
+  const part = [...figure.nodes, ...figure.frames].find(item => item.id === probe && !item.within.length);
   return { w: part.w, h: part.h };
 }
 

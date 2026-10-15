@@ -45,6 +45,7 @@ export const HOOKS = [
   { id: "actions-export-contract", where: "the Export menu: Contract", unique: true },
   { id: "actions-export-scenarioPage", where: "the Export menu: Scenario page…", unique: true },
   { id: "tools-dock", where: "the editor: the tools", unique: true },
+  { id: "tools-tab", where: "each tab of the tools (data-kind: system, machine, flow)", unique: false },
   { id: "zoom-island", where: "the editor: zoom", unique: true },
   { id: "canvas", where: "the editor: the level shown", unique: true },
   { id: "canvas-point", where: "the canvas: an agent's note (view.point)", unique: true },

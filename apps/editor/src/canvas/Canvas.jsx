@@ -27,7 +27,7 @@ import { Refusal } from "@/editing/Refusal";
 import { TriggerEditor } from "@/editing/TriggerEditor";
 import { hasTrigger } from "@/editing/triggers";
 import { editingStore, useEditing } from "@/editing/state";
-import { toolsFor } from "@/editing/tools";
+import { toolById } from "@/editing/tools";
 import { elementName } from "@/inspector/references";
 import { useSubject } from "@/inspector/state";
 import { cn } from "@/lib/cn";
@@ -483,8 +483,8 @@ function Flow({ onNavigate }) {
     });
     return () => cancelAnimationFrame(frame);
   }, [editorOpen, canvasId]);
-  const tools = toolsFor(doc.canvases[canvasId].kind);
-  const tool = useEditing(state => tools.find(item => item.id === state.tool && item.id !== "select") ?? null);
+  const levelKind = doc.canvases[canvasId].kind;
+  const tool = useEditing(state => (state.tool === "select" ? null : toolById(levelKind, state.tool)));
 
   const place = (chosen, at) => startTool(t, chosen, at);
   const pointAt = event => flow.screenToFlowPosition({ x: event.clientX, y: event.clientY });
@@ -567,7 +567,7 @@ function Flow({ onNavigate }) {
         event.dataTransfer.dropEffect = "copy";
       }}
       onDrop={event => {
-        const dropped = tools.find(item => item.id === event.dataTransfer.getData(TOOL_TYPE));
+        const dropped = toolById(levelKind, event.dataTransfer.getData(TOOL_TYPE));
         if (!dropped || dropped.id === "select") return;
         event.preventDefault();
         place(dropped, pointAt(event));
