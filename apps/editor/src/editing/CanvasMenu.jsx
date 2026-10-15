@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 
 import { ContextMenu } from "@/components/ui/ContextMenu";
+import { commentsStore } from "@/comments/store";
 import { Icon } from "@/components/ui/Icon";
 import { isMac } from "@/features/editor/shortcuts";
 import { inspectorStore } from "@/inspector/state";
@@ -118,6 +119,17 @@ export function CanvasMenu({ at, onClose }) {
               disabled: !chosen.length
             }),
             pasteItem,
+            // A comment on the one element right-clicked (collaboration spec §8.1).
+            ...(selection.length === 1 ?
+              [
+                item(
+                  "comment",
+                  t("comments.comment"),
+                  () => commentsStore.getState().startDraft({ canvas: canvasId, target: selection[0] }),
+                  { icon: <Icon name="note" />, disabled: readOnly }
+                )
+              ]
+            : []),
             item("delete", t("editing.delete"), () => deleteSelection(t), {
               icon: <Icon name="trash" />,
               shortcut: isMac() ? "⌫" : "Del",
@@ -195,6 +207,13 @@ export function CanvasMenu({ at, onClose }) {
         {
           items: [
             pasteItem,
+            // A comment at the point right-clicked.
+            item(
+              "comment",
+              t("comments.comment"),
+              () => commentsStore.getState().startDraft({ canvas: canvasId, at: { x: at.point.x, y: at.point.y } }),
+              { icon: <Icon name="note" />, disabled: readOnly || !at.point }
+            ),
             item("select-all", t("editing.selectAll"), selectAll, {
               icon: <Icon name="select-all" />,
               shortcut: command("A")

@@ -486,5 +486,24 @@
     "eventPlaceholder": "An event that leads there",
     "alsoChanges_one": "Shared: {{count}} other level changes too.",
     "alsoChanges_other": "Shared: {{count}} other levels change too."
+  },
+  "comments": {
+    "pin": "Comment: {{text}}",
+    "thread": "Comment",
+    "you": "You",
+    "agent": "The AI",
+    "reply": "Reply",
+    "replyPlaceholder": "Reply…",
+    "comment": "Comment",
+    "commentPlaceholder": "What do you want to say here?",
+    "resolve": "Resolve",
+    "reopen": "Reopen",
+    "remove": "Remove the comment",
+    "close": "Close",
+    "added": "Comment",
+    "replied": "Reply to a comment",
+    "resolved": "Resolve a comment",
+    "reopened": "Reopen a comment",
+    "removed": "Remove a comment"
   }
 }

@@ -11,6 +11,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { RepositoryContext } from "@/app/repository";
 import { catalogStore } from "@/catalog/state";
+import { commentsStore } from "@/comments/store";
 import EditorPage from "@/features/editor/EditorPage";
 import { memoryRepository } from "@/persistence/repository";
 import { problemRows, sentence } from "@/problems/rows";
@@ -193,5 +194,26 @@ describe("Problems in the editor", () => {
     await user.click(screen.getByRole("button", { name: name => name.startsWith(sentence(message)) }));
     expect(catalogStore.getState()).toMatchObject({ open: true, collection: "endpoints", item: "ept_createPayment" });
     act(() => catalogStore.getState().close());
+  });
+
+  it("opens the thread of an open comment picked in the panel (collaboration spec §8.1)", async () => {
+    const user = userEvent.setup();
+    await openPayments("/p/prj_payments/cnv_lifecycle");
+    act(() => {
+      editorStore.getState().dispatch(
+        [
+          {
+            type: "comment.add",
+            args: { id: "cmt_why", canvas: "cnv_expiryClock", target: "nod_paused", text: "Why pause here?" }
+          }
+        ],
+        { label: "Comment" }
+      );
+    });
+    await user.click(screen.getByRole("button", { name: /problems$/ }));
+    await user.click(await screen.findByRole("button", { name: /^State "paused" has an open comment/ }));
+    await waitFor(() => expect(screen.getByTestId("canvas").dataset.canvas).toBe("cnv_expiryClock"));
+    expect(commentsStore.getState().open).toBe("cmt_why");
+    act(() => commentsStore.getState().close());
   });
 });

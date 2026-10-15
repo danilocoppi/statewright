@@ -486,5 +486,24 @@
     "eventPlaceholder": "Un evento que lleva allí",
     "alsoChanges_one": "Compartido: otro nivel también cambia.",
     "alsoChanges_other": "Compartido: otros {{count}} niveles también cambian."
+  },
+  "comments": {
+    "pin": "Comentario: {{text}}",
+    "thread": "Comentario",
+    "you": "Tú",
+    "agent": "La IA",
+    "reply": "Responder",
+    "replyPlaceholder": "Responde…",
+    "comment": "Comentar",
+    "commentPlaceholder": "¿Qué quieres decir aquí?",
+    "resolve": "Resolver",
+    "reopen": "Reabrir",
+    "remove": "Eliminar el comentario",
+    "close": "Cerrar",
+    "added": "Comentario",
+    "replied": "Responder a un comentario",
+    "resolved": "Resolver un comentario",
+    "reopened": "Reabrir un comentario",
+    "removed": "Eliminar un comentario"
   }
 }

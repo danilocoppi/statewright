@@ -8,6 +8,7 @@ import { Island } from "@/components/ui/Island";
 import { INSPECTOR, DOCK_SPACE } from "@/canvas/viewport";
 import { Segmented } from "@/components/ui/Segmented";
 import { catalogStore } from "@/catalog/state";
+import { commentsStore } from "@/comments/store";
 import { guideHref, ruleAnchor } from "@/guide/links";
 import { cn } from "@/lib/cn";
 import { catalogPlace, problemRows } from "@/problems/rows";
@@ -91,6 +92,12 @@ export function ProblemsPanel({ onClose, onNavigate, beside = false }) {
     // A scenario that now goes elsewhere opens at that step (simulator spec §6.4).
     if (row.code === "scenario.diverged") {
       openScenario(row.target, row.data?.step ?? 0);
+      if (canvas !== editor.canvasId) onNavigate(canvas);
+      return;
+    }
+    // An open comment opens its thread on its level (collaboration spec §8.1).
+    if (row.code === "comment.open" && row.data?.comment) {
+      commentsStore.getState().show(row.data.comment);
       if (canvas !== editor.canvasId) onNavigate(canvas);
       return;
     }

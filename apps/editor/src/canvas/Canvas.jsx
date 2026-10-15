@@ -42,6 +42,7 @@ import { pathName } from "@/simulate/words";
 import { editorStore, useEditor } from "@/store/editor";
 import { currentInspectorWidth, useInspectorWidth } from "@/stores/inspector";
 import { useView } from "@/stores/view";
+import { CommentsLayer } from "@/comments/CommentsLayer";
 import { MarksLayer } from "@/marks/MarksLayer";
 import { ProposalLayer } from "@/proposals/ProposalLayer";
 import { useMarksState } from "@/marks/store";
@@ -646,6 +647,7 @@ function Flow({ onNavigate }) {
           {!presenting && <Pointer canvasId={canvasId} />}
           {!presenting && <MarksLayer canvasId={canvasId} />}
           {!presenting && <ProposalLayer canvasId={canvasId} />}
+          {!presenting && <CommentsLayer canvasId={canvasId} />}
           {showMinimap && (
             <MiniMap
               pannable

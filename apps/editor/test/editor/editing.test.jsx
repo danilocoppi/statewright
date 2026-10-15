@@ -13,6 +13,7 @@ import { editingStore } from "@/editing/state";
 import EditorPage from "@/features/editor/EditorPage";
 import { memoryRepository } from "@/persistence/repository";
 import { useView, VIEW_DEFAULTS } from "@/stores/view";
+import { commentsStore } from "@/comments/store";
 import { editorStore } from "@/store/editor";
 
 import { placedExample } from "../fixtures.js";
@@ -54,6 +55,15 @@ afterEach(() => {
 });
 
 describe("the canvas menu", () => {
+  it("writes a comment on what is right-clicked (collaboration spec §8.1)", async () => {
+    const user = userEvent.setup();
+    await openPayments();
+    fireEvent.contextMenu(box("nod_scheduler"));
+    await user.click(screen.getByRole("menuitem", { name: /Comment/ }));
+    expect(commentsStore.getState().draft).toEqual({ canvas: "cnv_runtime", target: "nod_scheduler" });
+    act(() => commentsStore.getState().close());
+  });
+
   it("selects what is right-clicked and offers what can be done to it, aligning two boxes as one change", async () => {
     const user = userEvent.setup();
     await openPayments();
