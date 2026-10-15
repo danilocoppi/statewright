@@ -1,19 +1,132 @@
 import { current, isDraft } from "immer";
+import { CATALOG_COLLECTIONS } from "../constants.js";
 import { z } from "zod";
 import { idPatternFor, makeId, prefixOf } from "../ids.js";
-import { buildIndex } from "../query/build-index.js";
 import { createRefCollector } from "../query/refs.js";
 import { flattenIssues, toPointer } from "../serialize/parse.js";
 import { fail } from "./errors.js";
 
+const ANNOTATION_SECTIONS = [
+  ["findings", "finding", "fnd"],
+  ["notes", "note", "nte"],
+  ["lanes", "lane", "lne"],
+  ["scenarios", "scenario", "scn"],
+  ["comments", "comment", "cmt"],
+  ["locks", "lock", "lck"]
+];
+
+/**
+ * Where every element of a document is, read from its keys alone: on a draft, no element is visited, so none gets a
+ * proxy (performance spec §3 P1). The same entries as buildIndex, without values.
+ */
+function locateAll(doc) {
+  const entries = new Map();
+  const duplicates = [];
+  const add = (id, entry) => {
+    if (entries.has(id)) duplicates.push(id);
+    else entries.set(id, { id, ...entry });
+  };
+  add(doc.project.id, { type: "project", path: ["project"] });
+  for (const collection of Object.keys(CATALOG_COLLECTIONS)) {
+    for (const id of Object.keys(doc.catalog[collection] ?? {})) {
+      add(id, { type: "catalog", collection, path: ["catalog", collection, id] });
+    }
+  }
+  for (const id of Object.keys(doc.definitions)) add(id, { type: "definition", path: ["definitions", id] });
+  for (const canvasId of Object.keys(doc.canvases)) {
+    const canvas = doc.canvases[canvasId];
+    add(canvasId, { type: "canvas", path: ["canvases", canvasId] });
+    for (const part of ["regions", "nodes", "edges"]) {
+      const type = part.slice(0, -1);
+      for (const id of Object.keys(canvas[part] ?? {})) {
+        add(id, { type, canvas: canvasId, path: ["canvases", canvasId, part, id] });
+      }
+    }
+  }
+  for (const [section, type] of ANNOTATION_SECTIONS) {
+    for (const id of Object.keys(doc.annotations?.[section] ?? {})) {
+      add(id, { type, path: ["annotations", section, id] });
+    }
+  }
+  return { entries, duplicates };
+}
+
+/** Where one element made by a command is, from its prefix; undefined when it is not where its prefix says. */
+function locateOne(doc, id) {
+  const prefix = prefixOf(id);
+  const has = (container, key) => container != null && Object.hasOwn(container, key);
+  if (prefix === "cnv") return has(doc.canvases, id) ? { id, type: "canvas", path: ["canvases", id] } : undefined;
+  if (prefix === "def") {
+    return has(doc.definitions, id) ? { id, type: "definition", path: ["definitions", id] } : undefined;
+  }
+  const part = { rgn: "regions", nod: "nodes", edg: "edges" }[prefix];
+  if (part) {
+    for (const canvasId of Object.keys(doc.canvases)) {
+      if (has(doc.canvases[canvasId][part], id)) {
+        return { id, type: part.slice(0, -1), canvas: canvasId, path: ["canvases", canvasId, part, id] };
+      }
+    }
+    return undefined;
+  }
+  const collection = Object.keys(CATALOG_COLLECTIONS).find(key => CATALOG_COLLECTIONS[key] === prefix);
+  if (collection) {
+    return has(doc.catalog[collection], id) ?
+        { id, type: "catalog", collection, path: ["catalog", collection, id] }
+      : undefined;
+  }
+  const annotation = ANNOTATION_SECTIONS.find(([, , short]) => short === prefix);
+  if (annotation && has(doc.annotations?.[annotation[0]], id)) {
+    return { id, type: annotation[1], path: ["annotations", annotation[0], id] };
+  }
+  return undefined;
+}
+
+/**
+ * The index of a batch's draft (performance spec §3 P1): where each element is, read from the draft's keys, and each
+ * entry's `value` read from the draft at its path when asked for, so commands write through it into the draft.
+ * `added(ids)` takes in elements a command made, without reading the document again; it answers false when one is
+ * not where its prefix says (then the batch indexes the draft again).
+ * @param {any} draft
+ */
+export function draftIndex(draft) {
+  const { entries, duplicates } = locateAll(draft);
+  const live = new Map();
+  return {
+    get(id) {
+      const entry = entries.get(id);
+      if (!entry) return undefined;
+      let found = live.get(id);
+      if (!found) {
+        found = Object.defineProperty({ ...entry }, "value", {
+          get: () => entry.path.reduce((value, key) => value?.[key], draft),
+          enumerable: true
+        });
+        live.set(id, found);
+      }
+      return found;
+    },
+    has: id => entries.has(id),
+    entries,
+    duplicates,
+    added(ids) {
+      for (const id of ids) {
+        const entry = locateOne(draft, id);
+        if (!entry) return false;
+        if (!entries.has(id)) entries.set(id, entry);
+      }
+      return true;
+    }
+  };
+}
+
 /**
  * Per-command view of the document being changed. `doc` is an Immer draft: write to it directly.
- * `index` reflects the document as it was when the command started.
+ * `index` reflects the document as it was when the command started (the batch's, see draftIndex).
  * @param {any} draft
  * @param {string[]} created Shared list of IDs created by the batch.
+ * @param {ReturnType<typeof draftIndex>} [index]
  */
-export function createContext(draft, created) {
-  const index = buildIndex(draft);
+export function createContext(draft, created, index = draftIndex(draft)) {
   const claimed = new Set();
   return {
     doc: draft,

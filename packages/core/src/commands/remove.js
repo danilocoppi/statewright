@@ -1,3 +1,4 @@
+import { current, isDraft } from "immer";
 import { buildIndex } from "../query/build-index.js";
 import { collectRefs } from "../query/refs.js";
 import { tidy } from "./context.js";
@@ -44,9 +45,11 @@ function isImplicit(ref) {
  * @returns {string[]} Every removed ID.
  */
 export function removeElements(doc, ids, { cascade = false } = {}) {
-  const index = buildIndex(doc);
+  // Read from a plain snapshot of the draft (performance spec §3 P1); removals are written to the draft.
+  const plain = isDraft(doc) ? current(doc) : doc;
+  const index = buildIndex(plain);
   const refsByTarget = new Map();
-  for (const ref of collectRefs(doc)) {
+  for (const ref of collectRefs(plain)) {
     if (!refsByTarget.has(ref.target)) refsByTarget.set(ref.target, []);
     refsByTarget.get(ref.target).push(ref);
   }

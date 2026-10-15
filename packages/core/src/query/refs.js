@@ -1,3 +1,4 @@
+import { isDraft } from "immer";
 import { CATALOG_COLLECTIONS, PRIMITIVE_TYPES } from "../constants.js";
 
 /**
@@ -307,6 +308,17 @@ export function createRefCollector() {
  * @returns {Ref[]}
  */
 export function collectRefs(doc) {
+  const frozen = Object.isFrozen(doc) && !isDraft(doc);
+  if (frozen && keptRefs.has(doc)) return keptRefs.get(doc);
+  const refs = refsOf(doc);
+  if (frozen) keptRefs.set(doc, Object.freeze(refs));
+  return refs;
+}
+
+/** References of frozen documents (what applyBatch returns), kept with them. */
+const keptRefs = new WeakMap();
+
+function refsOf(doc) {
   const collect = createRefCollector();
   collect.root(doc.root);
   for (const collection of Object.keys(CATALOG_COLLECTIONS)) {
@@ -314,9 +326,7 @@ export function collectRefs(doc) {
   }
   for (const [id, definition] of Object.entries(doc.definitions)) collect.definition(id, definition);
   for (const [canvasId, canvas] of Object.entries(doc.canvases)) {
-    collect.canvas(canvasId, canvas);
-    for (const [id, node] of Object.entries(canvas.nodes)) collect.node(canvas.kind, canvasId, id, node);
-    for (const [id, edge] of Object.entries(canvas.edges)) collect.edge(canvas.kind, canvasId, id, edge);
+    for (const ref of canvasRefs(canvasId, canvas)) collect.refs.push(ref);
   }
   const annotations = doc.annotations ?? {};
   for (const [id, finding] of Object.entries(annotations.findings ?? {})) collect.finding(id, finding);
@@ -327,7 +337,31 @@ export function collectRefs(doc) {
   for (const [id, comment] of Object.entries(annotations.comments ?? {})) collect.comment(id, comment);
   for (const [id, lock] of Object.entries(annotations.locks ?? {})) collect.lock(id, lock);
   for (const [canvasId, canvasLayout] of Object.entries(doc.layout?.canvases ?? {})) {
-    collect.layoutCanvas(canvasId, canvasLayout);
+    for (const ref of kept(canvasId, canvasLayout, each => each.layoutCanvas(canvasId, canvasLayout))) {
+      collect.refs.push(ref);
+    }
   }
   return collect.refs;
 }
+
+/** References of parts that cannot change (frozen), kept with each part: an edit recollects only what it touched. */
+const keptParts = new WeakMap();
+
+/** The references `collect` finds in `part`, stored under `id`; kept while the part is frozen. */
+function kept(id, part, collect) {
+  const frozen = Object.isFrozen(part) && !isDraft(part);
+  const known = frozen ? keptParts.get(part) : undefined;
+  if (known?.id === id) return known.refs;
+  const each = createRefCollector();
+  collect(each);
+  if (frozen) keptParts.set(part, { id, refs: each.refs });
+  return each.refs;
+}
+
+/** A canvas's references: the canvas itself, its nodes and its edges. */
+const canvasRefs = (canvasId, canvas) =>
+  kept(canvasId, canvas, each => {
+    each.canvas(canvasId, canvas);
+    for (const [id, node] of Object.entries(canvas.nodes)) each.node(canvas.kind, canvasId, id, node);
+    for (const [id, edge] of Object.entries(canvas.edges)) each.edge(canvas.kind, canvasId, id, edge);
+  });

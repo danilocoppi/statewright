@@ -5,7 +5,7 @@ import { flattenIssues } from "../serialize/parse.js";
 import annotationCommands from "./annotation.js";
 import canvasCommands from "./canvas.js";
 import catalogCommands from "./catalog.js";
-import { createContext } from "./context.js";
+import { createContext, draftIndex } from "./context.js";
 import definitionCommands from "./definition.js";
 import edgeCommands from "./edge.js";
 import { CommandError, fail } from "./errors.js";
@@ -43,7 +43,51 @@ export function listCommands() {
   }));
 }
 
-function run(draft, command, created) {
+/**
+ * Commands that never add, remove or move an element: after them, the batch's index still holds (performance spec
+ * §3 P1). Every other command makes the next one index the draft again.
+ */
+/**
+ * Commands that only add elements, each of them claimed (ctx.claim): after them, the batch's index takes in what they
+ * made instead of indexing the draft again.
+ */
+const ADDS = new Set([
+  "catalog.add",
+  "canvas.create",
+  "region.add",
+  "node.add",
+  "edge.add",
+  "definition.create",
+  "note.add",
+  "lane.add",
+  "scenario.add",
+  "comment.add",
+  "lock.add"
+]);
+
+const KEEPS_INDEX = new Set([
+  "project.update",
+  "catalog.update",
+  "canvas.update",
+  "region.update",
+  "node.update",
+  "edge.update",
+  "definition.update",
+  "note.update",
+  "lane.update",
+  "scenario.update",
+  "comment.reply",
+  "comment.resolve",
+  "comment.reopen",
+  "focus.set",
+  "layout.node.set",
+  "layout.edge.set",
+  "layout.note.set",
+  "layout.canvas.clear",
+  "legend.labels.set"
+]);
+
+function run(draft, command, created, index) {
   if (command === null || typeof command !== "object" || Array.isArray(command)) {
     fail("INVALID_ARGS", 'A command is an object { "type": "…", "args": { … } }');
   }
@@ -54,7 +98,7 @@ function run(draft, command, created) {
     const errors = flattenIssues(parsed.error.issues, ["args"]);
     fail("INVALID_ARGS", `Invalid args for ${command.type}: ${errors[0].path} ${errors[0].message}`, { errors });
   }
-  definition.run(createContext(draft, created), parsed.data);
+  definition.run(createContext(draft, created, index), parsed.data);
 }
 
 /**
@@ -73,7 +117,16 @@ export function applyBatch(doc, commands) {
   let result;
   try {
     result = produceWithPatches(doc, draft => {
-      for (position = 0; position < commands.length; position++) run(draft, commands[position], created);
+      let index = null;
+      for (position = 0; position < commands.length; position++) {
+        const command = commands[position];
+        index ??= draftIndex(draft);
+        const made = created.length;
+        run(draft, command, created, index);
+        if (ADDS.has(command?.type)) {
+          if (!index.added(created.slice(made))) index = null;
+        } else if (!KEEPS_INDEX.has(command?.type)) index = null;
+      }
     });
   } catch (error) {
     if (error instanceof CommandError) error.index = position;
