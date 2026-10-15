@@ -140,6 +140,15 @@
       "warning": "Avisos",
       "incomplete": "Incompletos"
     },
+    "severity": {
+      "error": "Erro",
+      "warning": "Aviso",
+      "incomplete": "Incompleto"
+    },
+    "incomplete": {
+      "level": "Não é um erro: este nível mostra só algumas das suas transições, então a regra apenas lembra você.",
+      "reminder": "Não é um erro: um lembrete do que ainda falta decidir ou especificar."
+    },
     "none": "Nenhum problema neste projeto.",
     "noneHere": "Nenhum deste tipo.",
     "catalog": "Catálogo / {{collection}}",
@@ -177,7 +186,10 @@
         "unused": "{{count}} {{collection}} sem uso"
       }
     },
-    "explain": "O que {{code}} significa"
+    "explain": "O que {{code}} significa",
+    "on": "Problemas em {{name}}",
+    "show": "Mostrar em Problemas",
+    "marker": "Problemas: {{severity}}"
   },
   "refusals": {
     "elsewhere": "Só caixas deste nível podem ser conectadas.",

@@ -7,7 +7,7 @@ import { ConnectDialog } from "@/agent/ConnectDialog";
 import { PairedBadge } from "@/agent/PairedBadge";
 import { useRepository } from "@/app/repository";
 import { Canvas } from "@/canvas/Canvas";
-import { findingStore } from "@/canvas/findings";
+import { hoverShown } from "@/canvas/hover";
 import { CatalogSheet } from "@/catalog/CatalogSheet";
 import { catalogStore } from "@/catalog/state";
 import { PanelBoundary } from "@/components/PanelBoundary";
@@ -195,6 +195,7 @@ export default function EditorPage() {
   const problemsButton = useRef(null);
   const closeProblems = () => {
     setProblems(false);
+    problemsStore.getState().setFocus(null);
     problemsButton.current?.focus();
   };
   const navigate = useNavigate();
@@ -213,6 +214,15 @@ export default function EditorPage() {
     if (state !== "ready") return;
     return watchProblems({ editor: editorStore, problems: problemsStore, client: problemsClient() });
   }, [state]);
+
+  // "Show in Problems", from a marker's details (ProblemPopover): the panel opens on the element.
+  useEffect(
+    () =>
+      problemsStore.subscribe((now, before) => {
+        if (now.focus && now.focus !== before.focus) setProblems(true);
+      }),
+    []
+  );
 
   // The address is the level shown (spec §4.6): it sets the store's level, and a level the store moves to by itself
   // (undoing a change made on another level) becomes the address. An address naming a level the project does not
@@ -236,8 +246,9 @@ export default function EditorPage() {
     if (state !== "ready") return;
     // Capture: Esc must see the selection before the canvas clears it.
     const onKeyDown = event => {
-      // A badge's findings shown over the canvas: Esc is theirs (FindingPopover closes them), and does nothing else.
-      if (event.key === "Escape" && findingStore.getState().shown) return;
+      // A badge's findings or a marker's Problems shown over the canvas: Esc is theirs (useHoverPopover closes them),
+      // and does nothing else.
+      if (event.key === "Escape" && hoverShown()) return;
       // The stage has keys of its own (simulator spec §7.1); Esc leaves it even when it could not be shown.
       if (simulationStore.getState().stage) {
         if (event.key === "Escape") simulationStore.getState().leaveStage();
@@ -444,7 +455,11 @@ export default function EditorPage() {
               {running ?
                 <SimulatingStatus onStop={stopSimulating} />
               : <>
-                  <ProblemsButton ref={problemsButton} open={problems} onToggle={() => setProblems(open => !open)} />
+                  <ProblemsButton
+                    ref={problemsButton}
+                    open={problems}
+                    onToggle={() => (problems ? closeProblems() : setProblems(true))}
+                  />
                   <span aria-hidden="true" className="mx-0.5 h-4 border-l border-hairline" />
                   {!readOnly && !simulating && <EditActions mac={mac} />}
                   <SimulateAction />

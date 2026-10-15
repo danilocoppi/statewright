@@ -30,3 +30,16 @@ describe("Problems", () => {
     expect(store.getState()).toMatchObject({ version: null, list: [] });
   });
 });
+
+describe("the Problems panel on an element", () => {
+  it("is asked for with the element, highlighted on the canvas, and forgotten", () => {
+    const store = createProblemsStore();
+    store.getState().showElement("nod_a");
+    expect(store.getState()).toMatchObject({ focus: "nod_a", highlight: "nod_a" });
+    store.getState().setFocus(null);
+    expect(store.getState().focus).toBeNull();
+    store.getState().showElement("nod_b");
+    store.getState().clear();
+    expect(store.getState()).toMatchObject({ focus: null, highlight: null });
+  });
+});

@@ -1,5 +1,6 @@
 import { EdgeLabelRenderer } from "@xyflow/react";
 import { use } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useProblems } from "@/problems/store";
 import { useSimulation } from "@/simulate/store";
@@ -32,23 +33,27 @@ function badgeIn(svg) {
   return { target, codes, x: Number(x), y: Number(y), w: Number(w), h: Number(h) };
 }
 
+/** How far an edge's Problems marker reaches from its middle (its ring's radius). */
+const MARKER_R = 8;
+
 /**
- * Where the pointer reaches an edge's badge: above every edge, since each edge's wide invisible path (and the edges
- * drawn after it) would otherwise cover the badge Core drew, and its findings would never show (FindingPopover).
+ * Where the pointer reaches something drawn on an edge — Core's finding badge, the Problems marker — above every edge,
+ * since each edge's wide invisible path (and the edges drawn after it) would otherwise cover it, and its details would
+ * never show (FindingPopover, ProblemPopover, which find it by its class and data).
+ * @param {{ className: string, box: { x: number, y: number, w: number, h: number } }} props And its `data-` attributes.
  */
-function BadgeHit({ badge }) {
+function Hit({ className, box, ...data }) {
   return (
     <EdgeLabelRenderer>
       <span
-        className="badge-hit nopan"
-        data-target={badge.target}
-        data-codes={badge.codes}
+        {...data}
+        className={`${className} nopan`}
         aria-hidden="true"
         style={{
           position: "absolute",
-          transform: `translate(${badge.x}px, ${badge.y}px)`,
-          width: badge.w,
-          height: badge.h,
+          transform: `translate(${box.x}px, ${box.y}px)`,
+          width: box.w,
+          height: box.h,
           pointerEvents: "all"
         }}
       />
@@ -197,10 +202,11 @@ function Preview({ sourceX, sourceY, targetX, targetY }) {
 
 /**
  * An edge of the figure: Core's route, arrowhead and label (markup made by Core, safe to insert), a wider invisible
- * path that takes the pointer, the selection halo and the Problems marker. React Flow's own endpoints are used only
- * while an end is being dragged: the route is Core's.
+ * path that takes the pointer, the selection halo and the Problems marker (reached, as a finding badge is, above the
+ * edges). React Flow's own endpoints are used only while an end is being dragged: the route is Core's.
  */
 export function FigureEdge({ data, selected, sourceX, sourceY, targetX, targetY }) {
+  const { t } = useTranslation("editor");
   const { part, label } = data;
   const marker = useMarker(part.id);
   const running = useSimulation(state => state.mode === "run");
@@ -215,12 +221,17 @@ export function FigureEdge({ data, selected, sourceX, sourceY, targetX, targetY 
       {(selected || highlighted) && <path d={d} fill="none" className="sw-edge-halo stroke-accent" strokeWidth={6} />}
       <g dangerouslySetInnerHTML={{ __html: part.svg + (label?.svg ?? "") }} />
       <path d={d} fill="none" stroke="transparent" strokeWidth={14} className="react-flow__edge-interaction" />
-      {badge && <BadgeHit badge={badge} />}
+      {badge && <Hit className="badge-hit" box={badge} data-target={badge.target} data-codes={badge.codes} />}
       {data.mark?.fired && <FiredMark mark={data.mark} d={d} part={part} label={label} />}
       {data.mark && !data.mark.fired && <EdgeMark id={part.id} mark={data.mark} d={d} part={part} label={label} />}
       {severity && (
-        <g aria-hidden="true" data-severity={severity} transform={`translate(${x} ${y})`}>
-          <circle r="8" className="fill-canvas" />
+        <g
+          role="img"
+          aria-label={t("problems.marker", { severity: t(`problems.severity.${severity}`) })}
+          data-severity={severity}
+          transform={`translate(${x} ${y})`}
+        >
+          <circle r={MARKER_R} className="fill-canvas" />
           <circle r="6.5" className={TONE[severity]} />
           <text
             y="3.2"
@@ -233,6 +244,13 @@ export function FigureEdge({ data, selected, sourceX, sourceY, targetX, targetY 
             {severity === "incomplete" ? "i" : "!"}
           </text>
         </g>
+      )}
+      {severity && (
+        <Hit
+          className="problem-marker"
+          box={{ x: x - MARKER_R, y: y - MARKER_R, w: 2 * MARKER_R, h: 2 * MARKER_R }}
+          data-target={part.id}
+        />
       )}
     </>
   );

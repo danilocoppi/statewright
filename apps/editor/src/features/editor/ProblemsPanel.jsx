@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { buildIndex } from "statewright";
 
@@ -39,6 +39,8 @@ function where(t, row) {
  * The Problems panel (spec §8.1, mockup 12): the project's Problems by severity, with filters. A line on a level
  * highlights its element while the pointer rests on it and, when picked, shows that level with the element selected.
  * It stays open beside the canvas (a non-modal dialog), left of the inspector when that is open; Esc inside it closes it.
+ * Opened on an element ("Show in Problems", from a marker's details), it shows every severity and marks that element's
+ * lines, scrolled into view.
  * @param {{ onClose: () => void, onNavigate: (canvasId: string) => void, beside?: boolean }} props `beside`: the
  *   inspector is open.
  */
@@ -46,15 +48,29 @@ export function ProblemsPanel({ onClose, onNavigate, beside = false }) {
   const { t } = useTranslation("editor");
   const doc = useEditor(state => state.doc);
   const list = useProblems(state => state.list);
+  const focus = useProblems(state => state.focus);
   const [filter, setFilter] = useState("all");
+  const [focused, setFocused] = useState(focus);
+  const lines = useRef(null);
   const rows = useMemo(() => problemRows(doc, list), [doc, list]);
   const counts = useMemo(() => summarize(list), [list]);
   const inspector = useInspectorWidth();
   const right = beside ? inspector + INSPECTOR.margin + 12 : INSPECTOR.margin;
   const shown = filter === "all" ? rows : rows.filter(row => row.severity === filter);
 
+  // Opened on another element: every severity again, so its lines are there.
+  if (focus !== focused) {
+    setFocused(focus);
+    if (focus) setFilter("all");
+  }
+
   // Nothing stays highlighted once the panel is gone.
   useEffect(() => () => problemsStore.getState().setHighlight(null), []);
+
+  // The element's first line in view.
+  useEffect(() => {
+    if (focus) lines.current?.querySelector('[aria-current="true"]')?.scrollIntoView?.({ block: "nearest" });
+  }, [focus]);
 
   const pick = row => {
     const { canvas } = row.location;
@@ -117,7 +133,7 @@ export function ProblemsPanel({ onClose, onNavigate, beside = false }) {
           ]}
         />
       </div>
-      <div className="min-h-0 overflow-y-auto border-t border-hairline pb-1.5">
+      <div ref={lines} className="min-h-0 overflow-y-auto border-t border-hairline pb-1.5">
         {shown.length === 0 && (
           <p className="px-4 py-6 text-center text-read text-muted">
             {t(list.length ? "problems.noneHere" : "problems.none")}
@@ -154,11 +170,17 @@ export function ProblemsPanel({ onClose, onNavigate, beside = false }) {
                     </>
                   );
                   const explain = t("problems.explain", { code: row.code });
+                  const current = row.kind === "one" && focus !== null && row.target === focus;
                   return (
                     <li
                       key={row.key}
                       data-testid="problems-row"
-                      className={cn("group flex items-start", reachable && "hover:bg-subtle")}
+                      aria-current={current ? "true" : undefined}
+                      className={cn(
+                        "group flex items-start",
+                        current && "bg-accent-soft",
+                        reachable && !current && "hover:bg-subtle"
+                      )}
                     >
                       {reachable ?
                         <button

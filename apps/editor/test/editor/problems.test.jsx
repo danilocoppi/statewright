@@ -123,6 +123,36 @@ describe("Problems in the editor", () => {
     expect(problemsStore.getState().highlight).toBeNull();
   });
 
+  it("opens the panel on an element's Problems from its marker's details, whatever it was showing", async () => {
+    const user = userEvent.setup();
+    await openPayments("/p/prj_payments/cnv_lifecycle");
+    await waitFor(() => expect(box("nod_complianceHold").querySelector(".problem-marker")).toBeTruthy());
+    await user.hover(box("nod_complianceHold").querySelector(".problem-marker"));
+    const details = await screen.findByRole("dialog", { name: "Problems on compliance_hold" });
+    await user.click(within(details).getByRole("button", { name: "Show in Problems" }));
+    const panel = screen.getByRole("dialog", { name: "Problems" });
+    const [row] = within(panel)
+      .getAllByTestId("problems-row")
+      .filter(item => item.getAttribute("aria-current") === "true");
+    expect(row.textContent).toContain('State "compliance_hold" has no way out');
+    expect(problemsStore.getState().highlight).toBe("nod_complianceHold");
+
+    // Open on another kind, it shows them all again.
+    await user.click(within(panel).getByRole("radio", { name: /^Errors/ }));
+    await user.hover(box("nod_expiryClock").querySelector(".problem-marker"));
+    const clock = await screen.findByRole("dialog", { name: "Problems on expiry_clock" });
+    await user.click(within(clock).getByRole("button", { name: "Show in Problems" }));
+    expect(within(panel).getByRole("radio", { name: /^All/ }).getAttribute("aria-checked")).toBe("true");
+    const current = within(panel)
+      .getAllByTestId("problems-row")
+      .filter(item => item.getAttribute("aria-current") === "true");
+    expect(current.map(item => item.textContent)).toEqual([expect.stringContaining('"expiry_clock" has no way out')]);
+
+    // Closed, the panel forgets the element.
+    fireEvent.keyDown(within(panel).getByRole("radio", { name: /^All/ }), { key: "Escape" });
+    expect(problemsStore.getState().focus).toBeNull();
+  });
+
   it("marks the boxes that have Problems, and hides incomplete markers when asked", async () => {
     await openPayments("/p/prj_payments/cnv_lifecycle");
     await waitFor(() => expect(box("nod_complianceHold").querySelector("[data-severity]")).toBeTruthy());
