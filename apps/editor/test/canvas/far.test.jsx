@@ -62,4 +62,30 @@ describe("far out, boxes draw less (performance spec §3 P2)", () => {
     fireEvent.click(within(zoom).getByRole("button", { name: "Zoom to 100 %" }));
     await waitFor(() => expect(box().querySelector("svg g.node")).toBeTruthy());
   });
+
+  it("keeps far out what is acted on: arrows' pointer targets, badges and Problems markers", async () => {
+    const motion = vi.spyOn(window, "matchMedia").mockImplementation(query => ({
+      matches: query === "(prefers-reduced-motion: reduce)",
+      media: query,
+      addEventListener() {},
+      removeEventListener() {}
+    }));
+    onTestFinished(() => motion.mockRestore());
+    const doc = await placedExample("get-paid-as-built");
+    const [canvas] = Object.entries(doc.canvases).find(([, level]) => level.nodes.nod_processing);
+    act(() => editorStore.getState().open(doc, { canvasId: canvas }));
+    render(<Canvas />);
+    const zoom = screen.getByRole("toolbar", { name: "Zoom" });
+    fireEvent.click(within(zoom).getByRole("button", { name: "Zoom to 100 %" }));
+    const near = {
+      targets: document.querySelectorAll(".react-flow__edge-interaction").length,
+      badges: document.querySelectorAll(".badge").length
+    };
+    expect(near.badges).toBeGreaterThan(0);
+    for (let step = 0; step < 6; step += 1) fireEvent.click(within(zoom).getByRole("button", { name: "Zoom out" }));
+    expect(document.querySelector("[data-far-edge]")).toBeTruthy();
+    expect(document.querySelectorAll(".react-flow__edge-interaction").length).toBe(near.targets);
+    expect(document.querySelectorAll(".badge").length).toBe(near.badges);
+    expect(document.querySelector("[data-far-edge]").getAttribute("marker-end")).toMatch(/^url\(/);
+  });
 });

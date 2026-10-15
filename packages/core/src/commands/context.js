@@ -47,15 +47,55 @@ function locateOne(doc, id) {
 }
 
 /**
- * The index of a batch's draft (performance spec §3 P1): the index of a plain snapshot of the draft — the parts not
- * changed yet are the frozen document's own, whose entries are kept with them — with each entry's `value` read from the
- * draft at its path when asked for, so commands write through it into the draft. What commands add or remove later in
- * the batch is noted over it (`added`, `removed`) instead of indexing again; `added` answers false when an element is
- * not where its prefix says (then the batch indexes the draft again).
- * @param {any} draft
+ * Where every element of a draft is, read from its keys alone: no element is visited, so none gets a proxy, and
+ * nothing is copied. The same entries as buildIndex, without values.
  */
-export function draftIndex(draft) {
-  const plain = buildIndex(isDraft(draft) ? current(draft) : draft);
+function locateAll(doc) {
+  const entries = new Map();
+  const duplicates = [];
+  const add = (id, entry) => {
+    if (entries.has(id)) duplicates.push(id);
+    else entries.set(id, { id, ...entry });
+  };
+  add(doc.project.id, { type: "project", path: ["project"] });
+  for (const collection of Object.keys(CATALOG_COLLECTIONS)) {
+    for (const id of Object.keys(doc.catalog[collection] ?? {})) {
+      add(id, { type: "catalog", collection, path: ["catalog", collection, id] });
+    }
+  }
+  for (const id of Object.keys(doc.definitions)) add(id, { type: "definition", path: ["definitions", id] });
+  for (const canvasId of Object.keys(doc.canvases)) {
+    const canvas = doc.canvases[canvasId];
+    add(canvasId, { type: "canvas", path: ["canvases", canvasId] });
+    for (const part of ["regions", "nodes", "edges"]) {
+      const type = part.slice(0, -1);
+      for (const id of Object.keys(canvas[part] ?? {})) {
+        add(id, { type, canvas: canvasId, path: ["canvases", canvasId, part, id] });
+      }
+    }
+  }
+  for (const [section, type] of ANNOTATION_SECTIONS) {
+    for (const id of Object.keys(doc.annotations?.[section] ?? {})) {
+      add(id, { type, path: ["annotations", section, id] });
+    }
+  }
+  return { get: id => entries.get(id), has: id => entries.has(id), duplicates };
+}
+
+/**
+ * The index of a batch's draft (performance spec §3 P1): at the start of a batch, the kept index of the document it
+ * starts from (`base`); later in it, where elements are read from the draft's keys. Each entry's `value` is read from
+ * the draft at its path when asked for, so commands write through it into the draft. What commands add or remove is
+ * noted over it (`added`, `removed`) instead of indexing again; `added` answers false when an element is not where its
+ * prefix says (then the batch indexes the draft again).
+ * @param {any} draft
+ * @param {any} [base] The frozen document the batch starts from, while the draft has not changed.
+ */
+export function draftIndex(draft, base) {
+  const plain =
+    base ? buildIndex(base)
+    : isDraft(draft) ? locateAll(draft)
+    : buildIndex(draft);
   const extra = new Map();
   const gone = new Set();
   const live = new Map();

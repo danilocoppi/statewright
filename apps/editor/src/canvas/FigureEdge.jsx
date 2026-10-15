@@ -216,16 +216,28 @@ export function FigureEdge({ data, selected, sourceX, sourceY, targetX, targetY 
   const far = use(FarContext);
   if (data.moving) return <Preview sourceX={sourceX} sourceY={sourceY} targetX={targetX} targetY={targetY} />;
   const d = pathOf(part.points);
-  // Far out, the line alone (far.js).
-  if (far && !selected && !data.mark) {
-    return <path d={d} fill="none" data-far-edge="" stroke={farLook(part).stroke ?? "var(--sub)"} strokeWidth={1.2} />;
-  }
+
   const [x, y] = markerAt(part, label);
   const badge = badgeIn(part.svg + (label?.svg ?? ""));
+  // An arrow's badge is drawn with its line or with its label.
+  const farBadge = far ? (farLook(part).badge ?? (label ? farLook(label).badge : undefined)) : undefined;
   return (
     <>
       {(selected || highlighted) && <path d={d} fill="none" className="sw-edge-halo stroke-accent" strokeWidth={6} />}
-      <g dangerouslySetInnerHTML={{ __html: part.svg + (label?.svg ?? "") }} />
+      {far ?
+        // Far out, Core's line and arrowhead without its label (far.js); the badge stays, it is acted on.
+        <>
+          <path
+            d={d}
+            fill="none"
+            data-far-edge=""
+            stroke={farLook(part).stroke ?? "var(--sub)"}
+            strokeWidth={1.2}
+            markerEnd={farLook(part).markerEnd}
+          />
+          {farBadge && <g dangerouslySetInnerHTML={{ __html: farBadge }} />}
+        </>
+      : <g dangerouslySetInnerHTML={{ __html: part.svg + (label?.svg ?? "") }} />}
       <path d={d} fill="none" stroke="transparent" strokeWidth={14} className="react-flow__edge-interaction" />
       {badge && <Hit className="badge-hit" box={badge} data-target={badge.target} data-codes={badge.codes} />}
       {data.mark?.fired && <FiredMark mark={data.mark} d={d} part={part} label={label} />}

@@ -174,3 +174,26 @@ describe("indexes and references kept per document", () => {
     });
   });
 });
+
+describe("batches of commands that index again", () => {
+  it("grow with their length, not its square (definition.detach)", async () => {
+    const { readExample } = await import("../helpers.js");
+    const { parse } = await import("../../src/serialize/parse.js");
+    const doc = applyBatch(parse(readExample("airport-operations.sttw")).doc, []).doc;
+    const owners = Object.values(doc.canvases)
+      .flatMap(canvas => Object.entries(canvas.nodes))
+      .filter(([, node]) => node.inner?.definition)
+      .map(([id]) => id);
+    const detach = count => owners.slice(0, count).map(owner => ({ type: "definition.detach", args: { owner } }));
+    applyBatch(doc, detach(20));
+    const time = count => {
+      const start = performance.now();
+      applyBatch(doc, detach(count));
+      return performance.now() - start;
+    };
+    const short = Math.min(time(40), time(40));
+    const long = Math.min(time(160), time(160));
+    // Four times the commands: about four times the time when linear, sixteen when quadratic.
+    expect(long / short).toBeLessThan(8);
+  });
+});

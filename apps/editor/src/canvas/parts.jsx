@@ -60,18 +60,21 @@ const ROUND = new Set(["dot", "end", "history"]);
 
 /** A box far out: its outline and fill where Core draws it, without its text and markup (far.js). */
 function FarBox({ part }) {
-  const { fill, stroke, radius } = farLook(part);
+  const { fill, stroke, radius, badge } = farLook(part);
   return (
-    <span
-      aria-hidden="true"
-      data-far-box=""
-      className="pointer-events-none absolute inset-0 border"
-      style={{
-        backgroundColor: fill ?? "var(--surface)",
-        borderColor: stroke ?? "var(--hairline)",
-        borderRadius: ROUND.has(part.shape) ? "9999px" : `${radius ?? 8}px`
-      }}
-    />
+    <>
+      <span
+        aria-hidden="true"
+        data-far-box=""
+        className="pointer-events-none absolute inset-0 border"
+        style={{
+          backgroundColor: fill ?? "var(--surface)",
+          borderColor: stroke ?? "var(--hairline)",
+          borderRadius: ROUND.has(part.shape) ? "9999px" : `${radius ?? 8}px`
+        }}
+      />
+      {badge && <PartSvg part={{ ...part, svg: badge }} />}
+    </>
   );
 }
 

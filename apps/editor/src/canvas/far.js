@@ -11,13 +11,13 @@ export const FarContext = createContext(false);
 
 const looks = new WeakMap();
 
-const attribute = (svg, name) => svg.match(new RegExp(`\\b${name}="([^"]*)"`))?.[1];
+const attribute = (svg, name) => svg.match(new RegExp(`(?<![-\\w])${name}="([^"]*)"`))?.[1];
 
 /**
- * A part's look far out, read from Core's markup of it: the fill, outline and corner of its first shape, or an
- * arrow's line colour.
+ * A part's look far out, read from Core's markup of it: the fill, outline and corner of its first shape, an arrow's
+ * line colour and arrowhead, and its finding badge.
  * @param {{ svg: string }} part
- * @returns {{ fill?: string, stroke?: string, radius?: number }}
+ * @returns {{ fill?: string, stroke?: string, radius?: number, markerEnd?: string, badge?: string }}
  */
 export function farLook(part) {
   let look = looks.get(part);
@@ -28,7 +28,10 @@ export function farLook(part) {
     look = {
       fill: fill && fill !== "none" ? fill : undefined,
       stroke: attribute(svg, "stroke"),
-      radius: rx === undefined ? undefined : Number(rx)
+      radius: rx === undefined ? undefined : Number(rx),
+      markerEnd: attribute(svg, "marker-end"),
+      // A finding badge stays: it is what its findings are reached by (FindingPopover).
+      badge: svg.match(/<g class="badge"[\s\S]*?<\/g>/)?.[0]
     };
     looks.set(part, look);
   }

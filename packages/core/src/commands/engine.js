@@ -136,7 +136,8 @@ export function applyBatch(doc, commands) {
       let index = null;
       for (position = 0; position < commands.length; position++) {
         const command = commands[position];
-        index ??= draftIndex(draft);
+        // The first index is the starting document's (kept with it); later ones are read from the draft.
+        index ??= draftIndex(draft, position === 0 ? doc : undefined);
         const made = created.length;
         run(draft, command, created, index);
         if (ADDS.has(command?.type)) {
