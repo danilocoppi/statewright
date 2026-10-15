@@ -6,45 +6,45 @@ import { BADGE, EDGE_STYLES, INK, MUTED, NODE_STYLES, NOTE_TONES, RULE, SUB, TON
 /** Dark value of every colour of Core's palette, by its light value. */
 export const DARK = {
   // Surfaces and text
-  "#FFFFFF": "#262A33",
+  "#FFFFFF": "#3B414F",
   "#05060F": "#E8EAEF",
   "#464849": "#A9AFBA",
-  "#878E91": "#8B929E",
+  "#878E91": "#8D94A0",
   "#E6E7EE": "#2A2F38",
   // Plain boxes and default edges
-  "#3B3F4A": "#9AA1AE",
-  "#5B6170": "#8C93A1",
+  "#3B3F4A": "#A9B0BD",
+  "#5B6170": "#A6ADB9",
   // Happy path, focus, proposed, info
-  "#0A66C2": "#5AA2FF",
-  "#EEF4FB": "#1A2D45",
-  "#E8F0FB": "#1A2F4A",
+  "#0A66C2": "#73B0FF",
+  "#EEF4FB": "#264366",
+  "#E8F0FB": "#244268",
   // Failure
-  "#B42318": "#F97066",
-  "#FEF3F2": "#44201C",
-  "#FEE4E2": "#3F1D21",
+  "#B42318": "#FA8F88",
+  "#FEF3F2": "#68312B",
+  "#FEE4E2": "#673036",
   // Success
   "#059669": "#34D399",
   "#047857": "#34D399",
-  "#ECFDF5": "#15362C",
+  "#ECFDF5": "#1C493B",
   // Ops, hold, warning
   "#B45309": "#F5A524",
-  "#FFFBEB": "#362B17",
+  "#FFFBEB": "#4F3F22",
   "#92400E": "#FCD34D",
-  "#FEF3C7": "#3A2E15",
+  "#FEF3C7": "#4F3F1D",
   // Defect, implied
-  "#BE123C": "#FB7185",
+  "#BE123C": "#FC8C9C",
   "#E11D48": "#FB7185",
-  "#FFF1F2": "#441C26",
+  "#FFF1F2": "#6C2D3C",
   // Legacy, frame
-  "#B9BDC9": "#565D6A",
+  "#B9BDC9": "#6E7584",
   "#FAFBFD": "#16191E",
   // Waiting, stopped, external, store, neutral
-  "#F6F7FA": "#282C35",
-  "#6B7280": "#9CA3AF",
-  "#F3F4F6": "#2C313A",
+  "#F6F7FA": "#3B414E",
+  "#6B7280": "#A6ACB7",
+  "#F3F4F6": "#3B424E",
   "#4B5563": "#C3C8D1",
-  "#FAFAFC": "#262A34",
-  "#F3F5F9": "#262B35"
+  "#FAFAFC": "#3B4150",
+  "#F3F5F9": "#3A4151"
 };
 
 const variable = color => `--sw-${color.slice(1).toLowerCase()}`;
@@ -77,5 +77,7 @@ export function diagramStyles() {
     `${selector} {\n${PALETTE.map(color => `  ${variable(color)}: ${valueOf(color)};`).join("\n")}\n}`;
   // A label's backing hides the edge under it: in dark it is the canvas, not the boxes' lighter surface.
   const label = ".dark g.label > rect {\n  fill: var(--canvas);\n}";
-  return `${block(":root", color => color)}\n${block(".dark", color => DARK[color])}\n${label}\n`;
+  // A finding badge's code is white on rose in the export; in dark the rose is light, so the code takes the canvas.
+  const badge = ".dark g.badge > text {\n  fill: var(--canvas);\n}";
+  return `${block(":root", color => color)}\n${block(".dark", color => DARK[color])}\n${label}\n${badge}\n`;
 }

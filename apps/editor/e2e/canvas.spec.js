@@ -66,5 +66,5 @@ test("draws the diagram with its light colours, and with its dark ones in the da
   expect(await waiting.evaluate(rect => getComputedStyle(rect).fill)).toBe("rgb(246, 247, 250)");
   await page.getByRole("button", { name: /^Get paid/ }).click();
   await page.getByRole("menuitemradio", { name: "Dark" }).click();
-  await expect.poll(() => waiting.evaluate(rect => getComputedStyle(rect).fill)).toBe("rgb(40, 44, 53)");
+  await expect.poll(() => waiting.evaluate(rect => getComputedStyle(rect).fill)).toBe("rgb(59, 65, 78)");
 });

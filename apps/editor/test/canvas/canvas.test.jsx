@@ -67,7 +67,7 @@ describe("the canvas", () => {
     const css = document.querySelector("style").textContent;
     const [light, dark] = css.split(".dark");
     expect(light).toContain("--sw-ffffff: #FFFFFF;");
-    expect(dark).toContain("--sw-ffffff: #262A33;");
+    expect(dark).toContain("--sw-ffffff: #3B414F;");
   });
 
   it("draws every edge of the level with Core's route, arrowhead and label", async () => {

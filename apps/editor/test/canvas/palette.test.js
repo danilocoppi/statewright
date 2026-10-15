@@ -35,8 +35,8 @@ const TEXTS = [
     [`muted chip on ${key}`, MUTED, style.fill]
   ]),
   ...Object.entries(TONES).map(([key, tone]) => [`${key} tag or status`, tone.color, tone.fill]),
-  ["finding badge", BADGE.color, BADGE.fill],
-  ...Object.entries(EDGE_STYLES).map(([key, style]) => [`${key} label`, style.stroke, WHITE]),
+  // An edge label is backed by the canvas in dark (white, the light canvas, in the export).
+  ...Object.entries(EDGE_STYLES).map(([key, style]) => [`${key} label`, style.stroke, "canvas"]),
   ...Object.entries(NOTE_TONES).flatMap(([key, tone]) => [
     [`${key} note`, tone.color, tone.fill],
     [`${key} note under a label`, tone.color, "canvas"]
@@ -77,21 +77,26 @@ describe("the diagram palette", () => {
   });
 
   it("keeps the meaning colours of spec §5.3 in dark", () => {
-    expect(DARK["#FFFFFF"]).toBe("#262A33");
-    expect(DARK["#0A66C2"]).toBe("#5AA2FF");
-    expect(DARK["#B42318"]).toBe("#F97066");
+    expect(DARK["#FFFFFF"]).toBe("#3B414F");
+    expect(DARK["#0A66C2"]).toBe("#73B0FF");
+    expect(DARK["#B42318"]).toBe("#FA8F88");
     expect(DARK["#059669"]).toBe("#34D399");
     expect(DARK["#B45309"]).toBe("#F5A524");
-    expect(DARK["#BE123C"]).toBe("#FB7185");
-    expect(DARK["#878E91"]).toBe("#8B929E");
+    expect(DARK["#BE123C"]).toBe("#FC8C9C");
+    expect(DARK["#878E91"]).toBe("#8D94A0");
   });
 
   it("lifts every box off the dark canvas, the plain ones and the tinted ones", () => {
     const fills = [...new Set(Object.values(NODE_STYLES).map(style => style.fill.toUpperCase()))].filter(
       fill => fill !== "#FAFBFD"
     );
-    const flat = fills.filter(fill => contrast(DARK[fill], CANVAS.dark) < 1.25);
-    expect(flat).toEqual([]);
+    // Every box stands well off the canvas (the meaning colours are lifted just enough to stay legible on them).
+    expect(fills.filter(fill => contrast(DARK[fill], CANVAS.dark) < 1.75)).toEqual([]);
+  });
+
+  it("writes a finding badge's code in the canvas colour in dark, legible on its rose", () => {
+    expect(diagramStyles()).toContain(".dark g.badge > text {\n  fill: var(--canvas);\n}");
+    expect(contrast(CANVAS.dark, DARK[BADGE.fill.toUpperCase()])).toBeGreaterThanOrEqual(4.5);
   });
 
   it("backs an edge's label with the canvas in dark, so a lighter box colour does not show behind it", () => {
