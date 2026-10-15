@@ -82,7 +82,7 @@ export default [
     description: "Create a reusable definition with an empty body canvas of the given kind.",
     args: z.strictObject({
       name: z.string().min(1),
-      kind: z.enum(["system", "machine", "flow"]),
+      kind: z.enum(["system", "machine", "flow", "mixed"]),
       description: z.string().optional(),
       id: z.string().optional()
     }),

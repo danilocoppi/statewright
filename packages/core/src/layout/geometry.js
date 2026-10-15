@@ -1,4 +1,4 @@
-import { homeKind, isGuest } from "../roles/kinds.js";
+import { homeKind, isGuest, stateLevelOf } from "../roles/kinds.js";
 import { createStyle, displayOf as displayOfNode, stepText } from "../style/index.js";
 
 // Advance widths of Inter (regular and semibold) for the printable ASCII characters, in thousandths of an em.
@@ -154,10 +154,8 @@ export function createGeometry(doc, { style = createStyle(doc) } = {}) {
     const node = doc.canvases[canvasId].nodes[nodeId];
     const lines = node.summary ? node.summary.split("\n") : [];
     // A state guest says which machine its state belongs to (mixed levels spec §4.4).
-    if (doc.canvases[canvasId].kind === "flow" && node.kind === "state") {
-      const machine = Object.values(doc.canvases).find(
-        canvas => canvas.kind === "machine" && canvas.nodes[node.target]?.kind === "state"
-      );
+    if (homeKind(doc.canvases[canvasId].kind, node) === "flow" && node.kind === "state") {
+      const machine = doc.canvases[stateLevelOf(doc, node.target)];
       if (machine) lines.push(machine.name);
     }
     if (displayOf(canvasId, nodeId) === "card") {

@@ -19,6 +19,7 @@ const CANVAS = [
   "noDrive",
   "noLeadingEvent",
   "isTheStep",
+  "mixedEnds",
   "already",
   "notRun",
   "nothingToReceive"

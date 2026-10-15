@@ -4,12 +4,14 @@ import {
   ActionDef,
   Canvas,
   Definition,
+  edgeHome,
   EndpointDef,
   EventDef,
   Finding,
   FlowEdge,
   FlowNode,
   GuardDef,
+  homeKind,
   Lane,
   MachineEdge,
   MachineNode,
@@ -64,9 +66,15 @@ function optionOf(union, value) {
  * @param {{ type: string, value: any, canvas?: string, collection?: string }} entry
  */
 export function schemaOf(doc, entry) {
-  if (entry.type === "node") return optionOf(NODES[doc.canvases[entry.canvas].kind], entry.value);
+  const canvas = entry.canvas && doc.canvases[entry.canvas];
+  // On a mixed level, an element's schema is its own kind's (mixed levels spec §6).
+  const home =
+    canvas?.kind !== "mixed" ? canvas?.kind
+    : entry.type === "node" ? (homeKind("mixed", entry.value) ?? "machine")
+    : (edgeHome(canvas, entry.value) ?? "machine");
+  if (entry.type === "node") return optionOf(NODES[home], entry.value);
   if (entry.type === "edge") {
-    const union = EDGES[doc.canvases[entry.canvas].kind];
+    const union = EDGES[home];
     return union.options ? optionOf(union, entry.value) : union;
   }
   if (entry.type === "canvas") return optionOf(Canvas, entry.value);

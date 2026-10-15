@@ -2,7 +2,7 @@
 // never stored: each is read from the field that holds its meaning (a transition's `by`, an event's `source`, an
 // action's `party`, a step's event), so every view of it agrees, and drawing or deleting one edits that field.
 import { figureCanvases } from "../style/frames.js";
-import { homeKind } from "./kinds.js";
+import { homeKind, stateLevelOf } from "./kinds.js";
 import { viewOf } from "./typed.js";
 
 /**
@@ -133,12 +133,7 @@ function systemRoles(doc, canvasId, framed, out) {
 }
 
 /** Where a state is: its machine canvas, or null. */
-function machineOfState(doc, nodeId) {
-  for (const [canvasId, canvas] of sortedEntries(doc.canvases)) {
-    if (canvas.kind === "machine" && canvas.nodes[nodeId]?.kind === "state") return canvasId;
-  }
-  return null;
-}
+const machineOfState = (doc, nodeId) => stateLevelOf(doc, nodeId);
 
 /** The events and calls that lead a machine into a state: the triggers of its transitions there. */
 function arrivalsAt(doc, stateId) {

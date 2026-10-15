@@ -329,7 +329,7 @@ export default function EditorPage() {
       if (action === "tab") return editingStore.getState().setTab(DOCK_TABS[Number(event.key) - 1]);
       if (action === "tool") {
         const { doc, canvasId, readOnly } = editorStore.getState();
-        const tool = toolForKey(doc.canvases[canvasId].kind, event.key);
+        const tool = toolForKey(doc.canvases[canvasId].kind, event.key, editingStore.getState().tab ?? undefined);
         if (tool && !readOnly) editingStore.getState().setTool(tool.id);
         return;
       }

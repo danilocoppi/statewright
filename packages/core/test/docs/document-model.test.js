@@ -38,7 +38,7 @@ describe("documentModel: the content the Markdown and the page share", () => {
       rootKind: "system"
     });
     expect(model.counts).toEqual({
-      levels: { system: 1, machine: 4, flow: 0 },
+      levels: { system: 1, machine: 4, flow: 0, mixed: 0 },
       states: 21,
       transitions: 29,
       scenarios: 2,

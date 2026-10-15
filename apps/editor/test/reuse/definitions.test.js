@@ -11,10 +11,10 @@ const entry = (doc, id) => buildIndex(doc).get(id);
 describe("reuse", () => {
   it("knows which interiors each kind of element can have", () => {
     const doc = readExample("payments");
-    expect(interiorKinds(doc, entry(doc, "nod_scheduler"))).toEqual(["system", "machine", "flow"]);
-    expect(interiorKinds(doc, entry(doc, "nod_complianceHold"))).toEqual(["machine"]);
+    expect(interiorKinds(doc, entry(doc, "nod_scheduler"))).toEqual(["system", "machine", "flow", "mixed"]);
+    expect(interiorKinds(doc, entry(doc, "nod_complianceHold"))).toEqual(["machine", "mixed"]);
     const action = Object.keys(doc.catalog.actions)[0];
-    expect(interiorKinds(doc, entry(doc, action))).toEqual(["flow"]);
+    expect(interiorKinds(doc, entry(doc, action))).toEqual(["flow", "mixed"]);
     expect(interiorKinds(doc, entry(doc, Object.keys(doc.catalog.events)[0]))).toEqual([]);
   });
 

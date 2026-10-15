@@ -207,6 +207,7 @@
     "noDrive": "A box of a system drives a transition of a lifecycle shown here as a frame: drop it on one.",
     "noLeadingEvent": "No event moves its machine into that state: give one of its transitions an event first.",
     "isTheStep": "This connector is the step itself: its event leads there. Delete the step, or change its event.",
+    "mixedEnds": "These two do not connect: on a mixed level a state leads to a state, a step to a step, a box to a box.",
     "already": "That is already so.",
     "notRun": "That action does not run there.",
     "nothingToReceive": "Nothing runs there that someone could receive.",
@@ -339,7 +340,8 @@
       "tip": {
         "system": "This level is a system: its tools are a system's",
         "machine": "This level is a state machine: its tools are a state machine's",
-        "flow": "This level is a flow: its tools are a flow's"
+        "flow": "This level is a flow: its tools are a flow's",
+        "mixed": "This level is mixed: elements of every kind, each connection by what its ends are"
       },
       "menu": "Levels inside a box",
       "create": "Create inside {{name}}",
@@ -348,9 +350,14 @@
       "hint": {
         "flow": "Steps in order: actions, checks, loops",
         "machine": "States and the events that change them",
-        "system": "Services, actors, stores and queues"
+        "system": "Services, actors, stores and queues",
+        "mixed": "States, steps and boxes together, by meaning"
       },
-      "pick": "Select a box to create a level inside it"
+      "pick": "Select a box to create a level inside it",
+      "mixed": "Mixed",
+      "thisLevel": "This level",
+      "toMixed": "Change to mixed",
+      "toMixedHint": "Take elements of every kind here"
     },
     "select": "Select",
     "note": "Note",
@@ -408,7 +415,8 @@
     "kinds": {
       "system": "system",
       "machine": "state machine",
-      "flow": "flow"
+      "flow": "flow",
+      "mixed": "mixed level"
     },
     "tabs": {
       "label": "Kinds of element",

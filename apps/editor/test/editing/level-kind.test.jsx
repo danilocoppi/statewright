@@ -70,7 +70,11 @@ describe("the level's kind, under the dock's tools", () => {
     ]) {
       const { unmount } = dock(readExample("payments"), canvasId, selected);
       const items = await openMenu(user);
-      expect(items.map(item => item.textContent)).toEqual(["Select a box to create a level inside it"]);
+      // The level itself can always be changed to mixed (mixed levels spec §6).
+      expect(items.map(item => item.querySelector(".text-ink")?.textContent ?? item.textContent)).toEqual([
+        "Select a box to create a level inside it",
+        "Change to mixed"
+      ]);
       expect(items[0].getAttribute("aria-disabled")).toBe("true");
       unmount();
     }
@@ -83,13 +87,22 @@ describe("the level's kind, under the dock's tools", () => {
     const create = screen.getByRole("group", { name: "Create inside Scheduler" });
     expect(within(create).getByText("Create inside Scheduler")).toBeTruthy();
     const items = within(create).getAllByRole("menuitem");
-    expect(items.map(item => item.querySelector(".text-ink").textContent)).toEqual(["Flow", "State machine", "System"]);
+    expect(items.map(item => item.querySelector(".text-ink").textContent)).toEqual([
+      "Flow",
+      "State machine",
+      "System",
+      "Mixed"
+    ]);
     expect(items.every(item => item.querySelector("svg") && item.querySelector(".text-muted").textContent)).toBe(true);
     unmount();
 
-    // A state can hold only a state machine.
+    // A state can hold only a state machine (or a mixed level, which runs as one).
     dock(readExample("payments"), "cnv_expiryClock", ["nod_running"]);
-    expect((await openMenu(user)).map(item => item.querySelector(".text-ink").textContent)).toEqual(["State machine"]);
+    expect((await openMenu(user)).map(item => item.querySelector(".text-ink").textContent)).toEqual([
+      "State machine",
+      "Mixed",
+      "Change to mixed"
+    ]);
   });
 
   it("creates the level as the inspector's Add does, as one change, opens it, and Undo takes it back", async () => {
@@ -127,7 +140,10 @@ describe("the level's kind, under the dock's tools", () => {
     const user = userEvent.setup();
     const { unmount } = dock(readExample("payments"), "cnv_runtime", ["nod_lifecycleEngine"]);
     const items = await openMenu(user);
-    expect(items.map(item => item.querySelector(".text-ink").textContent)).toEqual(["Open Lifecycle engine"]);
+    expect(items.map(item => item.querySelector(".text-ink").textContent)).toEqual([
+      "Open Lifecycle engine",
+      "Change to mixed"
+    ]);
     await user.click(items[0]);
     expect(state().canvasId).toBe("cnv_lifecycle");
     unmount();
@@ -147,7 +163,7 @@ describe("the level's kind, under the dock's tools", () => {
       const { unmount } = dock(readExample("payments"), "cnv_runtime", ["nod_scheduler"]);
       act(hold);
       const items = await openMenu(user);
-      expect(items).toHaveLength(3);
+      expect(items).toHaveLength(5);
       expect(items.every(item => item.getAttribute("aria-disabled") === "true")).toBe(true);
       await user.click(items[0]);
       expect(state().doc.canvases.cnv_runtime.nodes.nod_scheduler).not.toHaveProperty("inner");

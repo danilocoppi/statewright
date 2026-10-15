@@ -207,6 +207,7 @@
     "noDrive": "Una caja del sistema conduce una transición de un ciclo de vida mostrado aquí como marco: suéltala sobre una.",
     "noLeadingEvent": "Ningún evento lleva la máquina a ese estado: da primero un evento a una de sus transiciones.",
     "isTheStep": "Este conector es el propio paso: su evento lleva allí. Borra el paso o cambia su evento.",
+    "mixedEnds": "Estos dos no se conectan: en un nivel mixto, un estado lleva a un estado, un paso a un paso, una caja a una caja.",
     "already": "Ya es así.",
     "notRun": "Esa acción no corre allí.",
     "nothingToReceive": "Allí no corre nada que alguien pueda recibir.",
@@ -339,7 +340,8 @@
       "tip": {
         "system": "Este nivel es un sistema: sus herramientas son las de un sistema",
         "machine": "Este nivel es una máquina de estados: sus herramientas son las de una máquina de estados",
-        "flow": "Este nivel es un flujo: sus herramientas son las de un flujo"
+        "flow": "Este nivel es un flujo: sus herramientas son las de un flujo",
+        "mixed": "Este nivel es mixto: elementos de todos los tipos, cada conexión por lo que son sus extremos"
       },
       "menu": "Niveles dentro de una caja",
       "create": "Crear dentro de {{name}}",
@@ -348,9 +350,14 @@
       "hint": {
         "flow": "Pasos en orden: acciones, comprobaciones, bucles",
         "machine": "Estados y los eventos que los cambian",
-        "system": "Servicios, actores, almacenes y colas"
+        "system": "Servicios, actores, almacenes y colas",
+        "mixed": "Estados, pasos y cajas juntos, con significado"
       },
-      "pick": "Selecciona una caja para crear un nivel dentro de ella"
+      "pick": "Selecciona una caja para crear un nivel dentro de ella",
+      "mixed": "Mixto",
+      "thisLevel": "Este nivel",
+      "toMixed": "Cambiar a mixto",
+      "toMixedHint": "Recibir aquí elementos de todos los tipos"
     },
     "select": "Seleccionar",
     "note": "Nota",
@@ -408,7 +415,8 @@
     "kinds": {
       "system": "sistema",
       "machine": "máquina de estados",
-      "flow": "flujo"
+      "flow": "flujo",
+      "mixed": "nivel mixto"
     },
     "tabs": {
       "label": "Tipos de elemento",

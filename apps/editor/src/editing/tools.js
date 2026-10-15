@@ -96,7 +96,21 @@ export const NAME_REQUIRED = new Set(["state", "entry"]);
  * @param {"system" | "machine" | "flow"} kind
  * @param {"system" | "machine" | "flow"} [tab]
  */
-export const toolsFor = (kind, tab = kind) => (tab === kind ? TOOLS[kind] : [SELECT, ...GUESTS[kind][tab], NOTE]);
+export const toolsFor = (kind, tab = defaultTab(kind)) => {
+  // On a mixed level the tabs are peers (mixed levels spec §6): each kind's tools, with the guests that live there.
+  if (kind === "mixed") return [...TOOLS[tab].slice(0, -1), ...MIXED_GUESTS[tab], NOTE];
+  return tab === kind ? TOOLS[kind] : [SELECT, ...GUESTS[kind][tab], NOTE];
+};
+
+/** The tab a level opens on: its own kind's, or, on a mixed level, the machine's. */
+export const defaultTab = kind => (kind === "mixed" ? "machine" : kind);
+
+/** The guests a mixed level's tabs add to their kind's tools: participants and steps with states, state guests with steps. */
+const MIXED_GUESTS = {
+  system: [],
+  machine: [...PARTICIPANTS, { id: "steps", icon: "action", node: { kind: "steps" }, needs: "action" }],
+  flow: [{ id: "stateGuest", icon: "state", node: { kind: "state" }, needs: "state" }]
+};
 
 /**
  * A tool of a level of this kind, on any of its tabs, by ID; null when there is none.
@@ -111,4 +125,5 @@ export const toolById = (kind, id) =>
  * @param {"system" | "machine" | "flow"} kind
  * @param {string} key As `KeyboardEvent.key` gives it.
  */
-export const toolForKey = (kind, key) => TOOLS[kind].find(tool => tool.key === key.toUpperCase()) ?? null;
+export const toolForKey = (kind, key, tab = defaultTab(kind)) =>
+  (kind === "mixed" ? toolsFor(kind, tab) : TOOLS[kind]).find(tool => tool.key === key.toUpperCase()) ?? null;

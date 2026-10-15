@@ -44,7 +44,7 @@ export function StartTiles({ onStart, onOpenFile, onExample }) {
       <section>
         <h2 className="mb-2.5 text-[12px] font-medium text-muted">{t("start.title")}</h2>
         <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-[18px]">
-          {["system", "machine", "flow"].map(kind => (
+          {["system", "machine", "flow", "mixed"].map(kind => (
             <Tile
               key={kind}
               icon={<Icon name={kind} />}

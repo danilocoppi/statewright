@@ -279,7 +279,8 @@
     "canvas": {
       "system": "Nivel de sistema",
       "machine": "Máquina de estados",
-      "flow": "Flujo"
+      "flow": "Flujo",
+      "mixed": "Nivel mixto"
     },
     "catalog": {
       "types": "Tipo",
@@ -305,7 +306,8 @@
     "add": {
       "machine": "Añadir una transición",
       "system": "Añadir una conexión",
-      "flow": "Añadir un paso siguiente"
+      "flow": "Añadir un paso siguiente",
+      "mixed": "Añadir una conexión"
     },
     "pick": "¿A qué caja?",
     "itself": "ella misma"

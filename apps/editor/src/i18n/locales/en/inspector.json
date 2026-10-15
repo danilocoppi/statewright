@@ -279,7 +279,8 @@
     "canvas": {
       "system": "System level",
       "machine": "State machine",
-      "flow": "Flow"
+      "flow": "Flow",
+      "mixed": "Mixed level"
     },
     "catalog": {
       "types": "Type",
@@ -305,7 +306,8 @@
     "add": {
       "machine": "Add a transition",
       "system": "Add a connection",
-      "flow": "Add a next step"
+      "flow": "Add a next step",
+      "mixed": "Add a connection"
     },
     "pick": "To which box?",
     "itself": "itself"

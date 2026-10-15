@@ -1,3 +1,4 @@
+import { typedView } from "statewright";
 import { useTranslation } from "react-i18next";
 
 import { Button, IconButton } from "@/components/ui/Button";
@@ -26,7 +27,7 @@ function Now({ point, index }) {
   const canvas = useSimulation(state => state.canvas);
   const points = useSimulation(state => state.points);
   const rows = nowRows(doc, canvas, point.session, t);
-  const flow = doc.canvases[canvas]?.kind === "flow";
+  const flow = typedView(doc).canvases[canvas]?.kind === "flow";
   return (
     <Section title={t("run.now")} id="simulate-now">
       {rows.length > 0 ?

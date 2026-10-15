@@ -33,7 +33,8 @@ export function InteriorControl({ id, field, value, layer, entry }) {
   const edit = useField(id, field);
   const doc = useEditor(state => state.doc);
   const [removing, setRemoving] = useState(false);
-  const kinds = interiorKinds(doc, entry);
+  // The inspector adds a typed level; a mixed one is made from the level-kind menu or by changing a level to mixed.
+  const kinds = interiorKinds(doc, entry).filter(kind => kind !== "mixed");
   const name = entry.value.name ?? id;
   // The address follows the level the store shows (spec §4.6), so opening a level is showing it.
   const open = canvasId => editorStore.getState().setCanvas(canvasId);

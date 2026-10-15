@@ -31,6 +31,9 @@ const PATHS = {
   system: "M2.5 3.5h5v4h-5zM8.5 8.5h5v4h-5zM7.5 5.5H10v3",
   machine: "M2.5 8a1.3 1.3 0 1 0 2.6 0 1.3 1.3 0 0 0-2.6 0zM7 5.5h6.5v5H7zM5.1 8H7",
   flow: "M8 2.5 11 5.5 8 8.5 5 5.5zM8 8.5v2M5 13h6",
+  // A mixed level: a box, a step, a state and a start, one in each corner.
+  mixed:
+    "M2.5 2.5h4.5v3.5H2.5zM11 2.2 13.6 4.4 11 6.6 8.4 4.4zM9 9.5h4.5v4H9zM2.6 11.5a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 0 0-3.2 0z",
   "align-left": "M3 2.5v11M5.5 5.5h7M5.5 10.5h4.5",
   "align-centre": "M8 2.5v11M4.5 5.5h7M5.5 10.5h5",
   "align-right": "M13 2.5v11M3.5 5.5h7M6 10.5h4.5",

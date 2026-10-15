@@ -1,4 +1,4 @@
-import { homeKind } from "../roles/kinds.js";
+import { homeKind, stateLevelOf } from "../roles/kinds.js";
 import { sorted } from "./facts.js";
 
 /** Catalog collections whose items may have a flow, with the word messages use for them. */
@@ -48,8 +48,8 @@ export default [
       for (const [canvasId, id, node] of nodesOf(facts, "flow", "state")) {
         const entry = facts.index.get(node.target);
         if (!entry) continue; // ref.dangling covers it
-        const isState = entry.type === "node" && entry.value.kind === "state";
-        if (isState && facts.doc.canvases[entry.canvas].kind === "machine") continue;
+        // A machine's state, on a machine level or on a mixed one.
+        if (stateLevelOf(facts.doc, node.target)) continue;
         report({
           target: id,
           canvas: canvasId,

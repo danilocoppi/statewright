@@ -1,5 +1,5 @@
 // How the inspector heads an element (mockup 09): its name, or what stands for it, and what it is, where.
-import { isGuest, stepText } from "statewright";
+import { edgeHome, isGuest, stepText } from "statewright";
 
 /**
  * What a node is called on its level: its name, or its kind ("Initial node"); a guest, given the document, by what it
@@ -17,7 +17,9 @@ export function kindWords(t, doc, entry) {
   const { type, value } = entry;
   if (type === "node") return t(`inspector:kinds.node.${value.kind}`);
   if (type === "edge") {
-    const canvasKind = doc.canvases[entry.canvas].kind;
+    const canvas = doc.canvases[entry.canvas];
+    // A mixed level's connection is called what it is at home (mixed levels spec §4.5).
+    const canvasKind = canvas.kind === "mixed" ? (edgeHome(canvas, value) ?? "machine") : canvas.kind;
     const kind =
       canvasKind !== "machine" ? canvasKind
       : value.kind === "link" ? "link"

@@ -106,7 +106,7 @@ const isRecord = value => typeof value === "object" && value !== null && !Array.
 const isClip = clip =>
   isRecord(clip) &&
   clip.format === CLIP_FORMAT &&
-  ["system", "machine", "flow"].includes(clip.kind) &&
+  ["system", "machine", "flow", "mixed"].includes(clip.kind) &&
   ["nodes", "edges", "notes", "canvases", "catalog"].every(key => isRecord(clip[key])) &&
   isRecord(clip.layout) &&
   ["nodes", "edges", "notes"].every(key => isRecord(clip.layout[key]));

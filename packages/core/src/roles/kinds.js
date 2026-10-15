@@ -70,3 +70,17 @@ export function edgeHome(canvas, edge) {
   const from = homeKind("mixed", canvas.nodes[edge.from]);
   return from === "machine" ? null : from;
 }
+
+/**
+ * The level a machine's state is on (on a machine level, or on a mixed level as a state, not a state guest), or null.
+ * @param {any} doc
+ * @param {string} stateId
+ * @returns {string|null}
+ */
+export function stateLevelOf(doc, stateId) {
+  for (const [canvasId, canvas] of Object.entries(doc.canvases)) {
+    const node = canvas.nodes[stateId];
+    if (node?.kind === "state" && homeKind(canvas.kind, node) === "machine") return canvasId;
+  }
+  return null;
+}

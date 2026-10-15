@@ -1,7 +1,7 @@
 // Drawing and deleting a role's connector (mixed levels spec §3): a connector is never stored, so drawing one writes the
 // field that holds its meaning, and deleting one clears it. What a pair of ends means comes from their kinds; a pair
 // that means nothing is refused, in words the Editor can say.
-import { homeKind, isGuest } from "./kinds.js";
+import { homeKind, isGuest, stateLevelOf } from "./kinds.js";
 import { viewOf } from "./typed.js";
 import { makeId } from "../ids.js";
 import { buildIndex } from "../query/build-index.js";
@@ -119,9 +119,7 @@ function drives(doc, canvasId, box, edgeId, choice) {
 
 /** The events whose transitions bring a machine into a state (mixed levels spec §4.4), sorted. */
 function eventsInto(doc, stateId) {
-  const machine = Object.values(doc.canvases).find(
-    canvas => canvas.kind === "machine" && canvas.nodes[stateId]?.kind === "state"
-  );
+  const machine = doc.canvases[stateLevelOf(doc, stateId)];
   const events = new Set();
   for (const edge of Object.values(machine?.edges ?? {})) {
     if (edge.kind !== "link" && edge.to === stateId) for (const event of edge.on ?? []) events.add(event);

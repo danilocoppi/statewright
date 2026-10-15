@@ -401,7 +401,10 @@ export function documentModel(doc) {
     },
     counts: {
       levels: Object.fromEntries(
-        ["system", "machine", "flow"].map(kind => [kind, canvases.filter(canvas => canvas.kind === kind).length])
+        ["system", "machine", "flow", "mixed"].map(kind => [
+          kind,
+          canvases.filter(canvas => canvas.kind === kind).length
+        ])
       ),
       states: machines.reduce(
         (sum, canvas) => sum + Object.values(canvas.nodes).filter(node => node.kind === "state").length,

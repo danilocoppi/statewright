@@ -8,10 +8,11 @@ import { useSimulation } from "@/simulate/store";
 import { editorStore, useEditor } from "@/store/editor";
 import { toast } from "@/stores/toast";
 
+import { mixLevel } from "./actions";
 import { refusalKey } from "./refusals";
 
 /** The kinds of level a box may hold, in the order the menu offers them. */
-const KINDS = ["flow", "machine", "system"];
+const KINDS = ["flow", "machine", "system", "mixed"];
 
 /** The level inside a box: its own, or the body of the reusable part it uses; null when there is none. */
 function levelInside(doc, node) {
@@ -30,6 +31,26 @@ function createInside(t, id, kind) {
   const result = editor.dispatch(commands, { label: t("inspector:reuse.added") });
   if (result.ok) editorStore.getState().setCanvas(level);
   else toast.error(t(`editor:${refusalKey(result.error.code)}`));
+}
+
+/** What the menu offers for the level itself: to change it to mixed, when it is not. */
+function levelSection(t, doc, canvasId, locked) {
+  if (doc.canvases[canvasId].kind === "mixed") return [];
+  return [
+    {
+      title: t("tools.kind.thisLevel"),
+      items: [
+        {
+          id: "toMixed",
+          label: t("tools.kind.toMixed"),
+          hint: t("tools.kind.toMixedHint"),
+          icon: <Icon name="mixed" />,
+          disabled: locked,
+          onSelect: () => mixLevel(t)
+        }
+      ]
+    }
+  ];
 }
 
 /**
@@ -100,7 +121,10 @@ export function LevelKind({ kind, buttonRef, onKeyDown, tip, onTip }) {
     <Menu
       label={t("tools.kind.menu")}
       side="right"
-      sections={sectionsFor(t, doc, canvasId, selection, readOnly || simulating)}
+      sections={[
+        ...sectionsFor(t, doc, canvasId, selection, readOnly || simulating),
+        ...levelSection(t, doc, canvasId, readOnly || simulating)
+      ]}
       menuClassName="w-80"
       trigger={({ ref, onKeyDown: _opens, ...props }) => (
         <div className="relative">

@@ -1,3 +1,4 @@
+import { typedView } from "statewright";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { instancesOf } from "statewright/simulate";
@@ -48,7 +49,7 @@ export function Data({ session }) {
   const id = useId();
   const names = new Map(instancesOf(doc, canvas).map(instance => [instance.key, instance.name]));
   const groups =
-    doc.canvases[canvas]?.kind === "flow" ?
+    typedView(doc).canvases[canvas]?.kind === "flow" ?
       [
         { key: "vars", name: t("data.vars"), value: session.vars ?? {} },
         { key: "context", name: t("data.context"), value: session.context?.[canvas] ?? {} }

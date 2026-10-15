@@ -46,10 +46,12 @@ export function stateOptions(doc, onPick) {
   return query => {
     const typed = query.trim().toLowerCase();
     return Object.values(doc.canvases)
-      .filter(canvas => canvas.kind === "machine")
+      .filter(canvas => canvas.kind === "machine" || canvas.kind === "mixed")
       .flatMap(canvas =>
         Object.entries(canvas.nodes)
-          .filter(([, node]) => node.kind === "state" && node.name.toLowerCase().includes(typed))
+          .filter(
+            ([, node]) => node.kind === "state" && node.target === undefined && node.name.toLowerCase().includes(typed)
+          )
           .map(([id, node]) => ({ id, label: node.name, meta: canvas.name, onPick: () => onPick({ target: id }) }))
       )
       .slice(0, 8);

@@ -1,5 +1,6 @@
 // What the panel says about a run (simulator spec §6.2): the clock, where the run is now. Names of states, events and
 // nodes are the document's, as written; the panel's own words are the interface language's (`t`).
+import { typedView } from "statewright";
 import { locate, reachedOf } from "statewright/simulate";
 
 import { parseDuration } from "@/editing/triggers";
@@ -59,7 +60,7 @@ function whereOf(doc, places, t) {
  * @returns {Array<{ key: string, path: string, name: string, where: string | null }>}
  */
 export function nowRows(doc, top, session, t) {
-  if (doc.canvases[top]?.kind === "flow") return tokenRows(doc, top, session, t);
+  if (typedView(doc).canvases[top]?.kind === "flow") return tokenRows(doc, top, session, t);
   return reachedOf(session).active.map(path => {
     const places = locate(doc, top, path);
     if (!places) return { key: path, path, name: path, where: null };
@@ -307,7 +308,7 @@ export function sentenceOf(doc, top, frame, t, language) {
   const parts = [];
   if (frame.step === 0) {
     const places = [...new Set(frame.active.map(name))];
-    const flow = doc.canvases[top]?.kind === "flow";
+    const flow = typedView(doc).canvases[top]?.kind === "flow";
     if (places.length) parts.push(t(flow ? "simulate:stage.waits" : "simulate:stage.starts", { places: list(places) }));
   } else {
     const chains = [];

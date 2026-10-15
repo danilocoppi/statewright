@@ -10,7 +10,7 @@ import { useEditor } from "@/store/editor";
 import { LevelKind } from "./LevelKind";
 import { TOOL_TYPE } from "./place";
 import { editingStore, useEditing } from "./state";
-import { DOCK_TABS, toolsFor } from "./tools";
+import { DOCK_TABS, defaultTab, toolsFor } from "./tools";
 
 /** A tooltip beside the dock: the tool's name and, when it has one, its key. */
 function Tip({ text, shortcut }) {
@@ -42,7 +42,7 @@ export function ToolDock() {
   const [tip, setTip] = useState(null);
   const buttons = useRef([]);
   if (!kind) return null;
-  const tab = chosen ?? kind;
+  const tab = chosen ?? defaultTab(kind);
   const tools = toolsFor(kind, tab);
 
   // The tabs, the tools, then the level's kind.

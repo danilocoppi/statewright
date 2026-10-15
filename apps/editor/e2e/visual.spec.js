@@ -5,7 +5,7 @@
 // (mockup 06); plan D1, the documentation page's cover and a level's part; plan A3, an agent's toast and note (AI
 // interface spec §7.3); plan A4, Connect an AI… (§7.4); a finding badge's details, beside it; a Problems marker's
 // details, beside it; the level's kind under the tool dock, its menu open; the support popover above its badge; and
-// plan M2, a machine's roles; plan M3, a lifecycle framed on a system; plan M4, a flow's roles.
+// plan M2, a machine's roles; plan M3, a lifecycle framed on a system; plan M4, a flow's roles; plan M5, a mixed level.
 // After a deliberate change of look, update the pictures with
 // `npm run e2e -w @statewright/editor -- e2e/visual.spec.js --update-snapshots=all` and look at every one before
 // committing it.
@@ -170,6 +170,51 @@ const FLOW_ROLES = flow => [
     type: "lane.add",
     args: { id: "lne_payments", lane: { canvas: flow, label: "Payments", nodes: ["nod_call"], party: "pty_payments" } }
   }
+];
+
+/** One mixed level: Order's states, the charge's steps and the shop's boxes, with who sends and what leads where. */
+const MIXED = root => [
+  {
+    type: "catalog.add",
+    args: { collection: "parties", id: "pty_customer", item: { kind: "human", name: "Customer" } }
+  },
+  { type: "catalog.add", args: { collection: "events", id: "evt_pay", item: { name: "order.pay" } } },
+  {
+    type: "catalog.add",
+    args: { collection: "endpoints", id: "ept_pay", item: { name: "Pay", method: "POST", path: "/pay" } }
+  },
+  { type: "node.add", args: { canvas: root, id: "nod_init", node: { kind: "initial" } } },
+  { type: "node.add", args: { canvas: root, id: "nod_open", node: { kind: "state", name: "open" } } },
+  {
+    type: "node.add",
+    args: { canvas: root, id: "nod_paid", node: { kind: "state", name: "paid", outcome: "success", terminal: true } }
+  },
+  {
+    type: "edge.add",
+    args: { canvas: root, id: "edg_init", edge: { from: "nod_init", to: "nod_open", kind: "transition" } }
+  },
+  {
+    type: "edge.add",
+    args: {
+      canvas: root,
+      id: "edg_pay",
+      edge: { from: "nod_open", to: "nod_paid", kind: "transition", on: ["evt_pay"], by: "pty_customer" }
+    }
+  },
+  { type: "node.add", args: { canvas: root, id: "nod_start", node: { kind: "start" } } },
+  { type: "node.add", args: { canvas: root, id: "nod_call", node: { kind: "call", endpoint: "ept_pay" } } },
+  { type: "node.add", args: { canvas: root, id: "nod_tell", node: { kind: "emit", event: "evt_pay" } } },
+  { type: "node.add", args: { canvas: root, id: "nod_end", node: { kind: "end" } } },
+  { type: "edge.add", args: { canvas: root, id: "edg_s1", edge: { from: "nod_start", to: "nod_call" } } },
+  { type: "edge.add", args: { canvas: root, id: "edg_s2", edge: { from: "nod_call", to: "nod_tell" } } },
+  { type: "edge.add", args: { canvas: root, id: "edg_s3", edge: { from: "nod_tell", to: "nod_end" } } },
+  {
+    type: "node.add",
+    args: { canvas: root, id: "nod_web", node: { kind: "service", name: "Web", party: "pty_customer" } }
+  },
+  { type: "node.add", args: { canvas: root, id: "nod_db", node: { kind: "store", name: "Orders" } } },
+  { type: "edge.add", args: { canvas: root, id: "edg_db", edge: { from: "nod_web", to: "nod_db", kind: "data" } } },
+  { type: "node.add", args: { canvas: root, id: "nod_paidHere", node: { kind: "state", target: "nod_paid" } } }
 ];
 
 /** Wait until the level is drawn and still: arranged and stored, its fonts in, its view no longer moving. */
@@ -410,6 +455,29 @@ for (const theme of ["light", "dark"]) {
       await page.mouse.move(8, 892);
       await settled(page);
       await expect(page).toHaveScreenshot(`flow-roles-${theme}.png`, { maxDiffPixelRatio: 0.001 });
+    });
+
+    test("shows a mixed level: states, steps and boxes together, each connection by what it is", async ({ page }) => {
+      await page.goto("/");
+      await page.getByRole("button", { name: /^Mixed/ }).click();
+      const dialog = page.getByRole("dialog", { name: "New project" });
+      await dialog.getByRole("textbox", { name: "Name" }).fill("Shop floor");
+      await dialog.getByRole("button", { name: "Create project" }).click();
+      await expect(page.getByTestId("canvas")).toBeVisible();
+      const call = (name, args) =>
+        page.evaluate(([name, args]) => globalThis.statewright.call(name, args), [name, args]);
+      const root = (await call("document.get")).result.document.root;
+      await call("batch.apply", { label: "Mixed", commands: MIXED(root) });
+      const placed = async () => (await call("document.get")).result.document.layout?.canvases?.[root]?.nodes?.nod_db;
+      await expect.poll(placed).toBeTruthy();
+      await settled(page);
+      await page.getByRole("button", { name: "Auto-layout" }).click();
+      await expect(page.locator(".react-flow__node.sw-ai")).toHaveCount(0, { timeout: 5000 });
+      await expect(page.getByTestId("toast")).toHaveCount(0, { timeout: 8000 });
+      await page.keyboard.press("Shift+F");
+      await page.mouse.move(8, 892);
+      await settled(page);
+      await expect(page).toHaveScreenshot(`mixed-${theme}.png`, { maxDiffPixelRatio: 0.001 });
     });
 
     test("shows a badge's findings beside it", async ({ page }) => {

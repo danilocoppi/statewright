@@ -1,3 +1,4 @@
+import { edgeHome } from "statewright";
 import { useViewport } from "@xyflow/react";
 import { useEffect, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -311,12 +312,14 @@ export function TriggerEditor({ edgeId, at, onClose }) {
   if (!edge) return null;
   const nameOf = id => canvas.nodes[id]?.name ?? t(`trigger.unnamed.${canvas.nodes[id]?.kind}`, { defaultValue: id });
   const names = { from: nameOf(edge.from), to: nameOf(edge.to) };
-  const question = t(`trigger.question.${canvas.kind}`, names);
+  // On a mixed level a connection asks what it is at home asks (mixed levels spec §4.5).
+  const home = canvas.kind === "mixed" ? (edgeHome(canvas, edge) ?? "machine") : canvas.kind;
+  const question = t(`trigger.question.${home}`, names);
   const apply = (commands, label) => {
     change(commands, { label, at });
     onClose();
   };
-  const Body = { machine: MachineTrigger, system: SystemKind, flow: FlowBranch }[canvas.kind];
+  const Body = { machine: MachineTrigger, system: SystemKind, flow: FlowBranch }[home];
 
   return (
     <section

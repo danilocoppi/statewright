@@ -51,7 +51,9 @@ describe("a mixed level, seen as the typed level its executable part is (mixed l
   it("is judged by the machine rules, and lists in the contract among machines", async () => {
     const doc = mixedDoc();
     doc.canvases.cnv_mixed.nodes.nod_lost = { kind: "state", name: "lost" };
-    expect(check(doc).some(problem => problem.code === "machine.unreachable" && problem.target === "nod_lost")).toBe(true);
+    expect(check(doc).some(problem => problem.code === "machine.unreachable" && problem.target === "nod_lost")).toBe(
+      true
+    );
     const { contract } = await toContract(mixedDoc());
     expect(contract.machines.map(machine => machine.id)).toContain("cnv_mixed");
   });
@@ -70,7 +72,9 @@ describe("a mixed level, seen as the typed level its executable part is (mixed l
     const doc = mixedDoc();
     doc.canvases.cnv_mixed.edges.edg_pay.by = "pty_customer";
     expect(associationsOf(doc, "cnv_mixed").map(item => item.id)).toEqual(
-      expect.arrayContaining(["sends:nod_customer:edg_pay", "sends:nod_web:edg_pay", "leadsTo:nod_call:nod_paidHere"].slice(0, 2))
+      expect.arrayContaining(
+        ["sends:nod_customer:edg_pay", "sends:nod_web:edg_pay", "leadsTo:nod_call:nod_paidHere"].slice(0, 2)
+      )
     );
   });
 

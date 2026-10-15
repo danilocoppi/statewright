@@ -1,7 +1,7 @@
 // What the inspector edits for each element (spec §7.4): its fields in two layers — Basics, what a reviewer understands
 // without the format, and Details — each with the control that edits it. Every key of format 1.0 is a field here or
 // is listed in ELSEWHERE with the place it is edited (spec §13, E4: "every field of format 1.0 is editable somewhere").
-import { isGuest } from "statewright";
+import { edgeHome, homeKind, isGuest } from "statewright";
 
 import { indexOf } from "@/lib/derived";
 
@@ -328,11 +328,16 @@ const OTHER_FIELDS = {
  * The fields of a kind of element, in order (each layer keeps this order).
  * @param {string} type An index entry type: "node", "edge", "canvas", "catalog", "project", "definition", "region",
  *   "note", "lane", "finding".
- * @param {{ canvasKind?: string, kind?: string, collection?: string }} [of] A node's or edge's kind of level and kind
+ * @param {{ canvasKind?: string, kind?: string, collection?: string, value?: object }} [of] A node's or edge's kind of
+ *   level and kind (and, on a mixed level, the node, which says which kind it is at home)
  *   ("transition" or "link" for machine edges), a level's kind, a catalog item's collection.
  * @returns {Field[]}
  */
-export function fieldsOfKind(type, { canvasKind, kind, collection } = {}) {
+export function fieldsOfKind(type, { canvasKind, kind, collection, value } = {}) {
+  // On a mixed level, an element takes the fields of its own kind (a state with a target is a flow's state guest).
+  if (canvasKind === "mixed" && (type === "node" || type === "edge")) {
+    canvasKind = homeKind("mixed", value ?? { kind }) ?? "machine";
+  }
   if (type === "node") {
     const own = NODE_FIELDS[canvasKind][kind];
     // Guests take no part in the level's transitions or steps, so they have no connections section.
@@ -363,9 +368,13 @@ export function fieldsOfKind(type, { canvasKind, kind, collection } = {}) {
 
 /** The kind of element an index entry is, as `fieldsOfKind` takes it. */
 function kindOf(doc, entry) {
-  if (entry.type === "node") return { canvasKind: doc.canvases[entry.canvas].kind, kind: entry.value.kind };
+  if (entry.type === "node") {
+    return { canvasKind: doc.canvases[entry.canvas].kind, kind: entry.value.kind, value: entry.value };
+  }
   if (entry.type === "edge") {
-    const canvasKind = doc.canvases[entry.canvas].kind;
+    const canvas = doc.canvases[entry.canvas];
+    // A mixed level's connection takes the fields of what it is (mixed levels spec §6).
+    const canvasKind = canvas.kind === "mixed" ? (edgeHome(canvas, entry.value) ?? "machine") : canvas.kind;
     return { canvasKind, kind: entry.value.kind === "link" ? "link" : "transition" };
   }
   if (entry.type === "canvas") return { kind: entry.value.kind };

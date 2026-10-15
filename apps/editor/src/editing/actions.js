@@ -20,6 +20,7 @@ import { copyOf, duplicateCommands, pasteCommands } from "./clipboard";
 import { idsFor } from "./ids";
 import { asksAfterConnect, connectCommands, connectRefusal, inWords, isRolePair, placeRefusal } from "./connect";
 import { placeCommands } from "./place";
+import { refusalKey } from "./refusals";
 import { change, editingStore } from "./state";
 
 /** The open level, what is selected on it, and whether this tab may change it. */
@@ -435,4 +436,16 @@ export function laneSelection(t) {
     at: centreOf(doc, canvasId, nodes)
   });
   return ok ? id : null;
+}
+
+/**
+ * Make the level shown mixed (mixed levels spec §6: "Change to mixed"), as one undoable change: it then takes elements
+ * of every kind, its elements and their meaning kept.
+ */
+export function mixLevel(t) {
+  const editor = editorStore.getState();
+  const result = editor.dispatch([{ type: "canvas.mix", args: { id: editor.canvasId } }], {
+    label: t("editor:tools.kind.toMixed")
+  });
+  if (!result.ok) toast.error(t(`editor:${refusalKey(result.error.code)}`));
 }

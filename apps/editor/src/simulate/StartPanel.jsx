@@ -1,6 +1,6 @@
 import { useId, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ownersOf } from "statewright";
+import { ownersOf, typedView } from "statewright";
 import { instancesOf } from "statewright/simulate";
 
 import { Button, IconButton } from "@/components/ui/Button";
@@ -29,7 +29,8 @@ function inputTypeOf(doc, canvas) {
 
 /** What the Start panel asks for a top canvas: starting values per machine instance, a flow's input, an entry. */
 function startOf(doc, canvas) {
-  const level = doc.canvases[canvas];
+  // A mixed level runs as what its part is (mixed levels spec §4.5).
+  const level = typedView(doc).canvases[canvas];
   if (level.kind === "flow") {
     return { kind: "flow", contexts: [], input: { fields: fieldsOf(doc, inputTypeOf(doc, canvas)) }, entries: [] };
   }

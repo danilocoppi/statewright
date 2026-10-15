@@ -1,7 +1,7 @@
 import { buildIndex } from "../query/build-index.js";
 import { figureCanvases, interiorOf, stepsItem } from "./frames.js";
 import { associationsOf } from "../roles/index.js";
-import { edgeHome, homeKind } from "../roles/kinds.js";
+import { edgeHome, homeKind, stateLevelOf } from "../roles/kinds.js";
 import { CHIP_LABELS, EDGE_STYLES, MUTED, NODE_STYLES, ROLE_STYLES, TONES } from "./palette.js";
 
 export { displayOf, figureCanvases, interiorOf } from "./frames.js";
@@ -69,11 +69,10 @@ const STYLED_SHAPES = new Set(["box", "actor", "ref"]);
 
 /** The state a state guest stands for, with its machine canvas, or null. */
 function guestTarget(doc, node) {
-  for (const [canvasId, canvas] of Object.entries(doc.canvases)) {
-    const target = canvas.nodes[node.target];
-    if (target && canvas.kind === "machine") return { canvasId, canvas, state: target };
-  }
-  return null;
+  const canvasId = stateLevelOf(doc, node.target);
+  return canvasId ?
+      { canvasId, canvas: doc.canvases[canvasId], state: doc.canvases[canvasId].nodes[node.target] }
+    : null;
 }
 
 /**
@@ -166,7 +165,7 @@ export function createStyle(doc) {
       if (NODE_STYLES[key].chip) chip(NODE_STYLES[key].chip, NODE_STYLES[key].stroke);
       else if (look?.chip) chip(look.chip, MUTED);
     }
-    if (canvasKind === "flow" && value.kind === "state") chip("STATE", MUTED);
+    if (homeKind(canvasKind, value) === "flow" && value.kind === "state") chip("STATE", MUTED);
     if (value.terminal) chip("FINAL", style.stroke);
     if (CATEGORY_KEYS[value.category]) {
       const category = NODE_STYLES[CATEGORY_KEYS[value.category]];

@@ -226,3 +226,13 @@ describe("connections on systems and flows", () => {
     expect(edge("edg_card")).toMatchObject({ kind: "case", case: "card" });
   });
 });
+
+describe("the trigger editor on a mixed level (mixed levels spec §4.5)", () => {
+  it("asks what a transition asks, keeping it a transition", async () => {
+    const user = userEvent.setup();
+    const mixed = applyBatch(await machine(), [{ type: "canvas.mix", args: { id: (await machine()).root } }]).doc;
+    edit(mixed, "edg_go");
+    await user.type(screen.getByRole("combobox", { name: "Event" }), "psp.received{Enter}");
+    expect(edge("edg_go")).toMatchObject({ kind: "transition", on: ["evt_pspReceived"] });
+  });
+});

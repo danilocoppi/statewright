@@ -1,13 +1,13 @@
 // Connecting boxes (spec §7.2): what a new edge looks like on each kind of canvas, the box a drag to empty space
 // creates, and what the canvas refuses before Core is asked — what the format forbids, said in plain words.
-import { applyBatch, associationRefusal, CommandError, isGuest } from "statewright";
+import { applyBatch, associationRefusal, CommandError, homeKind, isGuest } from "statewright";
 
 import { regionAt } from "./changes";
 import { idsFor } from "./ids";
 
 /**
  * @typedef {"elsewhere" | "intoStart" | "fromTerminal" | "initialOnce" | "crossRegion" | "secondInitial" | "guest"
- *   | "noMeaning" | "already" | "notRun" | "nothingToReceive"} Refusal The last four: a role's connector (Core's
+ *   | "noMeaning" | "already" | "notRun" | "nothingToReceive" | "mixedEnds"} Refusal The last four: a role's connector (Core's
  *   `associate`).
  *   Keys of `editor:refusals` (with Core's error codes for anything else Core refuses).
  */
@@ -26,7 +26,10 @@ export function edgeFor(doc, canvasId, from, to) {
   const canvas = doc.canvases[canvasId];
   const ends = [canvas.nodes[from], canvas.nodes[to]];
   if (ends.some(node => node?.kind === "ref")) return { from, to, kind: "link" };
-  if (canvas.kind !== "flow") return { from, to };
+  // On a mixed level a connection is what its ends make it: between a machine's nodes, a transition that says so.
+  const home = homeKind(canvas.kind, ends[0]);
+  if (canvas.kind === "mixed" && home === "machine") return { from, to, kind: "transition" };
+  if (home !== "flow") return { from, to };
   const taken = outgoing(canvas, from);
   if (ends[0].kind === "if") {
     const branch = ["true", "false"].find(kind => !taken.some(edge => edge.kind === kind));
@@ -70,7 +73,11 @@ export function connectRefusal(doc, canvasId, from, to) {
   const source = canvas.nodes[from];
   const target = canvas.nodes[to];
   if (!source || !target) return "elsewhere";
-  if (canvas.kind === "machine") {
+  // On a mixed level, ends of different kinds mean nothing together (mixed levels spec §4.5).
+  if (canvas.kind === "mixed" && source.kind !== "ref" && target.kind !== "ref") {
+    if (homeKind("mixed", source) !== homeKind("mixed", target)) return "mixedEnds";
+  }
+  if (homeKind(canvas.kind, source) === "machine" && homeKind(canvas.kind, target) !== "flow") {
     if (NOT_TARGETS.has(target.kind)) return "intoStart";
     if (source.kind === "state" && source.terminal) return "fromTerminal";
     if (source.kind === "initial" && outgoing(canvas, from).length) return "initialOnce";
@@ -93,8 +100,8 @@ export function startRefusal(doc, canvasId, from) {
   const canvas = doc.canvases[canvasId];
   const node = canvas.nodes[from];
   // On a machine, a participant starts what it sends and embedded steps go where they run (mixed levels spec §4).
-  if (node && isGuest(canvas.kind, node)) return canvas.kind === "machine" ? null : "guest";
-  if (canvas.kind !== "machine" || !node) return null;
+  if (node && isGuest(canvas.kind, node)) return ["machine", "mixed"].includes(canvas.kind) ? null : "guest";
+  if (!node || homeKind(canvas.kind, node) !== "machine") return null;
   if (node.kind === "state" && node.terminal) return "fromTerminal";
   if (node.kind === "initial" && outgoing(canvas, from).length) return "initialOnce";
   return null;
@@ -134,7 +141,10 @@ export function asksAfterConnect(doc, canvasId, edgeId) {
   const canvas = doc.canvases[canvasId];
   const edge = canvas.edges[edgeId];
   if (!edge || edge.kind === "link") return false;
-  return canvas.kind !== "flow" || ["if", "switch"].includes(canvas.nodes[edge.from]?.kind);
+  return (
+    homeKind(canvas.kind, canvas.nodes[edge.from]) !== "flow" ||
+    ["if", "switch"].includes(canvas.nodes[edge.from]?.kind)
+  );
 }
 
 /**
@@ -156,4 +166,4 @@ export function placeRefusal(doc, canvasId, node, point) {
  * state on machines, a service on systems, an action on flows.
  * @param {"system" | "machine" | "flow"} kind
  */
-export const naturalTool = kind => ({ system: "service", machine: "state", flow: "action" })[kind];
+export const naturalTool = kind => ({ system: "service", machine: "state", flow: "action", mixed: "state" })[kind];

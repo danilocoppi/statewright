@@ -27,7 +27,9 @@
     "flow": "Flujo",
     "flowHint": "Pasos, if, while, switch",
     "drop": "Suelta un .sttw",
-    "dropHint": "o haz clic para abrir un archivo"
+    "dropHint": "o haz clic para abrir un archivo",
+    "mixed": "Mixto",
+    "mixedHint": "Estados, pasos y cajas en un solo nivel"
   },
   "examples": {
     "title": "Ejemplos",
