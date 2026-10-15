@@ -9,7 +9,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { changedOf } from "@/agent/changes";
 import { MARK_MS, announce, markChanged, noticeStore } from "@/agent/notice";
+import { connection } from "@/agent/connection";
 import { Canvas } from "@/canvas/Canvas";
+import { conversationStore } from "@/conversation/store";
 import { Toaster } from "@/components/ui/Toaster";
 import { EditActions } from "@/features/editor/EditActions";
 import { simulationStore } from "@/simulate/store";
@@ -150,5 +152,28 @@ describe("an agent's change, made visible (AI interface spec §7.3)", () => {
     const first = noticeStore.getState().marked.key;
     act(() => markChanged({ cnv_a: ["nod_a"] }));
     expect(noticeStore.getState().marked.key).toBe(first + 1);
+  });
+
+  it("writes the change into the conversation instead of a toast while an agent is paired (collaboration spec §4)", async () => {
+    const doc = await placedExample("payments");
+    act(() => editorStore.getState().open(doc, { canvasId: "cnv_expiryClock" }));
+    act(() => connection.store.setState({ status: "connected", agent: "claude-code" }));
+    try {
+      agentApplies(LATE);
+      expect(toasts()).toEqual([]);
+      expect(conversationStore.getState().lines).toMatchObject([
+        {
+          kind: "change",
+          label: "A state for late payers",
+          agent: "claude-code",
+          canvases: { cnv_expiryClock: expect.any(Array) }
+        }
+      ]);
+    } finally {
+      act(() => {
+        connection.store.setState({ status: "off", agent: null });
+        conversationStore.getState().clear();
+      });
+    }
   });
 });

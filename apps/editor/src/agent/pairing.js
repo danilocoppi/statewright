@@ -7,6 +7,8 @@ import { EDITOR_ORIGIN } from "statewright";
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 
+import { conversationStore } from "@/conversation/store";
+
 import { APP } from "@/config/app";
 
 /** Where the bridge listens unless the person says otherwise (spec §6: "127.0.0.1:47615, editable"). */
@@ -85,14 +87,16 @@ export const addressOf = text =>
  *   call: (name: string, args: object) => Promise<object> }, fetch?: typeof fetch, storage?: Storage,
  *   random?: (bytes: Uint8Array) => Uint8Array, onEnd?: (reason: string, agent: string | null) => void }} [options]
  *   `api`: what runs the agent's calls (`window.statewright`); `onEnd`: told why a pairing ended — `agent` (the agent
- *   disconnected), `replaced` (another tab took over), `server` (the server stopped), `lost`, or `person`.
+ *   disconnected), `replaced` (another tab took over), `server` (the server stopped), `lost`, or `person`;
+ *   `conversation`: the conversation the person's messages and the agent's replies go to (collaboration spec §3).
  */
 export function createPairing({
   api = () => globalThis.statewright,
   fetch: request = (...args) => globalThis.fetch(...args),
   storage = globalThis.localStorage,
   random,
-  onEnd = () => {}
+  onEnd = () => {},
+  conversation = conversationStore
 } = {}) {
   const saved = (() => {
     try {
@@ -125,11 +129,14 @@ export function createPairing({
     link = null;
     api()?.hello({});
     store.setState({ status: "off", code: null, agent: null, handover: null });
+    // The conversation lives while the pairing does (collaboration spec §4).
+    conversation.getState().clear();
     onEnd(reason, own.agent);
   }
 
   /** Run a call of the agent's and answer it. */
   async function answer(own, { id, name, args }) {
+    conversation.getState().called();
     const outcome = await api().call(name, args);
     if (link === own) await post(own, "/results", { id, outcome }).catch(() => {});
   }
@@ -161,6 +168,9 @@ export function createPairing({
         else if (event === "confirm") store.setState({ handover: { id: data.id, agent: data.agent ?? null } });
         else if (event === "withdrawn" && store.getState().handover?.id === data.id) store.setState({ handover: null });
         else if (event === "bye") reason = data.reason;
+        else if (event === "read") conversation.getState().markRead(data.ids ?? []);
+        else if (event === "reply") conversation.getState().add({ kind: "agent", ...data });
+        else if (event === "listening") conversation.getState().setListening(data);
       }
     } catch {
       // The stream broke: the server stopped, or this tab disconnected.
@@ -229,6 +239,22 @@ export function createPairing({
       })
         .catch(() => {})
         .finally(() => own.controller.abort());
+    },
+
+    /**
+     * Write to the agent (collaboration spec §3.2): `{ text, context? }`, or `{ stop: true }`.
+     * @returns {Promise<{ id: string } | { error: string }>}
+     */
+    async send(body) {
+      const own = link;
+      if (!own) return { error: "not paired" };
+      try {
+        const response = await post(own, "/messages", body);
+        if (response.status !== 202) return { error: `refused (${response.status})` };
+        return { id: (await response.json()).id };
+      } catch {
+        return { error: "unreachable" };
+      }
     },
 
     /** Answer whether another tab may take this one's place. */

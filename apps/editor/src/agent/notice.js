@@ -5,10 +5,12 @@ import i18n from "i18next";
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 
+import { conversationStore } from "@/conversation/store";
 import { editorStore } from "@/store/editor";
 import { toast, useToastStore } from "@/stores/toast";
 
 import { changedOf } from "./changes";
+import { connection } from "./connection";
 
 /** How long a change glows (spec §7.3: "for 2 s"). */
 export const MARK_MS = 2000;
@@ -55,6 +57,17 @@ function undoOrSayWhy() {
 export function announce(entry) {
   const canvases = changedOf(entry.patches);
   markChanged(canvases);
+  // While an agent is paired, its changes are lines of the conversation, where the bar stands (collaboration spec §4).
+  if (connection.store.getState().status === "connected") {
+    conversationStore.getState().add({
+      kind: "change",
+      entry,
+      label: entry.label,
+      agent: entry.agent ?? null,
+      canvases
+    });
+    return;
+  }
   const levels = Object.keys(canvases);
   const shown = editorStore.getState().canvasId;
   const elsewhere = levels.length && !levels.includes(shown) ? levels[0] : null;

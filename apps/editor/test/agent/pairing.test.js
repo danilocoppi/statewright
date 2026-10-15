@@ -11,6 +11,8 @@ import {
   serverCommand
 } from "@/agent/pairing";
 
+import { createConversationStore } from "@/conversation/store";
+
 import { createBridge } from "../../../../packages/core/src/mcp/bridge.js";
 
 const opened = [];
@@ -36,7 +38,12 @@ function memoryStorage() {
 }
 
 /** A tab's pairing whose calls run on a fake window.statewright that names each call back. */
-function tab({ origin, storage = memoryStorage(), fetch: request = fromPage(origin) } = {}) {
+function tab({
+  origin,
+  storage = memoryStorage(),
+  fetch: request = fromPage(origin),
+  conversation = createConversationStore()
+} = {}) {
   const hellos = [];
   const ends = [];
   const calls = [];
@@ -47,10 +54,11 @@ function tab({ origin, storage = memoryStorage(), fetch: request = fromPage(orig
     }),
     fetch: request,
     storage,
-    onEnd: (reason, agent) => ends.push({ reason, agent })
+    onEnd: (reason, agent) => ends.push({ reason, agent }),
+    conversation
   });
   opened.push(() => pairing.disconnect());
-  return { pairing, hellos, ends, calls, storage, state: () => pairing.store.getState() };
+  return { pairing, hellos, ends, calls, storage, conversation, state: () => pairing.store.getState() };
 }
 
 /** The agent brings the code the tab shows, once it has reached the bridge. */
@@ -235,5 +243,35 @@ describe("serverCommand", () => {
     expect(serverCommand("127.0.0.1:47615", "https://design.example.com")).toBe(
       "npx statewright mcp --port 47615 --origin https://design.example.com"
     );
+  });
+});
+
+describe("the conversation through the pairing (collaboration spec §3)", () => {
+  it("sends the person's message, and hears when it is read, the agent's reply and whether it listens", async () => {
+    const { bridge, address } = await bridgeOn();
+    const paired = await pairedTab(bridge, address);
+    const talk = () => paired.conversation.getState();
+    const waiting = bridge.wait(5);
+    await expect.poll(() => talk().listening).toBe(true);
+    talk().add({ kind: "person", id: "msg_1", text: "hello", chips: [], state: "sent" });
+    expect(await paired.pairing.send({ text: "hello", context: { level: { id: "cnv_a" } } })).toEqual({ id: "msg_1" });
+    expect((await waiting).result.messages.map(message => message.text)).toEqual(["hello"]);
+    await expect.poll(() => talk().lines[0].state).toBe("read");
+    await expect.poll(() => talk().listening).toBe(false);
+    bridge.reply({ text: "Done", point: ["nod_a"] });
+    await expect.poll(() => talk().lines.at(-1)).toMatchObject({ kind: "agent", id: "rpl_1", text: "Done" });
+  });
+
+  it("knows when the agent last called, and forgets the conversation when the pairing ends", async () => {
+    const { bridge, address } = await bridgeOn();
+    const paired = await pairedTab(bridge, address);
+    const talk = () => paired.conversation.getState();
+    expect(talk().lastCall).toBe(0);
+    await bridge.call("document.summary", {});
+    expect(talk().lastCall).toBeGreaterThan(0);
+    talk().add({ kind: "person", text: "hi", chips: [], state: "sent" });
+    paired.pairing.disconnect();
+    expect(talk().lines).toEqual([]);
+    expect(await paired.pairing.send({ text: "late" })).toEqual({ error: "not paired" });
   });
 });
