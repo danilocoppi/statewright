@@ -1,5 +1,7 @@
 import ELK from "elkjs/lib/elk.bundled.js";
 import { applyBatch } from "../commands/engine.js";
+import { associationsOf } from "../roles/index.js";
+import { isGuest } from "../roles/kinds.js";
 import { createGeometry, labelSize } from "./geometry.js";
 
 export { BOX, createGeometry, labelLines, labelSize, textWidth } from "./geometry.js";
@@ -55,6 +57,25 @@ const sortedKeys = map => Object.keys(map ?? {}).sort();
 const round = value => Math.round(value);
 
 /**
+ * The roles' connectors of a canvas as hidden edges between its nodes (mixed levels spec §7): an end that is a
+ * transition stands at its source state, so a sender lands before the state it moves, a receiver and embedded steps
+ * after the place that runs them. They shape the layout; no route is stored for them.
+ */
+function roleEdges(doc, canvasId, inside) {
+  const canvas = doc.canvases[canvasId];
+  const nodeOf = id => (canvas.nodes[id] ? id : canvas.edges[id]?.from);
+  const seen = new Set();
+  return associationsOf(doc, canvasId).flatMap(association => {
+    const from = nodeOf(association.from);
+    const to = nodeOf(association.to);
+    const id = `role:${from}:${to}`;
+    if (!inside.has(from) || !inside.has(to) || from === to || seen.has(id)) return [];
+    seen.add(id);
+    return [{ id, sources: [from], targets: [to] }];
+  });
+}
+
+/**
  * Lay out a set of nodes of one canvas with ELK.
  * @returns {Promise<{ nodes: Map<string, { x: number, y: number }>, edges: Map<string, { points: number[][], labelAt?: number[] }>, w: number, h: number }>}
  */
@@ -64,26 +85,32 @@ async function runElk(geometry, canvasId, nodeIds) {
   const edgeIds = sortedKeys(canvas.edges).filter(
     id => inside.has(canvas.edges[id].from) && inside.has(canvas.edges[id].to)
   );
+  const roles = roleEdges(geometry.doc, canvasId, inside);
+  // Guests that start something come first in reading order, so breaking cycles never turns their connectors around.
+  const senders = new Set(roles.flatMap(edge => edge.sources).filter(id => isGuest(canvas.kind, canvas.nodes[id])));
+  const order = readingOrder(canvas, nodeIds);
   const graph = {
     id: "root",
     layoutOptions: OPTIONS,
-    children: readingOrder(canvas, nodeIds).map(id => ({
+    children: [...order.filter(id => senders.has(id)), ...order.filter(id => !senders.has(id))].map(id => ({
       id,
       ...sizeOf(geometry, canvasId, id),
       ...(STARTS.has(canvas.nodes[id].kind) ?
         { layoutOptions: { "elk.layered.layering.layerConstraint": "FIRST" } }
       : {})
     })),
-    edges: edgeIds.map(id => {
-      const edge = canvas.edges[id];
-      const label = labelSize(geometry.style.edgeLabel(id));
-      return {
-        id,
-        sources: [edge.from],
-        targets: [edge.to],
-        labels: label ? [{ id: `${id}:label`, text: label.lines.join("\n"), width: label.w, height: label.h }] : []
-      };
-    })
+    edges: edgeIds
+      .map(id => {
+        const edge = canvas.edges[id];
+        const label = labelSize(geometry.style.edgeLabel(id));
+        return {
+          id,
+          sources: [edge.from],
+          targets: [edge.to],
+          labels: label ? [{ id: `${id}:label`, text: label.lines.join("\n"), width: label.w, height: label.h }] : []
+        };
+      })
+      .concat(roles)
   };
   const result = await elk.layout(graph);
   const nodes = new Map(result.children.map(child => [child.id, { x: child.x, y: child.y }]));

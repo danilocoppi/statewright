@@ -292,6 +292,12 @@ function placeAssociations(doc, canvasId, scene, labels) {
   });
 }
 
+/**
+ * Whether a connector's words say more than its ends: the action a participant receives, the event a call leads to a
+ * state by. A sender's event is the transition's own label already; an emit step names its event.
+ */
+const worded = item => item.label && (item.role === "receives" || (item.role === "leadsTo" && item.field !== "event"));
+
 /** A role's connector: its line, a dot where it arrives, and what it stands for when its ends do not say it. */
 function drawAssociation(item, paint) {
   const style = ROLE_STYLES[`role.${item.role}`];
@@ -308,7 +314,7 @@ function drawAssociation(item, paint) {
       "stroke-dasharray": style.dash
     }) +
       el("circle", { cx: x, cy: y, r: 2, fill: paint(style.stroke) }) +
-      (item.label ?
+      (worded(item) ?
         el("rect", {
           x: mx - textWidth(item.label, BOX.summary) / 2 - 3,
           y: my - 7,
