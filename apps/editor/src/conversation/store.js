@@ -15,10 +15,22 @@ export const WORKING_MS = 30000;
  * @typedef {{ key: number, kind: "change", entry: object, label: string, agent: string | null,
  *   canvases: Record<string, string[]> }} ChangeLine
  * @typedef {{ key: number, kind: "stop", id?: string, state: "sending" | "sent" | "read" | "failed" }} StopLine
- * @typedef {PersonLine | AgentLine | ChangeLine | StopLine} Line
+ * @typedef {{ key: number, kind: "question", id: string, question: string,
+ *   options?: Array<{ label: string, value: string, point?: string[], description?: string }>, multiple?: boolean,
+ *   pick?: "elements", state: "open" | "answered", answer?: object }} QuestionLine The agent's question (spec §6.1).
+ * @typedef {PersonLine | AgentLine | ChangeLine | StopLine | QuestionLine} Line
  */
 
-const EMPTY = { lines: [], read: [], draft: "", historyOpen: false, listening: false, channel: false, lastCall: 0 };
+const EMPTY = {
+  lines: [],
+  read: [],
+  hover: [],
+  draft: "",
+  historyOpen: false,
+  listening: false,
+  channel: false,
+  lastCall: 0
+};
 
 /** A conversation's store; the Editor keeps one (`conversationStore`), tests make their own. */
 export function createConversationStore() {
@@ -48,6 +60,16 @@ export function createConversationStore() {
           line.id && ids.includes(line.id) && "state" in line ? { ...line, state: "read" } : line
         )
       })),
+    /** The person answered the agent's question. */
+    answerQuestion: (id, answer) =>
+      set(state => ({
+        lines: state.lines.map(line =>
+          line.kind === "question" && line.id === id ? { ...line, state: "answered", answer } : line
+        ),
+        hover: []
+      })),
+    /** The elements an option of a question means, rung on the canvas while the pointer rests on it. */
+    setHover: ids => set({ hover: ids }),
     setDraft: draft => set({ draft }),
     toggleHistory: () => set(state => ({ historyOpen: !state.historyOpen })),
     setListening: ({ listening, channel }) => set({ listening: Boolean(listening), channel: Boolean(channel) }),

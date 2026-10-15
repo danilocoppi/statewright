@@ -281,4 +281,15 @@ describe("the conversation through the pairing (collaboration spec §3)", () => 
     expect(paired.marks.getState()).toMatchObject({ tool: null, marks: [], forAI: [], shown: null });
     expect(await paired.pairing.send({ text: "late" })).toEqual({ error: "not paired" });
   });
+
+  it("shows the agent's question, and posts the person's answer", async () => {
+    const { bridge, address } = await bridgeOn();
+    const paired = await pairedTab(bridge, address);
+    const asking = bridge.ask({ question: "Which?", options: [{ label: "This", value: "this" }], seconds: 30 });
+    await expect
+      .poll(() => paired.conversation.getState().lines.at(-1))
+      .toMatchObject({ kind: "question", id: "qst_1", question: "Which?", state: "open" });
+    expect(await paired.pairing.answer("qst_1", { values: ["this"] })).toBe(204);
+    expect((await asking).result).toEqual({ answered: true, question: "qst_1", values: ["this"] });
+  });
 });

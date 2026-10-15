@@ -17,6 +17,8 @@ import { isSimulating } from "@/simulate/store";
 import { editorStore, useEditor } from "@/store/editor";
 
 import { chipsOf, contextOf } from "./context";
+import { answerWords } from "./answers";
+import { Question } from "./Question";
 import { WORKING_MS, conversationStore, statusOf, useConversation } from "./store";
 
 /** The bar's widest, and the narrowest it takes in a row before it moves up a row. */
@@ -183,6 +185,17 @@ function Line({ line, agent, status, onNavigate }) {
             </button>
           )}
         </span>
+      </li>
+    );
+  }
+  if (line.kind === "question") {
+    return (
+      <li data-testid="conversation-line" data-kind="question" className="grid gap-0.5 py-1.5">
+        <span className="text-label font-medium text-accent">{agent}</span>
+        <span className="text-read text-ink">{line.question}</span>
+        {line.state === "answered" && (
+          <span className="text-label text-sub">{t("question.answered", { answer: answerWords(line) })}</span>
+        )}
       </li>
     );
   }
@@ -368,6 +381,12 @@ export function ConversationBar({ onNavigate }) {
           ))}
         </ol>
       )}
+      {/* The agent's open questions stand above the field (collaboration spec §6.1). */}
+      {lines
+        .filter(line => line.kind === "question" && line.state === "open")
+        .map(line => (
+          <Question key={line.key} line={line} agent={agent} />
+        ))}
       {!historyOpen && last && (
         <ol className="px-2.5">
           <Line line={last} agent={agent} status={status} onNavigate={onNavigate} />

@@ -108,5 +108,18 @@
       "marks_other": "{{count}} marcas"
     },
     "show": "Ver marcas"
+  },
+  "question": {
+    "label": "Pregunta de {{agent}}",
+    "another": "Otra respuesta",
+    "anotherPlaceholder": "Escribe tu respuesta…",
+    "answer": "Responder",
+    "markOnCanvas": "Marcar en el lienzo",
+    "picking": "Marca los elementos en el lienzo y confirma.",
+    "confirm_one": "Confirmar ({{count}})",
+    "confirm_other": "Confirmar ({{count}})",
+    "cancel": "Cancelar",
+    "answered": "Respondiste: {{answer}}",
+    "failed": "La respuesta no llegó a {{agent}}: inténtalo de nuevo."
   }
 }

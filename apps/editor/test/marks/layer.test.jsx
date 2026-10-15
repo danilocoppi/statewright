@@ -7,6 +7,7 @@ import { act, fireEvent, render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { Canvas } from "@/canvas/Canvas";
+import { conversationStore } from "@/conversation/store";
 import { marksStore } from "@/marks/store";
 import { editorStore } from "@/store/editor";
 
@@ -78,5 +79,18 @@ describe("the marks on the canvas (collaboration spec §5.1)", () => {
     fireEvent.pointerDown(document.querySelector(".react-flow__pane"), { button: 0, clientX: 300, clientY: 300 });
     expect(document.activeElement).not.toBe(field);
     field.remove();
+  });
+
+  it("rings what a question's option means, and what is marked for the question", async () => {
+    await show("cnv_lifecycle");
+    act(() => conversationStore.getState().setHover(["nod_complianceHold"]));
+    expect(document.querySelector('[data-hover="nod_complianceHold"]')).toBeTruthy();
+    act(() => {
+      conversationStore.getState().setHover([]);
+      marksStore.getState().startPicking("qst_1");
+      marksStore.getState().toggleForAI("nod_expiryClock", "cnv_lifecycle");
+    });
+    expect(document.querySelector('[data-for-ai="nod_expiryClock"]')).toBeTruthy();
+    act(() => marksStore.getState().stopPicking());
   });
 });

@@ -2,6 +2,7 @@ import { ViewportPortal, useReactFlow, useStore as useFlow } from "@xyflow/react
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { useConversation } from "@/conversation/store";
 import { useEditor } from "@/store/editor";
 
 import { beginGesture, eraseAlong, eraseAt } from "./gesture";
@@ -96,10 +97,16 @@ export function MarksLayer({ canvasId }) {
   }, [zoom]);
 
   const drawn = (shown?.marks ?? marks).filter(mark => mark.level === canvasId);
-  const marked = new Set((shown?.forAI ?? forAI).filter(item => item.level === canvasId).map(item => item.id));
+  const picking = useMarksState(state => state.picking);
+  const hover = useConversation(state => state.hover);
+  // What is marked for the person's message, or — while they mark for a question — for the question.
+  const marked = new Set(
+    (picking ? picking.items : (shown?.forAI ?? forAI)).filter(item => item.level === canvasId).map(item => item.id)
+  );
+  const hovered = new Set(hover);
   // The level's geometry (Core's figure) only while it is needed — a tool in hand, or something marked on it — so an
   // edit on a large level costs nothing more (spec §9: an edit shown within 50 ms).
-  const needed = Boolean(tool) || marked.size > 0;
+  const needed = Boolean(tool) || marked.size > 0 || hovered.size > 0;
   const geometryRef = useRef(null);
   const geometry = useMemo(
     () => (needed && doc?.canvases[canvasId] ? geometryOf(doc, canvasId) : { boxes: [], regions: [], lines: [] }),
@@ -225,6 +232,24 @@ export function MarksLayer({ canvasId }) {
           className="pointer-events-none absolute left-0 top-0 overflow-visible"
           aria-hidden="true"
         >
+          {[...geometry.boxes, ...geometry.regions]
+            .filter(box => hovered.has(box.id))
+            .map(box => (
+              <rect
+                key={`hover-${box.id}`}
+                data-hover={box.id}
+                x={box.x - 8}
+                y={box.y - 8}
+                width={box.width + 16}
+                height={box.height + 16}
+                rx={12}
+                fill="var(--accent)"
+                fillOpacity={0.08}
+                stroke="var(--accent)"
+                strokeWidth={2}
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
           {[...geometry.boxes, ...geometry.regions]
             .filter(box => marked.has(box.id))
             .map(box => (

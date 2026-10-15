@@ -34,6 +34,13 @@ export function createMarksStore() {
     forAI: [],
     /** @type {null | { marks: Mark[], forAI: Array<{ id: string, level: string }> }} */
     shown: null,
+    /**
+     * Marking for an agent's question (spec §6.1): what the Mark tool marks goes to the question, not to the message.
+     * @type {null | { question: string, items: Array<{ id: string, level: string }> }}
+     */
+    picking: null,
+    startPicking: question => set({ picking: { question, items: [] }, tool: "mark" }),
+    stopPicking: () => set({ picking: null, tool: null }),
     setTool: tool => set({ tool }),
     setColour: colour => set({ colour }),
     /** Draw a mark: its ID. */
@@ -46,13 +53,25 @@ export function createMarksStore() {
     remove: id => set(state => ({ marks: state.marks.filter(mark => mark.id !== id) })),
     /** Mark an element for the AI, or unmark it. */
     toggleForAI: (id, level) =>
-      set(state => ({
-        forAI:
-          state.forAI.some(item => item.id === id) ?
-            state.forAI.filter(item => item.id !== id)
-          : [...state.forAI, { id, level }],
-        shown: null
-      })),
+      set(state => {
+        if (state.picking) {
+          const { items } = state.picking;
+          return {
+            picking: {
+              ...state.picking,
+              items:
+                items.some(item => item.id === id) ? items.filter(item => item.id !== id) : [...items, { id, level }]
+            }
+          };
+        }
+        return {
+          forAI:
+            state.forAI.some(item => item.id === id) ?
+              state.forAI.filter(item => item.id !== id)
+            : [...state.forAI, { id, level }],
+          shown: null
+        };
+      }),
     unmark: id => set(state => ({ forAI: state.forAI.filter(item => item.id !== id) })),
     /** Take back the last mark drawn on a level (any level without one): whether there was one. */
     undo(level) {
@@ -79,7 +98,7 @@ export function createMarksStore() {
     /** Everything erased (sent, or the eraser's Shift+click); the tool and the colour stay. */
     clear: () => set({ marks: [], forAI: [], shown: null }),
     /** The pairing ended: no marks, no tool in hand. */
-    reset: () => set({ marks: [], forAI: [], shown: null, tool: null }),
+    reset: () => set({ marks: [], forAI: [], shown: null, tool: null, picking: null }),
     /** Show a sent message's marks again, or stop showing them. */
     show: snapshot => set({ shown: snapshot })
   }));

@@ -175,6 +175,7 @@ export function createPairing({
         else if (event === "read") conversation.getState().markRead(data.ids ?? []);
         else if (event === "reply") conversation.getState().add({ kind: "agent", ...data });
         else if (event === "listening") conversation.getState().setListening(data);
+        else if (event === "ask") conversation.getState().add({ kind: "question", ...data, state: "open" });
       }
     } catch {
       // The stream broke: the server stopped, or this tab disconnected.
@@ -258,6 +259,20 @@ export function createPairing({
         return { id: (await response.json()).id };
       } catch {
         return { error: "unreachable" };
+      }
+    },
+
+    /**
+     * Answer the agent's question (collaboration spec §6.1): the bridge's status (204, or 404 when it no longer waits).
+     * @returns {Promise<number>}
+     */
+    async answer(id, body) {
+      const own = link;
+      if (!own) return 0;
+      try {
+        return (await post(own, "/answers", { id, ...body })).status;
+      } catch {
+        return 0;
       }
     },
 

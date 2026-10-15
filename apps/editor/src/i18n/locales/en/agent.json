@@ -108,5 +108,18 @@
       "marks_other": "{{count}} marks"
     },
     "show": "Show marks"
+  },
+  "question": {
+    "label": "Question from {{agent}}",
+    "another": "Another answer",
+    "anotherPlaceholder": "Write your answer…",
+    "answer": "Answer",
+    "markOnCanvas": "Mark on the canvas",
+    "picking": "Mark the elements on the canvas, then confirm.",
+    "confirm_one": "Confirm ({{count}})",
+    "confirm_other": "Confirm ({{count}})",
+    "cancel": "Cancel",
+    "answered": "You answered: {{answer}}",
+    "failed": "The answer did not reach {{agent}}: try again."
   }
 }
