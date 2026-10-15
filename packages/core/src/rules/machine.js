@@ -15,13 +15,31 @@ const inRegion = (facts, canvas, key) =>
 const regionText = (facts, canvasId, region) =>
   region.key === "" ? facts.describe(canvasId) : `region "${region.name}" of ${facts.describe(canvasId)}`;
 
+/** Each check's `any` nodes, by canvas and region, in ID order: found once, not once per state (performance §3 P1). */
+const anyNodes = new WeakMap();
+
+function anyByRegion(facts, canvasId) {
+  if (!anyNodes.has(facts)) anyNodes.set(facts, new Map());
+  const byCanvas = anyNodes.get(facts);
+  if (!byCanvas.has(canvasId)) {
+    const canvas = facts.doc.canvases[canvasId];
+    const byRegion = new Map();
+    for (const [id, node] of sorted(canvas.nodes)) {
+      if (node.kind !== "any") continue;
+      const key = facts.regionKey(canvas, node);
+      if (!byRegion.has(key)) byRegion.set(key, []);
+      byRegion.get(key).push([id, node]);
+    }
+    byCanvas.set(canvasId, byRegion);
+  }
+  return byCanvas.get(canvasId);
+}
+
 /** `any` nodes of the node's region whose transitions apply to it (spec §16.4). */
 function anyFor(facts, canvasId, nodeId) {
   const canvas = facts.doc.canvases[canvasId];
   const key = facts.regionKey(canvas, canvas.nodes[nodeId]);
-  return sorted(canvas.nodes).filter(
-    ([, node]) => node.kind === "any" && facts.regionKey(canvas, node) === key && !node.except?.includes(nodeId)
-  );
+  return (anyByRegion(facts, canvasId).get(key) ?? []).filter(([, node]) => !node.except?.includes(nodeId));
 }
 
 /** Readable trigger token for messages. */
