@@ -62,6 +62,15 @@ describe("figureOf", () => {
       [8, 8, 0.3],
       [4, 4, 0.6]
     ]);
+    // The stack is inside the box's bounds, so an edge never ends under a card: the front card is 8 px smaller.
+    const cards = [
+      ...engine.svg.matchAll(/<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.-]+)" height="([\d.-]+)" rx="8"/g)
+    ];
+    expect(cards.map(match => match.slice(1).map(Number))).toEqual([
+      [engine.x + 8, engine.y + 8, engine.w - 8, engine.h - 8],
+      [engine.x + 4, engine.y + 4, engine.w - 8, engine.h - 8],
+      [engine.x, engine.y, engine.w - 8, engine.h - 8]
+    ]);
     expect(engine.svg).toMatch(/<g class="interior-mark">.*↳ machine<\/text><\/g>/);
     const plain = figureOf(doc, "cnv_m").nodes.find(part => part.id === "nod_idle");
     expect(plain.svg).not.toContain("stroke-opacity");

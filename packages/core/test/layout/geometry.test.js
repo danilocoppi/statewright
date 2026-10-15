@@ -155,6 +155,15 @@ describe("createGeometry", () => {
     });
   });
 
+  it("makes room for the stack behind a box with a level inside, so edges end on what is drawn", () => {
+    const doc = cleanDoc();
+    const inside = createGeometry(doc).size("cnv_root", "nod_engine");
+    delete doc.canvases.cnv_root.nodes.nod_engine.inner;
+    const alone = createGeometry(doc).size("cnv_root", "nod_engine");
+    expect(inside).toEqual({ w: alone.w + BOX.stack, h: alone.h + BOX.stack });
+    expect(BOX.stack).toBe(8);
+  });
+
   it("titles unnamed flow steps after what they do", () => {
     expect(createGeometry(cleanDoc()).title("cnv_f", "nod_tell")).toBe("stop");
   });

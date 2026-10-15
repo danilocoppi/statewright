@@ -67,6 +67,7 @@ export const BOX = {
   minWidth: 140,
   minHeight: 48,
   pad: 8,
+  stack: 8,
   maxAspect: 1.5,
   name: { size: 12, weight: 600 },
   summary: { size: 10, mono: true },
@@ -256,6 +257,8 @@ export function createGeometry(doc, { style = createStyle(doc) } = {}) {
         width = low;
       }
       result = { w: width, h: heightAt(width) };
+      // A level inside stacks two cards behind the box: they are part of its room, so edges end on what is drawn.
+      if (nodeStyle.interior) result = { w: result.w + BOX.stack, h: result.h + BOX.stack };
     }
     if (stored?.w !== undefined) result = { ...result, w: stored.w };
     if (stored?.h !== undefined) result = { ...result, h: stored.h };

@@ -359,7 +359,9 @@ function drawInteriorMark(geometry, interior, rect, paint) {
 
 /** A box node (also actors, refs and cards): rect, chips, status pills, name, summary, badges. */
 function drawBox(geometry, item, nodeStyle, paint, tooltips) {
-  const { rect } = item;
+  // With a level inside, the front card leaves the stack's room on the right and below.
+  const stack = nodeStyle.interior ? BOX.stack : 0;
+  const rect = { ...item.rect, w: item.rect.w - stack, h: item.rect.h - stack };
   const lines = geometry.summaryLines(item.canvasId, item.nodeId, rect.w);
   const top = nodeStyle.chips.length || nodeStyle.statuses.length ? 22 : BOX.pad;
   const content = 14 + (lines.length ? 4 + BOX.lineHeight * lines.length : 0);
@@ -368,8 +370,8 @@ function drawBox(geometry, item, nodeStyle, paint, tooltips) {
   // A level inside: two cards stacked behind the box, the farther one fainter.
   if (nodeStyle.interior) {
     for (const [offset, opacity] of [
-      [8, 0.3],
-      [4, 0.6]
+      [BOX.stack, 0.3],
+      [BOX.stack / 2, 0.6]
     ]) {
       parts.push(
         el("rect", {
