@@ -5,6 +5,7 @@ import { evaluate, truthy } from "../logic/index.js";
 import { compareText, triggersOf } from "../rules/facts.js";
 import { EngineError, childPath, createModel, lastOf, parentOf, within } from "./model.js";
 import { addDuration, instantOf, parseInstant } from "./time.js";
+import { embeddedFlowOf, runEmbedded } from "./embedded.js";
 
 /** Thrown to stop a step at a question the caller has not answered yet. */
 export class NeedAnswer {
@@ -242,7 +243,9 @@ export function runEffects(run, effects, key, event, at) {
     Object.fromEntries(Object.entries(map).map(([name, expr]) => [name, valueOf(run, expr, key, event) ?? null]));
   for (const effect of effects ?? []) {
     if (effect.action) {
-      run.trace.push({ type: "action", action: effect.action, args: evaluated(effect.args ?? {}), at });
+      const entry = { type: "action", action: effect.action, args: evaluated(effect.args ?? {}), at };
+      run.trace.push(entry);
+      runEmbedded(run, effect.action, entry, key, event);
     } else if (effect.emit) {
       const payload = effect.payload === undefined ? null : evaluated(effect.payload);
       run.queue.push({ event: effect.emit, payload });
@@ -715,6 +718,16 @@ function take(run, { source, edgeId, edge }, event) {
     ...(edge.internal ? { internal: true } : {})
   });
   runEffects(run, edge.actions, instanceOf(run, source), event, source);
+  // A call that triggers the transition runs its endpoint's or webhook's flow (mixed levels spec §4.2).
+  if (edge.via && event?.kind === "call" && embeddedFlowOf(run.doc, edge.via)) {
+    const entry = {
+      type: "action",
+      [run.doc.catalog.endpoints[edge.via] ? "endpoint" : "webhook"]: edge.via,
+      at: source
+    };
+    run.trace.push(entry);
+    runEmbedded(run, edge.via, entry, instanceOf(run, source), event);
+  }
   if (!edge.internal) enter(run, target, event);
 }
 

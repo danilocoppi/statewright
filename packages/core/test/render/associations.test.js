@@ -51,7 +51,10 @@ async function placed(doc, canvasId) {
 }
 
 const inside = (point, part) =>
-  point[0] >= part.x - 0.5 && point[0] <= part.x + part.w + 0.5 && point[1] >= part.y - 0.5 && point[1] <= part.y + part.h + 0.5;
+  point[0] >= part.x - 0.5 &&
+  point[0] <= part.x + part.w + 0.5 &&
+  point[1] >= part.y - 0.5 &&
+  point[1] <= part.y + part.h + 0.5;
 
 describe("the roles' connectors on the figure (mixed levels spec §7)", () => {
   it("gives each association a part, from a box's border to a transition's label", async () => {

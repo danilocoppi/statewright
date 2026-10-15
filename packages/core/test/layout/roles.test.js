@@ -25,7 +25,13 @@ function rolesDoc() {
     },
     edges: {
       edg_start: { from: "nod_init", to: "nod_open" },
-      edg_pay: { from: "nod_open", to: "nod_paid", on: ["evt_pay"], by: "pty_customer", actions: [{ action: "act_charge" }] }
+      edg_pay: {
+        from: "nod_open",
+        to: "nod_paid",
+        on: ["evt_pay"],
+        by: "pty_customer",
+        actions: [{ action: "act_charge" }]
+      }
     }
   };
   return doc;

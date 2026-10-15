@@ -65,9 +65,9 @@ describe("a scenario as a page anyone can open (simulator spec §7.2)", () => {
     const { frames } = storyIn(await toScenarioPage(doc, "scn_verificationPausesTheClock"));
     expect(frames.map(frame => [frame.input, frame.text])).toEqual([
       ["Start", "Starts in clear, running and awaiting_funds."],
-      ["verify.started", "running → paused. timer.expiry cancelled."],
+      ["verify.started", "running → paused. Client sends verify.started. timer.expiry cancelled."],
       ["2 days later", "awaiting_funds → awaiting_funds. quote_ttl falls due."],
-      ["verify.ended", "paused → running."]
+      ["verify.ended", "paused → running. Client sends verify.ended."]
     ]);
     const batch = uncaptioned(JSON.parse(readExample("payout-batch.sttw")));
     const flow = storyIn(await toScenarioPage(batch, "scn_aPayoutIsRefused")).frames;

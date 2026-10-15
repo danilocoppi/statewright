@@ -67,7 +67,9 @@ describe("drawing a role (mixed levels spec §3: drawing writes the field)", () 
     const after = run(doc, result);
     expect(after.catalog.actions.act_charge.party).toBe("pty_payments");
     expect(ids(after)).toContain("receives:nod_paid:nod_service");
-    expect(associate(doc, "cnv_root", "nod_paid", "nod_service", { action: "act_gone" })).toEqual({ refusal: "notRun" });
+    expect(associate(doc, "cnv_root", "nod_paid", "nod_service", { action: "act_gone" })).toEqual({
+      refusal: "notRun"
+    });
     expect(associate(doc, "cnv_root", "nod_open", "nod_service")).toEqual({ refusal: "nothingToReceive" });
   });
 

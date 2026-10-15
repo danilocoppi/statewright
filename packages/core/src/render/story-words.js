@@ -92,6 +92,31 @@ const namesOf = (trace, type, key, collection) => [
   ...new Set(trace.filter(entry => entry.type === type).map(entry => collection[entry[key]]?.name ?? entry[key]))
 ];
 
+/** A trace with the entries of the actions' flows run within it, in order (mixed levels spec §4.2). */
+const withSteps = trace => trace.flatMap(entry => [entry, ...withSteps(entry.steps ?? [])]);
+
+/**
+ * Who took part in a frame (mixed levels spec §4.1): the party that sent what moved each transition it took — its
+ * `by`, else its event's source — and the party that receives each action it ran. "Customer sends order.pay."
+ */
+function rolesOf(doc, top, frame) {
+  const party = id => doc.catalog.parties[id]?.name ?? id;
+  const said = [];
+  for (const item of frame.taken.filter(taken => !taken.initial)) {
+    const edge = doc.canvases[item.canvas]?.edges[item.edge];
+    const events = (edge?.on ?? []).filter(id => doc.catalog.events[id]);
+    const sourced = events.find(id => ![undefined, "internal"].includes(doc.catalog.events[id].source));
+    const sender = edge?.by ?? (sourced && doc.catalog.events[sourced].source);
+    const event = edge?.by ? events[0] : sourced;
+    if (sender && event) said.push(`${party(sender)} sends ${doc.catalog.events[event].name}.`);
+  }
+  for (const entry of withSteps(frame.trace)) {
+    const action = entry.type === "action" && doc.catalog.actions[entry.action];
+    if (action?.party) said.push(`${party(action.party)} receives ${action.name}.`);
+  }
+  return [...new Set(said)];
+}
+
 /**
  * What a frame did, in a sentence, for a step without a caption (simulator spec §7.1): where the run went, the timers
  * that fell due or were cancelled, the events it raised and how it ended — the input itself is shown beside it.
@@ -118,11 +143,12 @@ export function sentenceOf(doc, top, frame) {
     }
     if (chains.length) parts.push(`${listWords(chains.map(chain => chain.map(name).join(" → ")))}.`);
   }
+  parts.push(...rolesOf(doc, top, frame));
   const fired = namesOf(frame.trace, "timerFired", "timer", doc.catalog.timers);
   if (fired.length) parts.push(`${listWords(fired)} ${fired.length === 1 ? "falls" : "fall"} due.`);
   const cancelled = namesOf(frame.trace, "timerCancelled", "timer", doc.catalog.timers);
   if (cancelled.length) parts.push(`${listWords(cancelled)} cancelled.`);
-  const raised = namesOf(frame.trace, "emitted", "event", doc.catalog.events);
+  const raised = namesOf(withSteps(frame.trace), "emitted", "event", doc.catalog.events);
   if (raised.length) parts.push(`Raises ${listWords(raised)}.`);
   if (frame.ended) parts.push(ENDINGS[frame.ended]);
   if (parts.length) return parts.join(" ");
