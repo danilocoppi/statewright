@@ -43,6 +43,7 @@ import { editorStore, useEditor } from "@/store/editor";
 import { currentInspectorWidth, useInspectorWidth } from "@/stores/inspector";
 import { useView } from "@/stores/view";
 import { MarksLayer } from "@/marks/MarksLayer";
+import { ProposalLayer } from "@/proposals/ProposalLayer";
 import { useMarksState } from "@/marks/store";
 
 import { lightBeacon, useBeacon } from "./beacon";
@@ -644,6 +645,7 @@ function Flow({ onNavigate }) {
           {presenting && <StageMotion level={level} marks={marks} play={played ?? -1} />}
           {!presenting && <Pointer canvasId={canvasId} />}
           {!presenting && <MarksLayer canvasId={canvasId} />}
+          {!presenting && <ProposalLayer canvasId={canvasId} />}
           {showMinimap && (
             <MiniMap
               pannable
