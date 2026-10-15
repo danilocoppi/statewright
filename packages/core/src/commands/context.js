@@ -2,6 +2,7 @@ import { current, isDraft } from "immer";
 import { CATALOG_COLLECTIONS } from "../constants.js";
 import { z } from "zod";
 import { idPatternFor, makeId, prefixOf } from "../ids.js";
+import { buildIndex } from "../query/build-index.js";
 import { createRefCollector } from "../query/refs.js";
 import { flattenIssues, toPointer } from "../serialize/parse.js";
 import { fail } from "./errors.js";
@@ -14,42 +15,6 @@ const ANNOTATION_SECTIONS = [
   ["comments", "comment", "cmt"],
   ["locks", "lock", "lck"]
 ];
-
-/**
- * Where every element of a document is, read from its keys alone: on a draft, no element is visited, so none gets a
- * proxy (performance spec §3 P1). The same entries as buildIndex, without values.
- */
-function locateAll(doc) {
-  const entries = new Map();
-  const duplicates = [];
-  const add = (id, entry) => {
-    if (entries.has(id)) duplicates.push(id);
-    else entries.set(id, { id, ...entry });
-  };
-  add(doc.project.id, { type: "project", path: ["project"] });
-  for (const collection of Object.keys(CATALOG_COLLECTIONS)) {
-    for (const id of Object.keys(doc.catalog[collection] ?? {})) {
-      add(id, { type: "catalog", collection, path: ["catalog", collection, id] });
-    }
-  }
-  for (const id of Object.keys(doc.definitions)) add(id, { type: "definition", path: ["definitions", id] });
-  for (const canvasId of Object.keys(doc.canvases)) {
-    const canvas = doc.canvases[canvasId];
-    add(canvasId, { type: "canvas", path: ["canvases", canvasId] });
-    for (const part of ["regions", "nodes", "edges"]) {
-      const type = part.slice(0, -1);
-      for (const id of Object.keys(canvas[part] ?? {})) {
-        add(id, { type, canvas: canvasId, path: ["canvases", canvasId, part, id] });
-      }
-    }
-  }
-  for (const [section, type] of ANNOTATION_SECTIONS) {
-    for (const id of Object.keys(doc.annotations?.[section] ?? {})) {
-      add(id, { type, path: ["annotations", section, id] });
-    }
-  }
-  return { entries, duplicates };
-}
 
 /** Where one element made by a command is, from its prefix; undefined when it is not where its prefix says. */
 function locateOne(doc, id) {
@@ -82,19 +47,23 @@ function locateOne(doc, id) {
 }
 
 /**
- * The index of a batch's draft (performance spec §3 P1): where each element is, read from the draft's keys, and each
- * entry's `value` read from the draft at its path when asked for, so commands write through it into the draft.
- * `added(ids)` takes in elements a command made, without reading the document again; it answers false when one is
+ * The index of a batch's draft (performance spec §3 P1): the index of a plain snapshot of the draft — the parts not
+ * changed yet are the frozen document's own, whose entries are kept with them — with each entry's `value` read from the
+ * draft at its path when asked for, so commands write through it into the draft. What commands add or remove later in
+ * the batch is noted over it (`added`, `removed`) instead of indexing again; `added` answers false when an element is
  * not where its prefix says (then the batch indexes the draft again).
  * @param {any} draft
  */
 export function draftIndex(draft) {
-  const { entries, duplicates } = locateAll(draft);
+  const plain = buildIndex(isDraft(draft) ? current(draft) : draft);
+  const extra = new Map();
+  const gone = new Set();
   const live = new Map();
+  const find = id => (gone.has(id) ? undefined : (extra.get(id) ?? plain.get(id)));
   return {
     get(id) {
-      const entry = entries.get(id);
-      if (!entry) return undefined;
+      const entry = find(id);
+      if (!entry || !isDraft(draft)) return entry;
       let found = live.get(id);
       if (!found) {
         found = Object.defineProperty({ ...entry }, "value", {
@@ -105,13 +74,13 @@ export function draftIndex(draft) {
       }
       return found;
     },
-    has: id => entries.has(id),
-    entries,
-    duplicates,
+    has: id => find(id) !== undefined,
+    duplicates: plain.duplicates,
     /** Forget elements a removal took out (removeElements tells its index). */
     removed(ids) {
       for (const id of ids) {
-        entries.delete(id);
+        gone.add(id);
+        extra.delete(id);
         live.delete(id);
       }
     },
@@ -119,7 +88,9 @@ export function draftIndex(draft) {
       for (const id of ids) {
         const entry = locateOne(draft, id);
         if (!entry) return false;
-        if (!entries.has(id)) entries.set(id, entry);
+        gone.delete(id);
+        live.delete(id);
+        extra.set(id, entry);
       }
       return true;
     }
