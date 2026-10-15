@@ -144,7 +144,7 @@ export default [
     args: z.strictObject({ id: z.string(), cascade: z.boolean().optional() }),
     run(ctx, { id, cascade }) {
       requireEntry(ctx, id, ["edge"]);
-      removeElements(ctx.doc, [id], { cascade });
+      removeElements(ctx.doc, [id], { cascade, index: ctx.index });
     }
   }
 ];

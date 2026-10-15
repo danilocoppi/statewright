@@ -78,7 +78,7 @@ export default [
       } else {
         alsoRemove = members;
       }
-      removeElements(ctx.doc, [id, ...alsoRemove], { cascade });
+      removeElements(ctx.doc, [id, ...alsoRemove], { cascade, index: ctx.index });
       if (last) delete canvas.regions;
     }
   }

@@ -1,6 +1,6 @@
 import { applyPatches as applyImmerPatches, enablePatches, produceWithPatches } from "immer";
 import { z } from "zod";
-import { documentSchema } from "../schema/document.js";
+import { validateChanged } from "../schema/narrow.js";
 import { flattenIssues } from "../serialize/parse.js";
 import annotationCommands from "./annotation.js";
 import canvasCommands from "./canvas.js";
@@ -65,6 +65,22 @@ const ADDS = new Set([
   "lock.add"
 ]);
 
+/** Commands that only remove (through removeElements, which takes what it removed out of the batch's index). */
+const REMOVES = new Set([
+  "canvas.remove",
+  "catalog.remove",
+  "region.remove",
+  "node.remove",
+  "edge.remove",
+  "definition.remove",
+  "finding.remove",
+  "note.remove",
+  "lane.remove",
+  "scenario.remove",
+  "comment.remove",
+  "lock.remove"
+]);
+
 const KEEPS_INDEX = new Set([
   "project.update",
   "catalog.update",
@@ -125,7 +141,7 @@ export function applyBatch(doc, commands) {
         run(draft, command, created, index);
         if (ADDS.has(command?.type)) {
           if (!index.added(created.slice(made))) index = null;
-        } else if (!KEEPS_INDEX.has(command?.type)) index = null;
+        } else if (!KEEPS_INDEX.has(command?.type) && !REMOVES.has(command?.type)) index = null;
       }
     });
   } catch (error) {
@@ -133,10 +149,9 @@ export function applyBatch(doc, commands) {
     throw error;
   }
   const [next, patches, inversePatches] = result;
-  const check = documentSchema.safeParse(next);
-  if (!check.success) {
-    fail("SCHEMA", "The batch would leave the document invalid", { errors: flattenIssues(check.error.issues) });
-  }
+  // Only what the batch touched (performance spec §3 P1): the rest was valid and did not change.
+  const errors = validateChanged(next, patches);
+  if (errors.length) fail("SCHEMA", "The batch would leave the document invalid", { errors });
   return { doc: next, patches, inversePatches, created };
 }
 

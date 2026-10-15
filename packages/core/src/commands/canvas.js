@@ -95,7 +95,7 @@ export default [
       if (definition) {
         fail("NOT_ALLOWED", `"${id}" is the body of ${definition.id}; remove the definition instead`, { id });
       }
-      removeElements(ctx.doc, [id], { cascade });
+      removeElements(ctx.doc, [id], { cascade, index: ctx.index });
     }
   }
 ];

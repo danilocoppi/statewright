@@ -1,6 +1,6 @@
 import { current, isDraft } from "immer";
 import { buildIndex } from "../query/build-index.js";
-import { collectRefs } from "../query/refs.js";
+import { referencesTo } from "../query/refs.js";
 import { tidy } from "./context.js";
 import { fail } from "./errors.js";
 
@@ -41,18 +41,15 @@ function isImplicit(ref) {
  *
  * @param {any} doc Immer draft of the document.
  * @param {string[]} ids Elements to remove (must exist).
- * @param {{ cascade?: boolean }} [options]
+ * @param {{ cascade?: boolean, index?: { get(id: string): any } }} [options] `index`: the batch's (the command's
+ *   context), so the document is not indexed again.
  * @returns {string[]} Every removed ID.
  */
-export function removeElements(doc, ids, { cascade = false } = {}) {
+export function removeElements(doc, ids, { cascade = false, index: given } = {}) {
   // Read from a plain snapshot of the draft (performance spec §3 P1); removals are written to the draft.
   const plain = isDraft(doc) ? current(doc) : doc;
-  const index = buildIndex(plain);
-  const refsByTarget = new Map();
-  for (const ref of collectRefs(plain)) {
-    if (!refsByTarget.has(ref.target)) refsByTarget.set(ref.target, []);
-    refsByTarget.get(ref.target).push(ref);
-  }
+  const index = given ?? buildIndex(plain);
+  const refsByTarget = referencesTo(plain);
 
   // Phase 1: everything that goes.
   const removed = new Set();
@@ -112,5 +109,6 @@ export function removeElements(doc, ids, { cascade = false } = {}) {
     if (finding.targets.length === 0) delete findings[id];
   }
   tidy(doc);
+  given?.removed?.(removed);
   return [...removed];
 }

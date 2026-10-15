@@ -319,29 +319,68 @@ export function collectRefs(doc) {
 const keptRefs = new WeakMap();
 
 function refsOf(doc) {
-  const collect = createRefCollector();
-  collect.root(doc.root);
+  const refs = [];
+  for (const piece of refPieces(doc)) for (const ref of piece) refs.push(ref);
+  return refs;
+}
+
+/**
+ * A document's references in pieces, in document order: the project's own (root, catalog, definitions), each canvas's,
+ * the annotations', each canvas layout's. The pieces of frozen canvases and layouts are kept with them.
+ */
+function refPieces(doc) {
+  const head = createRefCollector();
+  head.root(doc.root);
   for (const collection of Object.keys(CATALOG_COLLECTIONS)) {
-    for (const [id, item] of Object.entries(doc.catalog[collection] ?? {})) collect.catalogItem(collection, id, item);
+    for (const [id, item] of Object.entries(doc.catalog[collection] ?? {})) head.catalogItem(collection, id, item);
   }
-  for (const [id, definition] of Object.entries(doc.definitions)) collect.definition(id, definition);
-  for (const [canvasId, canvas] of Object.entries(doc.canvases)) {
-    for (const ref of canvasRefs(canvasId, canvas)) collect.refs.push(ref);
-  }
+  for (const [id, definition] of Object.entries(doc.definitions)) head.definition(id, definition);
+  const canvases = Object.entries(doc.canvases).map(([canvasId, canvas]) => canvasRefs(canvasId, canvas));
+  const tail = createRefCollector();
   const annotations = doc.annotations ?? {};
-  for (const [id, finding] of Object.entries(annotations.findings ?? {})) collect.finding(id, finding);
-  for (const [id, note] of Object.entries(annotations.notes ?? {})) collect.note(id, note);
-  collect.focus(annotations.focus);
-  for (const [id, lane] of Object.entries(annotations.lanes ?? {})) collect.lane(id, lane);
-  for (const [id, scenario] of Object.entries(annotations.scenarios ?? {})) collect.scenario(id, scenario);
-  for (const [id, comment] of Object.entries(annotations.comments ?? {})) collect.comment(id, comment);
-  for (const [id, lock] of Object.entries(annotations.locks ?? {})) collect.lock(id, lock);
-  for (const [canvasId, canvasLayout] of Object.entries(doc.layout?.canvases ?? {})) {
-    for (const ref of kept(canvasId, canvasLayout, each => each.layoutCanvas(canvasId, canvasLayout))) {
-      collect.refs.push(ref);
-    }
+  for (const [id, finding] of Object.entries(annotations.findings ?? {})) tail.finding(id, finding);
+  for (const [id, note] of Object.entries(annotations.notes ?? {})) tail.note(id, note);
+  tail.focus(annotations.focus);
+  for (const [id, lane] of Object.entries(annotations.lanes ?? {})) tail.lane(id, lane);
+  for (const [id, scenario] of Object.entries(annotations.scenarios ?? {})) tail.scenario(id, scenario);
+  for (const [id, comment] of Object.entries(annotations.comments ?? {})) tail.comment(id, comment);
+  for (const [id, lock] of Object.entries(annotations.locks ?? {})) tail.lock(id, lock);
+  const layouts = Object.entries(doc.layout?.canvases ?? {}).map(([canvasId, canvasLayout]) =>
+    kept(canvasId, canvasLayout, each => each.layoutCanvas(canvasId, canvasLayout))
+  );
+  return [head.refs, ...canvases, tail.refs, ...layouts];
+}
+
+/** References grouped by target, kept with each kept piece. */
+const keptGroups = new WeakMap();
+
+function grouped(piece) {
+  let groups = keptGroups.get(piece);
+  if (groups) return groups;
+  groups = new Map();
+  for (const ref of piece) {
+    if (!groups.has(ref.target)) groups.set(ref.target, []);
+    groups.get(ref.target).push(ref);
   }
-  return collect.refs;
+  if (Object.isFrozen(piece)) keptGroups.set(piece, groups);
+  return groups;
+}
+
+/**
+ * The references to each element, in document order, as `get(target)` (performance spec §3 P1): what removing an
+ * element asks, without walking every reference of the document again after each edit.
+ * @param {any} doc
+ * @returns {{ get(target: string): Ref[] }}
+ */
+export function referencesTo(doc) {
+  const groups = refPieces(doc).map(grouped);
+  return {
+    get(target) {
+      const found = [];
+      for (const group of groups) for (const ref of group.get(target) ?? []) found.push(ref);
+      return found;
+    }
+  };
 }
 
 /** References of parts that cannot change (frozen), kept with each part: an edit recollects only what it touched. */
@@ -354,7 +393,7 @@ function kept(id, part, collect) {
   if (known?.id === id) return known.refs;
   const each = createRefCollector();
   collect(each);
-  if (frozen) keptParts.set(part, { id, refs: each.refs });
+  if (frozen) keptParts.set(part, { id, refs: Object.freeze(each.refs) });
   return each.refs;
 }
 

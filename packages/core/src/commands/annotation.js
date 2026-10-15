@@ -119,7 +119,7 @@ export default [
     args: z.strictObject({ id: z.string() }),
     run(ctx, { id }) {
       requireEntry(ctx, id, ["finding"]);
-      removeElements(ctx.doc, [id]);
+      removeElements(ctx.doc, [id], { index: ctx.index });
     }
   },
   {
@@ -176,7 +176,7 @@ export default [
     args: z.strictObject({ id: z.string() }),
     run(ctx, { id }) {
       requireEntry(ctx, id, ["note"]);
-      removeElements(ctx.doc, [id]);
+      removeElements(ctx.doc, [id], { index: ctx.index });
     }
   },
   {
@@ -236,7 +236,7 @@ export default [
     args: z.strictObject({ id: z.string() }),
     run(ctx, { id }) {
       requireEntry(ctx, id, ["comment"]);
-      removeElements(ctx.doc, [id]);
+      removeElements(ctx.doc, [id], { index: ctx.index });
     }
   },
   {
@@ -258,7 +258,7 @@ export default [
     args: z.strictObject({ id: z.string() }),
     run(ctx, { id }) {
       requireEntry(ctx, id, ["lock"]);
-      removeElements(ctx.doc, [id]);
+      removeElements(ctx.doc, [id], { index: ctx.index });
     }
   },
   {
@@ -299,7 +299,7 @@ export default [
     args: z.strictObject({ id: z.string() }),
     run(ctx, { id }) {
       requireEntry(ctx, id, ["lane"]);
-      removeElements(ctx.doc, [id]);
+      removeElements(ctx.doc, [id], { index: ctx.index });
     }
   },
   {
@@ -331,7 +331,7 @@ export default [
     args: z.strictObject({ id: z.string() }),
     run(ctx, { id }) {
       requireEntry(ctx, id, ["scenario"]);
-      removeElements(ctx.doc, [id]);
+      removeElements(ctx.doc, [id], { index: ctx.index });
     }
   }
 ];

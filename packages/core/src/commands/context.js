@@ -108,6 +108,13 @@ export function draftIndex(draft) {
     has: id => entries.has(id),
     entries,
     duplicates,
+    /** Forget elements a removal took out (removeElements tells its index). */
+    removed(ids) {
+      for (const id of ids) {
+        entries.delete(id);
+        live.delete(id);
+      }
+    },
     added(ids) {
       for (const id of ids) {
         const entry = locateOne(draft, id);
