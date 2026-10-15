@@ -5,6 +5,7 @@ import flowRules from "./flow.js";
 import layoutRules from "./layout.js";
 import machineRules from "./machine.js";
 import referenceRules from "./references.js";
+import roleRules from "./roles.js";
 import scenarioRules from "./scenario.js";
 
 /**
@@ -31,6 +32,7 @@ const RULES = [
   ...canvasRules,
   ...machineRules,
   ...flowRules,
+  ...roleRules,
   ...catalogRules,
   ...layoutRules,
   ...scenarioRules

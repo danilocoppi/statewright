@@ -251,6 +251,10 @@ opens, but verification reports the changed part, and the CLI refuses to re-sign
 | `flow.unreachable` | warning | A flow node cannot be reached from the start node. |
 | `flow.branches` | incomplete | An if lacks its true or false edge; a while, forEach or subflow has no body. |
 | `flow.switchDefault` | warning | A switch has no default edge. |
+| `roles.stepsWithoutFlow` | incomplete | Embedded steps of an action, endpoint or webhook that has no flow yet. |
+| `roles.stateGuest` | error | A state guest on a flow stands for something that is not a state of a state machine. |
+| `roles.waitInAction` | warning | Embedded steps whose flow waits: a machine runs them in one step, so they run apart from it. |
+| `roles.participantTwice` | warning | Two participants of one party on one level. |
 | `event.name` | error | An event name is invalid or used by another event. |
 | `catalog.unused` | warning | A catalog item is never referenced. |
 | `spec.unspecified` | incomplete | Key behavioural fields are unspecified: event payload, endpoint request/responses, webhook payload, timer duration/at, guard without expr and description. |

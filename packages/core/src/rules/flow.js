@@ -1,3 +1,4 @@
+import { isGuest } from "../roles/kinds.js";
 import { sorted } from "./facts.js";
 
 /** Flow canvases in ID order. */
@@ -30,7 +31,7 @@ export default [
       for (const [canvasId, canvas] of flows(facts)) {
         const out = facts.outgoing(canvasId);
         for (const [id, node] of sorted(canvas.nodes)) {
-          if (node.kind === "end" || node.kind === "ref" || out.get(id).length) continue;
+          if (node.kind === "end" || node.kind === "ref" || isGuest("flow", node) || out.get(id).length) continue;
           report({
             target: id,
             canvas: canvasId,
@@ -59,7 +60,7 @@ export default [
           }
         }
         for (const [id, node] of nodes) {
-          if (reached.has(id) || node.kind === "ref") continue;
+          if (reached.has(id) || node.kind === "ref" || isGuest("flow", node)) continue;
           report({ target: id, canvas: canvasId, message: `${facts.describe(id)} cannot be reached from the start` });
         }
       }
