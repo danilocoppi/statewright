@@ -79,6 +79,7 @@ const UNSTOPPED = new Set([
   "editor_wait",
   "editor_inbox",
   "editor_reply",
+  "editor_ask",
   "editor_disconnect",
   "editor_pair",
   "guide_read"
@@ -109,6 +110,7 @@ async function converse(editor, tool, args = {}, signal) {
   if (state.status !== "paired") return failure("NOT_PAIRED", `Nobody is paired to write to you: ${howToPair(editor)}`);
   if (tool === "editor_inbox") return withImages(editor.inbox());
   if (tool === "editor_reply") return editor.reply(args);
+  if (tool === "editor_ask") return editor.ask(args, signal);
   const { seconds = WAIT_SECONDS } = args;
   if (!Number.isInteger(seconds) || seconds < 1 || seconds > 600) {
     return failure("BAD_ARGUMENTS", "Invalid arguments for editor_wait: seconds must be a whole number from 1 to 600", {
@@ -147,7 +149,9 @@ export async function route(where, tool, toolArgs, { signal } = {}) {
   if (!UNSTOPPED.has(tool) && editor?.state().status === "paired" && editor.stopping?.()) {
     return failure("STOPPED", "The person asked you to stop: read editor_inbox, then go on only as they say");
   }
-  if (["editor_wait", "editor_inbox", "editor_reply"].includes(tool)) return converse(editor, tool, toolArgs, signal);
+  if (["editor_wait", "editor_inbox", "editor_reply", "editor_ask"].includes(tool)) {
+    return converse(editor, tool, toolArgs, signal);
+  }
   return withNotice(editor, await run(where, tool, toolArgs));
 }
 

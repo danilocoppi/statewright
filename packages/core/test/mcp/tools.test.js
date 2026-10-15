@@ -12,9 +12,10 @@ describe("the contract's operations as MCP tools (AI interface spec §5)", () =>
       "editor_wait",
       "editor_inbox",
       "editor_reply",
+      "editor_ask",
       "guide_read"
     ]);
-    expect(tools).toHaveLength(45);
+    expect(tools).toHaveLength(46);
     for (const tool of tools) expect(tool.name).toMatch(/^[a-z]+_[a-zA-Z]+$/);
   });
 
@@ -54,6 +55,22 @@ describe("the contract's operations as MCP tools (AI interface spec §5)", () =>
       expect(byName[name].description.length).toBeGreaterThan(60);
       expect(byName[name].inputSchema.properties).not.toHaveProperty("file");
     }
+  });
+
+  it("asks the person, with choices, a free answer or elements marked on the canvas (collaboration spec §6.1)", () => {
+    const ask = toolsOf().find(tool => tool.name === "editor_ask");
+    expect(ask.inputSchema).toMatchObject({
+      required: ["question"],
+      additionalProperties: false,
+      properties: {
+        question: { type: "string", minLength: 1, maxLength: 500 },
+        options: { type: "array", maxItems: 8 },
+        multiple: { type: "boolean" },
+        pick: { enum: ["elements"] },
+        seconds: { type: "integer", minimum: 1, maximum: 600 }
+      }
+    });
+    expect(ask.description).toMatch(/instead of guessing/);
   });
 
   it("reads the guide, a section at a time, without changing anything (AI interface plan A5)", () => {

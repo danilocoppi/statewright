@@ -107,6 +107,48 @@ const BRIDGE_TOOLS = [
       additionalProperties: false
     },
     annotations: { readOnlyHint: false, openWorldHint: false }
+  },
+  {
+    name: "editor_ask",
+    description:
+      "Ask the person in the paired Editor instead of guessing (collaboration spec §6.1): your question, and choices " +
+      "as buttons (options; multiple: several at once), a free answer always, or elements they mark on the canvas " +
+      '(pick: "elements"). Answers as soon as they do: { answered: true, values?, text?, elements? }; when the time ' +
+      "is up, { answered: false } and the question stays open — their later answer reaches you as a message with " +
+      "answers. Other calls go on meanwhile. Errors: BAD_ARGUMENTS, NOT_PAIRED, EDITOR_GONE.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        question: { type: "string", minLength: 1, maxLength: 500, description: "What you ask." },
+        options: {
+          type: "array",
+          maxItems: 8,
+          description: "Choices shown as buttons.",
+          items: {
+            type: "object",
+            properties: {
+              label: { type: "string", minLength: 1, maxLength: 80, description: "What the button says." },
+              value: { type: "string", description: "What you get back; one of its own." },
+              point: { type: "array", items: { type: "string" }, description: "IDs of the elements it means." },
+              description: { type: "string", description: "A line more, shown under the label." }
+            },
+            required: ["label", "value"],
+            additionalProperties: false
+          }
+        },
+        multiple: { type: "boolean", description: "Several options may be chosen." },
+        pick: { enum: ["elements"], description: "The person marks elements on the canvas as the answer." },
+        seconds: {
+          type: "integer",
+          minimum: 1,
+          maximum: 600,
+          description: "How long to wait for the answer (default 120)."
+        }
+      },
+      required: ["question"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, openWorldHint: false }
   }
 ];
 

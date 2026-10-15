@@ -38,10 +38,11 @@ export async function serveMcp({ files, file, version, lines, write, log = () =>
   /** What a cancelled request stops: the wait of each editor_wait, by its request's id. */
   const cancelling = new Map();
   // Tool calls run one after the other, in the order they came: one may open the document the next works on. Waiting
-  // for the person (editor_wait) runs beside them, so it never holds the agent's other calls (collaboration spec §3.2).
+  // for the person (editor_wait, editor_ask) runs beside them, so it never holds the agent's other calls
+  // (collaboration spec §3.2, §6.1).
   let calls = Promise.resolve();
   const call = (tool, args, id) => {
-    if (tool === "editor_wait") {
+    if (tool === "editor_wait" || tool === "editor_ask") {
       const stop = new AbortController();
       if (id !== undefined) cancelling.set(id, stop);
       return hostNow()
@@ -96,11 +97,22 @@ function markInWords(mark) {
  * @returns {{ content: string, meta: Record<string, string> }}
  */
 export function channelOf(message) {
-  const { id, text, stop, context = {} } = message;
+  const { id, text, stop, answers, context = {} } = message;
   if (stop) {
     return {
       content: "The person asked you to stop: read editor_inbox, then go on only as they say.",
       meta: { message: id, stop: "true" }
+    };
+  }
+  if (answers) {
+    const said = [
+      ...(answers.values ?? []),
+      ...(answers.text ? [`"${answers.text}"`] : []),
+      ...(answers.elements ?? []).map(item => `${item.name} (${item.id})${item.level ? ` on ${item.level}` : ""}`)
+    ];
+    return {
+      content: `Answer to ${answers.question}: ${said.join("; ")}`,
+      meta: { message: id, question: answers.question }
     };
   }
   const lines = [];

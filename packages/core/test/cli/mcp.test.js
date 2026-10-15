@@ -14,8 +14,8 @@ describe("statewright mcp in the command line", () => {
       .split("\n")
       .map(line => JSON.parse(line));
     expect(answers.map(answer => answer.id).sort()).toEqual([1, 2]);
-    expect(answers.find(answer => answer.id === 2).result.tools).toHaveLength(45);
-    expect(stderr).toContain("statewright mcp: ready: 45 tools\n");
+    expect(answers.find(answer => answer.id === 2).result.tools).toHaveLength(46);
+    expect(stderr).toContain("statewright mcp: ready: 46 tools\n");
     expect(stderr).toContain("statewright mcp: connected to cli-test\n");
     expect(stderr).toMatch(/^statewright mcp: bridge on http:\/\/127\.0\.0\.1:\d+$/m);
     expect(stderr.trim().split("\n")).toHaveLength(3);

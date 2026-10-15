@@ -241,4 +241,33 @@ describe("the person writes to the agent (collaboration spec §3)", () => {
     expect(read.result.structuredContent.messages[0].image).toBe("attached");
     expect(read.result.content.at(-1)).toEqual({ type: "image", data: "iVBORw0KGgo=", mimeType: "image/png" });
   });
+
+  it("asks beside the queue, gives up when cancelled, and brings a late answer in words on the Channel", async () => {
+    const { tab, call, notify, written } = await served({
+      answer: () => ({ ok: true, result: { project: "Payments" } })
+    });
+    const asking = call(1, "editor_ask", { question: "Which states?", pick: "elements", seconds: 30 });
+    expect((await call(2, "document_summary")).result.structuredContent).toEqual({ project: "Payments" });
+    await settle();
+    expect(tab.events("ask")).toMatchObject([{ id: "qst_1", question: "Which states?", pick: "elements" }]);
+    notify("notifications/cancelled", { requestId: 1 });
+    expect((await asking).result.structuredContent).toEqual({ answered: false, question: "qst_1" });
+    await tab.answer("qst_1", {
+      values: ["now"],
+      text: "these two",
+      elements: [{ id: "nod_a", name: "a", level: "cnv_l" }]
+    });
+    await settle();
+    expect(notifications(written).at(-1).params).toEqual({
+      content: 'Answer to qst_1: now; "these two"; a (nod_a) on cnv_l',
+      meta: { message: "msg_1", question: "qst_1" }
+    });
+  });
+
+  it("lets the agent ask while the person's Stop waits", async () => {
+    const { tab, call } = await served();
+    await tab.send({ stop: true });
+    const asking = call(1, "editor_ask", { question: "Stop what?", seconds: 1 });
+    expect((await asking).result.structuredContent).toEqual({ answered: false, question: "qst_1" });
+  });
 });
