@@ -113,6 +113,46 @@ describe("a batch's own index (performance spec §3 P1)", () => {
   });
 });
 
+describe("what a removal takes with it, gone for the rest of the batch", () => {
+  /** nod_a and nod_b on the root, and a finding whose only target is nod_a. */
+  function withFinding() {
+    const doc = createDocument({ name: "Findings" });
+    return applyBatch(doc, [
+      { type: "node.add", args: { canvas: doc.root, id: "nod_a", node: { kind: "service", name: "A" } } },
+      { type: "node.add", args: { canvas: doc.root, id: "nod_b", node: { kind: "service", name: "B" } } },
+      {
+        type: "finding.upsert",
+        args: { id: "fnd_x", finding: { code: "X1", title: "On A", severity: "low", targets: ["nod_a"] } }
+      }
+    ]).doc;
+  }
+
+  it("a finding left with no target is gone for the next command", () => {
+    const doc = withFinding();
+    let error;
+    try {
+      applyBatch(doc, [
+        { type: "node.remove", args: { id: "nod_a" } },
+        { type: "finding.remove", args: { id: "fnd_x" } }
+      ]);
+    } catch (caught) {
+      error = caught;
+    }
+    expect(error).toMatchObject({ code: "NOT_FOUND", index: 1 });
+  });
+
+  it("its ID is free again", () => {
+    const { created } = applyBatch(withFinding(), [
+      { type: "node.remove", args: { id: "nod_a" } },
+      {
+        type: "finding.upsert",
+        args: { id: "fnd_x", finding: { code: "X1", title: "On B", severity: "low", targets: ["nod_b"] } }
+      }
+    ]);
+    expect(created).toEqual(["fnd_x"]);
+  });
+});
+
 describe("indexes and references kept per document", () => {
   it("are the same for the same frozen document, and new for another", () => {
     const doc = manyLevels(2, 5);

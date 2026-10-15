@@ -105,10 +105,15 @@ export function removeElements(doc, ids, { cascade = false, index: given } = {})
 
   // Findings need at least one target.
   const findings = doc.annotations?.findings ?? {};
+  const emptied = [];
   for (const [id, finding] of Object.entries(findings)) {
-    if (finding.targets.length === 0) delete findings[id];
+    if (finding.targets.length === 0) {
+      delete findings[id];
+      emptied.push(id);
+    }
   }
   tidy(doc);
-  given?.removed?.(removed);
+  // The batch's index forgets them all: those removed, and findings left with no target.
+  given?.removed?.([...removed, ...emptied]);
   return [...removed];
 }
