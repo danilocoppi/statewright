@@ -8,9 +8,8 @@ import { downloadFile } from "./download";
 import { slug } from "./names";
 
 /** File types offered by the pickers. */
-export const FILE_TYPES = [
-  { description: "Statewright document", accept: { "application/json": [".statewright.json", ".json"] } }
-];
+// Chrome's pickers refuse an extension longer than 16 characters: `.statewright.json` is 17, and ends in `.json`.
+export const FILE_TYPES = [{ description: "Statewright document", accept: { "application/json": [".json"] } }];
 
 /** The document's file name: "get-paid-as-built.statewright.json". */
 export const documentFileName = doc => `${slug(doc.project.name)}.statewright.json`;

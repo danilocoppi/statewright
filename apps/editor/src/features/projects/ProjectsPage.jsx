@@ -58,7 +58,9 @@ export default function ProjectsPage() {
 
   const openFile = async () => {
     if (!canPickFiles()) return fileInput.current.click();
-    const picked = await pickFile();
+    // A picker that refuses to open (not one the person cancelled) leaves the browser's file input to ask instead.
+    const picked = await pickFile().catch(() => "refused");
+    if (picked === "refused") return fileInput.current.click();
     if (picked) await importer.importFile(picked.file, picked.handle);
   };
 

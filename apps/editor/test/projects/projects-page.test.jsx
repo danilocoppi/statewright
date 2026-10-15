@@ -2,11 +2,11 @@
 import "../dom.js";
 import "../i18n.js";
 
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useParams } from "react-router";
 import { verify } from "statewright";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { RepositoryContext } from "@/app/repository";
 import { Toaster } from "@/components/ui/Toaster";
@@ -118,6 +118,24 @@ describe("Projects screen", () => {
     await screen.findByText(/No projects yet/);
     await upload(exampleText("payments"), "payments.statewright.json");
     expect(await screen.findByText("Opened prj_payments")).toBeTruthy();
+  });
+
+  it("falls back to the browser's file input when the system picker refuses to open", async () => {
+    const refused = vi.fn(async () => {
+      throw new TypeError("Failed to execute 'showOpenFilePicker' on 'Window'");
+    });
+    globalThis.showOpenFilePicker = refused;
+    try {
+      renderPage(keeping());
+      await screen.findByText(/No projects yet/);
+      const click = vi.spyOn(HTMLInputElement.prototype, "click").mockImplementation(() => {});
+      fireEvent.click(screen.getByTestId("projects-open-file"));
+      await waitFor(() => expect(click).toHaveBeenCalled());
+      expect(refused).toHaveBeenCalled();
+      click.mockRestore();
+    } finally {
+      delete globalThis.showOpenFilePicker;
+    }
   });
 
   it("asks for a review of a file changed outside Statewright and imports it signed", async () => {

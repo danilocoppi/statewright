@@ -2,7 +2,7 @@ import { parse, verify } from "statewright";
 import { describe, expect, it, vi } from "vitest";
 
 import { slug } from "@/files/names";
-import { documentFileName, pickFile, saveToFile } from "@/files/save-file";
+import { FILE_TYPES, documentFileName, pickFile, saveToFile } from "@/files/save-file";
 
 import { demoDoc, readExample } from "../fixtures.js";
 
@@ -21,6 +21,13 @@ function fakeHandle({ permission = "granted", granted = permission, fail = false
 }
 
 describe("slug and file names", () => {
+  it("names file types the way Chrome's pickers accept, so Open file and Save to file can open them", () => {
+    // Chrome refuses an extension longer than 16 characters, or one that is not a dot and letters or digits.
+    const extensions = FILE_TYPES.flatMap(type => Object.values(type.accept).flat());
+    expect(extensions.length).toBeGreaterThan(0);
+    for (const extension of extensions) expect(extension).toMatch(/^\.[A-Za-z0-9.]{1,15}$/);
+  });
+
   it("makes safe, readable file names from any project name", () => {
     expect(slug("Get paid / v2 – ü")).toBe("get-paid-v2-u");
     expect(slug("  Pagamentos à vista  ")).toBe("pagamentos-a-vista");
