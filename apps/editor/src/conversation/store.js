@@ -25,6 +25,7 @@ const EMPTY = {
   lines: [],
   read: [],
   hover: [],
+  action: null,
   draft: "",
   historyOpen: false,
   listening: false,
@@ -59,6 +60,14 @@ export function createConversationStore() {
         lines: state.lines.map(line =>
           line.id && ids.includes(line.id) && "state" in line ? { ...line, state: "read" } : line
         )
+      })),
+    /** A question that no longer waits (the bridge forgot it) or the person dismissed: it leaves the field. */
+    closeQuestion: id =>
+      set(state => ({
+        lines: state.lines.map(line =>
+          line.kind === "question" && line.id === id && line.state === "open" ? { ...line, state: "closed" } : line
+        ),
+        hover: []
       })),
     /** The person answered the agent's question. */
     answerQuestion: (id, answer) =>

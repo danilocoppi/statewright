@@ -314,7 +314,8 @@ export function ConversationBar({ onNavigate }) {
     : [])
   ];
   const last = [...lines].reverse().find(line => line.kind === "agent" || line.kind === "change");
-  const lastSaid = [...lines].reverse().find(line => line.kind === "agent");
+  // What the agent said last, read out: a reply, or a question it asks.
+  const lastSaid = [...lines].reverse().find(line => line.kind === "agent" || line.kind === "question");
   const stopping = status === "working" && !draft.trim();
   // Quick requests while something is selected or marked, and the field is empty or holds a request's words.
   const offerQuick =
@@ -351,7 +352,8 @@ export function ConversationBar({ onNavigate }) {
     after.update(key, answer.id ? { id: answer.id, state: "sent" } : { state: "failed" });
     // Sent, its marks are cleared from the canvas; not sent, they stay, and the text comes back to the field.
     if (answer.id) marksStore.getState().forget(drawn);
-    else if (!after.draft) after.setDraft(text);
+    // Not sent: the text comes back, a quick request's action with it.
+    else if (!after.draft) after.request(action, text);
   };
 
   const stop = async () => {
@@ -373,7 +375,11 @@ export function ConversationBar({ onNavigate }) {
     >
       {/* Each new answer is read out, the history open or not (collaboration spec §4: "announced politely"). */}
       <p role="status" aria-live="polite" className="sr-only">
-        {lastSaid ? `${agent}: ${lastSaid.text}` : ""}
+        {lastSaid?.kind === "question" ?
+          t("question.announced", { agent, question: lastSaid.question })
+        : lastSaid ?
+          `${agent}: ${lastSaid.text}`
+        : ""}
       </p>
       {historyOpen && (
         <ol

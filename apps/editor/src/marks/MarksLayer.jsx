@@ -155,7 +155,8 @@ export function MarksLayer({ canvasId }) {
         const reach = REACH / zoomRef.current;
         if (!eraseAt(store, canvasId, point, reach)) {
           const id = elementAt(event.clientX, event.clientY);
-          if (id && store.getState().forAI.some(item => item.id === id)) store.getState().unmark(id);
+          const { picking: asked, forAI: marked } = store.getState();
+          if (id && (asked ? asked.items : marked).some(item => item.id === id)) store.getState().unmark(id);
         }
         let last = point;
         follow(

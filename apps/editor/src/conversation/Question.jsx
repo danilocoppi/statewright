@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { connection } from "@/agent/connection";
@@ -27,8 +27,21 @@ export function Question({ line, agent }) {
   const picking = useMarksState(state => (state.picking?.question === line.id ? state.picking : null));
   const { id, question, options = [], multiple = false, pick } = line;
 
+  // Gone from the field (answered, closed, the pairing ended): no marking for it, no rings for its options.
+  useEffect(
+    () => () => {
+      if (marksStore.getState().picking?.question === id) marksStore.getState().stopPicking();
+      conversationStore.getState().setHover([]);
+    },
+    [id]
+  );
+
   const answer = async body => {
+    // Answered another way while marking for it: the marking ends.
+    if (marksStore.getState().picking?.question === id) marksStore.getState().stopPicking();
     const status = await connection.answer(id, body);
+    // The bridge no longer waits for it (the pairing changed): it leaves the field.
+    if (status === 404) return conversationStore.getState().closeQuestion(id);
     if (status !== 204) return setFailed(true);
     conversationStore.getState().answerQuestion(id, body);
   };
@@ -122,6 +135,11 @@ export function Question({ line, agent }) {
         className="h-8 rounded-control border border-control-border bg-surface px-2.5 text-ui text-ink outline-none placeholder:text-muted focus:border-accent"
       />
       {failed && <p className="text-label text-danger">{t("question.failed", { agent })}</p>}
+      <div className="flex justify-end">
+        <Button size="sm" variant="ghost" onClick={() => conversationStore.getState().closeQuestion(id)}>
+          {t("question.dismiss")}
+        </Button>
+      </div>
     </section>
   );
 }

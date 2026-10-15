@@ -39,6 +39,7 @@ describe("the conversation with the agent (collaboration spec §4)", () => {
     store.getState().toggleHistory();
     store.getState().setListening({ listening: true, channel: true });
     store.getState().called(5);
+    store.getState().request("review", "Review this.");
     store.getState().clear();
     expect(store.getState()).toMatchObject({
       lines: [],
@@ -46,7 +47,8 @@ describe("the conversation with the agent (collaboration spec §4)", () => {
       historyOpen: false,
       listening: false,
       channel: false,
-      lastCall: 0
+      lastCall: 0,
+      action: null
     });
   });
 });

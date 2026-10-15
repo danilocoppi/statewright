@@ -120,7 +120,9 @@
     "confirm_other": "Confirm ({{count}})",
     "cancel": "Cancel",
     "answered": "You answered: {{answer}}",
-    "failed": "The answer did not reach {{agent}}: try again."
+    "failed": "The answer did not reach {{agent}}: try again.",
+    "dismiss": "Dismiss",
+    "announced": "{{agent}} asks: {{question}}"
   },
   "quick": {
     "label": "Quick requests",

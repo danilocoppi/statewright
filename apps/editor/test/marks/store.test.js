@@ -47,4 +47,19 @@ describe("the marks (collaboration spec §5.1)", () => {
     expect(store.getState().marks.some(mark => mark.id === here)).toBe(false);
     expect(store.getState().undo("cnv_a")).toBe(false);
   });
+
+  it("ends marking for a question when another tool is taken or the tool is put down, and erases what it picked", () => {
+    const store = createMarksStore();
+    store.getState().toggleForAI("nod_a", "cnv_a");
+    store.getState().startPicking("qst_1");
+    store.getState().toggleForAI("nod_b", "cnv_a");
+    store.getState().unmark("nod_b");
+    expect(store.getState().picking.items).toEqual([]);
+    expect(store.getState().forAI).toEqual([{ id: "nod_a", level: "cnv_a" }]);
+    store.getState().setTool("pencil");
+    expect(store.getState().picking).toBeNull();
+    store.getState().startPicking("qst_2");
+    store.getState().setTool(null);
+    expect(store.getState().picking).toBeNull();
+  });
 });

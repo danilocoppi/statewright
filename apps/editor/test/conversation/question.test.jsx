@@ -113,4 +113,46 @@ describe("the agent's questions (collaboration spec §6.1)", () => {
       forAI: [{ id: "nod_complianceHold", level: "cnv_lifecycle" }]
     });
   });
+
+  it("ends marking for a question answered another way, and keeps the person's own marks", async () => {
+    const user = userEvent.setup();
+    ask({
+      id: "qst_1",
+      question: "Where?",
+      options: [{ label: "Back to running", value: "running" }],
+      pick: "elements"
+    });
+    await user.click(within(card("qst_1")).getByRole("button", { name: "Mark on the canvas" }));
+    await user.click(within(card("qst_1")).getByRole("button", { name: "Back to running" }));
+    expect(marksStore.getState()).toMatchObject({ picking: null, tool: null });
+    act(() => marksStore.getState().toggleForAI("nod_expiryClock", "cnv_lifecycle"));
+    expect(marksStore.getState().forAI).toEqual([{ id: "nod_expiryClock", level: "cnv_lifecycle" }]);
+  });
+
+  it("closes a question that no longer waits, and lets the person dismiss one", async () => {
+    const user = userEvent.setup();
+    connection.answer.mockImplementationOnce(async () => 404);
+    ask({ id: "qst_1", question: "Gone?", options: [{ label: "Yes", value: "yes" }] });
+    ask({ id: "qst_2", question: "Old?" });
+    await user.click(within(card("qst_1")).getByRole("button", { name: "Yes" }));
+    await vi.waitFor(() => expect(card("qst_1")).toBeNull());
+    expect(conversationStore.getState().lines[0].state).toBe("closed");
+    await user.click(within(card("qst_2")).getByRole("button", { name: "Dismiss" }));
+    expect(card("qst_2")).toBeNull();
+    expect(answered).toEqual([]);
+  });
+
+  it("announces the agent's question, and forgets what an option rang once the card goes", async () => {
+    const user = userEvent.setup();
+    ask({
+      id: "qst_1",
+      question: "Which one?",
+      options: [{ label: "This", value: "this", point: ["nod_expiryClock"] }]
+    });
+    expect(document.querySelector('[role="status"]').textContent).toBe("claude-code asks: Which one?");
+    await user.hover(within(card("qst_1")).getByRole("button", { name: "This" }));
+    expect(conversationStore.getState().hover).toEqual(["nod_expiryClock"]);
+    act(() => conversationStore.getState().answerQuestion("qst_1", { text: "elsewhere" }));
+    expect(conversationStore.getState().hover).toEqual([]);
+  });
 });

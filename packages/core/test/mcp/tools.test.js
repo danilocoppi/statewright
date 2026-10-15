@@ -71,6 +71,7 @@ describe("the contract's operations as MCP tools (AI interface spec §5)", () =>
       }
     });
     expect(ask.description).toMatch(/instead of guessing/);
+    expect(ask.inputSchema.properties.seconds.description).toMatch(/default 50/);
   });
 
   it("reads the guide, a section at a time, without changing anything (AI interface plan A5)", () => {

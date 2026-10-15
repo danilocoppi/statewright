@@ -268,6 +268,22 @@ describe("the person writes to the agent (collaboration spec §3)", () => {
     const { tab, call } = await served();
     await tab.send({ stop: true });
     const asking = call(1, "editor_ask", { question: "Stop what?", seconds: 1 });
-    expect((await asking).result.structuredContent).toEqual({ answered: false, question: "qst_1" });
+    expect((await asking).result.structuredContent).toMatchObject({
+      answered: false,
+      question: "qst_1",
+      inbox: { unread: 1 }
+    });
+  });
+
+  it("tells an agent that asked what the person wrote meanwhile, and waits 50 s unless told", async () => {
+    const { tab, call } = await served();
+    const asking = call(1, "editor_ask", { question: "Which?" });
+    await settle();
+    await tab.send({ text: "neither" });
+    expect((await asking).result.structuredContent).toEqual({
+      answered: false,
+      question: "qst_1",
+      inbox: { unread: 1, note: "The person wrote to you: read editor_inbox" }
+    });
   });
 });

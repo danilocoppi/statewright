@@ -28,8 +28,8 @@ const TRIES = 10;
 const MAX_BODY = 64 * 1024 * 1024;
 /** The largest registration: a code, from a page that needs no token to send it. */
 const MAX_CODE_BODY = 1024;
-/** How long editor_ask waits unless told (collaboration spec §6.1). */
-const ASK_SECONDS = 120;
+/** How long editor_ask waits unless told: under the 60 s MCP SDK clients wait for a call, as editor_wait. */
+const ASK_SECONDS = 50;
 
 /**
  * Why a question cannot be shown, or null: a question of 1–500 characters; at most 8 options, each a label of 1–80
@@ -622,8 +622,16 @@ export function createBridge({
       return new Promise(resolve => {
         const stop = new AbortController();
         own.waiting.add(stop);
+        // While it asks, the agent listens; a message the person writes instead ends the asking (spec §6.1: an open
+        // question never holds back what they write).
+        own.waits += 1;
+        if (own.waits === 1) sayListening(own);
+        const unhear = own.inbox.onAdd(() => unanswered());
         const finish = outcome => {
           clearTimeout(timer);
+          unhear();
+          own.waits -= 1;
+          if (own.waits === 0) sayListening(own);
           own.waiting.delete(stop);
           signal?.removeEventListener("abort", unanswered);
           asked.resolve = null;

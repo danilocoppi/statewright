@@ -110,7 +110,7 @@ async function converse(editor, tool, args = {}, signal) {
   if (state.status !== "paired") return failure("NOT_PAIRED", `Nobody is paired to write to you: ${howToPair(editor)}`);
   if (tool === "editor_inbox") return withImages(editor.inbox());
   if (tool === "editor_reply") return editor.reply(args);
-  if (tool === "editor_ask") return editor.ask(args, signal);
+  if (tool === "editor_ask") return withNotice(editor, await editor.ask(args, signal));
   const { seconds = WAIT_SECONDS } = args;
   if (!Number.isInteger(seconds) || seconds < 1 || seconds > 600) {
     return failure("BAD_ARGUMENTS", "Invalid arguments for editor_wait: seconds must be a whole number from 1 to 600", {

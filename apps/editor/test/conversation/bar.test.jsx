@@ -207,4 +207,15 @@ describe("the conversation bar (collaboration spec §4)", () => {
     await user.type(field(), "just a question{Enter}");
     expect(sent.at(-1)).not.toHaveProperty("action");
   });
+
+  it("keeps a quick request's action when its message could not be sent", async () => {
+    const user = userEvent.setup();
+    act(() => editorStore.getState().select(["nod_expiryClock"], "cnv_lifecycle"));
+    connection.send.mockImplementationOnce(async () => ({ error: "unreachable" }));
+    await user.click(within(bar()).getByRole("button", { name: "Review" }));
+    await user.type(field(), "{Enter}");
+    await vi.waitFor(() => expect(field().value).toBe("Review this: Problems, gaps and inconsistencies."));
+    await user.type(field(), "{Enter}");
+    await vi.waitFor(() => expect(sent.at(-1)).toMatchObject({ action: "review" }));
+  });
 });

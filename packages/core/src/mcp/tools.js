@@ -142,7 +142,7 @@ const BRIDGE_TOOLS = [
           type: "integer",
           minimum: 1,
           maximum: 600,
-          description: "How long to wait for the answer (default 120)."
+          description: "How long to wait for the answer (default 50; the question stays open after it)."
         }
       },
       required: ["question"],

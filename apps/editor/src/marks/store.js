@@ -41,7 +41,8 @@ export function createMarksStore() {
     picking: null,
     startPicking: question => set({ picking: { question, items: [] }, tool: "mark" }),
     stopPicking: () => set({ picking: null, tool: null }),
-    setTool: tool => set({ tool }),
+    /** Take a tool, or put it down; anything but the Mark tool ends marking for a question. */
+    setTool: tool => set(state => ({ tool, ...(tool !== "mark" && state.picking ? { picking: null } : {}) })),
     setColour: colour => set({ colour }),
     /** Draw a mark: its ID. */
     add(mark) {
@@ -72,7 +73,13 @@ export function createMarksStore() {
           shown: null
         };
       }),
-    unmark: id => set(state => ({ forAI: state.forAI.filter(item => item.id !== id) })),
+    /** Erase an element's mark: the question's while marking for one, else the message's. */
+    unmark: id =>
+      set(state =>
+        state.picking ?
+          { picking: { ...state.picking, items: state.picking.items.filter(item => item.id !== id) } }
+        : { forAI: state.forAI.filter(item => item.id !== id) }
+      ),
     /** Take back the last mark drawn on a level (any level without one): whether there was one. */
     undo(level) {
       let taken = false;

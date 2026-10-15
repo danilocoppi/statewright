@@ -903,9 +903,10 @@ too, each with Undo.
 - **Ask** with `editor_ask { question, options?, multiple?, pick?, seconds? }` whenever you would otherwise guess: a
   card stands above their field with your options as buttons (each may `point` at the elements it means, which ring
   while hovered), a free answer always, and with `pick: "elements"` a Mark on the canvas step for them to mark elements
-  and confirm. It answers `{ answered: true, values?, text?, elements? }` as soon as they do. When `seconds` (120 by
-  default) run out it answers `{ answered: false }` and the question stays open: their later answer reaches you as a
-  message with `answers: { question, … }`. Your other calls go on while you wait.
+  and confirm. It answers `{ answered: true, values?, text?, elements? }` as soon as they do. When `seconds` (50 by
+  default) run out, or the person writes to you instead, it answers `{ answered: false }` and the question stays open:
+  do not ask it again; their later answer reaches you as a message with `answers: { question, … }`. Your other calls go
+  on while you wait.
 - **Stop.** When the person presses Stop, every call but the conversation's answers `STOPPED` until you read
   `editor_inbox`; then go on only as they say.
 - **The Channel.** Claude Code can bring each message to you as a turn of its own, even while it waits for the person

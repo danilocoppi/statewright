@@ -571,4 +571,17 @@ describe("the agent asks the person (collaboration spec §6.1)", () => {
     await tab.answer("qst_1", { text: "yes" });
     await asking;
   });
+
+  it("stops asking when the person writes instead, and listens while it asks", async () => {
+    const { bridge, address } = await bridgeOn();
+    const { tab } = await paired(bridge, address);
+    const asking = bridge.ask({ question: "Which?", seconds: 600 });
+    await settle();
+    expect(tab.events("listening").at(-1)).toEqual({ listening: true, channel: false });
+    await tab.send({ text: "use the bank, and rename X" });
+    expect((await asking).result).toEqual({ answered: false, question: "qst_1" });
+    expect(bridge.unread()).toBe(1);
+    await settle();
+    expect(tab.events("listening").at(-1)).toEqual({ listening: false, channel: false });
+  });
 });

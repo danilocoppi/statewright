@@ -120,7 +120,9 @@
     "confirm_other": "Confirmar ({{count}})",
     "cancel": "Cancelar",
     "answered": "Você respondeu: {{answer}}",
-    "failed": "A resposta não chegou a {{agent}}: tente de novo."
+    "failed": "A resposta não chegou a {{agent}}: tente de novo.",
+    "dismiss": "Dispensar",
+    "announced": "{{agent}} pergunta: {{question}}"
   },
   "quick": {
     "label": "Pedidos rápidos",
