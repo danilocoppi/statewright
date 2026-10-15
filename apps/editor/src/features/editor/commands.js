@@ -149,7 +149,8 @@ export function editorCommands({
       "message",
       t("agent:conversation.command", { agent: connection.store.getState().agent ?? t("agent:change.anAgent") }),
       "M",
-      focusConversation
+      // Once ⌘K's dialog has closed and the page takes the focus again.
+      () => requestAnimationFrame(() => focusConversation())
     ),
     ...when(true, "connect", t("agent:pairing.menu"), undefined, onConnect),
     ...when(true, "guide", words("guide"), undefined, () => openGuide()),

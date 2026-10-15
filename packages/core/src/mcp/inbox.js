@@ -5,9 +5,10 @@
 /** @typedef {{ id: string, at: string, text?: string, action?: string, context?: object, stop?: true }} Message */
 
 /**
- * @param {{ now?: () => Date }} [options]
+ * @param {{ now?: () => Date, number?: () => number }} [options] `number`: the next message's number — the bridge
+ *   counts across pairings, so an answer to an old message never reads a new one.
  */
-export function createInbox({ now = () => new Date() } = {}) {
+export function createInbox({ now = () => new Date(), number } = {}) {
   /** @type {Message[]} */
   const unread = [];
   const read = new Set();
@@ -38,7 +39,7 @@ export function createInbox({ now = () => new Date() } = {}) {
       const { text, action, context, stop } = body;
       /** @type {Message} */
       const message = {
-        id: `msg_${next}`,
+        id: `msg_${number ? number() : next}`,
         at: now().toISOString(),
         ...(text !== undefined ? { text } : {}),
         ...(action !== undefined ? { action } : {}),

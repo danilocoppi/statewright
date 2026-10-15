@@ -114,4 +114,30 @@ describe("the conversation bar (collaboration spec §4)", () => {
     expect(history.getAttribute("aria-expanded")).toBe("true");
     expect(within(bar()).getByText("You asked claude-code to stop")).toBeTruthy();
   });
+
+  it("announces each new answer of the agent, the history open or not", async () => {
+    const user = userEvent.setup();
+    await user.click(within(bar()).getByRole("button", { name: "Conversation history" }));
+    act(() => {
+      conversationStore.getState().add({ kind: "agent", id: "rpl_1", text: "First answer" });
+    });
+    expect(within(bar()).getByRole("status").textContent).toBe("claude-code: First answer");
+  });
+
+  it("gives the text back when it could not be sent", async () => {
+    const user = userEvent.setup();
+    connection.send.mockImplementation(async () => ({ error: "unreachable" }));
+    await user.type(field(), "lost?{Enter}");
+    await vi.waitFor(() => expect(field().value).toBe("lost?"));
+    expect(conversationStore.getState().lines).toMatchObject([{ kind: "person", text: "lost?", state: "failed" }]);
+  });
+
+  it("sends a new selection even after the person left out the one before", async () => {
+    const user = userEvent.setup();
+    act(() => editorStore.getState().select(["nod_expiryClock"], "cnv_lifecycle"));
+    await user.click(within(bar()).getByRole("button", { name: "Leave out 1 selected" }));
+    act(() => editorStore.getState().select(["nod_complianceHold"], "cnv_lifecycle"));
+    await user.type(field(), "this one{Enter}");
+    expect(sent[0].context.selection).toMatchObject([{ id: "nod_complianceHold" }]);
+  });
 });

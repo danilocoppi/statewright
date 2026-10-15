@@ -23,13 +23,13 @@ describe("the conversation with the agent (collaboration spec §4)", () => {
     expect(store.getState().lines[0].state).toBe("read");
   });
 
-  it("says the agent works within 5 s of a call, listens while it waits or by the Channel, and is away otherwise", () => {
+  it("says the agent listens while it waits, works for 30 s after a call otherwise, and is away after that", () => {
     const base = { listening: false, channel: false, lastCall: 0 };
-    expect(statusOf(base, 10_000)).toBe("away");
-    expect(statusOf({ ...base, listening: true }, 10_000)).toBe("listening");
-    expect(statusOf({ ...base, channel: true }, 10_000)).toBe("listening");
-    expect(statusOf({ ...base, listening: true, lastCall: 6_000 }, 10_000)).toBe("working");
-    expect(statusOf({ ...base, lastCall: 4_000 }, 10_000)).toBe("away");
+    expect(statusOf(base, 100_000)).toBe("away");
+    expect(statusOf({ ...base, listening: true, lastCall: 99_000 }, 100_000)).toBe("listening");
+    expect(statusOf({ ...base, lastCall: 75_000 }, 100_000)).toBe("working");
+    expect(statusOf({ ...base, lastCall: 60_000 }, 100_000)).toBe("away");
+    expect(statusOf({ ...base, channel: true, lastCall: 60_000 }, 100_000)).toBe("listening");
   });
 
   it("forgets everything when cleared, as when the pairing ends", () => {

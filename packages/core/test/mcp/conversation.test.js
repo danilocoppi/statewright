@@ -70,6 +70,7 @@ async function served({ answer } = {}) {
     return answered;
   };
   const call = (id, name, args = {}) => request(id, "tools/call", { name, arguments: args });
+  const notify = (method, params) => input.push({ jsonrpc: "2.0", method, params });
   await request(0, "initialize", { clientInfo: { name: "claude-code" } });
   const listening = tab.register("K7Q2MX").then(() => tab.listen());
   for (;;) {
@@ -78,7 +79,7 @@ async function served({ answer } = {}) {
     await new Promise(resolve => setTimeout(resolve, 5));
   }
   await listening;
-  return { tab, call, written, bridge };
+  return { tab, call, notify, written, bridge };
 }
 
 const notifications = written => written.filter(message => message.method === "notifications/claude/channel");
@@ -152,5 +153,40 @@ describe("the person writes to the agent (collaboration spec §3)", () => {
     expect(replied.result.structuredContent).toEqual({ replied: "rpl_1" });
     await settle();
     expect(tab.events("reply")).toEqual([{ id: "rpl_1", text: "Done", to: "msg_1", point: ["nod_a"] }]);
+  });
+
+  it("forgets a wait the client cancelled: the next message waits for the agent, unread", async () => {
+    const { tab, call, notify } = await served();
+    const waiting = call(7, "editor_wait", { seconds: 30 });
+    await settle();
+    notify("notifications/cancelled", { requestId: 7, reason: "the person pressed Esc" });
+    await settle();
+    await tab.send({ text: "after the cancel" });
+    await settle();
+    expect(tab.events("read")).toEqual([]);
+    expect((await call(8, "editor_inbox")).result.structuredContent.messages.map(message => message.text)).toEqual([
+      "after the cancel"
+    ]);
+    expect((await waiting).result.structuredContent).toEqual({ messages: [] });
+  });
+
+  it("numbers messages across pairings, so a late reply to an old one reads nothing new", async () => {
+    const { tab, call, bridge } = await served();
+    await tab.send({ text: "old" });
+    await call(1, "editor_inbox");
+    await tab.disconnect();
+    const next = fakeTab(bridge.address());
+    open.push(async () => next.close());
+    const listening = next.register("222333").then(() => next.listen());
+    for (;;) {
+      const answer = await call(`again-${Math.random()}`, "editor_pair", { code: "222-333" });
+      if (!answer.result.isError) break;
+      await settle(5);
+    }
+    await listening;
+    expect((await next.send({ text: "new" })).body).toEqual({ id: "msg_2" });
+    expect((await call(2, "editor_reply", { text: "late", to: "msg_1" })).result.structuredContent.error.code).toBe(
+      "NOT_FOUND"
+    );
   });
 });

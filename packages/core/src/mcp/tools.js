@@ -74,7 +74,7 @@ const BRIDGE_TOOLS = [
           type: "integer",
           minimum: 1,
           maximum: 600,
-          description: "How long to wait at most (default 240)."
+          description: "How long to wait at most (default 50); call it again to go on listening."
         }
       },
       additionalProperties: false

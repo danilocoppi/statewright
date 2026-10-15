@@ -4,8 +4,8 @@
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 
-/** How long after its last call the agent still counts as working. */
-export const WORKING_MS = 5000;
+/** How long after its last call the agent still counts as working, unless it says it listens: models think between calls. */
+export const WORKING_MS = 30000;
 
 /**
  * @typedef {{ key: string, label: string }} Chip What goes with a message, shown in the field.
@@ -63,13 +63,14 @@ export const conversationStore = createConversationStore();
 export const useConversation = selector => useStore(conversationStore, selector);
 
 /**
- * Whether the agent is working (it called in the last 5 s), listening (it waits for a message, or the Channel reached
- * it), or away.
+ * Whether the agent is listening (it waits for a message), working (it called in the last 30 s), listening by the
+ * Channel, or away.
  * @param {{ listening: boolean, channel: boolean, lastCall: number }} state
  * @param {number} now
  * @returns {"working" | "listening" | "away"}
  */
 export function statusOf({ listening, channel, lastCall }, now) {
+  if (listening) return "listening";
   if (lastCall && now - lastCall < WORKING_MS) return "working";
-  return listening || channel ? "listening" : "away";
+  return channel ? "listening" : "away";
 }

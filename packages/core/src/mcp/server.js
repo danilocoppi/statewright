@@ -55,7 +55,7 @@ function toolResult(outcome) {
  * @returns {{ receive: (line: string) => Promise<string | null>, handle: (message: unknown) => Promise<object | null>,
  *   client: () => { name?: string, version?: string } | null }}
  */
-export function createMcpServer({ version, tools, call, log = () => {} }) {
+export function createMcpServer({ version, tools, call, cancel = () => {}, log = () => {} }) {
   const names = new Set(tools.map(tool => tool.name));
   let client = null;
 
@@ -81,7 +81,7 @@ export function createMcpServer({ version, tools, call, log = () => {} }) {
       if (!isObject(args)) return refuse(id, INVALID_PARAMS, `The arguments of ${name} must be an object`);
       let outcome;
       try {
-        outcome = await call(name, args);
+        outcome = await call(name, args, id);
       } catch (error) {
         log(`${name} failed: ${error?.stack ?? error}`);
         outcome = { ok: false, error: { code: "INTERNAL", message: String(error?.message ?? error) } };
@@ -100,7 +100,11 @@ export function createMcpServer({ version, tools, call, log = () => {} }) {
     const { id, method, params = {} } = message;
     if (method === undefined) return null; // a response to a request of ours: the server sends none
     if (typeof method !== "string") return refuse(id ?? null, INVALID_REQUEST, "The method must be a string");
-    if (id === undefined) return null; // a notification (initialized, cancelled, …): nothing to answer
+    if (id === undefined) {
+      // A notification: nothing to answer. A cancelled request stops what it waits for (editor_wait).
+      if (method === "notifications/cancelled" && isObject(params)) cancel(params.requestId);
+      return null;
+    }
     if (!isObject(params)) return refuse(id, INVALID_PARAMS, "The params must be an object");
     return request(method, params, id);
   }

@@ -467,4 +467,15 @@ describe("messages from the person (collaboration spec §3.2)", () => {
     expect(bridge.unread()).toBe(0);
     expect(bridge.stopping()).toBe(false);
   });
+
+  it("stops waiting for the person once the agent's client has gone", async () => {
+    const { bridge, address } = await bridgeOn();
+    await paired(bridge, address);
+    const waiting = bridge.wait(600);
+    await settle();
+    const started = Date.now();
+    bridge.stopWaiting();
+    expect((await waiting).result.messages).toEqual([]);
+    expect(Date.now() - started).toBeLessThan(500);
+  });
 });

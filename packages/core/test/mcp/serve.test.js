@@ -35,6 +35,20 @@ const HELLO = { jsonrpc: "2.0", id: 0, method: "initialize", params: { clientInf
 const call = (id, name, args = {}) => ({ jsonrpc: "2.0", id, method: "tools/call", params: { name, arguments: args } });
 
 describe("the MCP server at work (AI interface spec §5)", () => {
+  it("makes one file host, even when its first calls come together, editor_wait among them", async () => {
+    const files = memoryFiles({ "payments.json": PAYMENTS });
+    const { byId } = await serve(
+      [
+        HELLO,
+        call(1, "projects_open", { path: "payments.json" }),
+        call(2, "editor_wait", { seconds: 1 }),
+        call(3, "document_summary")
+      ],
+      { files }
+    );
+    expect(byId[3].result.structuredContent.project.id).toBe("prj_payments");
+  });
+
   it("runs a call with file on that file, and signs what it writes with the client's name", async () => {
     const files = memoryFiles({ "payments.json": PAYMENTS });
     const commands = [{ type: "node.update", args: { id: "nod_paused", set: { name: "on hold" } } }];

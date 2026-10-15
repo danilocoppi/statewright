@@ -89,27 +89,61 @@ test("the person writes from the bar, the agent reads it, answers there, and sto
   }
 });
 
-test("keeps the bar clear of the zoom island, Support and Problems, however narrow the window", async ({ page }) => {
+test("keeps the bar clear of the zoom island, the tools, Support, Problems and the inspector, however narrow the window", async ({
+  page
+}) => {
   await openLifecycle(page);
   const mcp = await startMcp({ agent: "claude-code" });
   try {
     await pair(page, mcp);
     const bar = page.getByTestId("conversation-bar");
-    for (const width of [1440, 1024, 640]) {
-      await page.setViewportSize({ width, height: 800 });
-      await expect(bar).toBeVisible();
-      await page.waitForTimeout(100);
-      const shown = await bar.boundingBox();
-      for (const other of [
-        page.getByTestId("zoom-island"),
-        page.locator("[data-support]"),
-        page.getByRole("button", { name: /problems$/ })
-      ]) {
-        expect(overlap(shown, await other.boundingBox()), `${width} px`).toBe(false);
+    const send = page.getByTestId("conversation-send");
+    for (const selected of [false, true]) {
+      if (selected) await page.locator('.react-flow__node[data-id="nod_expiryClock"]').click();
+      for (const width of [1440, 1024, 640]) {
+        await page.setViewportSize({ width, height: 800 });
+        await expect(bar).toBeVisible();
+        await page.waitForTimeout(400);
+        const shown = await bar.boundingBox();
+        const others = [
+          page.getByTestId("zoom-island"),
+          page.locator("[data-support]"),
+          page.getByRole("button", { name: /problems$/ }),
+          ...(selected && width > 640 ? [page.getByRole("dialog", { name: "Inspector" })] : [])
+        ];
+        for (const other of others) {
+          expect(overlap(shown, await other.boundingBox()), `${width} px${selected ? ", selected" : ""}`).toBe(false);
+        }
+        expect(shown.x).toBeGreaterThanOrEqual(0);
+        expect(shown.x + shown.width).toBeLessThanOrEqual(width);
+        const at = await send.boundingBox();
+        const top = await page.evaluate(
+          ([x, y]) => {
+            const found = document.elementFromPoint(x, y);
+            // Send, or the bar under it while it is disabled (it lets the pointer through): nothing else is over it.
+            return found?.closest('[data-testid="conversation-bar"]') ? "send" : (
+                (found?.outerHTML.slice(0, 200) ?? "nothing")
+              );
+          },
+          [at.x + at.width / 2, at.y + at.height / 2]
+        );
+        expect(top, `Send at ${width} px${selected ? ", selected" : ""}`).toBe("send");
       }
-      expect(shown.x).toBeGreaterThanOrEqual(0);
-      expect(shown.x + shown.width).toBeLessThanOrEqual(width);
     }
+  } finally {
+    await mcp.stop();
+  }
+});
+
+test("writes to the agent from ⌘K", async ({ page }) => {
+  await openLifecycle(page);
+  const mcp = await startMcp({ agent: "claude-code" });
+  try {
+    await pair(page, mcp);
+    await page.keyboard.press("Control+k");
+    await page.keyboard.type("Write to");
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("conversation-field")).toBeFocused();
   } finally {
     await mcp.stop();
   }

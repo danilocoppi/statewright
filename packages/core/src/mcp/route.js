@@ -83,10 +83,10 @@ const UNSTOPPED = new Set([
   "guide_read"
 ]);
 /** How long editor_wait waits unless told (collaboration spec §3.2). */
-const WAIT_SECONDS = 240;
+const WAIT_SECONDS = 50;
 
 /** The conversation's tools (collaboration spec §3): on the paired tab's inbox. */
-function converse(editor, tool, args = {}) {
+function converse(editor, tool, args = {}, signal) {
   if (!editor) return failure("NOT_PAIRED", "This server has no bridge to the Editor: the person cannot write to you");
   const state = editor.state();
   if (state.status === "gone") return state.outcome;
@@ -99,7 +99,7 @@ function converse(editor, tool, args = {}) {
       path: "seconds"
     });
   }
-  return editor.wait(seconds);
+  return editor.wait(seconds, signal);
 }
 
 /** While the person's messages wait unread, an answer says so (collaboration spec §3.2: "Notice while working"). */
@@ -126,12 +126,12 @@ function withNotice(editor, outcome) {
  * @param {object} toolArgs The tool's arguments, `file` and `acceptChanges` among them.
  * @returns {Promise<{ ok: true, result: any } | { ok: false, error: object }>}
  */
-export async function route(where, tool, toolArgs) {
+export async function route(where, tool, toolArgs, { signal } = {}) {
   const { editor } = where;
   if (!UNSTOPPED.has(tool) && editor?.state().status === "paired" && editor.stopping?.()) {
     return failure("STOPPED", "The person asked you to stop: read editor_inbox, then go on only as they say");
   }
-  if (["editor_wait", "editor_inbox", "editor_reply"].includes(tool)) return converse(editor, tool, toolArgs);
+  if (["editor_wait", "editor_inbox", "editor_reply"].includes(tool)) return converse(editor, tool, toolArgs, signal);
   return withNotice(editor, await run(where, tool, toolArgs));
 }
 

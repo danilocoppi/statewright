@@ -13,59 +13,105 @@ import { isSimulating } from "@/simulate/store";
 import { editorStore, useEditor } from "@/store/editor";
 
 import { chipsOf, contextOf } from "./context";
-import { statusOf, useConversation, conversationStore } from "./store";
+import { WORKING_MS, conversationStore, statusOf, useConversation } from "./store";
 
-/** The bar's widest, and the narrowest it takes beside the zoom island before it moves above it. */
+/** The bar's widest, and the narrowest it takes in a row before it moves up a row. */
 const WIDEST = 560;
 const NARROWEST = 320;
-/** Room kept between the bar and the islands beside it. */
+/** Room kept between the bar and what is beside it, and from the window's edges. */
 const GAP = 12;
+const EDGE = 16;
+/** What the bar keeps clear of: the zoom island and the tools at the left, Support and the panels at the right. */
+const AROUND = [
+  '[data-testid="zoom-island"]',
+  '[data-area="tools"]',
+  "[data-support]",
+  '[data-area="inspector"]',
+  '[data-area="simulation"]',
+  '[data-area="problems"]'
+];
 
 /**
- * Where the bar stands: centred between the zoom island and the Support pill, at most 560 px; where that leaves under
- * 320 px, above the zoom island's row instead, as wide as the window lets it.
- * @returns {{ width: number, raised: boolean }}
+ * The room in a row (`bottom` px above the window's bottom, `height` tall): between what stands beside it, left and
+ * right of the window's middle.
  */
-function usePlace() {
-  const [place, setPlace] = useState({ width: WIDEST, raised: false });
+function roomIn(bottom, height) {
+  const width = window.innerWidth;
+  const top = window.innerHeight - bottom - height;
+  const below = window.innerHeight - bottom;
+  let left = EDGE;
+  let right = width - EDGE;
+  for (const selector of AROUND) {
+    for (const element of document.querySelectorAll(selector)) {
+      const box = element.getBoundingClientRect();
+      if (!box.width || box.bottom <= top || box.top >= below) continue;
+      if (box.left + box.width / 2 < width / 2) left = Math.max(left, box.right + GAP);
+      else right = Math.min(right, box.left - GAP);
+    }
+  }
+  return { left, right };
+}
+
+/**
+ * Where the bar stands (collaboration spec §4): in the bottom row, centred in the room the zoom island, the tools,
+ * Support and the panels on the right leave, at most 560 px; short of 320 px there, a row up, above the zoom island;
+ * short there too, over the panels, as wide as the window lets it.
+ * @param {import("react").RefObject<HTMLElement>} bar
+ * @returns {{ left: number, width: number, bottom: number, over: boolean }}
+ */
+function usePlace(bar) {
+  const [place, setPlace] = useState({ left: 0, width: WIDEST, bottom: EDGE, over: false, ready: false });
   useLayoutEffect(() => {
     const measure = () => {
-      const room = window.innerWidth;
-      const zoom = document.querySelector('[data-testid="zoom-island"]')?.getBoundingClientRect();
-      const support = document.querySelector("[data-support]")?.getBoundingClientRect();
-      const left = zoom?.width ? zoom.right + GAP : GAP;
-      const right = support?.width ? support.left - GAP : room - GAP;
-      const half = Math.min(room / 2 - left, right - room / 2);
-      const beside = Math.min(WIDEST, Math.floor(half * 2));
-      setPlace(
-        beside >= NARROWEST ?
-          { width: beside, raised: false }
-        : { width: Math.min(WIDEST, room - 2 * 16), raised: true }
+      const height = bar.current?.getBoundingClientRect().height || 48;
+      let next = null;
+      for (const bottom of [EDGE, 64]) {
+        const { left, right } = roomIn(bottom, height);
+        if (right - left >= NARROWEST) {
+          const width = Math.min(WIDEST, right - left);
+          next = { left: Math.round(left + (right - left - width) / 2), width, bottom, over: false };
+          break;
+        }
+      }
+      if (!next) {
+        const width = Math.min(WIDEST, window.innerWidth - 2 * EDGE);
+        next = { left: Math.round((window.innerWidth - width) / 2), width, bottom: 64, over: true };
+      }
+      setPlace(before =>
+        (
+          before.ready &&
+          before.left === next.left &&
+          before.width === next.width &&
+          before.bottom === next.bottom &&
+          before.over === next.over
+        ) ?
+          before
+        : { ...next, ready: true }
       );
     };
     measure();
+    // The panels open and close with the selection and the run: the room is looked at again a few times a second.
+    const timer = setInterval(measure, 300);
     window.addEventListener("resize", measure);
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
-    for (const selector of ['[data-testid="zoom-island"]', "[data-support]"]) {
-      const element = document.querySelector(selector);
-      if (element) observer?.observe(element);
-    }
     return () => {
+      clearInterval(timer);
       window.removeEventListener("resize", measure);
-      observer?.disconnect();
     };
-  }, []);
+  }, [bar]);
   return place;
 }
 
-/** Re-render every second while the agent works, so "working" ends when its last call is 5 s old. */
-function useNow(active) {
+/** Re-render every second while the agent works, so "working" ends when its last call is 30 s old. */
+function useNow(lastCall, listening) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    if (!active) return undefined;
-    const timer = setInterval(() => setNow(Date.now()), 1000);
+    if (!lastCall || listening) return undefined;
+    const timer = setInterval(() => {
+      setNow(Date.now());
+      if (Date.now() - lastCall >= WORKING_MS) clearInterval(timer);
+    }, 1000);
     return () => clearInterval(timer);
-  }, [active]);
+  }, [lastCall, listening]);
   return now;
 }
 
@@ -202,10 +248,18 @@ export function ConversationBar({ onNavigate }) {
   const listening = useConversation(state => state.listening);
   const channel = useConversation(state => state.channel);
   const lastCall = useConversation(state => state.lastCall);
-  const now = useNow(Boolean(lastCall));
+  const now = useNow(lastCall, listening);
   const status = statusOf({ listening, channel, lastCall }, now);
-  const [leave, setLeave] = useState(() => new Set());
-  const place = usePlace();
+  // What the person left out of this message; the selection left out comes back once another is selected.
+  const selectionKey = `${canvasId}:${(selection ?? []).join(",")}`;
+  const [left, setLeft] = useState(() => ({ key: selectionKey, set: new Set() }));
+  const leave = useMemo(() => {
+    const set = new Set(left.set);
+    if (left.key !== selectionKey) set.delete("selection");
+    return set;
+  }, [left, selectionKey]);
+  const self = useRef(null);
+  const place = usePlace(self);
   const field = useRef(null);
   const history = useRef(null);
 
@@ -215,6 +269,7 @@ export function ConversationBar({ onNavigate }) {
   );
   const chips = context ? chipsOf(context, t) : [];
   const last = [...lines].reverse().find(line => line.kind === "agent" || line.kind === "change");
+  const lastSaid = [...lines].reverse().find(line => line.kind === "agent");
   const stopping = status === "working" && !draft.trim();
 
   // The newest line in view as the history grows.
@@ -228,9 +283,12 @@ export function ConversationBar({ onNavigate }) {
     const talk = conversationStore.getState();
     const key = talk.add({ kind: "person", text, chips, state: "sending" });
     talk.setDraft("");
-    setLeave(new Set());
+    setLeft({ key: selectionKey, set: new Set() });
     const answer = await connection.send({ text, context });
-    conversationStore.getState().update(key, answer.id ? { id: answer.id, state: "sent" } : { state: "failed" });
+    const after = conversationStore.getState();
+    after.update(key, answer.id ? { id: answer.id, state: "sent" } : { state: "failed" });
+    // Not sent: the text comes back to the field, unless the person has started another.
+    if (!answer.id && !after.draft) after.setDraft(text);
   };
 
   const stop = async () => {
@@ -246,12 +304,14 @@ export function ConversationBar({ onNavigate }) {
       aria-label={t("conversation.label", { agent })}
       data-testid="conversation-bar"
       data-area="conversation"
-      style={{ width: place.width }}
-      className={cn(
-        "fixed left-1/2 z-20 flex -translate-x-1/2 flex-col p-1.5",
-        place.raised ? "bottom-16" : "bottom-4"
-      )}
+      ref={self}
+      style={{ left: place.left, width: place.width, bottom: place.bottom }}
+      className={cn("fixed flex flex-col p-1.5", place.over ? "z-40" : "z-20", !place.ready && "invisible")}
     >
+      {/* Each new answer is read out, the history open or not (collaboration spec §4: "announced politely"). */}
+      <p role="status" aria-live="polite" className="sr-only">
+        {lastSaid ? `${agent}: ${lastSaid.text}` : ""}
+      </p>
       {historyOpen && (
         <ol
           ref={history}
@@ -266,7 +326,7 @@ export function ConversationBar({ onNavigate }) {
         </ol>
       )}
       {!historyOpen && last && (
-        <ol aria-live="polite" className="px-2.5">
+        <ol className="px-2.5">
           <Line line={last} agent={agent} status={status} onNavigate={onNavigate} />
         </ol>
       )}
@@ -299,7 +359,7 @@ export function ConversationBar({ onNavigate }) {
                   <button
                     type="button"
                     aria-label={t("conversation.chips.leave", { label: chip.label })}
-                    onClick={() => setLeave(before => new Set(before).add(chip.key))}
+                    onClick={() => setLeft({ key: selectionKey, set: new Set(leave).add(chip.key) })}
                     className="grid size-4 place-items-center rounded-chip hover:bg-surface"
                   >
                     <Icon name="close" size={10} />

@@ -117,6 +117,8 @@ export function createBridge({
   let port = null;
   /** Who hears each message the person sends (the MCP server, for the Channel). */
   const messageListeners = new Set();
+  /** Messages are numbered across pairings: an answer to an old one never reads a new one. */
+  let messages = 0;
 
   const server = createServer({ requestTimeout: 60000 }, (request, response) => {
     handle(request, response).catch(error => {
@@ -243,7 +245,7 @@ export function createBridge({
 
   /** A new session's inbox: the tab hears what is read, the server hears each message. */
   function inboxOf(own) {
-    const inbox = createInbox();
+    const inbox = createInbox({ number: () => (messages += 1) });
     inbox.onRead(ids => session === own && emit("read", { ids }));
     inbox.onAdd(added => {
       for (const listener of messageListeners) listener(added);
@@ -418,7 +420,8 @@ export function createBridge({
         waits: 0,
         channel: false,
         handed: new Set(),
-        replies: 0
+        replies: 0,
+        waiting: new Set()
       };
       own.inbox = inboxOf(own);
       session = own;
@@ -484,21 +487,31 @@ export function createBridge({
     },
 
     /**
-     * Wait for the person's messages (`editor_wait`): the unread ones as soon as there are some, none after `seconds`;
-     * `EDITOR_GONE` when the tab goes meanwhile.
+     * Wait for the person's messages (`editor_wait`): the unread ones as soon as there are some, none after `seconds`
+     * or once `signal` aborts; `EDITOR_GONE` when the tab goes meanwhile.
      * @param {number} seconds
+     * @param {AbortSignal} [signal]
      */
-    async wait(seconds) {
+    async wait(seconds, signal) {
       const own = session;
       if (!own?.stream) return goneOutcome();
+      // Ended by the client (it cancelled the call) or by the server (its client has gone): the next message then
+      // waits for the agent, unread.
+      const stop = new AbortController();
+      const abort = () => stop.abort();
+      signal?.addEventListener("abort", abort, { once: true });
+      if (signal?.aborted) stop.abort();
+      own.waiting.add(stop);
       own.waits += 1;
       if (own.waits === 1) sayListening(own);
-      const messages = await own.inbox.wait(seconds * 1000);
+      const taken = await own.inbox.wait(seconds * 1000, stop.signal);
+      own.waiting.delete(stop);
+      signal?.removeEventListener("abort", abort);
       own.waits -= 1;
       if (session !== own) return goneOutcome();
       if (own.waits === 0) sayListening(own);
-      for (const read of messages) own.handed.add(read.id);
-      return { ok: true, result: { messages } };
+      for (const read of taken) own.handed.add(read.id);
+      return { ok: true, result: { messages: taken } };
     },
 
     /** The person's unread messages, now read (`editor_inbox`). */
@@ -568,6 +581,7 @@ export function createBridge({
      */
     stopWaiting() {
       for (const stop of [...waits]) stop();
+      for (const waiting of [...(session?.waiting ?? [])]) waiting.abort();
     },
 
     /** Stop: the paired tab is told, the codes waiting are answered, and the port is free again. */

@@ -17,11 +17,12 @@ import { toolsOf } from "./tools.js";
  */
 export async function serveMcp({ files, file, version, lines, write, log = () => {}, editor = null, guide }) {
   const tools = toolsOf();
-  let host = null;
+  let hostMade = null;
   // The host is made at the first call, once the client has said its name: the documents it writes are signed with it.
-  // Its modules load then too, so the server lists its tools as soon as it starts (spec §11: within 100 ms).
-  const hostNow = async () => {
-    if (!host) {
+  // Its modules load then too, so the server lists its tools as soon as it starts (spec §11: within 100 ms). Made once,
+  // even when calls come together (editor_wait runs beside the queue).
+  const hostNow = () => {
+    hostMade ??= (async () => {
       const [{ createFileHost }, { route }] = await Promise.all([
         import("../agent/file-host.js"),
         import("./route.js")
@@ -30,20 +31,28 @@ export async function serveMcp({ files, file, version, lines, write, log = () =>
       const name = server.client()?.name;
       const agent = typeof name === "string" && name.trim() ? name.trim() : undefined;
       const made = createFileHost({ files, file, agent });
-      host = { call: (tool, args) => route({ host: made, editor, files, agent, guide }, tool, args) };
-    }
-    return host;
+      return { call: (tool, args, options) => route({ host: made, editor, files, agent, guide }, tool, args, options) };
+    })();
+    return hostMade;
   };
+  /** What a cancelled request stops: the wait of each editor_wait, by its request's id. */
+  const cancelling = new Map();
   // Tool calls run one after the other, in the order they came: one may open the document the next works on. Waiting
   // for the person (editor_wait) runs beside them, so it never holds the agent's other calls (collaboration spec §3.2).
   let calls = Promise.resolve();
-  const call = (tool, args) => {
-    if (tool === "editor_wait") return hostNow().then(made => made.call(tool, args));
+  const call = (tool, args, id) => {
+    if (tool === "editor_wait") {
+      const stop = new AbortController();
+      if (id !== undefined) cancelling.set(id, stop);
+      return hostNow()
+        .then(made => made.call(tool, args, { signal: stop.signal }))
+        .finally(() => cancelling.delete(id));
+    }
     const done = calls.then(async () => (await hostNow()).call(tool, args));
     calls = done.catch(() => {});
     return done;
   };
-  const server = createMcpServer({ version, tools, log, call });
+  const server = createMcpServer({ version, tools, log, call, cancel: id => cancelling.get(id)?.abort() });
   // Each message the person writes reaches Claude Code started with the Channel as a turn of its own.
   const unhear = editor?.onMessage?.(message =>
     write(JSON.stringify({ jsonrpc: "2.0", method: "notifications/claude/channel", params: channelOf(message) }))

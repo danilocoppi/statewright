@@ -892,8 +892,9 @@ While you are paired, a bar at the bottom of the Editor is your conversation wit
 the level they look at and what they selected going along, and they read your answers there. Your changes show there
 too, each with Undo.
 
-- **Listen.** When you have finished what they asked, call `editor_wait` (it waits up to `seconds`, 240 by default,
-  and answers their messages as soon as they write). Your other calls go on while it waits.
+- **Listen.** When you have finished what they asked, call `editor_wait` (it waits up to `seconds`, 50 by default,
+  and answers their messages as soon as they write; call it again to go on listening). Your other calls go on while
+  it waits.
 - **Notice.** While their messages wait unread, every answer you get carries `inbox: { unread }`: read them with
   `editor_inbox` before you go on.
 - **Answer** with `editor_reply { text, to, point }`: `to` is the message you answer (`msg_…`), `point` the IDs of the
