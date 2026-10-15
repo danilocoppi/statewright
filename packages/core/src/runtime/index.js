@@ -6,6 +6,7 @@ import { executableOf } from "../simulate/executable.js";
 import { computeHashes } from "../signature.js";
 import { RuntimeError } from "./errors.js";
 import { machineOf } from "./machine.js";
+import { typedView } from "../roles/typed.js";
 
 export { RuntimeError } from "./errors.js";
 
@@ -65,6 +66,7 @@ function bindGuards(doc, guards) {
  * @returns {Promise<{ content: string, machine: (key: string) => ReturnType<typeof machineOf> }>}
  */
 export async function createRuntime(doc, { guards = {}, expect } = {}) {
+  doc = typedView(doc);
   const errors = check(doc).filter(problem => problem.severity === "error");
   if (errors.length) {
     throw new RuntimeError(

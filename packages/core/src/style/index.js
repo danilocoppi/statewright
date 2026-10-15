@@ -1,6 +1,7 @@
 import { buildIndex } from "../query/build-index.js";
 import { figureCanvases, interiorOf, stepsItem } from "./frames.js";
 import { associationsOf } from "../roles/index.js";
+import { edgeHome, homeKind } from "../roles/kinds.js";
 import { CHIP_LABELS, EDGE_STYLES, MUTED, NODE_STYLES, ROLE_STYLES, TONES } from "./palette.js";
 
 export { displayOf, figureCanvases, interiorOf } from "./frames.js";
@@ -79,7 +80,9 @@ function guestTarget(doc, node) {
  * Style key of a node (spec §15 precedence: provenance › focus › kind › outcome › category › plain). A guest takes
  * the key of what it stands for: a participant its party's look, a state guest its state's key.
  */
-function nodeKey(doc, canvasKind, node, focused) {
+function nodeKey(doc, levelKind, node, focused) {
+  // On a mixed level, an element looks as it does at home (mixed levels spec §4.5).
+  const canvasKind = homeKind(levelKind, node) ?? levelKind;
   if (PROVENANCE_KEYS[node.provenance]) return PROVENANCE_KEYS[node.provenance];
   if (focused) return "state.focus";
   if (node.kind === "participant") return PARTY_LOOKS[doc.catalog.parties[node.party]?.kind]?.key ?? "node.actor";
@@ -199,6 +202,7 @@ export function createStyle(doc) {
     if (edge.provenance === "proposed" || edge.provenance === "fix") return "edge.proposed";
     if (edge.provenance === "implied") return "edge.implied";
     if (edge.intent === "failure" || (canvasKind === "flow" && edge.kind === "error")) return "edge.failure";
+    if (canvasKind === "mixed" && edge.kind === "error") return "edge.failure";
     if (edge.by && doc.catalog.parties[edge.by]?.kind === "operator") return "edge.ops";
     const timerOnly =
       edge.after !== undefined &&
@@ -235,7 +239,9 @@ export function createStyle(doc) {
     if (value.label !== undefined) return value.label;
     const canvas = doc.canvases[entry.canvas];
     const eventName = eventId => doc.catalog.events[eventId]?.name ?? eventId;
-    if (canvas.kind === "system") {
+    // A mixed level's connection is labelled as it is at home (a link as a transition's link is).
+    const home = canvas.kind === "mixed" ? (edgeHome(canvas, value) ?? "machine") : canvas.kind;
+    if (home === "system") {
       const parts = [
         ...(value.events ?? []).map(eventName),
         ...(value.endpoint ? [viaText(doc, value.endpoint)] : []),
@@ -247,7 +253,7 @@ export function createStyle(doc) {
         : ""
       );
     }
-    if (canvas.kind === "flow") {
+    if (home === "flow") {
       if (value.kind === "case") return typeof value.case === "string" ? value.case : JSON.stringify(value.case);
       return value.kind && value.kind !== "next" && value.kind !== "link" ? value.kind : "";
     }

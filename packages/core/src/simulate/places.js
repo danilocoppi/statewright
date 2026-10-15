@@ -1,6 +1,7 @@
 // Where a run is, for a person watching it (simulator spec §4.3, §6.3): each step of a path as a node on its level, and
 // the machine instances a run has — what the editor marks on each level and asks starting values for.
 import { createModel, lastOf } from "./model.js";
+import { typedView } from "../roles/typed.js";
 
 /**
  * The levels a path goes through: for each of its node IDs, the canvas that holds it. Null when the document no longer
@@ -11,6 +12,7 @@ import { createModel, lastOf } from "./model.js";
  * @returns {Array<{ canvas: string, node: string }> | null}
  */
 export function locate(doc, top, path) {
+  doc = typedView(doc);
   const model = createModel(doc, top);
   const ids = path.split("/");
   try {
@@ -33,6 +35,7 @@ export function locate(doc, top, path) {
  * @returns {Array<{ key: string, path: string, canvas: string, name: string, context?: string }>}
  */
 export function instancesOf(doc, top) {
+  doc = typedView(doc);
   if (doc.canvases[top]?.kind !== "machine") return [];
   const model = createModel(doc, top);
   const of = (key, path, canvas, name) => ({

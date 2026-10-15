@@ -7,6 +7,7 @@ import machineRules from "./machine.js";
 import referenceRules from "./references.js";
 import roleRules from "./roles.js";
 import scenarioRules from "./scenario.js";
+import { typedView } from "../roles/typed.js";
 
 /**
  * @typedef {object} Problem A structural finding about a document (spec §22).
@@ -25,6 +26,12 @@ import scenarioRules from "./scenario.js";
  * @property {string} description One line, for the README and the CLI.
  * @property {(facts: ReturnType<typeof createFacts>, report: (problem: Omit<Problem, "code"|"severity"> & { severity?: Problem["severity"] }) => void) => void} check
  */
+
+/**
+ * Rules that judge what a level runs as: they read mixed levels as the typed levels they run as (mixed levels spec
+ * §4.5: "the machine rules apply to the machine part, the flow rules to the flows").
+ */
+const TYPED = new Set([...machineRules, ...flowRules]);
 
 /** @type {Rule[]} Every rule, in report order. */
 const RULES = [
@@ -54,9 +61,11 @@ export function listRules() {
  */
 export function check(doc) {
   const facts = createFacts(doc);
+  const view = typedView(doc);
+  const typedFacts = view === doc ? facts : createFacts(view);
   const found = [];
   RULES.forEach((rule, order) => {
-    rule.check(facts, ({ target, canvas, message, data, severity = rule.severity }) => {
+    rule.check(TYPED.has(rule) ? typedFacts : facts, ({ target, canvas, message, data, severity = rule.severity }) => {
       const problem = { code: rule.code, severity, target };
       if (canvas !== undefined) problem.canvas = canvas;
       problem.message = message;

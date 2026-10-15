@@ -1,4 +1,4 @@
-import { isGuest } from "../roles/kinds.js";
+import { homeKind, isGuest } from "../roles/kinds.js";
 import { createStyle, displayOf as displayOfNode, stepText } from "../style/index.js";
 
 // Advance widths of Inter (regular and semibold) for the printable ASCII characters, in thousandths of an em.
@@ -139,7 +139,8 @@ export function createGeometry(doc, { style = createStyle(doc) } = {}) {
     }
     if (node.kind === "any") return "any";
     const canvasKind = doc.canvases[canvasId].kind;
-    return canvasKind === "flow" || isGuest(canvasKind, node) ? stepText(doc, node) : node.kind;
+    const home = homeKind(canvasKind, node);
+    return home === "flow" || isGuest(canvasKind, node) ? stepText(doc, node) : node.kind;
   }
 
   function findValue(id) {

@@ -6,6 +6,7 @@ import { computeHashes } from "../signature.js";
 import { flowsOf } from "./flows.js";
 import { machinesOf } from "./machines.js";
 import { vectorsOf } from "./vectors.js";
+import { typedView } from "../roles/typed.js";
 
 export { diffContracts, toChangesMarkdown } from "./diff.js";
 export { namePath } from "./vectors.js";
@@ -22,6 +23,7 @@ const CONTRACT_RULES = new Set(["machine.sameName"]);
  * @returns {Promise<{ contract: object, problems: object[] }>}
  */
 export async function toContract(doc) {
+  doc = typedView(doc);
   const { content } = await computeHashes(doc);
   const { vectors, stale } = vectorsOf(doc);
   const contract = {

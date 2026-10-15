@@ -1,7 +1,8 @@
 // Drawing and deleting a role's connector (mixed levels spec §3): a connector is never stored, so drawing one writes the
 // field that holds its meaning, and deleting one clears it. What a pair of ends means comes from their kinds; a pair
 // that means nothing is refused, in words the Editor can say.
-import { isGuest } from "./kinds.js";
+import { homeKind, isGuest } from "./kinds.js";
+import { viewOf } from "./typed.js";
 import { makeId } from "../ids.js";
 import { buildIndex } from "../query/build-index.js";
 import { figureCanvases } from "../style/frames.js";
@@ -192,6 +193,26 @@ function flowRole(doc, canvasId, from, to, choice) {
 }
 
 /**
+ * On a mixed level (mixed levels spec §4.5), a gesture means what it means on the level its ends belong to: between a
+ * flow's step and a participant or a state guest, a flow's role; otherwise a machine's, a system's box with a party
+ * standing for a participant.
+ */
+function mixedRole(doc, canvasId, from, to, choice) {
+  const canvas = doc.canvases[canvasId];
+  const source = canvas.nodes[from];
+  const home = homeKind("mixed", source);
+  const withView = view => ({ ...doc, canvases: { ...doc.canvases, [canvasId]: view } });
+  if (home === "flow") return flowRole(withView(viewOf(canvas, "flow")), canvasId, from, to, choice);
+  const machine = viewOf(canvas, "machine");
+  for (const [id, node] of Object.entries(canvas.nodes)) {
+    if (homeKind("mixed", node) === "system" && node.party)
+      machine.nodes[id] = { kind: "participant", party: node.party };
+  }
+  if (!machine.nodes[from] || !(machine.nodes[to] || machine.edges[to])) return { refusal: "noMeaning" };
+  return associate(withView(machine), canvasId, from, to, choice);
+}
+
+/**
  * What drawing a connector from one element of a level to another means, and the commands that write it: on a machine,
  * sends, receives and runs; on a system, a box driving a transition of a lifecycle framed there.
  * @param {any} doc
@@ -205,6 +226,7 @@ function flowRole(doc, canvasId, from, to, choice) {
  */
 export function associate(doc, canvasId, from, to, choice = {}) {
   const canvas = doc.canvases[canvasId];
+  if (canvas?.kind === "mixed") return mixedRole(doc, canvasId, from, to, choice);
   if (canvas?.kind === "flow") return flowRole(doc, canvasId, from, to, choice);
   if (canvas?.kind === "system") {
     const box = canvas.nodes[from];

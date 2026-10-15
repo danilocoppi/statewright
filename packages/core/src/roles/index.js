@@ -2,6 +2,8 @@
 // never stored: each is read from the field that holds its meaning (a transition's `by`, an event's `source`, an
 // action's `party`, a step's event), so every view of it agrees, and drawing or deleting one edits that field.
 import { figureCanvases } from "../style/frames.js";
+import { homeKind } from "./kinds.js";
+import { viewOf } from "./typed.js";
 
 /**
  * @typedef {object} Association A derived connector on a figure.
@@ -209,6 +211,26 @@ function flowRoles(doc, canvas, out) {
 }
 
 /**
+ * A mixed level's roles (mixed levels spec §4.5): its machine part's (a system box with a party sends and receives as
+ * a participant does), its flow part's, and its boxes' drives of the lifecycles framed on it.
+ */
+function mixedRoles(doc, canvasId, framed, out) {
+  const canvas = doc.canvases[canvasId];
+  const machine = viewOf(canvas, "machine");
+  for (const [id, node] of Object.entries(canvas.nodes)) {
+    if (homeKind("mixed", node) === "system" && node.party)
+      machine.nodes[id] = { kind: "participant", party: node.party };
+  }
+  machineRoles(doc, machine, out);
+  flowRoles(doc, viewOf(canvas, "flow"), out);
+  const boxes = {
+    ...canvas,
+    nodes: Object.fromEntries(Object.entries(canvas.nodes).filter(([, node]) => homeKind("mixed", node) === "system"))
+  };
+  systemRoles({ ...doc, canvases: { ...doc.canvases, [canvasId]: boxes } }, canvasId, framed.slice(1), out);
+}
+
+/**
  * The derived connectors of a level's figure (spec §3): its own and those of the interiors it shows as frames, and,
  * on a system level, the boxes that drive its framed machines. Pure; dangling IDs give nothing.
  * @param {any} doc A schema-valid document.
@@ -224,6 +246,7 @@ export function associationsOf(doc, canvasId) {
     if (canvas.kind === "machine") machineRoles(doc, canvas, out);
     if (canvas.kind === "flow") flowRoles(doc, canvas, out);
     if (canvas.kind === "system") systemRoles(doc, id, framed, out);
+    if (canvas.kind === "mixed") mixedRoles(doc, id, framed, out);
   }
   return out.list();
 }

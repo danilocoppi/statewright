@@ -24,6 +24,7 @@ import {
   settle
 } from "./run.js";
 import { instantOf, parseInstant } from "./time.js";
+import { typedView } from "../roles/typed.js";
 
 export { executableOf, instancesOf, locate };
 
@@ -95,6 +96,7 @@ const refused = (code, message, details) => ({
  * @returns {Result}
  */
 export function start(doc, { canvas, at, entry, context, input, answers }, options = {}) {
+  doc = typedView(doc);
   const top = executableOf(doc, canvas);
   if (top.canvas !== canvas) {
     const where = top.canvas ? `; start from ${doc.canvases[top.canvas].name}, which runs it` : "";
@@ -153,6 +155,7 @@ export function start(doc, { canvas, at, entry, context, input, answers }, optio
  * @returns {Result}
  */
 export function step(doc, session, { do: action, answers } = {}, options = {}) {
+  doc = typedView(doc);
   const keys = action && typeof action === "object" ? Object.keys(action).filter(key => key !== "payload") : [];
   if (keys.length !== 1) return refused("badInput", "A step is one event, one call or a wait");
   if (action.event !== undefined) {
@@ -200,6 +203,7 @@ export function step(doc, session, { do: action, answers } = {}, options = {}) {
  *   not due yet.
  */
 export function fire(doc, session, { timer, answers } = {}, options = {}) {
+  doc = typedView(doc);
   if (doc.canvases[session.canvas]?.kind !== "machine") return refused("badInput", "Only a machine's timers are fired");
   const name = doc.catalog.timers[timer]?.name ?? timer;
   const armedFor = item => item.kind === "after" && item.timer === timer;
@@ -243,6 +247,7 @@ export function reachedOf(session) {
  * @param {Options} [options]
  */
 export function moves(doc, session, options = {}) {
+  doc = typedView(doc);
   return movesOf(doc, session, (target, current, input) => step(target, current, input, options));
 }
 
@@ -253,6 +258,7 @@ export function moves(doc, session, options = {}) {
  * @param {object} scenario
  */
 export function replay(doc, scenario) {
+  doc = typedView(doc);
   return replayOf(doc, scenario, { start, step, reachedOf });
 }
 
@@ -268,6 +274,7 @@ export function replay(doc, scenario) {
  * @param {string | null} previous The level of the frame before; null for the start.
  */
 export function frameOf(doc, top, point, previous) {
+  doc = typedView(doc);
   return frameFrom(doc, top, point, previous, reachedOf);
 }
 
@@ -280,5 +287,6 @@ export function frameOf(doc, top, point, previous) {
  *   message?: string } }}
  */
 export function storyOf(doc, scenario) {
+  doc = typedView(doc);
   return storyFrom(doc, scenario, { start, step, reachedOf });
 }

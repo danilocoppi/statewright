@@ -10,6 +10,7 @@ export { check, listRules } from "./rules/index.js";
 export { ROLES, associationsOf, performerOf } from "./roles/index.js";
 export { associate, associationRefusal, dissociateCommands } from "./roles/edit.js";
 export { GUEST_KINDS, edgeHome, homeKind, isGuest } from "./roles/kinds.js";
+export { partOf, typedView, viewOf } from "./roles/typed.js";
 export { DOCUMENT_KINDS, createDocument } from "./create.js";
 export { slug } from "./names.js";
 export * from "./docs/index.js";

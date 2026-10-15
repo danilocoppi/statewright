@@ -3,6 +3,7 @@
 import { isGuest } from "../roles/kinds.js";
 import { compareText } from "../rules/facts.js";
 import { locate, storyOf } from "../simulate/index.js";
+import { typedView } from "../roles/typed.js";
 
 /** The nodes of a level that count: a machine's states, a flow's every node but its guests. */
 const countedNodes = canvas =>
@@ -39,6 +40,7 @@ function enteredOf(frame) {
  *   covered, rounded; null for a level with neither. `missed` lists IDs in ID order.
  */
 export function coverageOf(doc) {
+  doc = typedView(doc);
   const reached = new Map();
   const mark = (canvas, kind, id) => {
     if (!reached.has(canvas)) reached.set(canvas, { nodes: new Set(), edges: new Set() });

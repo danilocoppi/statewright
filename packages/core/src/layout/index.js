@@ -177,7 +177,7 @@ function shift(block, dx, dy) {
  */
 function groupsOf(canvas, nodeIds) {
   const regions = sortedKeys(canvas.regions);
-  if (canvas.kind !== "machine" || regions.length === 0) return [{ region: null, ids: nodeIds }];
+  if (!["machine", "mixed"].includes(canvas.kind) || regions.length === 0) return [{ region: null, ids: nodeIds }];
   const groups = regions.map(region => ({ region, ids: nodeIds.filter(id => canvas.nodes[id].region === region) }));
   groups.push({ region: null, ids: nodeIds.filter(id => !regions.includes(canvas.nodes[id].region)) });
   return groups.filter(group => group.ids.length);
@@ -186,7 +186,7 @@ function groupsOf(canvas, nodeIds) {
 /** Lay out the given nodes; machines with regions stack one block per region, each under its caption. */
 async function layoutNodes(geometry, canvasId, nodeIds) {
   const canvas = geometry.doc.canvases[canvasId];
-  if (canvas.kind !== "machine" || sortedKeys(canvas.regions).length === 0) {
+  if (!["machine", "mixed"].includes(canvas.kind) || sortedKeys(canvas.regions).length === 0) {
     return runElk(geometry, canvasId, nodeIds);
   }
   const merged = { nodes: new Map(), edges: new Map(), w: 0, h: 0 };

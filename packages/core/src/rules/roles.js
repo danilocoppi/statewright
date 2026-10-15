@@ -1,3 +1,4 @@
+import { homeKind } from "../roles/kinds.js";
 import { sorted } from "./facts.js";
 
 /** Catalog collections whose items may have a flow, with the word messages use for them. */
@@ -11,11 +12,12 @@ function itemOf(facts, id) {
 
 /** Nodes of one kind on canvases of one kind, in ID order: [canvasId, nodeId, node]. */
 function nodesOf(facts, canvasKind, kind) {
+  // A mixed level's nodes count where their own kind lives (mixed levels spec §4.5).
   return sorted(facts.doc.canvases)
-    .filter(([, canvas]) => canvas.kind === canvasKind)
+    .filter(([, canvas]) => canvas.kind === canvasKind || canvas.kind === "mixed")
     .flatMap(([canvasId, canvas]) =>
       sorted(canvas.nodes)
-        .filter(([, node]) => node.kind === kind)
+        .filter(([, node]) => node.kind === kind && homeKind(canvas.kind, node) === canvasKind)
         .map(([id, node]) => [canvasId, id, node])
     );
 }

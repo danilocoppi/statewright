@@ -1,6 +1,7 @@
 // Which canvas a run of a level starts from (simulator spec §5.1): a machine that is not the interior of a state, or a
 // flow that is not the body of a `while`, `forEach` or `subflow`. A level inside one runs as part of it.
 import { sorted } from "../rules/facts.js";
+import { typedView } from "../roles/typed.js";
 
 /** Flow nodes whose interior runs as part of their flow. */
 const BODY_OWNERS = new Set(["while", "forEach", "subflow"]);
@@ -43,6 +44,7 @@ function insideOf(doc, systemId, seen) {
  * @returns {{ canvas: string, kind: "machine" | "flow" } | { reason: "system", inside: string[] } | { reason: "missing" | "cycle" }}
  */
 export function executableOf(doc, canvasId, seen = new Set()) {
+  doc = typedView(doc);
   const canvas = doc.canvases[canvasId];
   if (!canvas) return { reason: "missing" };
   if (canvas.kind === "system") return { reason: "system", inside: insideOf(doc, canvasId, new Set([canvasId])) };
