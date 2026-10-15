@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "statewright": {
+      "command": "npx",
+      "args": ["-y", "statewright@latest", "mcp"]
+    }
+  }
+}

@@ -369,8 +369,8 @@ describe("the platform guide", () => {
     expect(source).toContain("- [AI agents: start here](#ai-agents-start-here)\n- [What Statewright is for]");
     const section = source.slice(start, source.indexOf("\n## What Statewright is for\n"));
     for (const line of [
-      "| Claude Code       | `claude mcp add statewright -- npx statewright mcp`",
-      "| Codex             | `codex mcp add statewright -- npx statewright mcp`",
+      "| Claude Code       | The plugin: `/plugin install statewright --marketplace danilocoppi/statewright`; or `claude mcp add statewright -- npx statewright mcp`",
+      "| Codex             | The plugin: `codex plugin marketplace add danilocoppi/statewright`, then `codex plugin add statewright@statewright`; or `codex mcp add statewright -- npx statewright mcp`",
       "| Kimi CLI          | `kimi mcp add --transport stdio statewright -- npx statewright mcp`",
       "| Gemini CLI        | `gemini mcp add statewright npx statewright mcp`",
       '| Cursor            | `{ "mcpServers": { "statewright": { "command": "npx", "args": ["statewright", "mcp"] } } }` in `.cursor/mcp.json`'

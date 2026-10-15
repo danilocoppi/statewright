@@ -1,0 +1,16 @@
+{
+  "name": "statewright",
+  "description": "Statewright: layered system specifications designed with an AI agent beside a visual Editor.",
+  "owner": {
+    "name": "Danilo Coppi",
+    "url": "https://github.com/danilocoppi"
+  },
+  "plugins": [
+    {
+      "name": "statewright",
+      "source": "./plugins/statewright",
+      "description": "Model, simulate and audit architecture views, state machines and flows, and pair with the Statewright Editor.",
+      "category": "development"
+    }
+  ]
+}

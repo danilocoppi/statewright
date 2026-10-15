@@ -16,7 +16,7 @@ change an agent makes, and can undo it.
 
 ## Working with an AI agent
 
-Set up the MCP server in your agent — in Claude Code, `claude mcp add statewright -- npx statewright mcp`; the guide's
+Install the plugin in your agent — in Claude Code, `/plugin install statewright --marketplace danilocoppi/statewright`; the guide's
 [AI agents: start here](docs/guide/README.md#ai-agents-start-here) gives the command for other clients. Open a project
 in the Editor, choose **Connect an AI…** and give your agent the code it shows. Then work in one of three ways:
 

@@ -1,0 +1,14 @@
+{
+  "name": "statewright",
+  "displayName": "Statewright",
+  "version": "0.2.1",
+  "description": "Model, simulate and audit layered system specifications (architecture views, state machines and flows) in one signed JSON document, and pair with the Statewright Editor, where the person sees each change and can undo it.",
+  "author": {
+    "name": "Danilo Coppi",
+    "url": "https://github.com/danilocoppi"
+  },
+  "homepage": "https://statewright.cpss.com.br",
+  "repository": "https://github.com/danilocoppi/statewright",
+  "license": "MIT",
+  "keywords": ["state-machine", "architecture", "specification", "statecharts", "mcp", "editor"]
+}

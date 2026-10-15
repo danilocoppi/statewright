@@ -38,14 +38,14 @@ all at once.
 or newer. Register it with your client, then start a new session (or reload the client's MCP servers) so its tools
 appear. If you cannot run the command yourself, give the person the line for their client.
 
-| Client            | How                                                                                                               |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Claude Code       | `claude mcp add statewright -- npx statewright mcp`                                                               |
-| Codex             | `codex mcp add statewright -- npx statewright mcp`                                                                |
-| Kimi CLI          | `kimi mcp add --transport stdio statewright -- npx statewright mcp`                                               |
-| Gemini CLI        | `gemini mcp add statewright npx statewright mcp`                                                                  |
-| Cursor            | `{ "mcpServers": { "statewright": { "command": "npx", "args": ["statewright", "mcp"] } } }` in `.cursor/mcp.json` |
-| Other MCP clients | The same command, `npx statewright mcp`, in their MCP configuration.                                              |
+| Client            | How                                                                                                                                                                        |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Claude Code       | The plugin: `/plugin install statewright --marketplace danilocoppi/statewright`; or `claude mcp add statewright -- npx statewright mcp`                                    |
+| Codex             | The plugin: `codex plugin marketplace add danilocoppi/statewright`, then `codex plugin add statewright@statewright`; or `codex mcp add statewright -- npx statewright mcp` |
+| Kimi CLI          | `kimi mcp add --transport stdio statewright -- npx statewright mcp`                                                                                                        |
+| Gemini CLI        | `gemini mcp add statewright npx statewright mcp`                                                                                                                           |
+| Cursor            | `{ "mcpServers": { "statewright": { "command": "npx", "args": ["statewright", "mcp"] } } }` in `.cursor/mcp.json`                                                          |
+| Other MCP clients | The same command, `npx statewright mcp`, in their MCP configuration.                                                                                                       |
 
 The first start downloads the package, and some clients wait only seconds for a server (Codex, 10): run
 `npx statewright --version` once before you register it. Without an MCP client, the command line does the same work on
