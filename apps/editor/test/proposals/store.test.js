@@ -51,12 +51,12 @@ describe("proposals (collaboration spec §7)", () => {
     ]);
   });
 
-  it("always proposes a batch that removes, unless the person lets the agent delete", () => {
+  it("always proposes a batch that removes, unless the person lets the agent delete", async () => {
     const answer = apply({ commands: REMOVE });
     expect(answer).toMatchObject({ proposed: "prp_1", forced: "deletes", reason: expect.stringMatching(/elapsed/) });
     expect(editorStore.getState().doc.canvases.cnv_expiryClock.nodes.nod_elapsed).toBeTruthy();
     proposalsStore.getState().setAllowDeletes(true);
-    expect(apply({ commands: REMOVE })).toHaveProperty("created");
+    expect(await apply({ commands: REMOVE })).toHaveProperty("created");
     expect(editorStore.getState().doc.canvases.cnv_expiryClock.nodes.nod_elapsed).toBeUndefined();
   });
 

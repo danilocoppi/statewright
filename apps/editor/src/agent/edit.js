@@ -1,13 +1,14 @@
 // The Editor host's editing (AI interface spec §4.2: edit; §7.3): an agent's batch is one history entry of its own,
 // `origin: "ai"`, made visible on the canvas and in a toast; an agent undoes and redoes only its own entries.
 import { AgentError, problemsChange, signedBy } from "statewright/agent";
-import { applyPatches, check } from "statewright";
+import { applyPatches } from "statewright";
 
 import { isSimulating } from "@/simulate/store";
 import { editorStore } from "@/store/editor";
-import { layoutClient } from "@/workers";
+import { layoutClient, problemsClient } from "@/workers";
 
 import { conversationStore } from "@/conversation/store";
+import { problemsStore } from "@/problems/store";
 import { indexOf } from "@/lib/derived";
 import { lockedBy } from "@/locks/locked";
 import { diffOf, removes } from "@/proposals/diff";
@@ -28,11 +29,23 @@ function refusal() {
 }
 
 /**
- * Apply commands as the agent's change: one history entry, announced. Throws what Core or the Editor refused.
- * @returns {{ created: string[], problems: { added: object[], removed: object[] } }}
+ * The Problems of a document, from the Problems worker (performance spec §3 P3): those the page shows when they are of
+ * this very version, else checked there — never on the page.
  */
-export function changeAsAgent(commands, label, { agent }) {
-  const before = editorStore.getState().doc;
+function problemsOf(doc, version) {
+  const known = problemsStore.getState();
+  if (known.version === version && editorStore.getState().doc === doc) return known.list;
+  return problemsClient().request("check", { doc });
+}
+
+/**
+ * Apply commands as the agent's change: one history entry, announced. Throws what Core or the Editor refused; the
+ * Problems it added and removed are answered once the Problems worker has checked the document.
+ * @returns {Promise<{ created: string[], problems: { added: object[], removed: object[] } }>}
+ */
+export async function changeAsAgent(commands, label, { agent }) {
+  const { doc: before, version } = editorStore.getState();
+  const was = problemsOf(before, version);
   const result = editorStore.getState().dispatch(commands, { label, origin: "ai", agent });
   if (!result.ok) {
     const { code, message, details, index } = result.error;
@@ -40,7 +53,8 @@ export function changeAsAgent(commands, label, { agent }) {
   }
   const { doc, history } = editorStore.getState();
   announce(history.past.at(-1));
-  return { created: result.created, problems: problemsChange(check(before), check(doc)) };
+  const [then, now] = await Promise.all([was, problemsClient().request("check", { doc })]);
+  return { created: result.created, problems: problemsChange(then, now) };
 }
 
 /** The entry an agent may undo or redo: an agent's (the same agent's, when it gave its name). */
@@ -171,7 +185,7 @@ export const editOperations = {
         `Arranging ${level.name} moves ${namesOf(held)}, which the person locked: move the others with batch_apply, or propose it`
       );
     }
-    if (commands.length) changeAsAgent(commands, `Arrange ${level.name}`, context);
+    if (commands.length) await changeAsAgent(commands, `Arrange ${level.name}`, context);
     return { placed: commands.filter(command => command.type === "layout.node.set").map(command => command.args.id) };
   }
 };
