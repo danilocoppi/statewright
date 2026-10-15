@@ -7,11 +7,13 @@ import {
   MUTED,
   NODE_STYLES,
   NOTE_TONES,
+  ROLE_STYLES,
   RULE,
   SANS,
   SUB,
   TONES
 } from "../style/palette.js";
+import { associationsOf } from "../roles/index.js";
 import { el, esc, num, pathData, wrap } from "./svg.js";
 
 /** Fonts of the figure's own texts (box texts use BOX). */
@@ -249,7 +251,74 @@ function buildScene(doc, geometry, canvasId) {
 
   place(canvasId, 0, 0, 0, new Set(), []);
   scene.notes = scene.notes.map(item => placeNote(item, rectsById, labelsById));
+  scene.associations = placeAssociations(doc, canvasId, scene, labelsById);
   return scene;
+}
+
+/** Where a segment from the centre of a box towards a point leaves the box. */
+function border(rect, [px, py]) {
+  const [cx, cy] = center(rect);
+  const [dx, dy] = [px - cx, py - cy];
+  if (!dx && !dy) return [cx, cy];
+  const t = Math.min(dx ? rect.w / 2 / Math.abs(dx) : Infinity, dy ? rect.h / 2 / Math.abs(dy) : Infinity);
+  return [cx + dx * Math.min(t, 1), cy + dy * Math.min(t, 1)];
+}
+
+/**
+ * The roles' connectors of a figure (mixed levels spec §3, §7): a straight line between the two ends, each a box (from
+ * its border) or a transition (its label, else its route's middle). An association whose end is not drawn is left out;
+ * it is drawn in the frame that holds both ends (the shorter `within`).
+ */
+function placeAssociations(doc, canvasId, scene, labels) {
+  const boxes = new Map([...scene.nodes, ...scene.frames].map(item => [item.nodeId, item]));
+  const routes = new Map(scene.edges.map(item => [item.edgeId, item]));
+  const endOf = id => {
+    const box = boxes.get(id);
+    if (box) return { rect: box.rect, within: box.within };
+    const route = routes.get(id);
+    if (!route) return null;
+    const label = labels.get(id);
+    if (label) return { rect: label, within: route.within };
+    const [x, y] = midpoint(route.points);
+    return { rect: { x, y, w: 0, h: 0 }, within: route.within };
+  };
+  return associationsOf(doc, canvasId).flatMap(association => {
+    const from = endOf(association.from);
+    const to = endOf(association.to);
+    if (!from || !to) return [];
+    const points = [border(from.rect, center(to.rect)), border(to.rect, center(from.rect))];
+    const within = from.within.length <= to.within.length ? from.within : to.within;
+    return [{ ...association, points, within }];
+  });
+}
+
+/** A role's connector: its line, a dot where it arrives, and what it stands for when its ends do not say it. */
+function drawAssociation(item, paint) {
+  const style = ROLE_STYLES[`role.${item.role}`];
+  const [x, y] = item.points.at(-1);
+  const [mx, my] = midpoint(item.points);
+  return el(
+    "g",
+    { class: "association", "data-id": item.id, "data-role": item.role },
+    el("path", {
+      d: pathData(item.points),
+      fill: "none",
+      stroke: paint(style.stroke),
+      "stroke-width": style.width,
+      "stroke-dasharray": style.dash
+    }) +
+      el("circle", { cx: x, cy: y, r: 2, fill: paint(style.stroke) }) +
+      (item.label ?
+        el("rect", {
+          x: mx - textWidth(item.label, BOX.summary) / 2 - 3,
+          y: my - 7,
+          width: textWidth(item.label, BOX.summary) + 6,
+          height: 13,
+          rx: 2,
+          fill: paint(WHITE)
+        }) + text(mx, my + 3, item.label, BOX.summary, { "text-anchor": "middle", fill: paint(MUTED) })
+      : "")
+  );
 }
 
 /** Position and shape of a note: stored position, above its node, under its edge's label, or floating. */
@@ -688,6 +757,26 @@ export function figureOf(
   };
   return {
     canvas: canvasId,
+    associations: scene.associations.map(item => {
+      const box = bounds(item.points.map(([x, y]) => ({ x, y })));
+      return {
+        id: item.id,
+        role: item.role,
+        from: item.from,
+        to: item.to,
+        field: item.field,
+        owners: item.owners,
+        ...(item.label ? { label: item.label } : {}),
+        canvas: canvasId,
+        within: item.within,
+        x: box.x,
+        y: box.y,
+        w: box.right - box.x,
+        h: box.bottom - box.y,
+        points: item.points,
+        svg: drawAssociation(item, paint)
+      };
+    }),
     regions: scene.regions.map(region => ({
       id: region.regionId,
       canvas: region.canvasId,

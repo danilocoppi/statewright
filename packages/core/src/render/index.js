@@ -42,6 +42,21 @@ function layoutLegend(legend, badgeCode, width, prefix) {
             "marker-end": `url(#${markerId(prefix, item.key)})`
           }) + text(x + 32, y, item.label, FONTS.legend, { fill: SUB })
       })),
+      ...legend.roles.map(item => ({
+        w: 32 + textWidth(item.label, FONTS.legend),
+        draw: (x, y) =>
+          el("line", {
+            x1: x,
+            y1: y - 3.5,
+            x2: x + 22,
+            y2: y - 3.5,
+            stroke: item.stroke,
+            "stroke-width": item.width,
+            "stroke-dasharray": item.dash
+          }) +
+          el("circle", { cx: x + 22, cy: y - 3.5, r: 2, fill: item.stroke }) +
+          text(x + 32, y, item.label, FONTS.legend, { fill: SUB })
+      })),
       ...legend.chips.map(item => ({
         w: chipWidth(item.text) + 6 + textWidth(item.label, FONTS.legend),
         draw: (x, y) =>
@@ -137,7 +152,7 @@ export async function toSVG(
   }
   const dx = PAD + (width - 2 * PAD - body.w) / 2 - body.x;
   const dy = y + 8 - body.y;
-  const scenePart = ["regions", "frames", "edges", "labels", "nodes", "lanes", "notes"]
+  const scenePart = ["regions", "frames", "associations", "edges", "labels", "nodes", "lanes", "notes"]
     .flatMap(layer => figure[layer].map(part => part.svg))
     .join("");
   parts.push(el("g", { transform: `translate(${num(dx)} ${num(dy)})` }, scenePart));
@@ -146,7 +161,8 @@ export async function toSVG(
   const legend = geometry.style.legend(canvasId);
   const badgeCode = figure.nodes.map(part => geometry.style.node(part.id).badges[0]).find(Boolean) ?? "F1";
   const hasLegend =
-    showLegend && (legend.nodes.length || legend.edges.length || legend.chips.length || legend.findings);
+    showLegend &&
+    (legend.nodes.length || legend.edges.length || legend.roles.length || legend.chips.length || legend.findings);
   if (hasLegend) {
     const rows = layoutLegend(legend, badgeCode, width - 2 * PAD - 72, idPrefix);
     parts.push(el("line", { x1: PAD, y1: y, x2: width - PAD, y2: y, stroke: RULE }));

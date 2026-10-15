@@ -74,6 +74,20 @@ export const EDGE_STYLES = {
 };
 
 /**
+ * The roles' connectors (mixed levels spec §7): never a transition's arrowhead; dashed when someone starts something,
+ * dotted when something is for someone or runs somewhere. The legend's default wording.
+ * @type {Record<string, { stroke: string, width: number, dash: string, label: string }>}
+ */
+export const ROLE_STYLES = {
+  "role.sends": { stroke: "#5B6170", width: 1, dash: "5,3", label: "Sends (who starts it)" },
+  "role.receives": { stroke: "#5B6170", width: 1, dash: "1.5,3", label: "Receives (whom an action is for)" },
+  "role.runs": { stroke: "#878E91", width: 1, dash: "1.5,3", label: "Runs (embedded steps)" },
+  "role.drives": { stroke: "#5B6170", width: 1, dash: "5,3", label: "Drives (moves a lifecycle)" },
+  "role.leadsTo": { stroke: "#878E91", width: 1, dash: "1.5,3", label: "Leads to (a state)" },
+  "role.performs": { stroke: "#5B6170", width: 1, dash: "1.5,3", label: "Performs (who does a step)" }
+};
+
+/**
  * Colours of chips, tags and status pills by tone: text/border colour and background.
  * @type {Record<string, { color: string, fill: string }>}
  */

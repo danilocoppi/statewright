@@ -1,5 +1,9 @@
 import { buildIndex } from "../query/build-index.js";
-import { CHIP_LABELS, EDGE_STYLES, MUTED, NODE_STYLES, TONES } from "./palette.js";
+import { figureCanvases, interiorOf, stepsItem } from "./frames.js";
+import { associationsOf } from "../roles/index.js";
+import { CHIP_LABELS, EDGE_STYLES, MUTED, NODE_STYLES, ROLE_STYLES, TONES } from "./palette.js";
+
+export { displayOf, figureCanvases, interiorOf } from "./frames.js";
 
 export {
   BADGE,
@@ -10,6 +14,7 @@ export {
   MUTED,
   NODE_STYLES,
   NOTE_TONES,
+  ROLE_STYLES,
   RULE,
   SANS,
   SUB,
@@ -61,39 +66,6 @@ const SHAPES = {
 /** Shapes that show a node style (pseudo-nodes are drawn the same everywhere and stay out of the legend). */
 const STYLED_SHAPES = new Set(["box", "actor", "ref"]);
 
-/** The catalog item embedded steps show: an action, endpoint or webhook (mixed levels spec §4.2), or undefined. */
-const stepsItem = (doc, node) =>
-  doc.catalog.actions[node.action] ?? doc.catalog.endpoints[node.action] ?? doc.catalog.webhooks[node.action];
-
-/**
- * The canvas a node's interior shows (own canvas or definition body), or null. Embedded steps show their catalog
- * item's flow.
- */
-export function interiorOf(doc, node) {
-  const inner = node?.kind === "steps" ? stepsItem(doc, node)?.inner : node?.inner;
-  if (inner?.canvas) return doc.canvases[inner.canvas] ? inner.canvas : null;
-  const body = inner?.definition && doc.definitions[inner.definition]?.canvas;
-  return body && doc.canvases[body] ? body : null;
-}
-
-/**
- * How a node with an interior is displayed: the stored display, else a frame for embedded steps (a card when other
- * steps of the same item on the level come first), else a node. "node" for nodes without an interior.
- * @returns {"node"|"card"|"frame"}
- */
-export function displayOf(doc, canvasId, nodeId) {
-  const canvas = doc.canvases[canvasId];
-  const node = canvas?.nodes[nodeId];
-  if (!interiorOf(doc, node)) return "node";
-  const stored = doc.layout?.canvases?.[canvasId]?.nodes?.[nodeId]?.display;
-  if (stored) return stored;
-  if (node.kind !== "steps") return "node";
-  const first = Object.keys(canvas.nodes)
-    .sort()
-    .find(id => canvas.nodes[id].kind === "steps" && canvas.nodes[id].action === node.action);
-  return first === nodeId ? "frame" : "card";
-}
-
 /** The state a state guest stands for, with its machine canvas, or null. */
 function guestTarget(doc, node) {
   for (const [canvasId, canvas] of Object.entries(doc.canvases)) {
@@ -101,23 +73,6 @@ function guestTarget(doc, node) {
     if (target && canvas.kind === "machine") return { canvasId, canvas, state: target };
   }
   return null;
-}
-
-/**
- * Canvases drawn on one figure: the canvas and, recursively, interiors displayed as frames (each canvas once).
- * @param {any} doc
- * @param {string} canvasId
- * @returns {string[]}
- */
-export function figureCanvases(doc, canvasId, seen = new Set()) {
-  if (seen.has(canvasId) || !doc.canvases[canvasId]) return [];
-  seen.add(canvasId);
-  const out = [canvasId];
-  for (const [nodeId, node] of Object.entries(doc.canvases[canvasId].nodes)) {
-    const interior = interiorOf(doc, node);
-    if (interior && displayOf(doc, canvasId, nodeId) === "frame") out.push(...figureCanvases(doc, interior, seen));
-  }
-  return out;
 }
 
 /**
@@ -332,6 +287,7 @@ export function createStyle(doc) {
     const edgeKeys = new Set();
     let terminal = false;
     let findings = false;
+    const drawnRoles = new Set(associationsOf(doc, canvasId).map(item => `role.${item.role}`));
     for (const id of figureCanvases(doc, canvasId)) {
       const canvas = doc.canvases[id];
       const placed = doc.layout?.canvases?.[id]?.nodes ?? {};
@@ -356,6 +312,9 @@ export function createStyle(doc) {
         .filter(key => edgeKeys.has(key))
         .map(key => ({ key, ...EDGE_STYLES[key], label: labels[key] ?? EDGE_STYLES[key].label })),
       chips: terminal ? [{ text: "FINAL", label: labels["chip.final"] ?? CHIP_LABELS.FINAL }] : [],
+      roles: Object.keys(ROLE_STYLES)
+        .filter(key => drawnRoles.has(key))
+        .map(key => ({ key, ...ROLE_STYLES[key], label: labels[key] ?? ROLE_STYLES[key].label })),
       findings
     };
   }

@@ -1,7 +1,7 @@
 // The roles that let elements of one kind appear on a level of another (mixed levels spec §3). Their connectors are
 // never stored: each is read from the field that holds its meaning (a transition's `by`, an event's `source`, an
 // action's `party`, a step's event), so every view of it agrees, and drawing or deleting one edits that field.
-import { figureCanvases } from "../style/index.js";
+import { figureCanvases } from "../style/frames.js";
 
 /**
  * @typedef {object} Association A derived connector on a figure.
