@@ -29,7 +29,7 @@
     "drop": "Drop a .sttw",
     "dropHint": "or click to open a file",
     "mixed": "Mixed",
-    "mixedHint": "States, steps and boxes on one level"
+    "mixedHint": "States, steps and boxes"
   },
   "examples": {
     "title": "Examples",
