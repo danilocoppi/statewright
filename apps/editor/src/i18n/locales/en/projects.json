@@ -40,7 +40,9 @@
     "orderLifecycle": "Order lifecycle",
     "orderLifecycleHint": "Roles, a lifecycle, lanes, a mixed level",
     "payoutBatch": "Payout batch",
-    "payoutBatchHint": "A machine whose action a flow implements, with a scenario"
+    "payoutBatchHint": "A machine whose action a flow implements, with a scenario",
+    "airportOperations": "Airport operations",
+    "airportOperationsHint": "The largest: an airport of 42 levels and 1,700 boxes, with every kind of level and element"
   },
   "new": {
     "title": "New project",

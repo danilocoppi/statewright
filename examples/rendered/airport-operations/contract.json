@@ -1,0 +1,4580 @@
+{
+  "contract": "1",
+  "flows": [
+    {
+      "edges": [
+        {
+          "from": "nod_opStart",
+          "id": "edg_e1bs",
+          "to": "nod_fees"
+        },
+        {
+          "from": "nod_fees",
+          "id": "edg_e1bt",
+          "to": "nod_landingFee"
+        },
+        {
+          "from": "nod_landingFee",
+          "id": "edg_e1bu",
+          "to": "nod_feesDone"
+        },
+        {
+          "from": "nod_fees",
+          "id": "edg_e1bv",
+          "to": "nod_parkingFee"
+        },
+        {
+          "from": "nod_parkingFee",
+          "id": "edg_e1bw",
+          "to": "nod_feesDone"
+        },
+        {
+          "from": "nod_fees",
+          "id": "edg_e1bx",
+          "to": "nod_passengerFee"
+        },
+        {
+          "from": "nod_passengerFee",
+          "id": "edg_e1by",
+          "to": "nod_feesDone"
+        },
+        {
+          "from": "nod_fees",
+          "id": "edg_e1bz",
+          "to": "nod_securityFee"
+        },
+        {
+          "from": "nod_securityFee",
+          "id": "edg_e1c0",
+          "to": "nod_feesDone"
+        },
+        {
+          "from": "nod_feesDone",
+          "id": "edg_e1c1",
+          "to": "nod_charge"
+        },
+        {
+          "from": "nod_charge",
+          "id": "edg_e1c2",
+          "to": "nod_paidOrNot"
+        },
+        {
+          "from": "nod_paidOrNot",
+          "id": "edg_e1c3",
+          "to": "nod_opEnd"
+        }
+      ],
+      "id": "cnv_billOneOperator",
+      "name": "Bill one operator",
+      "owner": "nod_eachOperator",
+      "steps": [
+        {
+          "endpoint": "POST /charges",
+          "id": "nod_charge",
+          "kind": "call",
+          "name": "charge the operator"
+        },
+        {
+          "id": "nod_fees",
+          "kind": "parallel",
+          "name": "the fees"
+        },
+        {
+          "id": "nod_feesDone",
+          "kind": "join"
+        },
+        {
+          "id": "nod_landingFee",
+          "kind": "assign",
+          "name": "landing fee",
+          "set": {
+            "vars.fees.landing": {
+              "var": "vars.operator.landing"
+            }
+          }
+        },
+        {
+          "id": "nod_opEnd",
+          "kind": "end"
+        },
+        {
+          "id": "nod_opStart",
+          "kind": "start"
+        },
+        {
+          "after": {
+            "duration": "P30D",
+            "timer": "payment terms"
+          },
+          "id": "nod_paidOrNot",
+          "kind": "wait",
+          "name": "paid",
+          "on": [
+            "charge.succeeded",
+            "charge.failed"
+          ]
+        },
+        {
+          "id": "nod_parkingFee",
+          "kind": "assign",
+          "name": "parking fee",
+          "set": {
+            "vars.fees.parking": {
+              "var": "vars.operator.parking"
+            }
+          }
+        },
+        {
+          "id": "nod_passengerFee",
+          "kind": "assign",
+          "name": "passenger fee",
+          "set": {
+            "vars.fees.passenger": {
+              "var": "vars.operator.passenger"
+            }
+          }
+        },
+        {
+          "id": "nod_securityFee",
+          "kind": "assign",
+          "name": "security fee",
+          "set": {
+            "vars.fees.security": {
+              "var": "vars.operator.security"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_groupStart",
+          "id": "edg_e1j8",
+          "to": "nod_callGroup"
+        },
+        {
+          "from": "nod_callGroup",
+          "id": "edg_e1j9",
+          "to": "nod_groupWait"
+        },
+        {
+          "from": "nod_groupWait",
+          "id": "edg_e1ja",
+          "to": "nod_groupEnd"
+        }
+      ],
+      "id": "cnv_boardOneGroup",
+      "name": "Board one group",
+      "owner": "nod_gateGroups",
+      "steps": [
+        {
+          "endpoint": "POST /announcements",
+          "id": "nod_callGroup",
+          "kind": "call",
+          "name": "call the group"
+        },
+        {
+          "id": "nod_groupEnd",
+          "kind": "end"
+        },
+        {
+          "id": "nod_groupStart",
+          "kind": "start"
+        },
+        {
+          "after": {
+            "duration": "PT3M",
+            "timer": "paging interval"
+          },
+          "id": "nod_groupWait",
+          "kind": "wait",
+          "name": "the group has boarded",
+          "on": [
+            "passenger.boarded"
+          ]
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_oneStart",
+          "id": "edg_e49",
+          "to": "nod_scanPass"
+        },
+        {
+          "from": "nod_scanPass",
+          "id": "edg_e4a",
+          "to": "nod_passValid"
+        },
+        {
+          "from": "nod_passValid",
+          "id": "edg_e4b",
+          "kind": "true",
+          "to": "nod_boarded"
+        },
+        {
+          "from": "nod_passValid",
+          "id": "edg_e4c",
+          "kind": "false",
+          "to": "nod_whyRefused"
+        },
+        {
+          "case": "wrongGate",
+          "from": "nod_whyRefused",
+          "id": "edg_e4d",
+          "kind": "case",
+          "to": "nod_wrongGate"
+        },
+        {
+          "case": "notCheckedIn",
+          "from": "nod_whyRefused",
+          "id": "edg_e4e",
+          "kind": "case",
+          "to": "nod_notCheckedIn"
+        },
+        {
+          "from": "nod_whyRefused",
+          "id": "edg_e4f",
+          "kind": "default",
+          "to": "nod_oneEnd"
+        },
+        {
+          "from": "nod_boarded",
+          "id": "edg_e4g",
+          "to": "nod_oneEnd"
+        },
+        {
+          "from": "nod_wrongGate",
+          "id": "edg_e4h",
+          "to": "nod_oneEnd"
+        },
+        {
+          "from": "nod_notCheckedIn",
+          "id": "edg_e4i",
+          "to": "nod_oneEnd"
+        }
+      ],
+      "id": "cnv_boardOnePassenger",
+      "name": "Board one passenger",
+      "owner": "nod_eachPassenger",
+      "steps": [
+        {
+          "event": "passenger.boarded",
+          "id": "nod_boarded",
+          "kind": "emit",
+          "name": "boarded"
+        },
+        {
+          "endpoint": "POST /dcs/checkin",
+          "id": "nod_notCheckedIn",
+          "kind": "call",
+          "name": "check them in at the gate"
+        },
+        {
+          "id": "nod_oneEnd",
+          "kind": "end"
+        },
+        {
+          "id": "nod_oneStart",
+          "kind": "start"
+        },
+        {
+          "condition": {
+            "text": "the pass is for this flight and gate"
+          },
+          "id": "nod_passValid",
+          "kind": "if",
+          "name": "valid for this flight?"
+        },
+        {
+          "endpoint": "POST /dcs/boarded",
+          "id": "nod_scanPass",
+          "kind": "call",
+          "name": "scan the boarding pass"
+        },
+        {
+          "id": "nod_whyRefused",
+          "kind": "switch",
+          "name": "why not?",
+          "on": {
+            "var": "vars.passenger.problem"
+          }
+        },
+        {
+          "endpoint": "POST /wayfinding/directions",
+          "id": "nod_wrongGate",
+          "kind": "call",
+          "name": "send them to the right gate"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_boardStart",
+          "id": "edg_e3t",
+          "to": "nod_getList"
+        },
+        {
+          "from": "nod_getList",
+          "id": "edg_e3u",
+          "to": "nod_openGate"
+        },
+        {
+          "from": "nod_openGate",
+          "id": "edg_e3v",
+          "to": "nod_announce"
+        },
+        {
+          "from": "nod_openGate",
+          "id": "edg_e3w",
+          "to": "nod_readyDesk"
+        },
+        {
+          "from": "nod_announce",
+          "id": "edg_e3x",
+          "to": "nod_gateOpen"
+        },
+        {
+          "from": "nod_readyDesk",
+          "id": "edg_e3y",
+          "to": "nod_gateOpen"
+        },
+        {
+          "from": "nod_gateOpen",
+          "id": "edg_e3z",
+          "to": "nod_eachPassenger"
+        },
+        {
+          "from": "nod_eachPassenger",
+          "id": "edg_e40",
+          "to": "nod_anyoneMissing"
+        },
+        {
+          "from": "nod_anyoneMissing",
+          "id": "edg_e41",
+          "to": "nod_loadStatus"
+        },
+        {
+          "case": "complete",
+          "from": "nod_loadStatus",
+          "id": "edg_e42",
+          "kind": "case",
+          "to": "nod_closeDoors"
+        },
+        {
+          "case": "noShows",
+          "from": "nod_loadStatus",
+          "id": "edg_e43",
+          "kind": "case",
+          "to": "nod_offloadBags"
+        },
+        {
+          "from": "nod_loadStatus",
+          "id": "edg_e44",
+          "kind": "default",
+          "to": "nod_boardFail"
+        },
+        {
+          "from": "nod_offloadBags",
+          "id": "edg_e45",
+          "to": "nod_closeDoors"
+        },
+        {
+          "from": "nod_closeDoors",
+          "id": "edg_e46",
+          "to": "nod_waitCaptain"
+        },
+        {
+          "from": "nod_waitCaptain",
+          "id": "edg_e47",
+          "to": "nod_boardEnd"
+        },
+        {
+          "from": "nod_getList",
+          "id": "edg_e48",
+          "kind": "error",
+          "to": "nod_boardFail"
+        }
+      ],
+      "id": "cnv_boardingProcedure",
+      "name": "Boarding procedure",
+      "owner": "nod_boarding",
+      "steps": [
+        {
+          "endpoint": "POST /flights",
+          "id": "nod_announce",
+          "kind": "call",
+          "name": "announce boarding",
+          "performedBy": "Ground handler"
+        },
+        {
+          "body": {
+            "flow": "cnv_findMissing"
+          },
+          "condition": {
+            "expr": {
+              ">": [
+                {
+                  "var": "vars.missing"
+                },
+                0
+              ]
+            },
+            "text": "a checked-in passenger has not boarded"
+          },
+          "id": "nod_anyoneMissing",
+          "kind": "while",
+          "name": "while someone is missing"
+        },
+        {
+          "id": "nod_boardEnd",
+          "kind": "end",
+          "name": "boarded",
+          "outcome": "success"
+        },
+        {
+          "id": "nod_boardFail",
+          "kind": "end",
+          "name": "flight held",
+          "outcome": "failure"
+        },
+        {
+          "id": "nod_boardStart",
+          "kind": "start"
+        },
+        {
+          "event": "doors.closed",
+          "id": "nod_closeDoors",
+          "kind": "emit",
+          "name": "doors closed"
+        },
+        {
+          "as": "passenger",
+          "body": {
+            "flow": "cnv_boardOnePassenger"
+          },
+          "id": "nod_eachPassenger",
+          "items": {
+            "var": "vars.passengers"
+          },
+          "kind": "forEach",
+          "name": "each passenger at the gate"
+        },
+        {
+          "id": "nod_gateOpen",
+          "kind": "join",
+          "name": "gate open"
+        },
+        {
+          "endpoint": "GET /dcs/flights/{id}/passengers",
+          "id": "nod_getList",
+          "kind": "call",
+          "name": "get the boarding list",
+          "performedBy": "Ground handler"
+        },
+        {
+          "id": "nod_loadStatus",
+          "kind": "switch",
+          "name": "load status?",
+          "on": {
+            "var": "vars.loadStatus"
+          }
+        },
+        {
+          "body": {
+            "flow": "cnv_offloadNoShows"
+          },
+          "id": "nod_offloadBags",
+          "kind": "subflow",
+          "name": "offload their bags"
+        },
+        {
+          "id": "nod_openGate",
+          "kind": "parallel",
+          "name": "open the gate"
+        },
+        {
+          "id": "nod_readyDesk",
+          "kind": "assign",
+          "name": "desk ready",
+          "performedBy": "Ground handler",
+          "set": {
+            "vars.missing": 0
+          }
+        },
+        {
+          "id": "nod_waitCaptain",
+          "kind": "wait",
+          "name": "the captain accepts the load",
+          "on": [
+            "loadsheet.accepted"
+          ]
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_borderStart",
+          "id": "edg_e1af",
+          "to": "nod_travelDocument"
+        },
+        {
+          "case": "biometricPassport",
+          "from": "nod_travelDocument",
+          "id": "edg_e1ag",
+          "kind": "case",
+          "to": "nod_eGate"
+        },
+        {
+          "from": "nod_travelDocument",
+          "id": "edg_e1ah",
+          "kind": "default",
+          "to": "nod_officer"
+        },
+        {
+          "from": "nod_eGate",
+          "id": "edg_e1ai",
+          "kind": "error",
+          "to": "nod_officer"
+        },
+        {
+          "from": "nod_eGate",
+          "id": "edg_e1aj",
+          "to": "nod_watchlist"
+        },
+        {
+          "from": "nod_officer",
+          "id": "edg_e1ak",
+          "to": "nod_visaCheck"
+        },
+        {
+          "from": "nod_visaCheck",
+          "id": "edg_e1al",
+          "kind": "true",
+          "to": "nod_checkVisa"
+        },
+        {
+          "from": "nod_visaCheck",
+          "id": "edg_e1am",
+          "kind": "false",
+          "to": "nod_watchlist"
+        },
+        {
+          "from": "nod_checkVisa",
+          "id": "edg_e1an",
+          "to": "nod_watchlist"
+        },
+        {
+          "from": "nod_watchlist",
+          "id": "edg_e1ao",
+          "kind": "true",
+          "to": "nod_secondary"
+        },
+        {
+          "from": "nod_watchlist",
+          "id": "edg_e1ap",
+          "kind": "false",
+          "to": "nod_stamp"
+        },
+        {
+          "from": "nod_secondary",
+          "id": "edg_e1aq",
+          "to": "nod_stamp"
+        },
+        {
+          "from": "nod_secondary",
+          "id": "edg_e1ar",
+          "kind": "error",
+          "to": "nod_refused"
+        },
+        {
+          "from": "nod_stamp",
+          "id": "edg_e1as",
+          "to": "nod_borderEnd"
+        }
+      ],
+      "id": "cnv_borderCheck",
+      "name": "Border check",
+      "owner": "nod_borderControl",
+      "steps": [
+        {
+          "id": "nod_borderEnd",
+          "kind": "end",
+          "outcome": "success"
+        },
+        {
+          "id": "nod_borderStart",
+          "kind": "start"
+        },
+        {
+          "endpoint": "GET /visas/{number}",
+          "id": "nod_checkVisa",
+          "kind": "call",
+          "name": "check the visa"
+        },
+        {
+          "endpoint": "POST /border/checks",
+          "id": "nod_eGate",
+          "kind": "call",
+          "name": "e-gate"
+        },
+        {
+          "id": "nod_officer",
+          "kind": "call",
+          "name": "an officer checks",
+          "party": "Border police"
+        },
+        {
+          "id": "nod_refused",
+          "kind": "end",
+          "name": "refused entry",
+          "outcome": "failure"
+        },
+        {
+          "body": {
+            "flow": "cnv_secondaryInspection"
+          },
+          "id": "nod_secondary",
+          "kind": "subflow",
+          "name": "secondary inspection"
+        },
+        {
+          "event": "border.cleared",
+          "id": "nod_stamp",
+          "kind": "emit",
+          "name": "cleared"
+        },
+        {
+          "id": "nod_travelDocument",
+          "kind": "switch",
+          "name": "which document?",
+          "on": {
+            "var": "vars.document.kind"
+          }
+        },
+        {
+          "condition": {
+            "text": "the traveller's nationality needs a visa for this destination"
+          },
+          "id": "nod_visaCheck",
+          "kind": "if",
+          "name": "visa needed?"
+        },
+        {
+          "condition": {
+            "text": "the database returned a hit"
+          },
+          "id": "nod_watchlist",
+          "kind": "if",
+          "name": "on a watch list?"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_cleanStart",
+          "id": "edg_e1cd",
+          "to": "nod_cleanKind"
+        },
+        {
+          "case": "under 35",
+          "from": "nod_cleanKind",
+          "id": "edg_e1ce",
+          "kind": "case",
+          "to": "nod_quickClean"
+        },
+        {
+          "case": "35 to 90",
+          "from": "nod_cleanKind",
+          "id": "edg_e1cf",
+          "kind": "case",
+          "to": "nod_fullClean"
+        },
+        {
+          "case": "night stop",
+          "from": "nod_cleanKind",
+          "id": "edg_e1cg",
+          "kind": "case",
+          "to": "nod_deepClean"
+        },
+        {
+          "from": "nod_quickClean",
+          "id": "edg_e1ch",
+          "to": "nod_cleanDone"
+        },
+        {
+          "from": "nod_fullClean",
+          "id": "edg_e1ci",
+          "to": "nod_cleanDone"
+        },
+        {
+          "from": "nod_deepClean",
+          "id": "edg_e1cj",
+          "to": "nod_cleanDone"
+        },
+        {
+          "from": "nod_cleanKind",
+          "id": "edg_e1ck",
+          "kind": "default",
+          "to": "nod_quickClean"
+        },
+        {
+          "from": "nod_cleanDone",
+          "id": "edg_e1cl",
+          "to": "nod_cleanEnd"
+        }
+      ],
+      "id": "cnv_cabinCleaning",
+      "name": "Cabin cleaning",
+      "owner": "nod_cleaningService",
+      "steps": [
+        {
+          "event": "cleaning.completed",
+          "id": "nod_cleanDone",
+          "kind": "emit",
+          "name": "cabin clean"
+        },
+        {
+          "id": "nod_cleanEnd",
+          "kind": "end"
+        },
+        {
+          "id": "nod_cleanKind",
+          "kind": "switch",
+          "name": "which clean?",
+          "on": {
+            "var": "vars.turnaround.minutes"
+          }
+        },
+        {
+          "id": "nod_cleanStart",
+          "kind": "start"
+        },
+        {
+          "id": "nod_deepClean",
+          "kind": "call",
+          "name": "deep clean",
+          "party": "Cabin cleaning"
+        },
+        {
+          "id": "nod_fullClean",
+          "kind": "call",
+          "name": "full clean",
+          "party": "Cabin cleaning"
+        },
+        {
+          "id": "nod_quickClean",
+          "kind": "call",
+          "name": "quick clean",
+          "party": "Cabin cleaning"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_iceStart",
+          "id": "edg_e4t",
+          "to": "nod_readWeather"
+        },
+        {
+          "from": "nod_readWeather",
+          "id": "edg_e4u",
+          "to": "nod_conditions"
+        },
+        {
+          "case": "frost",
+          "from": "nod_conditions",
+          "id": "edg_e4v",
+          "kind": "case",
+          "to": "nod_typeOne"
+        },
+        {
+          "case": "snow",
+          "from": "nod_conditions",
+          "id": "edg_e4w",
+          "kind": "case",
+          "to": "nod_typeFour"
+        },
+        {
+          "case": "freezingRain",
+          "from": "nod_conditions",
+          "id": "edg_e4x",
+          "kind": "case",
+          "to": "nod_typeFour"
+        },
+        {
+          "from": "nod_conditions",
+          "id": "edg_e4y",
+          "kind": "default",
+          "to": "nod_typeOne"
+        },
+        {
+          "from": "nod_typeOne",
+          "id": "edg_e4z",
+          "to": "nod_padSlot"
+        },
+        {
+          "from": "nod_typeFour",
+          "id": "edg_e50",
+          "to": "nod_padSlot"
+        },
+        {
+          "from": "nod_padSlot",
+          "id": "edg_e51",
+          "to": "nod_spray"
+        },
+        {
+          "from": "nod_spray",
+          "id": "edg_e52",
+          "to": "nod_leftWing"
+        },
+        {
+          "from": "nod_spray",
+          "id": "edg_e53",
+          "to": "nod_rightWing"
+        },
+        {
+          "from": "nod_leftWing",
+          "id": "edg_e54",
+          "to": "nod_sprayed"
+        },
+        {
+          "from": "nod_rightWing",
+          "id": "edg_e55",
+          "to": "nod_sprayed"
+        },
+        {
+          "from": "nod_sprayed",
+          "id": "edg_e56",
+          "to": "nod_holdover"
+        },
+        {
+          "from": "nod_holdover",
+          "id": "edg_e57",
+          "kind": "true",
+          "to": "nod_iceDone"
+        },
+        {
+          "from": "nod_holdover",
+          "id": "edg_e58",
+          "kind": "false",
+          "to": "nod_iceAgain"
+        },
+        {
+          "from": "nod_iceDone",
+          "id": "edg_e59",
+          "to": "nod_iceEnd"
+        }
+      ],
+      "id": "cnv_deIcingProcedure",
+      "name": "De-icing",
+      "owner": "nod_deIcing",
+      "steps": [
+        {
+          "id": "nod_conditions",
+          "kind": "switch",
+          "name": "conditions?",
+          "on": {
+            "var": "vars.weather.precipitation"
+          }
+        },
+        {
+          "condition": {
+            "text": "the fluid's holdover time covers the taxi to the runway"
+          },
+          "id": "nod_holdover",
+          "kind": "if",
+          "name": "holdover time left?"
+        },
+        {
+          "id": "nod_iceAgain",
+          "kind": "end",
+          "name": "again",
+          "outcome": "failure"
+        },
+        {
+          "event": "deicing.completed",
+          "id": "nod_iceDone",
+          "kind": "emit",
+          "name": "de-icing completed"
+        },
+        {
+          "id": "nod_iceEnd",
+          "kind": "end",
+          "outcome": "success"
+        },
+        {
+          "id": "nod_iceStart",
+          "kind": "start"
+        },
+        {
+          "id": "nod_leftWing",
+          "kind": "call",
+          "name": "spray the left wing",
+          "party": "Ground handler"
+        },
+        {
+          "id": "nod_padSlot",
+          "kind": "wait",
+          "name": "a pad is free",
+          "on": [
+            "deicing.padAssigned"
+          ]
+        },
+        {
+          "endpoint": "GET /metar/{airport}",
+          "id": "nod_readWeather",
+          "kind": "call",
+          "name": "read the weather"
+        },
+        {
+          "id": "nod_rightWing",
+          "kind": "call",
+          "name": "spray the right wing",
+          "party": "Ground handler"
+        },
+        {
+          "id": "nod_spray",
+          "kind": "parallel",
+          "name": "both wings"
+        },
+        {
+          "id": "nod_sprayed",
+          "kind": "join"
+        },
+        {
+          "id": "nod_typeFour",
+          "kind": "assign",
+          "name": "type I then IV",
+          "set": {
+            "vars.fluid": "I+IV"
+          }
+        },
+        {
+          "id": "nod_typeOne",
+          "kind": "assign",
+          "name": "type I only",
+          "set": {
+            "vars.fluid": "I"
+          }
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_findStart",
+          "id": "edg_e4j",
+          "to": "nod_page"
+        },
+        {
+          "from": "nod_page",
+          "id": "edg_e4k",
+          "to": "nod_waitPage"
+        },
+        {
+          "from": "nod_waitPage",
+          "id": "edg_e4l",
+          "to": "nod_countMissing"
+        },
+        {
+          "from": "nod_countMissing",
+          "id": "edg_e4m",
+          "to": "nod_findEnd"
+        }
+      ],
+      "id": "cnv_findMissing",
+      "name": "Find the missing",
+      "owner": "nod_anyoneMissing",
+      "steps": [
+        {
+          "id": "nod_countMissing",
+          "kind": "assign",
+          "name": "count again",
+          "set": {
+            "vars.missing": {
+              "var": "vars.stillMissing"
+            }
+          }
+        },
+        {
+          "id": "nod_findEnd",
+          "kind": "end"
+        },
+        {
+          "id": "nod_findStart",
+          "kind": "start"
+        },
+        {
+          "endpoint": "POST /announcements",
+          "id": "nod_page",
+          "kind": "call",
+          "name": "page the passenger"
+        },
+        {
+          "after": {
+            "duration": "PT3M",
+            "timer": "paging interval"
+          },
+          "id": "nod_waitPage",
+          "kind": "wait",
+          "name": "three minutes"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_alertStart",
+          "id": "edg_e1be",
+          "to": "nod_readFlight"
+        },
+        {
+          "from": "nod_readFlight",
+          "id": "edg_e1bf",
+          "to": "nod_whatChanged"
+        },
+        {
+          "case": "gate",
+          "from": "nod_whatChanged",
+          "id": "edg_e1bg",
+          "kind": "case",
+          "to": "nod_alertGate"
+        },
+        {
+          "from": "nod_alertGate",
+          "id": "edg_e1bh",
+          "to": "nod_alertEnd"
+        },
+        {
+          "case": "delay",
+          "from": "nod_whatChanged",
+          "id": "edg_e1bi",
+          "kind": "case",
+          "to": "nod_alertDelay"
+        },
+        {
+          "from": "nod_alertDelay",
+          "id": "edg_e1bj",
+          "to": "nod_alertEnd"
+        },
+        {
+          "case": "boarding",
+          "from": "nod_whatChanged",
+          "id": "edg_e1bk",
+          "kind": "case",
+          "to": "nod_alertBoarding"
+        },
+        {
+          "from": "nod_alertBoarding",
+          "id": "edg_e1bl",
+          "to": "nod_alertEnd"
+        },
+        {
+          "case": "cancelled",
+          "from": "nod_whatChanged",
+          "id": "edg_e1bm",
+          "kind": "case",
+          "to": "nod_alertCancelled"
+        },
+        {
+          "from": "nod_alertCancelled",
+          "id": "edg_e1bn",
+          "to": "nod_alertEnd"
+        },
+        {
+          "from": "nod_whatChanged",
+          "id": "edg_e1bo",
+          "kind": "default",
+          "to": "nod_alertEnd"
+        }
+      ],
+      "id": "cnv_flightAlerts",
+      "name": "Flight alerts",
+      "owner": "nod_passengerApp",
+      "steps": [
+        {
+          "endpoint": "POST /push",
+          "id": "nod_alertBoarding",
+          "kind": "call",
+          "name": "boarding has started"
+        },
+        {
+          "endpoint": "POST /push",
+          "id": "nod_alertCancelled",
+          "kind": "call",
+          "name": "your flight is cancelled"
+        },
+        {
+          "endpoint": "POST /push",
+          "id": "nod_alertDelay",
+          "kind": "call",
+          "name": "your flight is delayed"
+        },
+        {
+          "id": "nod_alertEnd",
+          "kind": "end"
+        },
+        {
+          "endpoint": "POST /push",
+          "id": "nod_alertGate",
+          "kind": "call",
+          "name": "your gate changed"
+        },
+        {
+          "id": "nod_alertStart",
+          "kind": "start"
+        },
+        {
+          "endpoint": "GET /flights/{id}",
+          "id": "nod_readFlight",
+          "kind": "call",
+          "name": "read the flight"
+        },
+        {
+          "id": "nod_whatChanged",
+          "kind": "switch",
+          "name": "what changed?",
+          "on": {
+            "var": "vars.change"
+          }
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_fuelStart",
+          "id": "edg_e1c4",
+          "to": "nod_fuelOrder"
+        },
+        {
+          "from": "nod_fuelOrder",
+          "id": "edg_e1c5",
+          "to": "nod_passengersOnBoard"
+        },
+        {
+          "from": "nod_passengersOnBoard",
+          "id": "edg_e1c6",
+          "kind": "true",
+          "to": "nod_fireCover"
+        },
+        {
+          "from": "nod_passengersOnBoard",
+          "id": "edg_e1c7",
+          "kind": "false",
+          "to": "nod_dispatchTruck"
+        },
+        {
+          "from": "nod_fireCover",
+          "id": "edg_e1c8",
+          "to": "nod_dispatchTruck"
+        },
+        {
+          "from": "nod_dispatchTruck",
+          "id": "edg_e1c9",
+          "to": "nod_pumping"
+        },
+        {
+          "from": "nod_pumping",
+          "id": "edg_e1ca",
+          "to": "nod_pumped"
+        },
+        {
+          "from": "nod_pumped",
+          "id": "edg_e1cb",
+          "to": "nod_fuelReceipt"
+        },
+        {
+          "from": "nod_fuelReceipt",
+          "id": "edg_e1cc",
+          "to": "nod_fuelEnd"
+        }
+      ],
+      "id": "cnv_fuelling",
+      "name": "Into-plane fuelling",
+      "owner": "nod_fuelService",
+      "steps": [
+        {
+          "event": "fuel.truckAssigned",
+          "id": "nod_dispatchTruck",
+          "kind": "emit",
+          "name": "truck assigned",
+          "performedBy": "Fuel supplier"
+        },
+        {
+          "id": "nod_fireCover",
+          "kind": "call",
+          "name": "fire cover at the aircraft",
+          "party": "Fire and rescue"
+        },
+        {
+          "id": "nod_fuelEnd",
+          "kind": "end",
+          "outcome": "success"
+        },
+        {
+          "id": "nod_fuelOrder",
+          "kind": "wait",
+          "name": "the airline's fuel order",
+          "on": [
+            "fuel.ordered"
+          ]
+        },
+        {
+          "endpoint": "POST /fuel/receipts",
+          "id": "nod_fuelReceipt",
+          "kind": "call",
+          "name": "fuel receipt to the captain",
+          "performedBy": "Fuel supplier"
+        },
+        {
+          "id": "nod_fuelStart",
+          "kind": "start"
+        },
+        {
+          "condition": {
+            "text": "boarding has started or deboarding has not ended"
+          },
+          "id": "nod_passengersOnBoard",
+          "kind": "if",
+          "name": "passengers on board?"
+        },
+        {
+          "after": {
+            "duration": "PT45M",
+            "timer": "fuelling limit"
+          },
+          "id": "nod_pumped",
+          "kind": "wait",
+          "name": "pumped",
+          "on": [
+            "fuel.completed"
+          ],
+          "performedBy": "Fuel supplier"
+        },
+        {
+          "id": "nod_pumping",
+          "kind": "wait",
+          "name": "pumping",
+          "on": [
+            "fuel.started"
+          ],
+          "performedBy": "Fuel supplier"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_gateStart",
+          "id": "edg_e1j2",
+          "to": "nod_gateBridge"
+        },
+        {
+          "from": "nod_gateBridge",
+          "id": "edg_e1j3",
+          "to": "nod_gateBoardingList"
+        },
+        {
+          "from": "nod_gateBoardingList",
+          "id": "edg_e1j4",
+          "to": "nod_gateGroups"
+        },
+        {
+          "from": "nod_gateGroups",
+          "id": "edg_e1j5",
+          "to": "nod_gateClose"
+        },
+        {
+          "from": "nod_gateClose",
+          "id": "edg_e1j6",
+          "to": "nod_gateRetract"
+        },
+        {
+          "from": "nod_gateRetract",
+          "id": "edg_e1j7",
+          "to": "nod_gateEnd"
+        }
+      ],
+      "id": "cnv_gateBoarding",
+      "name": "Gate boarding",
+      "owner": "def_gateBoarding",
+      "steps": [
+        {
+          "endpoint": "GET /dcs/flights/{id}/passengers",
+          "id": "nod_gateBoardingList",
+          "kind": "call",
+          "name": "load the boarding list"
+        },
+        {
+          "id": "nod_gateBridge",
+          "kind": "call",
+          "name": "dock the jet bridge",
+          "party": "Ground handler"
+        },
+        {
+          "event": "gate.closed",
+          "id": "nod_gateClose",
+          "kind": "emit",
+          "name": "gate closed"
+        },
+        {
+          "id": "nod_gateEnd",
+          "kind": "end",
+          "outcome": "success"
+        },
+        {
+          "as": "group",
+          "body": {
+            "flow": "cnv_boardOneGroup"
+          },
+          "id": "nod_gateGroups",
+          "items": {
+            "var": "vars.groups"
+          },
+          "kind": "forEach",
+          "name": "each boarding group"
+        },
+        {
+          "id": "nod_gateRetract",
+          "kind": "call",
+          "name": "retract the bridge",
+          "party": "Ground handler"
+        },
+        {
+          "id": "nod_gateStart",
+          "kind": "start"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_billStart",
+          "id": "edg_e1bp",
+          "to": "nod_movements"
+        },
+        {
+          "from": "nod_movements",
+          "id": "edg_e1bq",
+          "to": "nod_eachOperator"
+        },
+        {
+          "from": "nod_eachOperator",
+          "id": "edg_e1br",
+          "to": "nod_billEnd"
+        }
+      ],
+      "id": "cnv_monthlyBilling",
+      "name": "Monthly billing",
+      "owner": "nod_billing",
+      "steps": [
+        {
+          "id": "nod_billEnd",
+          "kind": "end",
+          "outcome": "success"
+        },
+        {
+          "id": "nod_billStart",
+          "kind": "start"
+        },
+        {
+          "as": "operator",
+          "body": {
+            "flow": "cnv_billOneOperator"
+          },
+          "id": "nod_eachOperator",
+          "items": {
+            "var": "vars.operators"
+          },
+          "kind": "forEach",
+          "name": "each operator"
+        },
+        {
+          "endpoint": "GET /movements?month={m}",
+          "id": "nod_movements",
+          "kind": "call",
+          "name": "the month's movements"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_notifyStart",
+          "id": "edg_e2s",
+          "to": "nod_whoIsBooked"
+        },
+        {
+          "from": "nod_whoIsBooked",
+          "id": "edg_e2t",
+          "to": "nod_sendNotice"
+        },
+        {
+          "from": "nod_sendNotice",
+          "id": "edg_e2u",
+          "to": "nod_noticeSent"
+        },
+        {
+          "from": "nod_noticeSent",
+          "id": "edg_e2v",
+          "to": "nod_notifyEnd"
+        }
+      ],
+      "id": "cnv_notifyPassengers",
+      "name": "Notify passengers",
+      "owner": "act_notifyPassengers",
+      "steps": [
+        {
+          "event": "passenger.notified",
+          "id": "nod_noticeSent",
+          "kind": "emit",
+          "name": "notified"
+        },
+        {
+          "id": "nod_notifyEnd",
+          "kind": "end"
+        },
+        {
+          "id": "nod_notifyStart",
+          "kind": "start"
+        },
+        {
+          "endpoint": "POST /push",
+          "id": "nod_sendNotice",
+          "kind": "call",
+          "name": "push, SMS and e-mail"
+        },
+        {
+          "endpoint": "GET /dcs/flights/{id}/passengers",
+          "id": "nod_whoIsBooked",
+          "kind": "call",
+          "name": "who is booked"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_offloadStart",
+          "id": "edg_e4n",
+          "to": "nod_listBags"
+        },
+        {
+          "from": "nod_listBags",
+          "id": "edg_e4o",
+          "to": "nod_eachBag"
+        },
+        {
+          "from": "nod_eachBag",
+          "id": "edg_e4p",
+          "to": "nod_offloaded"
+        },
+        {
+          "from": "nod_offloaded",
+          "id": "edg_e4q",
+          "to": "nod_offloadEnd"
+        }
+      ],
+      "id": "cnv_offloadNoShows",
+      "name": "Offload the no-shows' bags",
+      "owner": "nod_offloadBags",
+      "steps": [
+        {
+          "as": "bag",
+          "body": {
+            "flow": "cnv_offloadOneBag"
+          },
+          "id": "nod_eachBag",
+          "items": {
+            "var": "vars.bags"
+          },
+          "kind": "forEach",
+          "name": "each bag"
+        },
+        {
+          "endpoint": "GET /bags?flight={id}&pax={pax}",
+          "id": "nod_listBags",
+          "kind": "call",
+          "name": "find their bags"
+        },
+        {
+          "id": "nod_offloadEnd",
+          "kind": "end"
+        },
+        {
+          "id": "nod_offloadStart",
+          "kind": "start"
+        },
+        {
+          "event": "bags.offloaded",
+          "id": "nod_offloaded",
+          "kind": "emit",
+          "name": "bags offloaded"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_bagOutStart",
+          "id": "edg_e4r",
+          "to": "nod_findInHold"
+        },
+        {
+          "from": "nod_findInHold",
+          "id": "edg_e4s",
+          "to": "nod_bagOutEnd"
+        }
+      ],
+      "id": "cnv_offloadOneBag",
+      "name": "Offload one bag",
+      "owner": "nod_eachBag",
+      "steps": [
+        {
+          "id": "nod_bagOutEnd",
+          "kind": "end"
+        },
+        {
+          "id": "nod_bagOutStart",
+          "kind": "start"
+        },
+        {
+          "id": "nod_findInHold",
+          "kind": "call",
+          "name": "find it in the hold",
+          "party": "Ground handler"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_secondStart",
+          "id": "edg_e1at",
+          "to": "nod_interview"
+        },
+        {
+          "from": "nod_interview",
+          "id": "edg_e1au",
+          "to": "nod_customsCheck"
+        },
+        {
+          "from": "nod_customsCheck",
+          "id": "edg_e1av",
+          "to": "nod_secondEnd"
+        }
+      ],
+      "id": "cnv_secondaryInspection",
+      "name": "Secondary inspection",
+      "owner": "nod_secondary",
+      "steps": [
+        {
+          "id": "nod_customsCheck",
+          "kind": "call",
+          "name": "customs check",
+          "party": "Customs"
+        },
+        {
+          "id": "nod_interview",
+          "kind": "call",
+          "name": "interview",
+          "party": "Border police"
+        },
+        {
+          "id": "nod_secondEnd",
+          "kind": "end"
+        },
+        {
+          "id": "nod_secondStart",
+          "kind": "start"
+        }
+      ]
+    },
+    {
+      "edges": [
+        {
+          "from": "nod_procStart",
+          "id": "edg_e1dh",
+          "to": "nod_onBlockChocks"
+        },
+        {
+          "from": "nod_onBlockChocks",
+          "id": "edg_e1di",
+          "to": "nod_teams"
+        },
+        {
+          "from": "nod_teams",
+          "id": "edg_e1dj",
+          "to": "nod_procDeboard"
+        },
+        {
+          "from": "nod_teams",
+          "id": "edg_e1dk",
+          "to": "nod_procCater"
+        },
+        {
+          "from": "nod_teams",
+          "id": "edg_e1dl",
+          "to": "nod_procOffload"
+        },
+        {
+          "from": "nod_teams",
+          "id": "edg_e1dm",
+          "to": "nod_procFuel"
+        },
+        {
+          "from": "nod_procDeboard",
+          "id": "edg_e1dn",
+          "to": "nod_procClean"
+        },
+        {
+          "from": "nod_procOffload",
+          "id": "edg_e1do",
+          "to": "nod_procLoad"
+        },
+        {
+          "from": "nod_procClean",
+          "id": "edg_e1dp",
+          "to": "nod_teamsDone"
+        },
+        {
+          "from": "nod_procCater",
+          "id": "edg_e1dq",
+          "to": "nod_teamsDone"
+        },
+        {
+          "from": "nod_procLoad",
+          "id": "edg_e1dr",
+          "to": "nod_teamsDone"
+        },
+        {
+          "from": "nod_procFuel",
+          "id": "edg_e1ds",
+          "to": "nod_teamsDone"
+        },
+        {
+          "from": "nod_teamsDone",
+          "id": "edg_e1dt",
+          "to": "nod_procDone"
+        },
+        {
+          "from": "nod_procDone",
+          "id": "edg_e1du",
+          "to": "nod_procEnd"
+        }
+      ],
+      "id": "cnv_turnaroundProcedure",
+      "name": "Turnaround procedure",
+      "owner": "act_runTheTurnaround",
+      "steps": [
+        {
+          "id": "nod_onBlockChocks",
+          "kind": "assign",
+          "name": "chocks and cones",
+          "set": {
+            "vars.safe": true
+          }
+        },
+        {
+          "id": "nod_procCater",
+          "kind": "wait",
+          "name": "catered",
+          "on": [
+            "catering.completed"
+          ],
+          "performedBy": "Cabin cleaning"
+        },
+        {
+          "id": "nod_procClean",
+          "kind": "wait",
+          "name": "cleaned",
+          "on": [
+            "cleaning.completed"
+          ],
+          "performedBy": "Cabin cleaning"
+        },
+        {
+          "id": "nod_procDeboard",
+          "kind": "wait",
+          "name": "deboarded",
+          "on": [
+            "deboarding.completed"
+          ],
+          "performedBy": "Cabin cleaning"
+        },
+        {
+          "event": "turnaround.completed",
+          "id": "nod_procDone",
+          "kind": "emit",
+          "name": "turnaround completed"
+        },
+        {
+          "id": "nod_procEnd",
+          "kind": "end",
+          "outcome": "success"
+        },
+        {
+          "id": "nod_procFuel",
+          "kind": "wait",
+          "name": "fuelled",
+          "on": [
+            "fuel.completed"
+          ]
+        },
+        {
+          "id": "nod_procLoad",
+          "kind": "wait",
+          "name": "holds closed",
+          "on": [
+            "holds.closed"
+          ],
+          "performedBy": "Ground handler"
+        },
+        {
+          "id": "nod_procOffload",
+          "kind": "wait",
+          "name": "holds empty",
+          "on": [
+            "offload.completed"
+          ],
+          "performedBy": "Ground handler"
+        },
+        {
+          "id": "nod_procStart",
+          "kind": "start"
+        },
+        {
+          "id": "nod_teams",
+          "kind": "parallel",
+          "name": "all teams"
+        },
+        {
+          "id": "nod_teamsDone",
+          "kind": "join",
+          "name": "all done"
+        }
+      ]
+    }
+  ],
+  "machines": [
+    {
+      "completeness": "partial",
+      "id": "cnv_alarmResolution",
+      "name": "Alarm resolution",
+      "owner": "nod_laneAlarm",
+      "starts": [
+        {
+          "id": "nod_alarmStart",
+          "kind": "initial",
+          "to": "tray held"
+        }
+      ],
+      "states": [
+        {
+          "final": true,
+          "id": "nod_alarmCleared",
+          "name": "cleared",
+          "outcome": "success"
+        },
+        {
+          "category": "processing",
+          "id": "nod_explosiveTrace",
+          "name": "trace detection"
+        },
+        {
+          "final": true,
+          "id": "nod_policeCalled",
+          "name": "police called",
+          "outcome": "stopped"
+        },
+        {
+          "category": "processing",
+          "id": "nod_searching",
+          "name": "hand search"
+        },
+        {
+          "category": "hold",
+          "id": "nod_trayHeld",
+          "name": "tray held"
+        }
+      ],
+      "subject": "lane.alarm",
+      "transitions": [
+        {
+          "from": "initial:nod_alarmStart",
+          "id": "edg_e1a9",
+          "to": "tray held"
+        },
+        {
+          "by": "Security screening",
+          "from": "tray held",
+          "id": "edg_e1aa",
+          "on": [
+            "search.started"
+          ],
+          "to": "hand search"
+        },
+        {
+          "from": "hand search",
+          "id": "edg_e1ab",
+          "intent": "happy",
+          "on": [
+            "search.clear"
+          ],
+          "to": "cleared"
+        },
+        {
+          "from": "hand search",
+          "id": "edg_e1ac",
+          "on": [
+            "search.suspicious"
+          ],
+          "to": "trace detection"
+        },
+        {
+          "from": "trace detection",
+          "id": "edg_e1ad",
+          "on": [
+            "trace.negative"
+          ],
+          "to": "cleared"
+        },
+        {
+          "from": "trace detection",
+          "id": "edg_e1ae",
+          "intent": "failure",
+          "on": [
+            "trace.positive"
+          ],
+          "to": "police called"
+        }
+      ],
+      "within": {
+        "machine": "cnv_securityLane",
+        "state": "alarm"
+      }
+    },
+    {
+      "completeness": "complete",
+      "id": "cnv_bagLifecycle",
+      "name": "Bag lifecycle",
+      "nodes": [
+        {
+          "id": "nod_screenResult",
+          "kind": "choice",
+          "name": "cleared?"
+        }
+      ],
+      "owner": "nod_bags",
+      "starts": [
+        {
+          "id": "nod_bagStart",
+          "kind": "initial",
+          "to": "accepted"
+        },
+        {
+          "by": "Passenger",
+          "id": "nod_dropBag",
+          "kind": "entry",
+          "name": "POST /bags",
+          "to": "accepted",
+          "via": "POST /bags"
+        }
+      ],
+      "states": [
+        {
+          "category": "waiting",
+          "id": "nod_accepted",
+          "name": "accepted"
+        },
+        {
+          "final": true,
+          "id": "nod_flown",
+          "name": "flown",
+          "outcome": "success"
+        },
+        {
+          "category": "processing",
+          "id": "nod_inSystem",
+          "name": "in the system"
+        },
+        {
+          "category": "hold",
+          "id": "nod_levelThree",
+          "name": "level 3 review"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_loaded",
+          "name": "loaded"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_madeUp",
+          "name": "in a container"
+        },
+        {
+          "final": true,
+          "id": "nod_mishandled",
+          "name": "mishandled",
+          "outcome": "failure"
+        },
+        {
+          "category": "hold",
+          "id": "nod_offloadedBag",
+          "name": "offloaded"
+        },
+        {
+          "final": true,
+          "id": "nod_rejectedBag",
+          "name": "rejected",
+          "outcome": "failure"
+        },
+        {
+          "category": "processing",
+          "id": "nod_screening",
+          "name": "screening"
+        },
+        {
+          "category": "processing",
+          "id": "nod_sorting",
+          "name": "sorting"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_stored",
+          "name": "in the early bag store"
+        },
+        {
+          "category": "hold",
+          "id": "nod_unread",
+          "name": "manual encoding"
+        }
+      ],
+      "subject": "bag.status",
+      "transitions": [
+        {
+          "from": "initial:nod_bagStart",
+          "id": "edg_emf",
+          "to": "accepted"
+        },
+        {
+          "actions": [
+            "emit bag.sourceMessage"
+          ],
+          "from": "entry:nod_dropBag",
+          "id": "edg_emg",
+          "to": "accepted"
+        },
+        {
+          "from": "accepted",
+          "id": "edg_emh",
+          "intent": "happy",
+          "on": [
+            "bag.inducted"
+          ],
+          "to": "in the system"
+        },
+        {
+          "from": "in the system",
+          "id": "edg_emi",
+          "intent": "happy",
+          "on": [
+            "bag.screened"
+          ],
+          "to": "screening"
+        },
+        {
+          "always": true,
+          "from": "screening",
+          "id": "edg_emj",
+          "to": "choice:nod_screenResult"
+        },
+        {
+          "from": "choice:nod_screenResult",
+          "guard": {
+            "name": "Cleared"
+          },
+          "id": "edg_emk",
+          "intent": "happy",
+          "to": "sorting"
+        },
+        {
+          "else": true,
+          "from": "choice:nod_screenResult",
+          "id": "edg_eml",
+          "to": "level 3 review"
+        },
+        {
+          "by": "Security screening",
+          "from": "level 3 review",
+          "id": "edg_emm",
+          "on": [
+            "bag.cleared"
+          ],
+          "to": "sorting"
+        },
+        {
+          "by": "Security screening",
+          "from": "level 3 review",
+          "id": "edg_emn",
+          "intent": "failure",
+          "on": [
+            "bag.rejected"
+          ],
+          "to": "rejected"
+        },
+        {
+          "from": "sorting",
+          "id": "edg_emo",
+          "intent": "happy",
+          "on": [
+            "bag.sorted"
+          ],
+          "to": "in a container"
+        },
+        {
+          "from": "sorting",
+          "id": "edg_emp",
+          "on": [
+            "bag.early"
+          ],
+          "to": "in the early bag store"
+        },
+        {
+          "from": "in the early bag store",
+          "id": "edg_emq",
+          "on": [
+            "bag.released"
+          ],
+          "to": "sorting"
+        },
+        {
+          "from": "sorting",
+          "id": "edg_emr",
+          "on": [
+            "bag.noRead"
+          ],
+          "to": "manual encoding"
+        },
+        {
+          "by": "Baggage operations",
+          "from": "manual encoding",
+          "id": "edg_ems",
+          "on": [
+            "bag.encoded"
+          ],
+          "to": "sorting"
+        },
+        {
+          "by": "Ground handler",
+          "from": "in a container",
+          "id": "edg_emt",
+          "intent": "happy",
+          "on": [
+            "bag.loaded"
+          ],
+          "to": "loaded"
+        },
+        {
+          "from": "loaded",
+          "id": "edg_emu",
+          "intent": "happy",
+          "on": [
+            "aircraft.airborne"
+          ],
+          "to": "flown"
+        },
+        {
+          "by": "Ground handler",
+          "from": "loaded",
+          "id": "edg_emv",
+          "on": [
+            "bags.offloaded"
+          ],
+          "to": "offloaded"
+        },
+        {
+          "from": "offloaded",
+          "id": "edg_emw",
+          "on": [
+            "bag.reflighted"
+          ],
+          "to": "sorting"
+        },
+        {
+          "after": {
+            "duration": "PT2H",
+            "timer": "rush window"
+          },
+          "from": "offloaded",
+          "id": "edg_emx",
+          "intent": "failure",
+          "to": "mishandled"
+        }
+      ]
+    },
+    {
+      "completeness": "complete",
+      "id": "cnv_boardingPhases",
+      "name": "Boarding phases",
+      "nodes": [
+        {
+          "id": "nod_phaseResume",
+          "kind": "history",
+          "name": "the phase it was in"
+        }
+      ],
+      "owner": "nod_boardingFlight",
+      "starts": [
+        {
+          "id": "nod_phasesStart",
+          "kind": "initial",
+          "to": "priority"
+        }
+      ],
+      "states": [
+        {
+          "category": "hold",
+          "id": "nod_boardingStopped",
+          "name": "stopped at the gate"
+        },
+        {
+          "category": "processing",
+          "id": "nod_finalCall",
+          "name": "final call"
+        },
+        {
+          "final": true,
+          "id": "nod_gateClosed",
+          "name": "gate closed",
+          "outcome": "success"
+        },
+        {
+          "category": "processing",
+          "id": "nod_generalBoarding",
+          "name": "general"
+        },
+        {
+          "category": "hold",
+          "id": "nod_offloading",
+          "name": "offloading no-shows"
+        },
+        {
+          "category": "processing",
+          "id": "nod_priorityBoarding",
+          "name": "priority"
+        }
+      ],
+      "subject": "flight.boarding",
+      "transitions": [
+        {
+          "from": "initial:nod_phasesStart",
+          "id": "edg_e2w",
+          "to": "priority"
+        },
+        {
+          "from": "priority",
+          "id": "edg_e2x",
+          "intent": "happy",
+          "on": [
+            "boarding.general"
+          ],
+          "to": "general"
+        },
+        {
+          "from": "general",
+          "id": "edg_e2y",
+          "intent": "happy",
+          "on": [
+            "boarding.finalCall"
+          ],
+          "to": "final call"
+        },
+        {
+          "from": "final call",
+          "guard": {
+            "text": "every checked-in passenger has boarded"
+          },
+          "id": "edg_e2z",
+          "intent": "happy",
+          "on": [
+            "gate.closed"
+          ],
+          "to": "gate closed"
+        },
+        {
+          "else": true,
+          "from": "final call",
+          "id": "edg_e30",
+          "on": [
+            "gate.closed"
+          ],
+          "to": "offloading no-shows"
+        },
+        {
+          "by": "Ground handler",
+          "from": "offloading no-shows",
+          "id": "edg_e31",
+          "on": [
+            "bags.offloaded"
+          ],
+          "to": "gate closed"
+        },
+        {
+          "from": "priority",
+          "id": "edg_e32",
+          "on": [
+            "boarding.suspended"
+          ],
+          "to": "stopped at the gate"
+        },
+        {
+          "from": "general",
+          "id": "edg_e33",
+          "on": [
+            "boarding.suspended"
+          ],
+          "to": "stopped at the gate"
+        },
+        {
+          "from": "final call",
+          "id": "edg_e34",
+          "on": [
+            "boarding.suspended"
+          ],
+          "to": "stopped at the gate"
+        },
+        {
+          "from": "stopped at the gate",
+          "id": "edg_e35",
+          "on": [
+            "boarding.resumed"
+          ],
+          "to": "history:nod_phaseResume"
+        },
+        {
+          "from": "history:nod_phaseResume",
+          "id": "edg_e36",
+          "to": "priority"
+        }
+      ],
+      "within": {
+        "machine": "cnv_flightLifecycle",
+        "state": "boarding"
+      }
+    },
+    {
+      "completeness": "partial",
+      "id": "cnv_climbOut",
+      "name": "Climb out",
+      "owner": "nod_airborneFlight",
+      "starts": [
+        {
+          "id": "nod_climbStart",
+          "kind": "initial",
+          "to": "initial climb"
+        }
+      ],
+      "states": [
+        {
+          "category": "processing",
+          "id": "nod_departureRoute",
+          "name": "on the departure route"
+        },
+        {
+          "final": true,
+          "id": "nod_handedOff",
+          "name": "handed off",
+          "outcome": "success"
+        },
+        {
+          "category": "hold",
+          "id": "nod_holdingPattern",
+          "name": "holding"
+        },
+        {
+          "category": "processing",
+          "id": "nod_initialClimb",
+          "name": "initial climb"
+        }
+      ],
+      "subject": "flight.climb",
+      "transitions": [
+        {
+          "from": "initial:nod_climbStart",
+          "id": "edg_e37",
+          "to": "initial climb"
+        },
+        {
+          "from": "initial climb",
+          "id": "edg_e38",
+          "intent": "happy",
+          "on": [
+            "route.joined"
+          ],
+          "to": "on the departure route"
+        },
+        {
+          "by": "Air traffic control",
+          "from": "on the departure route",
+          "id": "edg_e39",
+          "intent": "happy",
+          "on": [
+            "handoff.accepted"
+          ],
+          "to": "handed off"
+        },
+        {
+          "by": "Air traffic control",
+          "from": "on the departure route",
+          "id": "edg_e3a",
+          "on": [
+            "hold.instructed"
+          ],
+          "to": "holding"
+        },
+        {
+          "by": "Air traffic control",
+          "from": "holding",
+          "id": "edg_e3b",
+          "on": [
+            "hold.released"
+          ],
+          "to": "on the departure route"
+        }
+      ],
+      "within": {
+        "machine": "cnv_flightLifecycle",
+        "state": "airborne"
+      }
+    },
+    {
+      "completeness": "partial",
+      "id": "cnv_disruptionDesk",
+      "name": "Disruption desk",
+      "owner": "nod_irregularOps",
+      "starts": [
+        {
+          "id": "nod_disruptionStart",
+          "kind": "initial",
+          "to": "open"
+        }
+      ],
+      "states": [
+        {
+          "category": "processing",
+          "id": "nod_assessing",
+          "name": "assessing"
+        },
+        {
+          "final": true,
+          "id": "nod_disruptionClosed",
+          "name": "closed",
+          "outcome": "success"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_disruptionOpen",
+          "name": "open"
+        },
+        {
+          "category": "processing",
+          "id": "nod_mitigating",
+          "name": "mitigating"
+        }
+      ],
+      "subject": "disruption.status",
+      "transitions": [
+        {
+          "from": "initial:nod_disruptionStart",
+          "id": "edg_e5a",
+          "to": "open"
+        },
+        {
+          "from": "open",
+          "id": "edg_e5b",
+          "on": [
+            "disruption.reported"
+          ],
+          "to": "assessing"
+        },
+        {
+          "from": "assessing",
+          "id": "edg_e5c",
+          "on": [
+            "disruption.major"
+          ],
+          "to": "mitigating"
+        },
+        {
+          "from": "assessing",
+          "id": "edg_e5d",
+          "on": [
+            "disruption.local"
+          ],
+          "to": "mitigating"
+        },
+        {
+          "from": "mitigating",
+          "id": "edg_e5e",
+          "on": [
+            "disruption.resolved"
+          ],
+          "to": "closed"
+        }
+      ]
+    },
+    {
+      "completeness": "partial",
+      "id": "cnv_emergencyDesk",
+      "name": "Emergency desk",
+      "owner": "nod_emergencyResponse",
+      "starts": [
+        {
+          "id": "nod_incidentStart",
+          "kind": "initial",
+          "to": "local standby"
+        }
+      ],
+      "states": [
+        {
+          "category": "processing",
+          "id": "nod_aircraftAccident",
+          "name": "aircraft accident"
+        },
+        {
+          "category": "processing",
+          "id": "nod_fullEmergency",
+          "name": "full emergency"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_localStandby",
+          "name": "local standby"
+        },
+        {
+          "final": true,
+          "id": "nod_standDown",
+          "name": "stand down",
+          "outcome": "success"
+        }
+      ],
+      "subject": "incident.alert",
+      "transitions": [
+        {
+          "from": "initial:nod_incidentStart",
+          "id": "edg_e1ct",
+          "to": "local standby"
+        },
+        {
+          "by": "Air traffic control",
+          "from": "local standby",
+          "id": "edg_e1cu",
+          "on": [
+            "emergency.escalated"
+          ],
+          "to": "full emergency"
+        },
+        {
+          "by": "Air traffic control",
+          "from": "full emergency",
+          "id": "edg_e1cv",
+          "intent": "failure",
+          "on": [
+            "aircraft.accident"
+          ],
+          "to": "aircraft accident"
+        },
+        {
+          "from": "local standby",
+          "id": "edg_e1cw",
+          "intent": "happy",
+          "on": [
+            "aircraft.landedSafely"
+          ],
+          "to": "stand down"
+        },
+        {
+          "from": "full emergency",
+          "id": "edg_e1cx",
+          "intent": "happy",
+          "on": [
+            "aircraft.landedSafely"
+          ],
+          "to": "stand down"
+        },
+        {
+          "from": "aircraft accident",
+          "id": "edg_e1cy",
+          "on": [
+            "emergency.closed"
+          ],
+          "to": "stand down"
+        }
+      ]
+    },
+    {
+      "completeness": "complete",
+      "id": "cnv_flightLifecycle",
+      "name": "Flight lifecycle",
+      "nodes": [
+        {
+          "except": [
+            "departed",
+            "airborne",
+            "diverted"
+          ],
+          "id": "nod_anyCancel",
+          "kind": "any",
+          "name": "any status"
+        },
+        {
+          "id": "nod_icingChoice",
+          "kind": "choice",
+          "name": "icing conditions?"
+        }
+      ],
+      "owner": "nod_flights",
+      "stage": "target",
+      "starts": [
+        {
+          "id": "nod_flightStart",
+          "kind": "initial",
+          "to": "scheduled"
+        },
+        {
+          "by": "Airline",
+          "id": "nod_publishFlight",
+          "kind": "entry",
+          "name": "POST /flights",
+          "to": "scheduled",
+          "via": "POST /flights"
+        }
+      ],
+      "states": [
+        {
+          "id": "nod_airborneFlight",
+          "inner": {
+            "machine": "cnv_climbOut"
+          },
+          "name": "airborne"
+        },
+        {
+          "category": "processing",
+          "id": "nod_boardingFlight",
+          "inner": {
+            "machine": "cnv_boardingPhases"
+          },
+          "name": "boarding"
+        },
+        {
+          "final": true,
+          "id": "nod_cancelledFlight",
+          "name": "cancelled",
+          "outcome": "failure"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_checkInClosed",
+          "name": "check-in closed"
+        },
+        {
+          "category": "processing",
+          "id": "nod_checkInOpen",
+          "name": "check-in open"
+        },
+        {
+          "category": "processing",
+          "id": "nod_deIcingFlight",
+          "name": "de-icing"
+        },
+        {
+          "category": "hold",
+          "id": "nod_delayedFlight",
+          "name": "delayed"
+        },
+        {
+          "final": true,
+          "id": "nod_departed",
+          "name": "departed",
+          "outcome": "success"
+        },
+        {
+          "final": true,
+          "id": "nod_divertedFlight",
+          "name": "diverted",
+          "outcome": "stopped"
+        },
+        {
+          "id": "nod_doorsClosed",
+          "name": "doors closed"
+        },
+        {
+          "id": "nod_pushedBack",
+          "name": "pushed back"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_readyForPushback",
+          "name": "ready for pushback"
+        },
+        {
+          "category": "hold",
+          "id": "nod_returnToStand",
+          "name": "returning to stand"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_scheduled",
+          "name": "scheduled"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_slotConfirmed",
+          "name": "slot confirmed"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_standAllocated",
+          "name": "stand allocated"
+        },
+        {
+          "category": "processing",
+          "id": "nod_taxiingOut",
+          "name": "taxiing out"
+        }
+      ],
+      "subject": "flight.status",
+      "transitions": [
+        {
+          "from": "initial:nod_flightStart",
+          "id": "edg_e20",
+          "to": "scheduled"
+        },
+        {
+          "actions": [
+            "Publish to displays"
+          ],
+          "from": "entry:nod_publishFlight",
+          "id": "edg_e21",
+          "receivedBy": {
+            "Publish to displays": "Operations database"
+          },
+          "to": "scheduled"
+        },
+        {
+          "by": "Network manager",
+          "from": "scheduled",
+          "id": "edg_e22",
+          "intent": "happy",
+          "on": [
+            "ctot.issued"
+          ],
+          "to": "slot confirmed"
+        },
+        {
+          "from": "slot confirmed",
+          "id": "edg_e23",
+          "internal": true,
+          "on": [
+            "ctot.revised"
+          ],
+          "to": "slot confirmed"
+        },
+        {
+          "by": "Airport operations centre",
+          "from": "slot confirmed",
+          "id": "edg_e24",
+          "intent": "happy",
+          "on": [
+            "stand.allocated"
+          ],
+          "to": "stand allocated"
+        },
+        {
+          "actions": [
+            "Publish to displays",
+            "assign context.gate"
+          ],
+          "after": {
+            "duration": "PT3H",
+            "timer": "check-in opens"
+          },
+          "from": "stand allocated",
+          "id": "edg_e25",
+          "intent": "happy",
+          "receivedBy": {
+            "Publish to displays": "Operations database"
+          },
+          "to": "check-in open"
+        },
+        {
+          "after": {
+            "duration": "PT2H20M",
+            "timer": "check-in closes"
+          },
+          "from": "check-in open",
+          "id": "edg_e26",
+          "intent": "happy",
+          "to": "check-in closed"
+        },
+        {
+          "by": "Ground handler",
+          "from": "check-in closed",
+          "id": "edg_e27",
+          "intent": "happy",
+          "on": [
+            "boarding.started"
+          ],
+          "to": "boarding"
+        },
+        {
+          "by": "Cabin crew",
+          "from": "boarding",
+          "id": "edg_e28",
+          "intent": "happy",
+          "on": [
+            "doors.closed"
+          ],
+          "to": "doors closed"
+        },
+        {
+          "always": true,
+          "from": "doors closed",
+          "id": "edg_e29",
+          "to": "choice:nod_icingChoice"
+        },
+        {
+          "actions": [
+            "Request de-icing"
+          ],
+          "from": "choice:nod_icingChoice",
+          "guard": {
+            "name": "Icing conditions"
+          },
+          "id": "edg_e2a",
+          "receivedBy": {
+            "Request de-icing": "Ground handler"
+          },
+          "to": "de-icing"
+        },
+        {
+          "else": true,
+          "from": "choice:nod_icingChoice",
+          "id": "edg_e2b",
+          "intent": "happy",
+          "to": "ready for pushback"
+        },
+        {
+          "by": "Ground handler",
+          "from": "de-icing",
+          "id": "edg_e2c",
+          "on": [
+            "deicing.completed"
+          ],
+          "to": "ready for pushback"
+        },
+        {
+          "by": "Air traffic control",
+          "from": "ready for pushback",
+          "id": "edg_e2d",
+          "intent": "happy",
+          "on": [
+            "aircraft.offBlock"
+          ],
+          "to": "pushed back"
+        },
+        {
+          "by": "Pilot in command",
+          "from": "pushed back",
+          "id": "edg_e2e",
+          "intent": "happy",
+          "on": [
+            "taxi.started"
+          ],
+          "to": "taxiing out"
+        },
+        {
+          "by": "Air traffic control",
+          "from": "taxiing out",
+          "id": "edg_e2f",
+          "intent": "happy",
+          "on": [
+            "aircraft.airborne"
+          ],
+          "to": "airborne"
+        },
+        {
+          "by": "Pilot in command",
+          "from": "taxiing out",
+          "id": "edg_e2g",
+          "intent": "failure",
+          "on": [
+            "aircraft.returning"
+          ],
+          "to": "returning to stand"
+        },
+        {
+          "after": {
+            "duration": "PT40M",
+            "timer": "taxi-out limit"
+          },
+          "from": "taxiing out",
+          "id": "edg_e2h",
+          "to": "delayed"
+        },
+        {
+          "actions": [
+            "Notify passengers"
+          ],
+          "flows": {
+            "Notify passengers": "Notify passengers"
+          },
+          "from": "returning to stand",
+          "id": "edg_e2i",
+          "on": [
+            "aircraft.onBlock"
+          ],
+          "receivedBy": {
+            "Notify passengers": "Operations database"
+          },
+          "to": "stand allocated"
+        },
+        {
+          "actions": [
+            "Charge the movement"
+          ],
+          "done": true,
+          "from": "airborne",
+          "id": "edg_e2j",
+          "intent": "happy",
+          "receivedBy": {
+            "Charge the movement": "Payment provider"
+          },
+          "to": "departed"
+        },
+        {
+          "by": "Pilot in command",
+          "from": "airborne",
+          "id": "edg_e2k",
+          "intent": "failure",
+          "on": [
+            "flight.diverted"
+          ],
+          "to": "diverted"
+        },
+        {
+          "actions": [
+            "Notify passengers"
+          ],
+          "flows": {
+            "Notify passengers": "Notify passengers"
+          },
+          "from": "scheduled",
+          "id": "edg_e2l",
+          "on": [
+            "flight.delayed"
+          ],
+          "receivedBy": {
+            "Notify passengers": "Operations database"
+          },
+          "to": "delayed"
+        },
+        {
+          "actions": [
+            "Notify passengers"
+          ],
+          "flows": {
+            "Notify passengers": "Notify passengers"
+          },
+          "from": "slot confirmed",
+          "id": "edg_e2m",
+          "on": [
+            "flight.delayed"
+          ],
+          "receivedBy": {
+            "Notify passengers": "Operations database"
+          },
+          "to": "delayed"
+        },
+        {
+          "actions": [
+            "Notify passengers"
+          ],
+          "flows": {
+            "Notify passengers": "Notify passengers"
+          },
+          "from": "stand allocated",
+          "id": "edg_e2n",
+          "on": [
+            "flight.delayed"
+          ],
+          "receivedBy": {
+            "Notify passengers": "Operations database"
+          },
+          "to": "delayed"
+        },
+        {
+          "actions": [
+            "Notify passengers"
+          ],
+          "flows": {
+            "Notify passengers": "Notify passengers"
+          },
+          "from": "check-in open",
+          "id": "edg_e2o",
+          "on": [
+            "flight.delayed"
+          ],
+          "receivedBy": {
+            "Notify passengers": "Operations database"
+          },
+          "to": "delayed"
+        },
+        {
+          "actions": [
+            "Notify passengers"
+          ],
+          "flows": {
+            "Notify passengers": "Notify passengers"
+          },
+          "from": "check-in closed",
+          "id": "edg_e2p",
+          "on": [
+            "flight.delayed"
+          ],
+          "receivedBy": {
+            "Notify passengers": "Operations database"
+          },
+          "to": "delayed"
+        },
+        {
+          "actions": [
+            "Publish to displays"
+          ],
+          "by": "Network manager",
+          "from": "delayed",
+          "id": "edg_e2q",
+          "on": [
+            "ctot.revised"
+          ],
+          "receivedBy": {
+            "Publish to displays": "Operations database"
+          },
+          "to": "slot confirmed"
+        },
+        {
+          "actions": [
+            "Notify passengers",
+            "Release the stand"
+          ],
+          "by": "Airline",
+          "flows": {
+            "Notify passengers": "Notify passengers"
+          },
+          "from": "any:nod_anyCancel",
+          "id": "edg_e2r",
+          "intent": "failure",
+          "on": [
+            "flight.cancelled"
+          ],
+          "receivedBy": {
+            "Notify passengers": "Operations database",
+            "Release the stand": "Airport operations centre"
+          },
+          "to": "cancelled"
+        }
+      ]
+    },
+    {
+      "completeness": "partial",
+      "id": "cnv_lostItem",
+      "name": "Lost item",
+      "owner": "nod_lostAndFound",
+      "stage": "target",
+      "starts": [
+        {
+          "id": "nod_lostStart",
+          "kind": "initial",
+          "to": "reported"
+        }
+      ],
+      "states": [
+        {
+          "category": "processing",
+          "id": "nod_matched",
+          "name": "matched"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_reported",
+          "name": "reported"
+        },
+        {
+          "final": true,
+          "id": "nod_returned",
+          "name": "returned",
+          "outcome": "success"
+        },
+        {
+          "final": true,
+          "id": "nod_unclaimed",
+          "name": "unclaimed",
+          "outcome": "stopped"
+        }
+      ],
+      "subject": "item.status",
+      "transitions": [
+        {
+          "from": "initial:nod_lostStart",
+          "id": "edg_emy",
+          "to": "reported"
+        },
+        {
+          "from": "reported",
+          "id": "edg_emz",
+          "on": [
+            "item.matched"
+          ],
+          "to": "matched"
+        },
+        {
+          "from": "matched",
+          "id": "edg_en0",
+          "on": [
+            "item.collected"
+          ],
+          "to": "returned"
+        },
+        {
+          "after": {
+            "duration": "P90D",
+            "timer": "keep for"
+          },
+          "from": "reported",
+          "id": "edg_en1",
+          "to": "unclaimed"
+        }
+      ]
+    },
+    {
+      "completeness": "partial",
+      "id": "cnv_parkingStay",
+      "name": "Parking stay",
+      "owner": "nod_parking",
+      "starts": [
+        {
+          "id": "nod_stayStart",
+          "kind": "initial",
+          "to": "entered"
+        }
+      ],
+      "states": [
+        {
+          "category": "waiting",
+          "id": "nod_entered",
+          "name": "entered"
+        },
+        {
+          "final": true,
+          "id": "nod_exited",
+          "name": "exited",
+          "outcome": "success"
+        },
+        {
+          "category": "hold",
+          "id": "nod_overstay",
+          "name": "overstayed"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_paid",
+          "name": "paid"
+        }
+      ],
+      "subject": "stay.status",
+      "transitions": [
+        {
+          "from": "initial:nod_stayStart",
+          "id": "edg_e1b9",
+          "to": "entered"
+        },
+        {
+          "from": "entered",
+          "id": "edg_e1ba",
+          "on": [
+            "stay.paid"
+          ],
+          "to": "paid"
+        },
+        {
+          "from": "paid",
+          "id": "edg_e1bb",
+          "on": [
+            "stay.exited"
+          ],
+          "to": "exited"
+        },
+        {
+          "after": {
+            "duration": "PT20M",
+            "timer": "grace to leave"
+          },
+          "from": "paid",
+          "id": "edg_e1bc",
+          "to": "overstayed"
+        },
+        {
+          "from": "overstayed",
+          "id": "edg_e1bd",
+          "on": [
+            "stay.paid"
+          ],
+          "to": "paid"
+        }
+      ]
+    },
+    {
+      "completeness": "partial",
+      "id": "cnv_passengerJourney",
+      "name": "Passenger journey",
+      "nodes": [
+        {
+          "id": "nod_international",
+          "kind": "choice",
+          "name": "leaving the Schengen area?"
+        }
+      ],
+      "owner": "nod_passengers",
+      "starts": [
+        {
+          "id": "nod_journeyStart",
+          "kind": "initial",
+          "to": "booked"
+        }
+      ],
+      "states": [
+        {
+          "category": "waiting",
+          "id": "nod_airside",
+          "name": "airside"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_atGate",
+          "name": "at the gate"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_bagDropped",
+          "name": "bag dropped"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_booked",
+          "name": "booked"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_borderPassed",
+          "name": "border passed"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_checkedIn",
+          "name": "checked in"
+        },
+        {
+          "final": true,
+          "id": "nod_deniedBoarding",
+          "name": "denied boarding",
+          "outcome": "stopped"
+        },
+        {
+          "final": true,
+          "id": "nod_noShow",
+          "name": "no-show",
+          "outcome": "failure"
+        },
+        {
+          "final": true,
+          "id": "nod_onBoard",
+          "name": "on board",
+          "outcome": "success"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_screened",
+          "name": "screened"
+        }
+      ],
+      "subject": "journey.stage",
+      "transitions": [
+        {
+          "from": "initial:nod_journeyStart",
+          "id": "edg_e1aw",
+          "to": "booked"
+        },
+        {
+          "from": "booked",
+          "id": "edg_e1ax",
+          "intent": "happy",
+          "on": [
+            "passenger.checkedIn"
+          ],
+          "to": "checked in"
+        },
+        {
+          "from": "checked in",
+          "id": "edg_e1ay",
+          "on": [
+            "bag.dropped"
+          ],
+          "to": "bag dropped"
+        },
+        {
+          "from": "checked in",
+          "id": "edg_e1az",
+          "on": [
+            "passenger.screened"
+          ],
+          "to": "screened"
+        },
+        {
+          "from": "bag dropped",
+          "id": "edg_e1b0",
+          "intent": "happy",
+          "on": [
+            "passenger.screened"
+          ],
+          "to": "screened"
+        },
+        {
+          "always": true,
+          "from": "screened",
+          "id": "edg_e1b1",
+          "to": "choice:nod_international"
+        },
+        {
+          "from": "choice:nod_international",
+          "guard": {
+            "text": "the destination is outside the Schengen area"
+          },
+          "id": "edg_e1b2",
+          "to": "border passed"
+        },
+        {
+          "else": true,
+          "from": "choice:nod_international",
+          "id": "edg_e1b3",
+          "intent": "happy",
+          "to": "airside"
+        },
+        {
+          "from": "border passed",
+          "id": "edg_e1b4",
+          "on": [
+            "border.cleared"
+          ],
+          "to": "airside"
+        },
+        {
+          "from": "airside",
+          "id": "edg_e1b5",
+          "intent": "happy",
+          "on": [
+            "passenger.atGate"
+          ],
+          "to": "at the gate"
+        },
+        {
+          "from": "at the gate",
+          "id": "edg_e1b6",
+          "intent": "happy",
+          "on": [
+            "passenger.boarded"
+          ],
+          "to": "on board"
+        },
+        {
+          "by": "Airline",
+          "from": "at the gate",
+          "id": "edg_e1b7",
+          "intent": "failure",
+          "on": [
+            "boarding.denied"
+          ],
+          "to": "denied boarding"
+        },
+        {
+          "from": "airside",
+          "id": "edg_e1b8",
+          "intent": "failure",
+          "on": [
+            "gate.closed"
+          ],
+          "to": "no-show"
+        }
+      ]
+    },
+    {
+      "completeness": "complete",
+      "id": "cnv_securityLane",
+      "name": "Security lane",
+      "owner": "nod_laneRecords",
+      "starts": [
+        {
+          "id": "nod_laneStart",
+          "kind": "initial",
+          "to": "closed"
+        }
+      ],
+      "states": [
+        {
+          "category": "hold",
+          "id": "nod_laneAlarm",
+          "inner": {
+            "machine": "cnv_alarmResolution"
+          },
+          "name": "alarm"
+        },
+        {
+          "category": "hold",
+          "id": "nod_laneBusy",
+          "name": "queue over 10 min"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_laneClosed",
+          "name": "closed"
+        },
+        {
+          "category": "processing",
+          "id": "nod_laneOpen",
+          "name": "open"
+        },
+        {
+          "category": "processing",
+          "id": "nod_laneOpening",
+          "name": "opening"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_lanePaused",
+          "name": "paused"
+        }
+      ],
+      "subject": "lane.status",
+      "transitions": [
+        {
+          "from": "initial:nod_laneStart",
+          "id": "edg_e19y",
+          "to": "closed"
+        },
+        {
+          "by": "Security screening",
+          "from": "closed",
+          "id": "edg_e19z",
+          "intent": "happy",
+          "on": [
+            "lane.staffed"
+          ],
+          "to": "opening"
+        },
+        {
+          "from": "opening",
+          "id": "edg_e1a0",
+          "intent": "happy",
+          "on": [
+            "lane.selfTested"
+          ],
+          "to": "open"
+        },
+        {
+          "from": "open",
+          "id": "edg_e1a1",
+          "on": [
+            "queue.long"
+          ],
+          "to": "queue over 10 min"
+        },
+        {
+          "from": "queue over 10 min",
+          "id": "edg_e1a2",
+          "on": [
+            "queue.normal"
+          ],
+          "to": "open"
+        },
+        {
+          "from": "open",
+          "id": "edg_e1a3",
+          "on": [
+            "screening.alarm"
+          ],
+          "to": "alarm"
+        },
+        {
+          "from": "queue over 10 min",
+          "id": "edg_e1a4",
+          "on": [
+            "screening.alarm"
+          ],
+          "to": "alarm"
+        },
+        {
+          "done": true,
+          "from": "alarm",
+          "id": "edg_e1a5",
+          "to": "open"
+        },
+        {
+          "by": "Security screening",
+          "from": "open",
+          "id": "edg_e1a6",
+          "on": [
+            "lane.break"
+          ],
+          "to": "paused"
+        },
+        {
+          "after": {
+            "duration": "PT15M",
+            "timer": "break"
+          },
+          "from": "paused",
+          "id": "edg_e1a7",
+          "to": "open"
+        },
+        {
+          "by": "Security screening",
+          "from": "open",
+          "id": "edg_e1a8",
+          "on": [
+            "lane.closed"
+          ],
+          "to": "closed"
+        }
+      ]
+    },
+    {
+      "completeness": "complete",
+      "definition": "def_standLifecycle",
+      "id": "cnv_standLifecycle",
+      "name": "Stand lifecycle",
+      "nodes": [
+        {
+          "except": [
+            "out of service"
+          ],
+          "id": "nod_standAny",
+          "kind": "any"
+        }
+      ],
+      "owner": "def_standLifecycle",
+      "starts": [
+        {
+          "id": "nod_standStart",
+          "kind": "initial",
+          "to": "free"
+        }
+      ],
+      "states": [
+        {
+          "category": "hold",
+          "id": "nod_standBlocked",
+          "name": "out of service"
+        },
+        {
+          "category": "processing",
+          "id": "nod_standClearing",
+          "name": "clearing"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_standFree",
+          "name": "free"
+        },
+        {
+          "category": "processing",
+          "id": "nod_standOccupied",
+          "name": "occupied"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_standPlanned",
+          "name": "planned"
+        }
+      ],
+      "subject": "stand.status",
+      "transitions": [
+        {
+          "from": "initial:nod_standStart",
+          "id": "edg_et0",
+          "to": "free"
+        },
+        {
+          "from": "free",
+          "id": "edg_et1",
+          "intent": "happy",
+          "on": [
+            "stand.allocated"
+          ],
+          "to": "planned"
+        },
+        {
+          "from": "planned",
+          "id": "edg_et2",
+          "on": [
+            "stand.deallocated"
+          ],
+          "to": "free"
+        },
+        {
+          "from": "planned",
+          "id": "edg_et3",
+          "intent": "happy",
+          "on": [
+            "aircraft.onBlock"
+          ],
+          "to": "occupied"
+        },
+        {
+          "from": "occupied",
+          "id": "edg_et4",
+          "intent": "happy",
+          "on": [
+            "aircraft.offBlock"
+          ],
+          "to": "clearing"
+        },
+        {
+          "by": "Ground handler",
+          "from": "clearing",
+          "id": "edg_et5",
+          "intent": "happy",
+          "on": [
+            "stand.inspected"
+          ],
+          "to": "free"
+        },
+        {
+          "by": "Airport maintenance",
+          "from": "any:nod_standAny",
+          "id": "edg_et6",
+          "on": [
+            "stand.outOfService"
+          ],
+          "to": "out of service"
+        },
+        {
+          "by": "Airport maintenance",
+          "from": "out of service",
+          "id": "edg_et7",
+          "on": [
+            "stand.returned"
+          ],
+          "to": "free"
+        }
+      ]
+    },
+    {
+      "completeness": "complete",
+      "id": "cnv_turnaroundMilestones",
+      "name": "Turnaround milestones",
+      "owner": "nod_turnaround",
+      "regions": [
+        {
+          "id": "rgn_bagsRegion",
+          "name": "Bags and cargo"
+        },
+        {
+          "id": "rgn_cateringRegion",
+          "name": "Catering"
+        },
+        {
+          "id": "rgn_cleaningRegion",
+          "name": "Cleaning"
+        },
+        {
+          "id": "rgn_fuelRegion",
+          "name": "Fuel"
+        },
+        {
+          "id": "rgn_groundRegion",
+          "name": "Ground power and water"
+        },
+        {
+          "id": "rgn_passengersRegion",
+          "name": "Passengers"
+        }
+      ],
+      "starts": [
+        {
+          "id": "nod_bagsRegionStart",
+          "kind": "initial",
+          "region": "Bags and cargo",
+          "to": "offloading"
+        },
+        {
+          "id": "nod_cateringRegionStart",
+          "kind": "initial",
+          "region": "Catering",
+          "to": "truck at the door"
+        },
+        {
+          "id": "nod_cleaningRegionStart",
+          "kind": "initial",
+          "region": "Cleaning",
+          "to": "cleaning"
+        },
+        {
+          "id": "nod_fuelRegionStart",
+          "kind": "initial",
+          "region": "Fuel",
+          "to": "awaiting the truck"
+        },
+        {
+          "id": "nod_groundRegionStart",
+          "kind": "initial",
+          "region": "Ground power and water",
+          "to": "power connected"
+        },
+        {
+          "id": "nod_passengersRegionStart",
+          "kind": "initial",
+          "region": "Passengers",
+          "to": "deboarding"
+        }
+      ],
+      "states": [
+        {
+          "final": true,
+          "id": "nod_bagsRegionHoldsClosed",
+          "name": "holds closed",
+          "outcome": "success",
+          "region": "Bags and cargo"
+        },
+        {
+          "category": "processing",
+          "id": "nod_bagsRegionHoldsEmpty",
+          "name": "holds empty",
+          "region": "Bags and cargo"
+        },
+        {
+          "category": "processing",
+          "id": "nod_bagsRegionLoadingBags",
+          "name": "loading",
+          "region": "Bags and cargo"
+        },
+        {
+          "category": "processing",
+          "id": "nod_bagsRegionOffloadingBags",
+          "name": "offloading",
+          "region": "Bags and cargo"
+        },
+        {
+          "final": true,
+          "id": "nod_cateringRegionCatered",
+          "name": "catered",
+          "outcome": "success",
+          "region": "Catering"
+        },
+        {
+          "category": "processing",
+          "id": "nod_cateringRegionCateringArrived",
+          "name": "truck at the door",
+          "region": "Catering"
+        },
+        {
+          "final": true,
+          "id": "nod_cleaningRegionCleaned",
+          "name": "cleaned",
+          "outcome": "success",
+          "region": "Cleaning"
+        },
+        {
+          "category": "processing",
+          "id": "nod_cleaningRegionCleaningCabin",
+          "name": "cleaning",
+          "region": "Cleaning"
+        },
+        {
+          "category": "processing",
+          "id": "nod_fuelRegionAwaitingFuel",
+          "name": "awaiting the truck",
+          "region": "Fuel"
+        },
+        {
+          "final": true,
+          "id": "nod_fuelRegionFuelled",
+          "name": "fuelled",
+          "outcome": "success",
+          "region": "Fuel"
+        },
+        {
+          "category": "processing",
+          "id": "nod_fuelRegionFuelling",
+          "name": "fuelling",
+          "region": "Fuel"
+        },
+        {
+          "category": "processing",
+          "id": "nod_groundRegionGpuConnected",
+          "name": "power connected",
+          "region": "Ground power and water"
+        },
+        {
+          "final": true,
+          "id": "nod_groundRegionGpuDisconnected",
+          "name": "power disconnected",
+          "outcome": "success",
+          "region": "Ground power and water"
+        },
+        {
+          "category": "processing",
+          "id": "nod_groundRegionWaterServiced",
+          "name": "water serviced",
+          "region": "Ground power and water"
+        },
+        {
+          "category": "processing",
+          "id": "nod_passengersRegionCabinEmpty",
+          "name": "cabin empty",
+          "region": "Passengers"
+        },
+        {
+          "final": true,
+          "id": "nod_passengersRegionCabinReady",
+          "name": "cabin ready",
+          "outcome": "success",
+          "region": "Passengers"
+        },
+        {
+          "category": "processing",
+          "id": "nod_passengersRegionDeboarding",
+          "name": "deboarding",
+          "region": "Passengers"
+        }
+      ],
+      "subject": "turnaround.milestones",
+      "transitions": [
+        {
+          "actions": [
+            "Run the turnaround"
+          ],
+          "from": "initial:nod_passengersRegionStart",
+          "id": "edg_e3c",
+          "receivedBy": {
+            "Run the turnaround": "Ground handler"
+          },
+          "region": "Passengers",
+          "to": "deboarding"
+        },
+        {
+          "from": "deboarding",
+          "id": "edg_e3d",
+          "intent": "happy",
+          "on": [
+            "deboarding.completed"
+          ],
+          "region": "Passengers",
+          "to": "cabin empty"
+        },
+        {
+          "from": "cabin empty",
+          "id": "edg_e3e",
+          "intent": "happy",
+          "on": [
+            "cabin.ready"
+          ],
+          "region": "Passengers",
+          "to": "cabin ready"
+        },
+        {
+          "from": "initial:nod_bagsRegionStart",
+          "id": "edg_e3f",
+          "region": "Bags and cargo",
+          "to": "offloading"
+        },
+        {
+          "from": "offloading",
+          "id": "edg_e3g",
+          "intent": "happy",
+          "on": [
+            "offload.completed"
+          ],
+          "region": "Bags and cargo",
+          "to": "holds empty"
+        },
+        {
+          "from": "holds empty",
+          "id": "edg_e3h",
+          "intent": "happy",
+          "on": [
+            "loading.started"
+          ],
+          "region": "Bags and cargo",
+          "to": "loading"
+        },
+        {
+          "from": "loading",
+          "id": "edg_e3i",
+          "intent": "happy",
+          "on": [
+            "holds.closed"
+          ],
+          "region": "Bags and cargo",
+          "to": "holds closed"
+        },
+        {
+          "from": "initial:nod_fuelRegionStart",
+          "id": "edg_e3j",
+          "region": "Fuel",
+          "to": "awaiting the truck"
+        },
+        {
+          "from": "awaiting the truck",
+          "id": "edg_e3k",
+          "intent": "happy",
+          "on": [
+            "fuel.started"
+          ],
+          "region": "Fuel",
+          "to": "fuelling"
+        },
+        {
+          "from": "fuelling",
+          "id": "edg_e3l",
+          "intent": "happy",
+          "on": [
+            "fuel.completed"
+          ],
+          "region": "Fuel",
+          "to": "fuelled"
+        },
+        {
+          "from": "initial:nod_cateringRegionStart",
+          "id": "edg_e3m",
+          "region": "Catering",
+          "to": "truck at the door"
+        },
+        {
+          "from": "truck at the door",
+          "id": "edg_e3n",
+          "intent": "happy",
+          "on": [
+            "catering.completed"
+          ],
+          "region": "Catering",
+          "to": "catered"
+        },
+        {
+          "from": "initial:nod_cleaningRegionStart",
+          "id": "edg_e3o",
+          "region": "Cleaning",
+          "to": "cleaning"
+        },
+        {
+          "from": "cleaning",
+          "id": "edg_e3p",
+          "intent": "happy",
+          "on": [
+            "cleaning.completed"
+          ],
+          "region": "Cleaning",
+          "to": "cleaned"
+        },
+        {
+          "from": "initial:nod_groundRegionStart",
+          "id": "edg_e3q",
+          "region": "Ground power and water",
+          "to": "power connected"
+        },
+        {
+          "from": "power connected",
+          "id": "edg_e3r",
+          "intent": "happy",
+          "on": [
+            "water.completed"
+          ],
+          "region": "Ground power and water",
+          "to": "water serviced"
+        },
+        {
+          "from": "water serviced",
+          "id": "edg_e3s",
+          "intent": "happy",
+          "on": [
+            "gpu.disconnected"
+          ],
+          "region": "Ground power and water",
+          "to": "power disconnected"
+        }
+      ]
+    },
+    {
+      "completeness": "complete",
+      "id": "cnv_workOrder",
+      "name": "Work order",
+      "owner": "nod_workOrders",
+      "starts": [
+        {
+          "id": "nod_workStart",
+          "kind": "initial",
+          "to": "raised"
+        }
+      ],
+      "states": [
+        {
+          "category": "hold",
+          "id": "nod_awaitingParts",
+          "name": "awaiting parts"
+        },
+        {
+          "category": "processing",
+          "id": "nod_inProgress",
+          "name": "in progress"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_raised",
+          "name": "raised"
+        },
+        {
+          "category": "waiting",
+          "id": "nod_triaged",
+          "name": "triaged"
+        },
+        {
+          "final": true,
+          "id": "nod_workDone",
+          "name": "done",
+          "outcome": "success"
+        },
+        {
+          "final": true,
+          "id": "nod_workRejected",
+          "name": "rejected",
+          "outcome": "stopped"
+        }
+      ],
+      "subject": "workOrder.status",
+      "transitions": [
+        {
+          "from": "initial:nod_workStart",
+          "id": "edg_e1cm",
+          "to": "raised"
+        },
+        {
+          "by": "Airport maintenance",
+          "from": "raised",
+          "id": "edg_e1cn",
+          "intent": "happy",
+          "on": [
+            "work.triaged"
+          ],
+          "to": "triaged"
+        },
+        {
+          "by": "Airport maintenance",
+          "from": "raised",
+          "id": "edg_e1co",
+          "on": [
+            "work.rejected"
+          ],
+          "to": "rejected"
+        },
+        {
+          "from": "triaged",
+          "id": "edg_e1cp",
+          "intent": "happy",
+          "on": [
+            "work.started"
+          ],
+          "to": "in progress"
+        },
+        {
+          "from": "in progress",
+          "id": "edg_e1cq",
+          "on": [
+            "work.partsNeeded"
+          ],
+          "to": "awaiting parts"
+        },
+        {
+          "from": "awaiting parts",
+          "id": "edg_e1cr",
+          "on": [
+            "work.partsArrived"
+          ],
+          "to": "in progress"
+        },
+        {
+          "actions": [
+            "emit stand.returned"
+          ],
+          "from": "in progress",
+          "id": "edg_e1cs",
+          "intent": "happy",
+          "on": [
+            "work.completed"
+          ],
+          "to": "done"
+        }
+      ]
+    }
+  ],
+  "source": {
+    "content": "cd57550dcc2cb728576599e0800d6cf622017af05d40158f822488beda61aae7",
+    "format": "1.3",
+    "name": "Airport operations",
+    "project": "prj_airportOperations"
+  },
+  "stale": [],
+  "vectors": [
+    {
+      "id": "scn_aBagFromTheDropToTheHold",
+      "kind": "machine",
+      "level": "cnv_bagLifecycle",
+      "name": "A bag from the drop to the hold",
+      "start": {
+        "at": "2026-10-01T06:00:00Z",
+        "expect": {
+          "active": [
+            "accepted"
+          ]
+        },
+        "fired": [
+          "edg_emf"
+        ]
+      },
+      "steps": [
+        {
+          "do": {
+            "event": "bag.inducted"
+          },
+          "expect": {
+            "active": [
+              "in the system"
+            ]
+          },
+          "fired": [
+            "edg_emh"
+          ]
+        },
+        {
+          "do": {
+            "event": "bag.screened"
+          },
+          "expect": {
+            "active": [
+              "level 3 review"
+            ]
+          },
+          "fired": [
+            "edg_emi",
+            "edg_emj",
+            "edg_eml"
+          ],
+          "given": [
+            {
+              "at": "cleared?",
+              "kind": "choice",
+              "value": "edg_eml"
+            }
+          ]
+        },
+        {
+          "do": {
+            "event": "bag.sorted"
+          },
+          "expect": {
+            "active": [
+              "level 3 review"
+            ]
+          }
+        },
+        {
+          "do": {
+            "event": "bag.loaded"
+          },
+          "expect": {
+            "active": [
+              "level 3 review"
+            ]
+          }
+        },
+        {
+          "do": {
+            "event": "aircraft.airborne"
+          },
+          "expect": {
+            "active": [
+              "level 3 review"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "scn_aDelayThenANewSlot",
+      "kind": "machine",
+      "level": "cnv_flightLifecycle",
+      "name": "A delay, then a new slot",
+      "start": {
+        "at": "2026-10-01T06:00:00Z",
+        "expect": {
+          "active": [
+            "scheduled"
+          ]
+        },
+        "fired": [
+          "edg_e20"
+        ]
+      },
+      "steps": [
+        {
+          "do": {
+            "event": "ctot.issued"
+          },
+          "expect": {
+            "active": [
+              "slot confirmed"
+            ]
+          },
+          "fired": [
+            "edg_e22"
+          ]
+        },
+        {
+          "do": {
+            "event": "stand.allocated"
+          },
+          "expect": {
+            "active": [
+              "stand allocated"
+            ]
+          },
+          "fired": [
+            "edg_e24"
+          ]
+        },
+        {
+          "do": {
+            "until": "2026-10-01T09:00:00Z",
+            "wait": "next"
+          },
+          "expect": {
+            "active": [
+              "check-in open"
+            ]
+          },
+          "fired": [
+            "edg_e25"
+          ]
+        },
+        {
+          "do": {
+            "event": "flight.delayed"
+          },
+          "expect": {
+            "active": [
+              "delayed"
+            ]
+          },
+          "fired": [
+            "edg_e2o"
+          ]
+        },
+        {
+          "do": {
+            "event": "ctot.revised"
+          },
+          "expect": {
+            "active": [
+              "slot confirmed"
+            ]
+          },
+          "fired": [
+            "edg_e2q"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scn_aDepartureOnTime",
+      "kind": "machine",
+      "level": "cnv_flightLifecycle",
+      "name": "A departure on time",
+      "start": {
+        "at": "2026-10-01T06:00:00Z",
+        "expect": {
+          "active": [
+            "scheduled"
+          ]
+        },
+        "fired": [
+          "edg_e20"
+        ]
+      },
+      "steps": [
+        {
+          "do": {
+            "event": "ctot.issued"
+          },
+          "expect": {
+            "active": [
+              "slot confirmed"
+            ]
+          },
+          "fired": [
+            "edg_e22"
+          ]
+        },
+        {
+          "do": {
+            "event": "stand.allocated"
+          },
+          "expect": {
+            "active": [
+              "stand allocated"
+            ]
+          },
+          "fired": [
+            "edg_e24"
+          ]
+        },
+        {
+          "do": {
+            "until": "2026-10-01T09:00:00Z",
+            "wait": "next"
+          },
+          "expect": {
+            "active": [
+              "check-in open"
+            ]
+          },
+          "fired": [
+            "edg_e25"
+          ]
+        },
+        {
+          "do": {
+            "until": "2026-10-01T11:20:00Z",
+            "wait": "next"
+          },
+          "expect": {
+            "active": [
+              "check-in closed"
+            ]
+          },
+          "fired": [
+            "edg_e26"
+          ]
+        },
+        {
+          "do": {
+            "event": "boarding.started"
+          },
+          "expect": {
+            "active": [
+              "boarding/priority"
+            ]
+          },
+          "fired": [
+            "edg_e27",
+            "edg_e2w"
+          ]
+        },
+        {
+          "do": {
+            "event": "doors.closed"
+          },
+          "expect": {
+            "active": [
+              "ready for pushback"
+            ]
+          },
+          "fired": [
+            "edg_e28",
+            "edg_e29",
+            "edg_e2b"
+          ],
+          "given": [
+            {
+              "at": "icing conditions?",
+              "kind": "choice",
+              "value": "edg_e2b"
+            }
+          ]
+        },
+        {
+          "do": {
+            "event": "aircraft.offBlock"
+          },
+          "expect": {
+            "active": [
+              "pushed back"
+            ]
+          },
+          "fired": [
+            "edg_e2d"
+          ]
+        },
+        {
+          "do": {
+            "event": "taxi.started"
+          },
+          "expect": {
+            "active": [
+              "taxiing out"
+            ]
+          },
+          "fired": [
+            "edg_e2e"
+          ]
+        },
+        {
+          "do": {
+            "event": "aircraft.airborne"
+          },
+          "expect": {
+            "active": [
+              "airborne/initial climb"
+            ]
+          },
+          "fired": [
+            "edg_e2f",
+            "edg_e37"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scn_aLaneInAlarm",
+      "kind": "machine",
+      "level": "cnv_securityLane",
+      "name": "A lane in alarm",
+      "start": {
+        "at": "2026-10-01T06:00:00Z",
+        "expect": {
+          "active": [
+            "closed"
+          ]
+        },
+        "fired": [
+          "edg_e19y"
+        ]
+      },
+      "steps": [
+        {
+          "do": {
+            "event": "lane.staffed"
+          },
+          "expect": {
+            "active": [
+              "opening"
+            ]
+          },
+          "fired": [
+            "edg_e19z"
+          ]
+        },
+        {
+          "do": {
+            "event": "lane.selfTested"
+          },
+          "expect": {
+            "active": [
+              "open"
+            ]
+          },
+          "fired": [
+            "edg_e1a0"
+          ]
+        },
+        {
+          "do": {
+            "event": "screening.alarm"
+          },
+          "expect": {
+            "active": [
+              "alarm/tray held"
+            ]
+          },
+          "fired": [
+            "edg_e1a3",
+            "edg_e1a9"
+          ]
+        },
+        {
+          "do": {
+            "event": "search.started"
+          },
+          "expect": {
+            "active": [
+              "alarm/hand search"
+            ]
+          },
+          "fired": [
+            "edg_e1aa"
+          ]
+        },
+        {
+          "do": {
+            "event": "search.clear"
+          },
+          "expect": {
+            "active": [
+              "open"
+            ]
+          },
+          "fired": [
+            "edg_e1ab",
+            "edg_e1a5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scn_aStandSDay",
+      "kind": "machine",
+      "level": "cnv_standLifecycle",
+      "name": "A stand's day",
+      "start": {
+        "at": "2026-10-01T06:00:00Z",
+        "expect": {
+          "active": [
+            "free"
+          ]
+        },
+        "fired": [
+          "edg_et0"
+        ]
+      },
+      "steps": [
+        {
+          "do": {
+            "event": "stand.allocated"
+          },
+          "expect": {
+            "active": [
+              "planned"
+            ]
+          },
+          "fired": [
+            "edg_et1"
+          ]
+        },
+        {
+          "do": {
+            "event": "aircraft.onBlock"
+          },
+          "expect": {
+            "active": [
+              "occupied"
+            ]
+          },
+          "fired": [
+            "edg_et3"
+          ]
+        },
+        {
+          "do": {
+            "event": "aircraft.offBlock"
+          },
+          "expect": {
+            "active": [
+              "clearing"
+            ]
+          },
+          "fired": [
+            "edg_et4"
+          ]
+        },
+        {
+          "do": {
+            "event": "stand.inspected"
+          },
+          "expect": {
+            "active": [
+              "free"
+            ]
+          },
+          "fired": [
+            "edg_et5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scn_theAirlineCancels",
+      "kind": "machine",
+      "level": "cnv_flightLifecycle",
+      "name": "The airline cancels",
+      "start": {
+        "at": "2026-10-01T06:00:00Z",
+        "expect": {
+          "active": [
+            "scheduled"
+          ]
+        },
+        "fired": [
+          "edg_e20"
+        ]
+      },
+      "steps": [
+        {
+          "do": {
+            "event": "ctot.issued"
+          },
+          "expect": {
+            "active": [
+              "slot confirmed"
+            ]
+          },
+          "fired": [
+            "edg_e22"
+          ]
+        },
+        {
+          "do": {
+            "event": "stand.allocated"
+          },
+          "expect": {
+            "active": [
+              "stand allocated"
+            ]
+          },
+          "fired": [
+            "edg_e24"
+          ]
+        },
+        {
+          "do": {
+            "event": "flight.cancelled"
+          },
+          "expect": {
+            "active": [
+              "cancelled"
+            ],
+            "ended": "done"
+          },
+          "fired": [
+            "edg_e2r"
+          ]
+        }
+      ]
+    }
+  ]
+}

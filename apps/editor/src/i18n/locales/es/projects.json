@@ -40,7 +40,9 @@
     "orderLifecycle": "Order lifecycle",
     "orderLifecycleHint": "Papeles, ciclo de vida, carriles, nivel mixto",
     "payoutBatch": "Payout batch",
-    "payoutBatchHint": "Una máquina cuya acción implementa un flujo, con un escenario"
+    "payoutBatchHint": "Una máquina cuya acción implementa un flujo, con un escenario",
+    "airportOperations": "Airport operations",
+    "airportOperationsHint": "El más grande: un aeropuerto de 42 niveles y 1.700 cajas, con todo tipo de nivel y elemento"
   },
   "new": {
     "title": "Nuevo proyecto",

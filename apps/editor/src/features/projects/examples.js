@@ -23,5 +23,11 @@ export const EXAMPLES = [
     projectId: "prj_payoutBatch",
     file: "payout-batch.sttw",
     load: () => import("../../../../../examples/payout-batch.sttw?raw").then(module => module.default)
+  },
+  {
+    id: "airportOperations",
+    projectId: "prj_airportOperations",
+    file: "airport-operations.sttw",
+    load: () => import("../../../../../examples/airport-operations.sttw?raw").then(module => module.default)
   }
 ];

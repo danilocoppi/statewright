@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="Statewright">
+<title>A departure on time · Airport operations</title>
+<style>
+
+:root {
+  --canvas: #fbfbfc;
+  --dot: #d8dbe1;
+  --surface: #ffffff;
+  --subtle: #f1f3f6;
+  --ink: #05060f;
+  --sub: #464849;
+  --muted: #696f72;
+  --hairline: #eceef2;
+  --control-border: #d9dce2;
+  --accent: #0a66c2;
+  --accent-soft: #eef4fb;
+  --halo: rgb(10 102 194 / 0.14);
+  --warning: #b45309;
+  --warning-soft: #fffbeb;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Consolas, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font: 400 14px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; color: inherit; }
+button:not(:disabled) { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.page {
+  display: grid;
+  grid-template-columns: minmax(320px, 26rem) minmax(0, 1fr);
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* The story: the scenario and its steps, each as it is told. */
+.story {
+  overflow-y: auto;
+  padding: 56px 32px 48px 40px;
+  background: var(--surface);
+  border-right: 1px solid var(--hairline);
+}
+.kicker {
+  margin: 0;
+  font: 500 10.5px/1.4 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+h1 {
+  margin: 12px 0 0;
+  font-size: 30px;
+  line-height: 1.16;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.description { margin-top: 14px; font-size: 15px; line-height: 1.55; color: var(--sub); }
+.description p { margin: 0 0 8px; }
+.description code { font: 0.92em var(--mono); }
+.description a { color: var(--accent); }
+.steps {
+  display: grid;
+  gap: 2px;
+  margin: 28px 0 0;
+  padding: 20px 0 0;
+  list-style: none;
+  border-top: 1px solid var(--hairline);
+}
+.step {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: baseline;
+  width: calc(100% + 32px);
+  margin: 0 -16px;
+  padding: 12px 16px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  text-align: left;
+  transition: background-color 160ms var(--ease);
+}
+.step:hover { background: var(--subtle); }
+.step[aria-current="step"] { background: var(--accent-soft); }
+.number { font: 500 13px/1.5 var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+.input { min-width: 0; overflow-wrap: anywhere; font: 400 13.5px/1.5 var(--mono); color: var(--ink); }
+.step[aria-current="step"] :is(.number, .input) { color: var(--accent); }
+.text { grid-column: 2; margin-top: 4px; font-size: 15px; line-height: 1.5; text-wrap: pretty; }
+.generated { color: var(--sub); }
+.answers { grid-column: 2; margin: 6px 0 0; padding: 0; list-style: none; font-size: 13px; color: var(--sub); }
+.step .answers { display: grid; }
+.stopped {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 13.5px;
+}
+
+/* The figure: the level the step is seen on, on the dotted ground, with the levels above it. */
+.view {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-width: 0;
+  min-height: 0;
+  background-color: var(--canvas);
+  background-image: radial-gradient(circle, var(--dot) 1.2px, transparent 1.4px);
+  background-size: 18px 18px;
+}
+.top { display: flex; align-items: flex-start; gap: 16px; padding: 28px 32px 0; }
+.heading { min-width: 0; margin-right: auto; }
+.crumbs { display: none; margin: 0 0 6px; font-size: 18px; letter-spacing: -0.01em; color: var(--muted); }
+.crumbs strong { font-weight: 600; color: var(--ink); }
+.trail { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; margin: 0; font-size: 15px; color: var(--sub); }
+.trail span:last-child { color: var(--ink); }
+.trail span + span::before { content: "›"; margin-right: 8px; color: var(--muted); }
+.ghost {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 500;
+}
+.ghost:hover { background: var(--subtle); }
+.ghost svg { width: 15px; height: 15px; }
+kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 5px;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  background: var(--surface);
+  font: 500 11px/1 var(--mono);
+  color: var(--sub);
+}
+.exit { display: none; }
+.figure { position: relative; min-height: 0; padding: 20px 32px; }
+.level { display: grid; place-items: center; width: 100%; height: 100%; margin: 0; }
+.level[hidden] { display: none; }
+.level svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: calc(var(--width) * 1.8px);
+  max-height: calc(var(--height) * 1.8px);
+}
+/* Core draws a figure on a white card; on the page it sits on the dotted ground. */
+.level svg > rect:first-of-type { fill: none; stroke: none; }
+.foot { display: flex; align-items: center; gap: 12px; padding: 0 32px 24px; font-size: 13px; color: var(--muted); }
+.foot .made { margin-right: auto; }
+.key {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--sub);
+}
+.key:hover:not(:disabled) { background: var(--subtle); color: var(--ink); }
+.key:disabled { opacity: 0.4; }
+.key svg { width: 14px; height: 14px; }
+
+/* The run on the figure: what is not part of it recedes; its marks are drawn over the figure, which stays Core's. */
+.figure [data-id] { transition: opacity 160ms var(--ease); }
+.figure.run [data-id]:not(.on) { opacity: 0.38; }
+.mark-halo { fill: none; stroke: var(--halo); stroke-width: 4; }
+.mark-ring { fill: none; stroke: var(--accent); stroke-width: 2; }
+.mark-ring.inside { stroke-width: 1.5; }
+.mark-left { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4 3; opacity: 0.45; }
+.mark-dot { fill: var(--accent); }
+.mark-count rect { fill: var(--accent); }
+.mark-count text { fill: var(--surface); font: 600 10px var(--mono); }
+.mark-pill rect { fill: var(--surface); stroke: var(--accent); }
+.mark-pill circle { fill: var(--accent); }
+.mark-pill text { fill: var(--accent); font: 400 11px var(--mono); }
+.mark-fired { fill: none; stroke: var(--accent); stroke-width: 1.6; }
+.mark-pulse { fill: none; stroke: var(--accent); stroke-width: 4; stroke-linecap: round; opacity: 0; }
+.mark-label rect { fill: var(--accent); }
+.mark-label text { fill: var(--surface); font: 500 10px var(--mono); }
+.mark-travel { fill: none; stroke: var(--accent); stroke-width: 2; }
+
+/* The caption card of the stage (mockup 05), shown while the page is presented. */
+.card {
+  position: absolute;
+  left: 50%;
+  bottom: 32px;
+  display: none;
+  width: min(760px, calc(100% - 48px));
+  padding: 22px 28px 18px;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid rgb(5 6 15 / 0.08);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgb(5 6 15 / 0.06), 0 12px 40px rgb(5 6 15 / 0.1);
+}
+.card-head { display: flex; align-items: center; gap: 12px; min-height: 28px; font-size: 14px; color: var(--sub); }
+.counter { font-variant-numeric: tabular-nums; }
+.pill {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  font: 400 14px/1.3 var(--mono);
+  color: var(--accent);
+}
+.pill:empty { display: none; }
+.clock { margin-left: auto; font-variant-numeric: tabular-nums; }
+.caption { margin: 14px 0 0; font-size: 23px; line-height: 1.42; letter-spacing: -0.012em; text-wrap: pretty; }
+.card .answers { margin-top: 8px; font-size: 14px; }
+.card .stops { margin: 12px 0 0; padding: 8px 12px; border-radius: 8px; background: var(--warning-soft); color: var(--warning); font-size: 13.5px; }
+.card .stops:empty { display: none; }
+.card-foot { display: flex; align-items: center; gap: 16px; margin-top: 20px; }
+.progress { display: flex; flex: 1; gap: 4px; }
+.progress span { flex: 1; height: 3px; border-radius: 2px; background: var(--hairline); transition: background-color 250ms var(--ease); }
+.progress span.done { background: var(--accent); }
+.arrows { display: flex; gap: 6px; }
+
+body.presenting .page { grid-template-columns: minmax(0, 1fr); }
+body.presenting .story, body.presenting .foot, body.presenting .present { display: none; }
+body.presenting .crumbs { display: block; }
+body.presenting .exit { display: inline-flex; }
+body.presenting .card { display: block; }
+body.presenting .top { padding: 36px 48px 0; }
+body.presenting .figure { padding: 24px 48px calc(var(--card, 200px) + 56px); }
+
+@media (max-width: 860px) {
+  .page { display: flex; flex-direction: column-reverse; height: auto; }
+  .story { overflow: visible; padding: 32px 24px 40px; border-right: 0; border-top: 1px solid var(--hairline); }
+  .view { height: 64vh; }
+  .top { padding: 20px 20px 0; }
+  .figure { padding: 12px 16px; }
+  .foot { padding: 0 20px 16px; }
+  body.presenting .view { height: 100vh; height: 100dvh; }
+  body.presenting .top { padding: 20px 20px 0; }
+  body.presenting .figure { padding: 12px 16px calc(var(--card, 200px) + 32px); }
+  .card { bottom: 16px; width: calc(100% - 24px); padding: 18px 20px 14px; }
+  .caption { font-size: 19px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .figure [data-id], .step, .progress span { transition: none; }
+}
+</style>
+</head>
+<body>
+<main class="page">
+<article class="story" aria-labelledby="sw-title">
+<p class="kicker">Airport operations · Scenario</p>
+<h1 id="sw-title">A departure on time</h1>
+<div class="description"><p>From the schedule to the hand-off, no ice, no delay.</p></div>
+<ol class="steps" aria-label="Steps">
+<li><button type="button" class="step" aria-current="step"><span class="number"></span><span class="input">Start</span><span class="text generated">Starts in scheduled.</span></button></li>
+<li><button type="button" class="step"><span class="number">1</span><span class="input">ctot.issued</span><span class="text generated">scheduled → slot confirmed. Network manager sends ctot.issued.</span></button></li>
+<li><button type="button" class="step"><span class="number">2</span><span class="input">stand.allocated</span><span class="text generated">slot confirmed → stand allocated. Airport operations centre sends stand.allocated.</span></button></li>
+<li><button type="button" class="step"><span class="number">3</span><span class="input">Until the next timer</span><span class="text generated">stand allocated → check-in open. Operations database receives Publish to displays. check-in opens falls due.</span></button></li>
+<li><button type="button" class="step"><span class="number">4</span><span class="input">Until the next timer</span><span class="text generated">check-in open → check-in closed. check-in closes falls due.</span></button></li>
+<li><button type="button" class="step"><span class="number">5</span><span class="input">boarding.started</span><span class="text generated">check-in closed → boarding. Ground handler sends boarding.started.</span></button></li>
+<li><button type="button" class="step"><span class="number">6</span><span class="input">doors.closed</span><span class="text generated">boarding → doors closed → icing conditions? → ready for pushback. Cabin crew sends doors.closed.</span><span class="answers"><span>Which way does icing conditions? go? Otherwise.</span></span></button></li>
+<li><button type="button" class="step"><span class="number">7</span><span class="input">aircraft.offBlock</span><span class="text generated">ready for pushback → pushed back. Air traffic control sends aircraft.offBlock.</span></button></li>
+<li><button type="button" class="step"><span class="number">8</span><span class="input">taxi.started</span><span class="text generated">pushed back → taxiing out. Pilot in command sends taxi.started.</span></button></li>
+<li><button type="button" class="step"><span class="number">9</span><span class="input">aircraft.airborne</span><span class="text generated">taxiing out → airborne. Air traffic control sends aircraft.airborne. taxi-out limit cancelled.</span></button></li>
+</ol>
+</article>
+<section class="view" aria-label="Diagram">
+<header class="top">
+<div class="heading">
+<p class="crumbs">Airport operations / <strong>A departure on time</strong></p>
+<p class="trail"><span>Flight lifecycle</span></p>
+</div>
+<button type="button" class="ghost present"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.75" y="2.25" width="12.5" height="8.75" rx="1.5"/><path d="M8 11v2.75M5.25 13.75h5.5"/><path d="M6.75 4.9 9.6 6.6 6.75 8.35z" fill="currentColor"/></svg>Present</button>
+<button type="button" class="ghost exit"><kbd>Esc</kbd>Exit</button>
+</header>
+<div class="figure">
+<figure class="level" data-level="cnv_flightLifecycle" style="--width: 6535; --height: 575"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 6535 575" width="6535" height="575" role="img" aria-label="Flight lifecycle"><title>Flight lifecycle</title><defs><marker id="sw-cnv_flightLifecycle-m-edge-default" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#5B6170"/></marker><marker id="sw-cnv_flightLifecycle-m-edge-happy" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#0A66C2"/></marker><marker id="sw-cnv_flightLifecycle-m-edge-failure" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#B42318"/></marker><marker id="sw-cnv_flightLifecycle-m-edge-ops" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#B45309"/></marker><marker id="sw-cnv_flightLifecycle-m-edge-timer" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 9 3.5, 0 7" fill="#878E91"/></marker></defs><rect x="0.5" y="0.5" width="6534" height="574" rx="12" fill="#FFFFFF" stroke="#E6E7EE"/><g transform="translate(24 32)"><g class="frame" data-id="nod_notifySteps"><rect x="5502" y="57" width="773" height="92" rx="10" fill="#FAFBFD" stroke="#B9BDC9" stroke-dasharray="6,4"/><rect x="5512" y="64" width="132" height="15" rx="3" fill="#FFFFFF" stroke="#B9BDC9"/><text x="5518" y="75" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="9.5" letter-spacing="0.14em" fill="#464849">Notify passengers</text></g><g class="association" data-id="receives:edg_e2a:nod_lifeHandler" data-role="receives"><path d="M 3504 364.8 L 2132 335.5" fill="none" stroke="#5B6170" stroke-width="1" stroke-dasharray="1.5,3"/><circle cx="2132" cy="335.5" r="2" fill="#5B6170"/><rect x="2767" y="343.1" width="102" height="13" rx="2" fill="#FFFFFF"/><text x="2818" y="353.1" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#878E91">Request de-icing</text></g><g class="association" data-id="runs:edg_e2i:nod_notifySteps" data-role="runs"><path d="M 3429 176.4 L 5502 114.5" fill="none" stroke="#878E91" stroke-width="1" stroke-dasharray="1.5,3"/><circle cx="5502" cy="114.5" r="2" fill="#878E91"/></g><g class="association" data-id="runs:edg_e2l:nod_notifySteps" data-role="runs"><path d="M 720 307.2 L 5502 118.3" fill="none" stroke="#878E91" stroke-width="1" stroke-dasharray="1.5,3"/><circle cx="5502" cy="118.3" r="2" fill="#878E91"/></g><g class="association" data-id="runs:edg_e2m:nod_notifySteps" data-role="runs"><path d="M 932 226.9 L 5502 112.7" fill="none" stroke="#878E91" stroke-width="1" stroke-dasharray="1.5,3"/><circle cx="5502" cy="112.7" r="2" fill="#878E91"/></g><g class="association" data-id="runs:edg_e2n:nod_notifySteps" data-role="runs"><path d="M 1332 190.1 L 5502 110.4" fill="none" stroke="#878E91" stroke-width="1" stroke-dasharray="1.5,3"/><circle cx="5502" cy="110.4" r="2" fill="#878E91"/></g><g class="association" data-id="runs:edg_e2o:nod_notifySteps" data-role="runs"><path d="M 1520 259.4 L 5502 116.8" fill="none" stroke="#878E91" stroke-width="1" stroke-dasharray="1.5,3"/><circle cx="5502" cy="116.8" r="2" fill="#878E91"/></g><g class="association" data-id="runs:edg_e2p:nod_notifySteps" data-role="runs"><path d="M 1708 299.8 L 5502 121.2" fill="none" stroke="#878E91" stroke-width="1" stroke-dasharray="1.5,3"/><circle cx="5502" cy="121.2" r="2" fill="#878E91"/></g><g class="association" data-id="runs:edg_e2r:nod_notifySteps" data-role="runs"><path d="M 726 12.9 L 5502 96.3" fill="none" stroke="#878E91" stroke-width="1" stroke-dasharray="1.5,3"/><circle cx="5502" cy="96.3" r="2" fill="#878E91"/></g><g class="association" data-id="sends:nod_lifeAirline:edg_e2r" data-role="sends"><path d="M 352 25.1 L 622 14.1" fill="none" stroke="#5B6170" stroke-width="1" stroke-dasharray="5,3"/><circle cx="622" cy="14.1" r="2" fill="#5B6170"/></g><g class="association" data-id="sends:nod_lifeAirline:nod_publishFlight" data-role="sends"><path d="M 212 30.6 L 140 33.4" fill="none" stroke="#5B6170" stroke-width="1" stroke-dasharray="5,3"/><circle cx="140" cy="33.4" r="2" fill="#5B6170"/></g><g class="association" data-id="sends:nod_lifeAtc:edg_e2d" data-role="sends"><path d="M 4041.7 422 L 4361.8 308.5" fill="none" stroke="#5B6170" stroke-width="1" stroke-dasharray="5,3"/><circle cx="4361.8" cy="308.5" r="2" fill="#5B6170"/></g><g class="association" data-id="sends:nod_lifeAtc:edg_e2f" data-role="sends"><path d="M 4044 438.5 L 5089 326.9" fill="none" stroke="#5B6170" stroke-width="1" stroke-dasharray="5,3"/><circle cx="5089" cy="326.9" r="2" fill="#5B6170"/></g><g class="association" data-id="sends:nod_lifeHandler:edg_e27" data-role="sends"><path d="M 2132 326.2 L 2416 294.8" fill="none" stroke="#5B6170" stroke-width="1" stroke-dasharray="5,3"/><circle cx="2416" cy="294.8" r="2" fill="#5B6170"/></g><g class="association" data-id="sends:nod_lifeHandler:edg_e2c" data-role="sends"><path d="M 2132 335.5 L 3919 372.8" fill="none" stroke="#5B6170" stroke-width="1" stroke-dasharray="5,3"/><circle cx="3919" cy="372.8" r="2" fill="#5B6170"/></g><path d="M 5530 109 L 5602 109" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_flightLifecycle-m-edge-default)" data-id="edg_e2s"/><path d="M 5742 109 L 5814 109" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_flightLifecycle-m-edge-default)" data-id="edg_e2t"/><path d="M 5957 109 L 6029 109" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_flightLifecycle-m-edge-default)" data-id="edg_e2u"/><path d="M 6169 109 L 6241 109" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_flightLifecycle-m-edge-default)" data-id="edg_e2v"/><path d="M 140 170 L 212 170" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_flightLifecycle-m-edge-default)" data-id="edg_e20"/><path d="M 140 44 L 160 44 L 160 154 L 212 154" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_flightLifecycle-m-edge-default)" data-id="edg_e21"/><path d="M 352 162 L 604 162" fill="none" stroke="#0A66C2" stroke-width="1.6" marker-end="url(#sw-cnv_flightLifecycle-m-edge-happy)" data-id="edg_e22"/><path d="M 651 138 L 651 128 L 697 128 L 697 138" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_flightLifecycle-m-edge-default)" data-id="edg_e23"/><path d="M 744 157 L 1404 157" fill="none" stroke="#B45309" stroke-width="1.2" stroke-dasharray="6,3" marker-end="url(#sw-cnv_flightLifecycle-m-edge-ops)" data-id="edg_e24"/><path d="M 1544 177 L 1564 177 L 1564 207 L 1780 207" fill="none" stroke="#878E91" stroke-width="1.2" stroke-dasharray="2,3" marker-end="url(#sw-cnv_flightLifecycle-m-edge-timer)" data-id="edg_e25"/><path d="M 1920 223 L 2204 223" fill="none" stroke="#878E91" stroke-width="1.2" stroke-dasharray="2,3" marker-end="url(#sw-cnv_flightLifecycle-m-edge-timer)" data-id="edg_e26"/><path d="M 2344 243 L 2364 243 L 2364 276 L 2592 276" fill="none" stroke="#B45309" stroke-width="1.2" stroke-dasharray="6,3" marker-end="url(#sw-cnv_flightLifecycle-m-edge-ops)" data-id="edg_e27"/><path d="M 2740 276 L 2979 276" fill="none" stroke="#0A66C2" stroke-width="1.6" marker-end="url(#sw-cnv_flightLifecycle-m-edge-happy)" data-id="edg_e28"/><path d="M 3119 276 L 3322 276" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_flightLifecycle-m-edge-default)" data-id="edg_e29"/><path d="M 3432 293 L 3452 293 L 3452 353 L 3692 353" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_flightLifecycle-m-edge-default)" data-id="edg_e2a"/><path d="M 3432 276 L 4116 276" fill="none" stroke="#0A66C2" stroke-width="1.6" marker-end="url(#sw-cnv_flightLifecycle-m-edge-happy)" data-id="edg_e2b"/><path d="M 3832 361 L 4064 361 L 4064 288 L 4116 288" fill="none" stroke="#B45309" stroke-width="1.2" stroke-dasharray="6,3" marker-end="url(#sw-cnv_flightLifecycle-m-edge-ops)" data-id="edg_e2c"/><path d="M 4256 288 L 4510 288" fill="none" stroke="#0A66C2" stroke-width="1.6" marker-end="url(#sw-cnv_flightLifecycle-m-edge-happy)" data-id="edg_e2d"/><path d="M 4650 288 L 4874 288" fill="none" stroke="#0A66C2" stroke-width="1.6" marker-end="url(#sw-cnv_flightLifecycle-m-edge-happy)" data-id="edg_e2e"/><path d="M 5014 308 L 5274 308" fill="none" stroke="#0A66C2" stroke-width="1.6" marker-end="url(#sw-cnv_flightLifecycle-m-edge-happy)" data-id="edg_e2f"/><path d="M 5014 292 L 5034 292 L 5034 186 L 5222 186 L 5222 181 L 5277 181" fill="none" stroke="#B42318" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#sw-cnv_flightLifecycle-m-edge-failure)" data-id="edg_e2g"/><path d="M 4874 312 L 4832 312 L 4832 490 L 1188 490 L 1188 267 L 1168 267" fill="none" stroke="#878E91" stroke-width="1.2" stroke-dasharray="2,3" marker-end="url(#sw-cnv_flightLifecycle-m-edge-timer)" data-id="edg_e2h"/><path d="M 5277 165 L 1544 165" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_flightLifecycle-m-edge-default)" data-id="edg_e2i"/><path d="M 5422 299 L 6347 299" fill="none" stroke="#0A66C2" stroke-width="1.6" marker-end="url(#sw-cnv_flightLifecycle-m-edge-happy)" data-id="edg_e2j"/><path d="M 5422 317 L 5442 317 L 5442 387 L 6347 387" fill="none" stroke="#B42318" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#sw-cnv_flightLifecycle-m-edge-failure)" data-id="edg_e2k"/><path d="M 352 174 L 372 174 L 372 297 L 976 297 L 976 265 L 1028 265" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_flightLifecycle-m-edge-default)" data-id="edg_e2l"/><path d="M 744 167 L 774 167 L 774 241 L 1028 241" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_flightLifecycle-m-edge-default)" data-id="edg_e2m"/><path d="M 1404 173 L 1352 173 L 1352 178 L 1188 178 L 1188 238 L 1168 238" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_flightLifecycle-m-edge-default)" data-id="edg_e2n"/><path d="M 1780 223 L 1728 223 L 1728 248 L 1168 248" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_flightLifecycle-m-edge-default)" data-id="edg_e2o"/><path d="M 2204 235 L 2152 235 L 2152 289 L 1198 289 L 1198 258 L 1168 258" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_flightLifecycle-m-edge-default)" data-id="edg_e2p"/><path d="M 1028 253 L 976 253 L 976 256 L 764 256 L 764 176 L 744 176" fill="none" stroke="#5B6170" stroke-width="1.2" marker-end="url(#sw-cnv_flightLifecycle-m-edge-default)" data-id="edg_e2q"/><path d="M 532 24 L 816 24" fill="none" stroke="#B42318" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#sw-cnv_flightLifecycle-m-edge-failure)" data-id="edg_e2r"/><g class="label" data-id="edg_e22"><rect x="441" y="166.5" width="74" height="15" rx="2" fill="#FFFFFF"/><text x="478" y="177.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#0A66C2">ctot.issued</text></g><g class="label" data-id="edg_e23"><rect x="634" y="108.5" width="80" height="15" rx="2" fill="#FFFFFF"/><text x="674" y="119.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">ctot revised</text></g><g class="label" data-id="edg_e24"><rect x="1049" y="162.5" width="98" height="15" rx="2" fill="#FFFFFF"/><text x="1098" y="173.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#B45309">stand.allocated</text></g><g class="label" data-id="edg_e25"><rect x="1616" y="212.5" width="92" height="15" rx="2" fill="#FFFFFF"/><text x="1662" y="223.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#878E91">check-in opens</text></g><g class="label" data-id="edg_e26"><rect x="2013" y="228.5" width="98" height="15" rx="2" fill="#FFFFFF"/><text x="2062" y="239.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#878E91">check-in closes</text></g><g class="label" data-id="edg_e27"><rect x="2416" y="281.5" width="104" height="15" rx="2" fill="#FFFFFF"/><text x="2468" y="292.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#B45309">boarding.started</text></g><g class="label" data-id="edg_e28"><rect x="2812" y="281.5" width="80" height="15" rx="2" fill="#FFFFFF"/><text x="2852" y="292.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#0A66C2">doors.closed</text></g><g class="label" data-id="edg_e29"><rect x="3206" y="281.5" width="44" height="15" rx="2" fill="#FFFFFF"/><text x="3228" y="292.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">always</text></g><g class="label" data-id="edg_e2a"><rect x="3504" y="358.5" width="116" height="15" rx="2" fill="#FFFFFF"/><text x="3562" y="369.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">[Icing conditions]</text></g><g class="label" data-id="edg_e2b"><rect x="3746" y="281.5" width="32" height="15" rx="2" fill="#FFFFFF"/><text x="3762" y="292.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#0A66C2">else</text></g><g class="label" data-id="edg_e2c"><rect x="3919" y="366.5" width="110" height="15" rx="2" fill="#FFFFFF"/><text x="3974" y="377.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#B45309">deicing.completed</text></g><g class="label" data-id="edg_e2d"><rect x="4328" y="293.5" width="110" height="15" rx="2" fill="#FFFFFF"/><text x="4383" y="304.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#0A66C2">aircraft.offBlock</text></g><g class="label" data-id="edg_e2e"><rect x="4722" y="293.5" width="80" height="15" rx="2" fill="#FFFFFF"/><text x="4762" y="304.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#0A66C2">taxi.started</text></g><g class="label" data-id="edg_e2f"><rect x="5089" y="313.5" width="110" height="15" rx="2" fill="#FFFFFF"/><text x="5144" y="324.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#0A66C2">aircraft.airborne</text></g><g class="label" data-id="edg_e2g"><rect x="5086" y="191.5" width="116" height="15" rx="2" fill="#FFFFFF"/><text x="5144" y="202.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#B42318">aircraft.returning</text></g><g class="label" data-id="edg_e2h"><rect x="2964" y="495.5" width="170" height="15" rx="2" fill="#FFFFFF"/><text x="3049" y="506.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#878E91">40 min at the holding point</text></g><g class="label" data-id="edg_e2i"><rect x="3325" y="170.5" width="104" height="15" rx="2" fill="#FFFFFF"/><text x="3377" y="181.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">aircraft.onBlock</text></g><g class="label" data-id="edg_e2j"><rect x="5873" y="278.5" width="32" height="15" rx="2" fill="#FFFFFF"/><text x="5889" y="289.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#0A66C2">done</text></g><g class="label" data-id="edg_e2k"><rect x="5840" y="391.5" width="98" height="15" rx="2" fill="#FFFFFF"/><text x="5889" y="402.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#B42318">flight.diverted</text></g><g class="label" data-id="edg_e2l"><rect x="628" y="301.5" width="92" height="15" rx="2" fill="#FFFFFF"/><text x="674" y="312.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">flight.delayed</text></g><g class="label" data-id="edg_e2m"><rect x="840" y="220.5" width="92" height="15" rx="2" fill="#FFFFFF"/><text x="886" y="231.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">flight.delayed</text></g><g class="label" data-id="edg_e2n"><rect x="1240" y="183.5" width="92" height="15" rx="2" fill="#FFFFFF"/><text x="1286" y="194.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">flight.delayed</text></g><g class="label" data-id="edg_e2o"><rect x="1428" y="253.5" width="92" height="15" rx="2" fill="#FFFFFF"/><text x="1474" y="264.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">flight.delayed</text></g><g class="label" data-id="edg_e2p"><rect x="1616" y="294.5" width="92" height="15" rx="2" fill="#FFFFFF"/><text x="1662" y="305.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">flight.delayed</text></g><g class="label" data-id="edg_e2q"><rect x="846" y="260.5" width="80" height="15" rx="2" fill="#FFFFFF"/><text x="886" y="271.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#5B6170">ctot.revised</text></g><g class="label" data-id="edg_e2r"><rect x="622" y="4.5" width="104" height="15" rx="2" fill="#FFFFFF"/><text x="674" y="15.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#B42318">flight.cancelled</text></g><g class="node" data-id="nod_airborneFlight"><rect x="5282" y="288" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-opacity="0.3"/><rect x="5278" y="284" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-opacity="0.6"/><rect x="5274" y="280" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><text x="5344" y="308" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">airborne</text><g class="interior-mark"><rect x="5284" y="321" width="56" height="13" rx="3" fill="#FFFFFF" stroke="#878E91"/><text x="5312" y="330.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8.5" text-anchor="middle" fill="#464849">↳ machine</text></g></g><g class="node" data-id="nod_anyCancel"><rect x="424" y="15" width="108" height="26" rx="13" fill="#FFFFFF" stroke="#878E91" stroke-dasharray="3,2"/><text x="478" y="31.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#878E91">from any state</text></g><g class="node" data-id="nod_boardingFlight"><rect x="2600" y="256" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-opacity="0.3"/><rect x="2596" y="252" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-opacity="0.6"/><rect x="2592" y="248" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><rect x="2600" y="255" width="32" height="13" rx="2" fill="none" stroke="#3B3F4A" stroke-opacity="0.5" stroke-width="0.8"/><text x="2616" y="264.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#3B3F4A">LIVE</text><text x="2662" y="283" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">boarding</text><g class="interior-mark"><rect x="2602" y="289" width="56" height="13" rx="3" fill="#FFFFFF" stroke="#878E91"/><text x="2630" y="298.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8.5" text-anchor="middle" fill="#464849">↳ machine</text></g></g><g class="node" data-id="nod_cancelledFlight"><rect x="816" y="0" width="140" height="48" rx="8" fill="#FEF3F2" stroke="#B42318" stroke-width="1"/><rect x="824" y="7" width="37" height="13" rx="2" fill="none" stroke="#B42318" stroke-opacity="0.5" stroke-width="0.8"/><text x="842.5" y="16.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#B42318">FINAL</text><text x="886" y="35" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">cancelled</text></g><g class="node" data-id="nod_checkInClosed"><rect x="2204" y="211" width="140" height="48" rx="8" fill="#F6F7FA" stroke="#878E91" stroke-width="1"/><rect x="2212" y="218" width="37" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="2230.5" y="227.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">WAITS</text><text x="2274" y="246" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">check-in closed</text></g><g class="node" data-id="nod_checkInOpen"><rect x="1780" y="191" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><rect x="1788" y="198" width="32" height="13" rx="2" fill="none" stroke="#3B3F4A" stroke-opacity="0.5" stroke-width="0.8"/><text x="1804" y="207.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#3B3F4A">LIVE</text><text x="1850" y="226" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">check-in open</text></g><g class="node" data-id="nod_deIcingFlight"><rect x="3692" y="337" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><rect x="3700" y="344" width="32" height="13" rx="2" fill="none" stroke="#3B3F4A" stroke-opacity="0.5" stroke-width="0.8"/><text x="3716" y="353.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#3B3F4A">LIVE</text><text x="3762" y="372" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">de-icing</text></g><g class="node" data-id="nod_delayedFlight"><rect x="1028" y="229" width="140" height="48" rx="8" fill="#FFFBEB" stroke="#B45309" stroke-width="1"/><rect x="1036" y="236" width="32" height="13" rx="2" fill="none" stroke="#B45309" stroke-opacity="0.5" stroke-width="0.8"/><text x="1052" y="245.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#B45309">HOLD</text><text x="1098" y="264" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">delayed</text></g><g class="node" data-id="nod_departed"><rect x="6347" y="275" width="140" height="48" rx="8" fill="#ECFDF5" stroke="#059669" stroke-width="1"/><rect x="6355" y="282" width="37" height="13" rx="2" fill="none" stroke="#059669" stroke-opacity="0.5" stroke-width="0.8"/><text x="6373.5" y="291.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#059669">FINAL</text><text x="6417" y="310" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">departed</text></g><g class="node" data-id="nod_divertedFlight"><rect x="6347" y="363" width="140" height="48" rx="8" fill="#F3F4F6" stroke="#6B7280" stroke-width="1"/><rect x="6355" y="370" width="37" height="13" rx="2" fill="none" stroke="#6B7280" stroke-opacity="0.5" stroke-width="0.8"/><text x="6373.5" y="379.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#6B7280">FINAL</text><text x="6417" y="398" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">diverted</text></g><g class="node" data-id="nod_doorsClosed"><rect x="2979" y="252" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><text x="3049" y="280" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">doors closed</text></g><g class="node" data-id="nod_flightStart"><circle cx="134" cy="170" r="6" fill="#05060F"/></g><g class="node" data-id="nod_icingChoice"><polygon points="3377,259 3393,275 3377,291 3361,275" fill="#FFFFFF" stroke="#3B3F4A"/><text x="3377" y="305" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="10" text-anchor="middle" fill="#464849">icing conditions?</text></g><g class="node" data-id="nod_lifeAirline"><rect x="212" y="4" width="140" height="48" rx="8" fill="#FAFAFC" stroke="#878E91" stroke-width="1" stroke-dasharray="4,3"/><rect x="220" y="11" width="53" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="246.5" y="20.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">EXTERNAL</text><text x="282" y="39" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Airline</text></g><g class="node" data-id="nod_lifeAtc"><rect x="3904" y="422" width="140" height="48" rx="8" fill="#FAFAFC" stroke="#878E91" stroke-width="1" stroke-dasharray="4,3"/><rect x="3912" y="429" width="53" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="3938.5" y="438.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">EXTERNAL</text><text x="3974" y="457" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Air traffic control</text></g><g class="node" data-id="nod_lifeHandler"><rect x="1992" y="310" width="140" height="48" rx="8" fill="#FFFBEB" stroke="#B45309" stroke-width="1" stroke-dasharray="4,3"/><rect x="2000" y="317" width="26" height="13" rx="2" fill="none" stroke="#B45309" stroke-opacity="0.5" stroke-width="0.8"/><text x="2013" y="326.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#B45309">OPS</text><text x="2062" y="345" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">Ground handler</text></g><g class="node" data-id="nod_noticeSent"><rect x="6029" y="85" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><rect x="6037" y="92" width="32" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="6053" y="101.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">EMIT</text><text x="6099" y="120" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">notified</text></g><g class="node" data-id="nod_notifyEnd"><circle cx="6250" cy="109" r="9" fill="#FFFFFF" stroke="#059669" stroke-width="1.5"/><circle cx="6250" cy="109" r="5" fill="#059669"/></g><g class="node" data-id="nod_notifyStart"><circle cx="5524" cy="109" r="6" fill="#05060F"/></g><g class="node" data-id="nod_sendNotice"><rect x="5814" y="85" width="143" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><rect x="5822" y="92" width="32" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="5838" y="101.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">CALL</text><text x="5885.5" y="120" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">push, SMS and e-mail</text></g><g class="node" data-id="nod_whoIsBooked"><rect x="5602" y="85" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><rect x="5610" y="92" width="32" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="5626" y="101.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">CALL</text><text x="5672" y="120" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">who is booked</text></g><g class="node" data-id="nod_publishFlight"><rect x="0" y="12" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><text x="70" y="40" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">POST /flights</text></g><g class="node" data-id="nod_pushedBack"><rect x="4510" y="264" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><text x="4580" y="292" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">pushed back</text></g><g class="node" data-id="nod_readyForPushback"><rect x="4116" y="264" width="140" height="48" rx="8" fill="#F6F7FA" stroke="#878E91" stroke-width="1"/><rect x="4124" y="271" width="37" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="4142.5" y="280.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">WAITS</text><text x="4186" y="299" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">ready for pushback</text></g><g class="node" data-id="nod_returnToStand"><rect x="5277" y="149" width="140" height="48" rx="8" fill="#FFFBEB" stroke="#B45309" stroke-width="1"/><rect x="5285" y="156" width="32" height="13" rx="2" fill="none" stroke="#B45309" stroke-opacity="0.5" stroke-width="0.8"/><text x="5301" y="165.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#B45309">HOLD</text><text x="5347" y="184" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">returning to stand</text></g><g class="node" data-id="nod_scheduled"><rect x="212" y="138" width="140" height="48" rx="8" fill="#F6F7FA" stroke="#878E91" stroke-width="1"/><rect x="220" y="145" width="37" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="238.5" y="154.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">WAITS</text><text x="282" y="173" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">scheduled</text></g><g class="node" data-id="nod_slotConfirmed"><rect x="604" y="138" width="140" height="48" rx="8" fill="#F6F7FA" stroke="#878E91" stroke-width="1"/><rect x="612" y="145" width="37" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="630.5" y="154.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">WAITS</text><text x="674" y="173" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">slot confirmed</text></g><g class="node" data-id="nod_standAllocated"><rect x="1404" y="141" width="140" height="48" rx="8" fill="#F6F7FA" stroke="#878E91" stroke-width="1"/><rect x="1412" y="148" width="37" height="13" rx="2" fill="none" stroke="#878E91" stroke-opacity="0.5" stroke-width="0.8"/><text x="1430.5" y="157.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#878E91">WAITS</text><text x="1474" y="176" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">stand allocated</text></g><g class="node" data-id="nod_taxiingOut"><rect x="4874" y="276" width="140" height="48" rx="8" fill="#FFFFFF" stroke="#3B3F4A" stroke-width="1"/><rect x="4882" y="283" width="32" height="13" rx="2" fill="none" stroke="#3B3F4A" stroke-opacity="0.5" stroke-width="0.8"/><text x="4898" y="292.5" font-family="'Geist Mono','SF Mono','Fira Code',Consolas,monospace" font-size="8" letter-spacing="0.06em" text-anchor="middle" fill="#3B3F4A">LIVE</text><text x="4944" y="311" font-family="'Inter',-apple-system,'Segoe UI',sans-serif" font-size="12" font-weight="600" text-anchor="middle" fill="#05060F">taxiing out</text></g></g></svg></figure>
+</div>
+<div class="card">
+<div class="card-head"><span class="counter">Start</span><span class="pill"></span><span class="clock">Thu 1 Oct 2026, 06:00</span></div>
+<p class="caption">Starts in scheduled.</p>
+<ul class="answers"></ul>
+<p class="stops" role="status"></p>
+<div class="card-foot"><div class="progress" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="arrows"><button type="button" class="key" data-go="-1" aria-label="Previous step"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8H3M7 4 3 8l4 4"/></svg></button><button type="button" class="key" data-go="1" aria-label="Next step"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button></div></div>
+</div>
+<footer class="foot">
+<span class="made">Made with Statewright</span>
+<button type="button" class="key" data-go="-1" aria-label="Previous step"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8H3M7 4 3 8l4 4"/></svg></button>
+<button type="button" class="key" data-go="1" aria-label="Next step"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button>
+<span>step through</span>
+</footer>
+</section>
+</main>
+<p class="live sr-only" aria-live="polite"></p>
+<script type="application/json" id="sw-story">{"total":9,"frames":[{"number":"","input":"Start","text":"Starts in scheduled.","generated":true,"answers":[],"clock":"Thu 1 Oct 2026, 06:00","level":"cnv_flightLifecycle","trail":["Flight lifecycle"],"run":[{"ids":["nod_scheduled"],"name":"scheduled"}],"fired":[{"edge":"edg_e20","from":"nod_flightStart","to":"nod_scheduled","initial":true}]},{"number":"1","input":"ctot.issued","text":"scheduled → slot confirmed. Network manager sends ctot.issued.","generated":true,"answers":[],"clock":"Thu 1 Oct 2026, 06:00","level":"cnv_flightLifecycle","trail":["Flight lifecycle"],"run":[{"ids":["nod_slotConfirmed"],"name":"slot confirmed"}],"fired":[{"edge":"edg_e22","from":"nod_scheduled","to":"nod_slotConfirmed","initial":false}]},{"number":"2","input":"stand.allocated","text":"slot confirmed → stand allocated. Airport operations centre sends stand.allocated.","generated":true,"answers":[],"clock":"Thu 1 Oct 2026, 06:00","level":"cnv_flightLifecycle","trail":["Flight lifecycle"],"run":[{"ids":["nod_standAllocated"],"name":"stand allocated"}],"fired":[{"edge":"edg_e24","from":"nod_slotConfirmed","to":"nod_standAllocated","initial":false}]},{"number":"3","input":"Until the next timer","text":"stand allocated → check-in open. Operations database receives Publish to displays. check-in opens falls due.","generated":true,"answers":[],"clock":"Thu 1 Oct 2026, 09:00","level":"cnv_flightLifecycle","trail":["Flight lifecycle"],"run":[{"ids":["nod_checkInOpen"],"name":"check-in open"}],"fired":[{"edge":"edg_e25","from":"nod_standAllocated","to":"nod_checkInOpen","initial":false}]},{"number":"4","input":"Until the next timer","text":"check-in open → check-in closed. check-in closes falls due.","generated":true,"answers":[],"clock":"Thu 1 Oct 2026, 11:20","level":"cnv_flightLifecycle","trail":["Flight lifecycle"],"run":[{"ids":["nod_checkInClosed"],"name":"check-in closed"}],"fired":[{"edge":"edg_e26","from":"nod_checkInOpen","to":"nod_checkInClosed","initial":false}]},{"number":"5","input":"boarding.started","text":"check-in closed → boarding. Ground handler sends boarding.started.","generated":true,"answers":[],"clock":"Thu 1 Oct 2026, 11:20","level":"cnv_flightLifecycle","trail":["Flight lifecycle"],"run":[{"ids":["nod_boardingFlight","nod_priorityBoarding"],"name":"priority"}],"fired":[{"edge":"edg_e27","from":"nod_checkInClosed","to":"nod_boardingFlight","initial":false},{"edge":"edg_e2w","from":"nod_phasesStart","to":"nod_priorityBoarding","initial":true}]},{"number":"6","input":"doors.closed","text":"boarding → doors closed → icing conditions? → ready for pushback. Cabin crew sends doors.closed.","generated":true,"answers":["Which way does icing conditions? go? Otherwise."],"clock":"Thu 1 Oct 2026, 11:20","level":"cnv_flightLifecycle","trail":["Flight lifecycle"],"run":[{"ids":["nod_readyForPushback"],"name":"ready for pushback"}],"fired":[{"edge":"edg_e28","from":"nod_boardingFlight","to":"nod_doorsClosed","initial":false},{"edge":"edg_e29","from":"nod_doorsClosed","to":"nod_icingChoice","initial":false},{"edge":"edg_e2b","from":"nod_icingChoice","to":"nod_readyForPushback","initial":false}]},{"number":"7","input":"aircraft.offBlock","text":"ready for pushback → pushed back. Air traffic control sends aircraft.offBlock.","generated":true,"answers":[],"clock":"Thu 1 Oct 2026, 11:20","level":"cnv_flightLifecycle","trail":["Flight lifecycle"],"run":[{"ids":["nod_pushedBack"],"name":"pushed back"}],"fired":[{"edge":"edg_e2d","from":"nod_readyForPushback","to":"nod_pushedBack","initial":false}]},{"number":"8","input":"taxi.started","text":"pushed back → taxiing out. Pilot in command sends taxi.started.","generated":true,"answers":[],"clock":"Thu 1 Oct 2026, 11:20","level":"cnv_flightLifecycle","trail":["Flight lifecycle"],"run":[{"ids":["nod_taxiingOut"],"name":"taxiing out"}],"fired":[{"edge":"edg_e2e","from":"nod_pushedBack","to":"nod_taxiingOut","initial":false}]},{"number":"9","input":"aircraft.airborne","text":"taxiing out → airborne. Air traffic control sends aircraft.airborne. taxi-out limit cancelled.","generated":true,"answers":[],"clock":"Thu 1 Oct 2026, 11:20","level":"cnv_flightLifecycle","trail":["Flight lifecycle"],"run":[{"ids":["nod_airborneFlight","nod_initialClimb"],"name":"initial climb"}],"fired":[{"edge":"edg_e2f","from":"nod_taxiingOut","to":"nod_airborneFlight","initial":false},{"edge":"edg_e37","from":"nod_climbStart","to":"nod_initialClimb","initial":true}]}],"stopped":null}</script>
+<script>
+(function (story) {
+  "use strict";
+  var NS = "http://www.w3.org/2000/svg";
+  var PULSE = 600;
+  var LONGEST = 2400;
+  var EASE = "cubic-bezier(0.2, 0.7, 0.2, 1)";
+  // The ring and the pulse set off and arrive gently, together, by four fifths of the edge's turn.
+  var TRAVEL = "cubic-bezier(0.4, 0, 0.2, 1)";
+  var ARRIVES = 0.8;
+  var body = document.body;
+  var figure = document.querySelector(".figure");
+  var card = document.querySelector(".card");
+  var steps = Array.from(document.querySelectorAll(".step"));
+  var frames = story.frames;
+  var current = 0;
+
+  function reduced() {
+    return Boolean(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+  function draw(name, attributes, parent) {
+    var element = document.createElementNS(NS, name);
+    Object.keys(attributes).forEach(function (key) {
+      element.setAttribute(key, String(attributes[key]));
+    });
+    parent.appendChild(element);
+    return element;
+  }
+  function appear(element, delay, duration) {
+    if (duration && element.animate) {
+      element.animate([{ opacity: 0 }, { opacity: 1 }], { duration: duration, delay: delay, easing: EASE, fill: "backwards" });
+    }
+    return element;
+  }
+
+  // The run's arrowhead in a figure, made once.
+  function arrowOf(svg, level) {
+    var id = "sw-run-" + level;
+    if (!svg.getElementById(id)) {
+      var defs = svg.querySelector("defs") || draw("defs", {}, svg);
+      var marker = draw("marker", {
+        id: id, markerWidth: 9, markerHeight: 7, refX: 8, refY: 3.5, orient: "auto", markerUnits: "userSpaceOnUse"
+      }, defs);
+      draw("polygon", { points: "0 0, 9 3.5, 0 7", fill: "#0a66c2" }, marker);
+    }
+    return id;
+  }
+
+  // A ring around a box: the selection ring with its halo, a thinner one when the run is inside it, or a dashed one
+  // where the run came from.
+  function ring(group, box, kind) {
+    var b = box.getBBox();
+    var round = Math.abs(b.width - b.height) < 2 && b.width < 48;
+    function rect(offset, className) {
+      return draw("rect", {
+        "class": className,
+        x: b.x - offset,
+        y: b.y - offset,
+        width: b.width + 2 * offset,
+        height: b.height + 2 * offset,
+        rx: round ? b.height / 2 + offset : 10 + offset
+      }, group);
+    }
+    if (kind === "left") return rect(2, "mark-left");
+    rect(5, "mark-halo");
+    rect(2, kind === "inside" ? "mark-ring inside" : "mark-ring");
+    if (kind === "active" && !round) draw("circle", { "class": "mark-dot", cx: b.x + b.width - 8.5, cy: b.y + 8.5, r: 3.5 }, group);
+    return b;
+  }
+
+  // A pill under a box with the run inside it, naming where (mockup 04).
+  function pill(group, box, words) {
+    var b = box.getBBox();
+    var shape = draw("g", { "class": "mark-pill" }, group);
+    var rect = draw("rect", { y: b.y + b.height - 8, height: 22, rx: 11 }, shape);
+    var dot = draw("circle", { cy: b.y + b.height + 3, r: 3 }, shape);
+    var text = draw("text", { y: b.y + b.height + 7 }, shape);
+    text.textContent = words;
+    var wide = (text.getComputedTextLength && text.getComputedTextLength()) || words.length * 6.6;
+    var left = b.x + b.width / 2 - (wide + 31) / 2;
+    rect.setAttribute("x", left);
+    rect.setAttribute("width", wide + 31);
+    dot.setAttribute("cx", left + 12);
+    text.setAttribute("x", left + 21);
+    return shape;
+  }
+
+  // The label of an edge the step took, as a pill in the run's colour.
+  function label(group, element) {
+    var b = element.getBBox();
+    var shape = draw("g", { "class": "mark-label" }, group);
+    draw("rect", { x: b.x - 6, y: b.y - 3, width: b.width + 12, height: b.height + 6, rx: (b.height + 6) / 2 }, shape);
+    var text = draw("text", { x: b.x + b.width / 2, y: b.y + b.height / 2 + 3.5, "text-anchor": "middle" }, shape);
+    text.textContent = Array.from(element.querySelectorAll("text")).map(function (line) {
+      return line.textContent;
+    }).join(" ");
+    return shape;
+  }
+
+  // A ring that moves from one box to another while the edge between them pulses.
+  function travel(group, from, to, delay, duration) {
+    var a = from.getBBox();
+    var b = to.getBBox();
+    var rect = draw("rect", {
+      "class": "mark-travel", x: a.x - 2, y: a.y - 2, width: a.width + 4, height: a.height + 4, rx: 12, opacity: 0
+    }, group);
+    var ends = {
+      x: [a.x - 2, b.x - 2],
+      y: [a.y - 2, b.y - 2],
+      width: [a.width + 4, b.width + 4],
+      height: [a.height + 4, b.height + 4]
+    };
+    Object.keys(ends).forEach(function (attribute) {
+      var move = draw("animate", {
+        attributeName: attribute,
+        from: ends[attribute][0],
+        to: ends[attribute][1],
+        begin: "indefinite",
+        dur: duration * ARRIVES + "ms",
+        fill: "freeze",
+        calcMode: "spline",
+        keyTimes: "0;1",
+        keySplines: "0.4 0 0.2 1"
+      }, rect);
+      if (move.beginElementAt) move.beginElementAt(delay / 1000);
+    });
+    if (rect.animate) {
+      rect.animate([{ opacity: 1 }, { opacity: 1, offset: ARRIVES }, { opacity: 0 }], { duration: duration, delay: delay });
+    }
+  }
+
+  // Mark the run of a frame on its level; animate plays its edges in order.
+  function mark(frame, animate) {
+    var level = document.querySelector('.level[data-level="' + frame.level + '"]');
+    var svg = level.querySelector("svg");
+    var scene = svg.querySelector(":scope > g[transform]") || svg;
+    Array.from(svg.querySelectorAll(".mark")).forEach(function (old) {
+      old.remove();
+    });
+    Array.from(svg.querySelectorAll(".on")).forEach(function (element) {
+      element.classList.remove("on");
+    });
+    figure.classList.add("run");
+    function find(selector, id) {
+      return svg.querySelector(selector + '[data-id="' + id + '"]');
+    }
+    function boxOf(id) {
+      return find("g.node", id) || find("g.frame", id);
+    }
+    function on(element) {
+      if (element) element.classList.add("on");
+    }
+    var marks = draw("g", { "class": "mark", "aria-hidden": "true" }, scene);
+    var moving = animate && !reduced();
+    var fired = frame.fired.filter(function (item) {
+      return find("path", item.edge);
+    });
+    var each = moving ? Math.min(PULSE, LONGEST / Math.max(fired.length, 1)) : 0;
+    var fadeIn = animate ? (moving ? 160 : 250) : 0;
+    var arrives = {};
+
+    fired.forEach(function (item, order) {
+      var path = find("path", item.edge);
+      var at = order * each;
+      var text = find("g.label", item.edge);
+      on(path);
+      on(text);
+      var route = draw("path", { "class": "mark mark-fired", d: path.getAttribute("d") }, path.parentNode);
+      route.setAttribute("marker-end", "url(#" + arrowOf(svg, frame.level) + ")");
+      if (path.getAttribute("stroke-dasharray")) route.setAttribute("stroke-dasharray", path.getAttribute("stroke-dasharray"));
+      path.after(route);
+      appear(route, at, fadeIn);
+      if (text) appear(label(marks, text), at, fadeIn);
+      if (moving) {
+        var pulse = draw("path", { "class": "mark mark-pulse", d: path.getAttribute("d") }, path.parentNode);
+        route.after(pulse);
+        var length = route.getTotalLength ? route.getTotalLength() : 0;
+        pulse.setAttribute("stroke-dasharray", "28 " + (length + 28));
+        if (pulse.animate) {
+          pulse.animate([
+            { strokeDashoffset: 28, opacity: 0.9, easing: TRAVEL },
+            { strokeDashoffset: -length, opacity: 0.9, offset: ARRIVES },
+            { strokeDashoffset: -length, opacity: 0.9 }
+          ], { duration: each, delay: at });
+        }
+      }
+      var from = boxOf(item.from);
+      var to = boxOf(item.to);
+      if (from && to && moving && !item.initial) travel(marks, from, to, at, each);
+      if (!(item.to in arrives)) arrives[item.to] = at + each;
+      var stays = frame.run.some(function (leaf) {
+        return leaf.ids.indexOf(item.from) >= 0;
+      });
+      if (from && !item.initial && !stays) {
+        on(from);
+        var left = draw("g", {}, marks);
+        ring(left, from, "left");
+        appear(left, at, fadeIn);
+      }
+    });
+
+    // Where the run is: each leaf on the deepest box of its path the figure draws; the boxes above it stay in full.
+    var tokens = {};
+    var inside = {};
+    frame.run.forEach(function (leaf) {
+      var deepest = -1;
+      leaf.ids.forEach(function (id, index) {
+        var box = boxOf(id);
+        on(box);
+        if (box) deepest = index;
+      });
+      if (deepest < 0) return;
+      var id = leaf.ids[deepest];
+      if (deepest === leaf.ids.length - 1) tokens[id] = (tokens[id] || 0) + 1;
+      else (inside[id] = inside[id] || []).push(leaf.name);
+    });
+    Object.keys(tokens).forEach(function (id) {
+      var group = draw("g", {}, marks);
+      var b = ring(group, boxOf(id), "active");
+      if (tokens[id] > 1) {
+        var badge = draw("g", { "class": "mark-count" }, group);
+        draw("rect", { x: b.x + b.width - 7, y: b.y - 11, width: 18, height: 18, rx: 9 }, badge);
+        var count = draw("text", { x: b.x + b.width + 2, y: b.y + 1.5, "text-anchor": "middle" }, badge);
+        count.textContent = String(tokens[id]);
+      }
+      appear(group, id in arrives ? arrives[id] : 0, fadeIn);
+    });
+    Object.keys(inside).forEach(function (id) {
+      var group = draw("g", {}, marks);
+      var names = inside[id];
+      var unique = names.filter(function (name, index) {
+        return names.indexOf(name) === index;
+      });
+      ring(group, boxOf(id), "inside");
+      pill(group, boxOf(id), unique.length === 1 ? unique[0] : names.length + " active");
+      appear(group, 0, fadeIn);
+    });
+  }
+
+  function element(tag, text) {
+    var made = document.createElement(tag);
+    made.textContent = text;
+    return made;
+  }
+
+  // Show a frame: its step in the story, its level and the levels above it, the stage's card, and the run.
+  function show(index, animate) {
+    var stops = card.querySelector(".stops");
+    if (!frames.length) {
+      // A story that cannot even start: its start's card says why.
+      card.querySelector(".counter").textContent = "Start";
+      stops.textContent = story.stopped || "";
+      document.querySelector(".live").textContent = story.stopped || "";
+      return;
+    }
+    current = Math.max(0, Math.min(frames.length - 1, index));
+    var frame = frames[current];
+    steps.forEach(function (button, at) {
+      if (at === current) button.setAttribute("aria-current", "step");
+      else button.removeAttribute("aria-current");
+    });
+    if (steps[current] && steps[current].scrollIntoView) steps[current].scrollIntoView({ block: "nearest" });
+    Array.from(document.querySelectorAll(".level")).forEach(function (level) {
+      level.hidden = level.getAttribute("data-level") !== frame.level;
+    });
+    document.querySelector(".trail").replaceChildren.apply(document.querySelector(".trail"), frame.trail.map(function (name) {
+      return element("span", name);
+    }));
+    card.querySelector(".counter").textContent = frame.number ? frame.number + " / " + story.total : "Start";
+    card.querySelector(".pill").textContent = frame.number ? frame.input : "";
+    card.querySelector(".clock").textContent = frame.clock;
+    var caption = card.querySelector(".caption");
+    caption.textContent = frame.text;
+    caption.classList.toggle("generated", frame.generated);
+    var answers = card.querySelector(".answers");
+    answers.replaceChildren.apply(answers, frame.answers.map(function (words) {
+      return element("li", words);
+    }));
+    // At its last frame, a story the design no longer takes to its end says where and why it stops.
+    stops.textContent = current === frames.length - 1 && story.stopped ? story.stopped : "";
+    Array.from(card.querySelectorAll(".progress span")).forEach(function (segment, at) {
+      segment.classList.toggle("done", at <= current);
+    });
+    Array.from(document.querySelectorAll("[data-go]")).forEach(function (button) {
+      var next = current + Number(button.getAttribute("data-go"));
+      button.disabled = next < 0 || next >= frames.length;
+    });
+    document.querySelector(".live").textContent = frame.number ?
+      "Step " + frame.number + " of " + story.total + ": " + frame.input + ". " + frame.text :
+      "Start. " + frame.text;
+    body.style.setProperty("--card", card.offsetHeight + "px");
+    mark(frame, Boolean(animate));
+  }
+
+  function go(index) {
+    show(index, index === current + 1);
+  }
+  function presenting() {
+    return body.classList.contains("presenting");
+  }
+  function present() {
+    body.classList.add("presenting");
+    var root = document.documentElement;
+    if (root.requestFullscreen) root.requestFullscreen().catch(function () {});
+    show(current);
+    card.querySelector('[data-go="1"]').focus();
+  }
+  function leave() {
+    if (!presenting()) return;
+    body.classList.remove("presenting");
+    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function () {});
+    show(current);
+    document.querySelector(".present").focus();
+  }
+
+  steps.forEach(function (button, index) {
+    button.addEventListener("click", function () {
+      go(index);
+    });
+  });
+  Array.from(document.querySelectorAll("[data-go]")).forEach(function (button) {
+    button.addEventListener("click", function () {
+      go(current + Number(button.getAttribute("data-go")));
+    });
+  });
+  document.querySelector(".present").addEventListener("click", present);
+  document.querySelector(".exit").addEventListener("click", leave);
+  document.addEventListener("fullscreenchange", function () {
+    if (!document.fullscreenElement) leave();
+  });
+  document.addEventListener("keydown", function (event) {
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    var stage = presenting();
+    if (event.key === "Escape" && stage) return leave();
+    // Space on a button is the button's own.
+    if (event.key === " " && event.target.closest && event.target.closest("button")) return;
+    var keys = { ArrowRight: 1, ArrowLeft: -1 };
+    if (stage) {
+      keys[" "] = 1;
+      keys.PageDown = 1;
+      keys.PageUp = -1;
+    }
+    var target = event.key in keys ? current + keys[event.key] :
+      event.key === "Home" ? 0 :
+      event.key === "End" ? frames.length - 1 :
+      null;
+    if (target === null) return;
+    event.preventDefault();
+    go(target);
+  });
+  // The figures' texts are measured in their fonts: once those are in, the marks are drawn again where they belong.
+  if (document.fonts) document.fonts.ready.then(function () {
+    show(current);
+  });
+  show(0);
+})(JSON.parse(document.getElementById("sw-story").textContent));
+</script>
+</body>
+</html>

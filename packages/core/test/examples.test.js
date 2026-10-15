@@ -14,6 +14,7 @@ describe("the examples", () => {
   it("are .sttw documents, the name Statewright saves under", () => {
     const files = readdirSync(new URL("../../../examples/", import.meta.url)).filter(name => name.includes("."));
     expect(files).toEqual([
+      "airport-operations.sttw",
       "bookings.sttw",
       "get-paid-as-built.sttw",
       "order-lifecycle.sttw",
@@ -24,6 +25,7 @@ describe("the examples", () => {
 });
 
 describe.each([
+  "airport-operations.sttw",
   "bookings.sttw",
   "get-paid-as-built.sttw",
   "order-lifecycle.sttw",

@@ -20,7 +20,8 @@
     "examples:render": "node scripts/render-examples.js",
     "editor:dev": "npm run dev -w @statewright/editor",
     "editor:build": "npm run build -w @statewright/editor",
-    "e2e": "npm run e2e -w @statewright/editor"
+    "e2e": "npm run e2e -w @statewright/editor",
+    "examples:airport": "node scripts/airport/build.js && npm run examples:normalize && npm run examples:render"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
