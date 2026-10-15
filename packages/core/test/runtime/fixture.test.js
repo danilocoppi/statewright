@@ -11,7 +11,7 @@ import { createBookingsOnRuntime } from "../fixtures/bookings-api/runtime.js";
 import { runtimeDriver } from "../fixtures/bookings-api/runtime-driver.js";
 import { readExample } from "../helpers.js";
 
-const bookings = () => parse(readExample("bookings.statewright.json")).doc;
+const bookings = () => parse(readExample("bookings.sttw")).doc;
 const AT = "2026-01-09T19:00:00Z";
 const minutes = count => new Date(Date.parse(AT) + count * 60_000).toISOString().replace(".000Z", "Z");
 

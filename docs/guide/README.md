@@ -111,11 +111,12 @@ library and CLI work on local files.
 
 ### Documents
 
-A document is one JSON file, by convention named `*.statewright.json`. It holds the project, a **catalog** of shared
-items, reusable **definitions**, the **canvases** (diagrams), **annotations** and **layout**. Everything with an ID lives
-in a map keyed by that ID: `nod_running`, `evt_payinConfirmed`, `cnv_lifecycle`. The prefix says what the element is
-(`cnv` canvas, `nod` node, `edg` edge, `rgn` region, `def` definition, `typ` type, `evt` event, `act` action, `grd`
-guard, `ept` endpoint, `whk` webhook, `tmr` timer, `sts` status, `pty` party, `fnd` finding, `nte` note, `lne` lane).
+A document is one JSON file, by convention named `*.sttw`. Files saved before 0.1.5 end in `.statewright.json`; they
+open as they are. It holds the project, a **catalog** of shared items, reusable **definitions**, the **canvases**
+(diagrams), **annotations** and **layout**. Everything with an ID lives in a map keyed by that ID: `nod_running`,
+`evt_payinConfirmed`, `cnv_lifecycle`. The prefix says what the element is (`cnv` canvas, `nod` node, `edg` edge, `rgn`
+region, `def` definition, `typ` type, `evt` event, `act` action, `grd` guard, `ept` endpoint, `whk` webhook, `tmr`
+timer, `sts` status, `pty` party, `fnd` finding, `nte` note, `lne` lane).
 IDs are unique in the document and **never change**, even when an element is renamed.
 
 Documents are strict: unknown keys are rejected (this catches typos), except keys starting with `x-`, which are kept
@@ -312,7 +313,7 @@ the same result, and nothing reads the real clock.
   run's own context, `if` and `switch` take their edge, `while`, `forEach` and `subflow` run their body (a token there
   has its owner's ID before its own: `nod_each/nod_pix`), `parallel` forks a token per edge and `join` waits for one on
   each. A `wait` lets its token go on when its event comes or its timer falls due. The run ends with its last token,
-  `success` or `failure` (`failure` wins). The repository's `examples/payout-batch.statewright.json` is a flow with a
+  `success` or `failure` (`failure` wins). The repository's `examples/payout-batch.sttw` is a flow with a
   recorded scenario.
 - **Questions.** A guard with a JSON Logic `expr` is evaluated against `{ event, context, vars }`. A guard the document
   only names or describes in words is a question for the person running it: which of the transitions holds, or which
@@ -372,10 +373,10 @@ Node.js 22.12 or newer. The library also runs in browsers (no Node-only APIs out
 Create a document, apply a batch of commands, then check it:
 
 ```sh
-npx statewright new orders.statewright.json --name "Orders"
-npx statewright apply orders.statewright.json batch.json
-npx statewright validate orders.statewright.json
-npx statewright inspect orders.statewright.json
+npx statewright new orders.sttw --name "Orders"
+npx statewright apply orders.sttw batch.json
+npx statewright validate orders.sttw
+npx statewright inspect orders.sttw
 ```
 
 `batch.json` builds level 0 (a customer calling an order API) and the order lifecycle inside the API:
@@ -763,7 +764,7 @@ errors, look at the scenarios that no longer do what they recorded, and add scen
 
 ## Building from the design
 
-A design can be the source of truth for the code that implements it. Keep the `.statewright.json` in the system's
+A design can be the source of truth for the code that implements it. Keep the `.sttw` in the system's
 repository, beside the code: the person edits it in the Editor (**Open file…**, then **Save to file**), agents through
 `file`. Statewright derives from it what code needs.
 
@@ -773,9 +774,9 @@ The contract is the design as plain JSON for code, in any language: its machines
 and its scenarios as test vectors. IDs travel beside the names, so every part of it leads back to the design.
 
 ```sh
-npx statewright contract design/bookings.statewright.json -o design/bookings.contract.json
-npx statewright contract design/bookings.statewright.json --since design/bookings.contract.json
-npx statewright contract design/bookings.statewright.json --check design/bookings.contract.json
+npx statewright contract design/bookings.sttw -o design/bookings.contract.json
+npx statewright contract design/bookings.sttw --since design/bookings.contract.json
+npx statewright contract design/bookings.sttw --check design/bookings.contract.json
 ```
 
 Commit the contract beside the design: it is the version of the design the code was last aligned with. `--since`
@@ -810,7 +811,7 @@ A state inside another is named by its path, `open/created`; a state of a reusab
 `expiry_clock/running`. Two states of one level and region with one name cannot both be values of one field:
 Statewright reports them (`machine.sameName`), and `statewright contract` exits 1 until one is renamed.
 
-A vector, as `examples/bookings.statewright.json` gives it:
+A vector, as `examples/bookings.sttw` gives it:
 
 <!-- checked:contract-vector -->
 
@@ -1003,7 +1004,7 @@ with open(results_file, "w", encoding="utf-8") as file:
 Then compare:
 
 ```sh
-npx statewright conform design/bookings.statewright.json design/bookings.results.json --write
+npx statewright conform design/bookings.sttw design/bookings.results.json --write
 ```
 
 Suppose `guest.arrived` no longer seats the guest. The report says where the code goes elsewhere, and which transitions
@@ -1038,7 +1039,7 @@ The exit code is 1 when a step diverged or threw, when no vector ran, or when th
 
 ### The runtime
 
-A system written in JavaScript can run the design itself: `statewright/runtime` takes the `.statewright.json` and
+A system written in JavaScript can run the design itself: `statewright/runtime` takes the `.sttw` and
 answers, for each record, what an event, a call or a timer does to it. It is the Simulator's engine, so the Editor's
 simulation, the contract's vectors and the system in production behave alike. It is pure: no I/O and no clock. The
 system keeps each record's snapshot, runs the actions it is given and schedules the timers.
@@ -1050,7 +1051,7 @@ import { readFile } from "node:fs/promises";
 import { parse } from "statewright";
 import { createRuntime } from "statewright/runtime";
 
-const { doc } = parse(await readFile("design/bookings.statewright.json", "utf8"));
+const { doc } = parse(await readFile("design/bookings.sttw", "utf8"));
 const runtime = await createRuntime(doc);
 const booking = runtime.machine("booking.status"); // by subject, or by the level's ID
 
@@ -1149,7 +1150,7 @@ step by step_ (a flow). The person reads level 0 first, then opens only the boxe
 action can hold a flow too, its handler, reached from the catalog and **Levels…**.
 
 The example designs table bookings for a restaurant, in the person's Editor; the design it builds, with five
-scenarios, is in the repository as `examples/bookings.statewright.json`. Each block is what you pass to a tool:
+scenarios, is in the repository as `examples/bookings.sttw`. Each block is what you pass to a tool:
 `batch_apply` takes document commands and applies them as one change, named by its `label` in the history
 (`statewright commands <type>` gives each command's arguments).
 
@@ -1158,7 +1159,7 @@ book online, the staff confirm or decline, a guest who has not come 30 minutes a
 no-show, and the guest gets a text message either way.
 
 **2. Create the project.** `projects_create { "name": "Bookings" }` (on a file, add
-`"path": "bookings.statewright.json"`). Its root level is `cnv_bookings`.
+`"path": "bookings.sttw"`). Its root level is `cnv_bookings`.
 
 **3. Level 0: who takes part.** Declare the parties, endpoints and events in the catalog, then the boxes and who calls
 whom (`batch_apply`):
@@ -2047,11 +2048,11 @@ When the person has a design and wants the system built from it, or kept in line
 truth: implement what it says, prove it with its scenarios, and when the code must differ, change the design with the
 person first. Work on the design file through `file` (or the CLI); the person reviews it in the Editor.
 
-**1. Keep the design and its contract beside the code.** Commit `design/bookings.statewright.json` and its contract,
-`statewright contract design/bookings.statewright.json -o design/bookings.contract.json` (`export_contract` with `out`):
+**1. Keep the design and its contract beside the code.** Commit `design/bookings.sttw` and its contract,
+`statewright contract design/bookings.sttw -o design/bookings.contract.json` (`export_contract` with `out`):
 the contract is the version of the design the code was last aligned with.
 
-**2. Read what changed, and implement it.** `statewright contract design/bookings.statewright.json --since
+**2. Read what changed, and implement it.** `statewright contract design/bookings.sttw --since
 design/bookings.contract.json` lists what changed since then, by ID: states added, renamed or removed, new triggers,
 guards and actions. Read the levels it names (`level_get`), implement them level by level in the system's language, and
 keep the names the design gives states, events and endpoints: the code holds them.
@@ -2060,7 +2061,7 @@ keep the names the design gives states, events and endpoints: the code holds the
 [Conformance](#conformance) shows; run them in the system's tests, so a divergence fails the build where it happens, and
 write the results file.
 
-**4. Run conformance, and show what differs.** `statewright conform design/bookings.statewright.json
+**4. Run conformance, and show what differs.** `statewright conform design/bookings.sttw
 design/bookings.results.json --write` turns each divergence into a finding on the transition it breaks, which the Editor
 shows on the canvas. Point the person at it (`view_point`), and decide with them: fix the code, or change the design and
 record the new path.

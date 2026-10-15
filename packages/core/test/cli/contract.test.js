@@ -8,7 +8,7 @@ import { applyBatch, parse, sign, stringify } from "../../src/index.js";
 import { cli, workspace } from "./helpers.js";
 import { clashingDoc } from "../contract/fixtures.js";
 
-const BOOKINGS = fileURLToPath(new URL("../../../../examples/bookings.statewright.json", import.meta.url));
+const BOOKINGS = fileURLToPath(new URL("../../../../examples/bookings.sttw", import.meta.url));
 const PINNED = new URL("../../../../examples/rendered/bookings/contract.json", import.meta.url);
 
 /** A copy of bookings in a fresh directory, with the state `requested` renamed `pending`. */
@@ -17,7 +17,7 @@ async function renamed(dir) {
   const changed = applyBatch(doc, [
     { type: "node.update", args: { id: "nod_requested", set: { name: "pending" } } }
   ]).doc;
-  const file = join(dir, "bookings.statewright.json");
+  const file = join(dir, "bookings.sttw");
   await writeFile(file, stringify(await sign(changed, { channel: "cli" })));
   return file;
 }
@@ -81,8 +81,8 @@ describe("statewright contract (source-of-truth spec §5)", () => {
 
   it("says when two states share a name, still writes the contract, and exits 1", async () => {
     const dir = await workspace();
-    await writeFile(join(dir, "orders.statewright.json"), stringify(await sign(clashingDoc(), { channel: "cli" })));
-    const run = await cli(["contract", "orders.statewright.json"], { cwd: dir });
+    await writeFile(join(dir, "orders.sttw"), stringify(await sign(clashingDoc(), { channel: "cli" })));
+    const run = await cli(["contract", "orders.sttw"], { cwd: dir });
     expect(run.code).toBe(1);
     expect(run.stderr).toBe(
       'statewright: state "reserved" has the name of state "reserved" in the same level: code that holds the state by ' +
@@ -93,10 +93,10 @@ describe("statewright contract (source-of-truth spec §5)", () => {
 
   it("with --json, says ok only when it exits 0, a clash of names under --since and --check too", async () => {
     const dir = await workspace();
-    await writeFile(join(dir, "orders.statewright.json"), stringify(await sign(clashingDoc(), { channel: "cli" })));
-    await cli(["contract", "orders.statewright.json", "-o", "orders.contract.json"], { cwd: dir });
+    await writeFile(join(dir, "orders.sttw"), stringify(await sign(clashingDoc(), { channel: "cli" })));
+    await cli(["contract", "orders.sttw", "-o", "orders.contract.json"], { cwd: dir });
     for (const option of ["--since", "--check"]) {
-      const run = await cli(["contract", "orders.statewright.json", option, "orders.contract.json", "--json"], {
+      const run = await cli(["contract", "orders.sttw", option, "orders.contract.json", "--json"], {
         cwd: dir
       });
       expect(run.code).toBe(1);

@@ -33,25 +33,25 @@ afterEach(() => {
 describe("Save a copy", () => {
   it("writes the copy where the person chose and keeps the project on its own file", async () => {
     const repository = memoryRepository();
-    const own = fileHandle("get-paid.statewright.json");
+    const own = fileHandle("get-paid.sttw");
     await repository.setHandle("prj_getPaid", own);
     editorStore.getState().open(readExample("get-paid-as-built"));
-    const copy = fileHandle("get-paid copy.statewright.json");
+    const copy = fileHandle("get-paid copy.sttw");
     window.showSaveFilePicker = vi.fn(async () => copy);
     await saveProjectToFile(repository, t, { askLocation: true });
     expect(copy.text).toContain('"prj_getPaid"');
     expect(own.text).toBeNull();
     expect(await repository.getHandle("prj_getPaid")).toBe(own);
-    expect(toasts()).toEqual(['files:save.copied {"file":"get-paid copy.statewright.json"}']);
+    expect(toasts()).toEqual(['files:save.copied {"file":"get-paid copy.sttw"}']);
   });
 
   it("takes the copy's file as the project's own when the project has none yet", async () => {
     const repository = memoryRepository();
     editorStore.getState().open(readExample("get-paid-as-built"));
-    const first = fileHandle("get-paid.statewright.json");
+    const first = fileHandle("get-paid.sttw");
     window.showSaveFilePicker = vi.fn(async () => first);
     await saveProjectToFile(repository, t, { askLocation: true });
     expect(await repository.getHandle("prj_getPaid")).toBe(first);
-    expect(toasts()).toEqual(['files:save.saved {"file":"get-paid.statewright.json"}']);
+    expect(toasts()).toEqual(['files:save.saved {"file":"get-paid.sttw"}']);
   });
 });

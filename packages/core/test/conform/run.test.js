@@ -20,7 +20,7 @@ import { workspace } from "../cli/helpers.js";
 import { bookingsDriver } from "../fixtures/bookings-api/driver.js";
 import { readExample } from "../helpers.js";
 
-const bookings = () => parse(readExample("bookings.statewright.json")).doc;
+const bookings = () => parse(readExample("bookings.sttw")).doc;
 const contractOf = async () => (await toContract(bookings())).contract;
 const machineVectors = contract => contract.vectors.filter(vector => vector.level === "cnv_booking");
 

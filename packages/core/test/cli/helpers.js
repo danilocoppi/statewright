@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { main } from "../../src/cli/main.js";
 
 /** Absolute path of the payments example. */
-export const EXAMPLE = fileURLToPath(new URL("../../../../examples/payments.statewright.json", import.meta.url));
+export const EXAMPLE = fileURLToPath(new URL("../../../../examples/payments.sttw", import.meta.url));
 
 /** A fresh temporary directory. */
 export const workspace = () => mkdtemp(join(tmpdir(), "statewright-cli-"));

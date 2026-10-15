@@ -92,7 +92,7 @@ export async function route({ host, editor, files, agent, guide = readGuide }, t
   const { name } = operation;
   const { args, file, acceptChanges } = splitArguments(toolArgs);
   if (file !== undefined && (typeof file !== "string" || file === "")) {
-    return failure("BAD_ARGUMENTS", `Invalid arguments for ${name}: file must be the path of a .statewright.json`, {
+    return failure("BAD_ARGUMENTS", `Invalid arguments for ${name}: file must be the path of a .sttw`, {
       path: "file"
     });
   }
@@ -114,7 +114,7 @@ export async function route({ host, editor, files, agent, guide = readGuide }, t
   if (host.current() || host.runsWithoutFile(name)) return host.call(name, args, { acceptChanges });
   return failure(
     "NOT_PAIRED",
-    `${name} has no document to work on: pass file (the path of a .statewright.json), start the server with --file, ` +
+    `${name} has no document to work on: pass file (the path of a .sttw), start the server with --file, ` +
       `or ${howToPair(editor)}`
   );
 }

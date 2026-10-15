@@ -1,7 +1,7 @@
 // Plan A4 (AI interface spec §2: "With statewright mcp configured …, an agent pairs with an open Editor using the code
 // the Editor shows, builds a machine level …, and the person sees each change highlighted on the canvas, finds it in
 // the undo history as the agent's, and undoes it"; "Through the tools, an agent runs a scenario step by step, saves
-// it, presents it on the stage of the paired Editor, and exports the .statewright.json, which statewright verify
+// it, presents it on the stage of the paired Editor, and exports the .sttw, which statewright verify
 // accepts"; §10): a real `statewright mcp`, its client, and the Editor paired with it.
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
@@ -114,11 +114,11 @@ test("an agent pairs by the code the Editor shows, builds, simulates, presents a
     await page.keyboard.press("Escape");
 
     // The document, exported where the agent runs, as statewright verify accepts it.
-    expect(await mcp.tool("export_document", { out: "refund.statewright.json" })).toEqual({
-      name: "refund.statewright.json",
-      written: "refund.statewright.json"
+    expect(await mcp.tool("export_document", { out: "refund.sttw" })).toEqual({
+      name: "refund.sttw",
+      written: "refund.sttw"
     });
-    const verified = spawnSync(process.execPath, [BIN, "verify", join(mcp.dir, "refund.statewright.json"), "--json"], {
+    const verified = spawnSync(process.execPath, [BIN, "verify", join(mcp.dir, "refund.sttw"), "--json"], {
       encoding: "utf8"
     });
     expect(verified.status, verified.stderr).toBe(0);

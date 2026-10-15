@@ -6,7 +6,7 @@ dist-hosted
 test-results
 playwright-report
 # Written by stringify()/build-schema; their exact bytes are tested.
-examples/*.statewright.json
+examples/*.sttw
 examples/rendered/
 packages/core/schema/
 # Built by npm run readme:build from docs/guide/README.md; its exact bytes are tested.

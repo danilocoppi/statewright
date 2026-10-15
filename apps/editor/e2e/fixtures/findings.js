@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 
 import { applyBatch, parse, sign, stringify } from "statewright";
 
-const GET_PAID = resolve(import.meta.dirname, "../../../../examples/get-paid-as-built.statewright.json");
+const GET_PAID = resolve(import.meta.dirname, "../../../../examples/get-paid-as-built.sttw");
 
 /** The file to open (Open file…), signed as the CLI signs what it writes. */
 export async function getPaidWithFindings() {
@@ -45,7 +45,7 @@ export async function getPaidWithFindings() {
   ]).doc;
   const signed = await sign(changed, { channel: "cli" }, { now: new Date("2026-10-14T12:00:00Z") });
   return {
-    name: "get-paid-as-built.statewright.json",
+    name: "get-paid-as-built.sttw",
     mimeType: "application/json",
     buffer: Buffer.from(stringify(signed))
   };

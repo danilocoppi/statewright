@@ -239,7 +239,7 @@ export function describeContract(title, openHost) {
     it("exports the document, a level, the documentation, the contract and a scenario's page", async () => {
       const { call } = await open();
       const document = (await call("export.document")).result;
-      expect(document.name).toBe("payments.statewright.json");
+      expect(document.name).toBe("payments.sttw");
       expect(JSON.parse(document.text).project.id).toBe("prj_payments");
       const svg = (await call("export.svg", { canvas: "cnv_expiryClock" })).result;
       expect(svg.name).toBe("payments-expiry-clock.svg");

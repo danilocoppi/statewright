@@ -8,8 +8,8 @@ import { autoLayout } from "statewright/layout";
 /** The repository's examples; tests run from apps/editor (npm test -w @statewright/editor). */
 const EXAMPLES = resolve(process.cwd(), "../../examples");
 
-/** The text of examples/<name>.statewright.json. */
-export const exampleText = name => readFileSync(resolve(EXAMPLES, `${name}.statewright.json`), "utf8");
+/** The text of examples/<name>.sttw. */
+export const exampleText = name => readFileSync(resolve(EXAMPLES, `${name}.sttw`), "utf8");
 
 /** A parsed example document. */
 export function readExample(name) {

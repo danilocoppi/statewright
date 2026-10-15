@@ -53,6 +53,13 @@ describe("the contract's operations as MCP tools (AI interface spec §5)", () =>
     );
     expect(byName.level_get.description).toMatch(/ Errors: NOT_FOUND\.$/);
     expect(byName.view_open.description).toMatch(/ Needs a paired Editor\. Errors: NOT_FOUND, BUSY\.$/);
+    expect(byName.export_document.description).toMatch(/^The signed \.sttw: /);
+  });
+
+  it("names the document a .sttw, and says a .statewright.json saved before 0.1.5 works as well", () => {
+    const { file } = toolsOf().find(tool => tool.name === "document_summary").inputSchema.properties;
+    expect(file.description).toMatch(/^The \.sttw to work on \(or a \.statewright\.json saved before 0\.1\.5\), /);
+    for (const tool of toolsOf()) expect(tool.description, tool.name).not.toContain(".statewright.json");
   });
 
   it("gives every operation's tool `file`, and the tools that change the document `acceptChanges`", () => {

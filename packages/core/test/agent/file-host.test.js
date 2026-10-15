@@ -15,7 +15,7 @@ import { sign, verify } from "../../src/signature.js";
 import { readExample } from "../helpers.js";
 import { describeContract } from "./suite.js";
 
-const FILE = "payments.statewright.json";
+const FILE = "payments.sttw";
 
 /** A file host on a fresh copy of the payments example, in memory. */
 function payments() {
@@ -256,13 +256,11 @@ describe("the file host's exports, projects and audit", () => {
       ok: false,
       error: { code: "FILE" }
     });
-    expect(
-      await host.call("projects.create", { name: "Refund", kind: "flow", path: "refund.statewright.json" })
-    ).toEqual({
+    expect(await host.call("projects.create", { name: "Refund", kind: "flow", path: "refund.sttw" })).toEqual({
       ok: true,
-      result: { project: { id: "prj_refund", name: "Refund" }, written: "refund.statewright.json" }
+      result: { project: { id: "prj_refund", name: "Refund" }, written: "refund.sttw" }
     });
-    const written = parse(files.text("refund.statewright.json"));
+    const written = parse(files.text("refund.sttw"));
     expect(written.ok).toBe(true);
     expect(written.doc.generator).toMatchObject({ channel: "api", agent: "test-agent" });
     expect(await verify(written.doc)).toMatchObject({ content: "ok" });
@@ -270,9 +268,9 @@ describe("the file host's exports, projects and audit", () => {
       "end",
       "start"
     ]);
-    expect(await host.call("projects.create", { name: "Again", path: "refund.statewright.json" })).toMatchObject({
+    expect(await host.call("projects.create", { name: "Again", path: "refund.sttw" })).toMatchObject({
       ok: false,
-      error: { code: "FILE", message: "refund.statewright.json already exists" }
+      error: { code: "FILE", message: "refund.sttw already exists" }
     });
   });
 
@@ -293,6 +291,24 @@ describe("the file host's exports, projects and audit", () => {
     expect(await host.call("projects.open", { id: "prj_payments" })).toMatchObject({
       ok: false,
       error: { code: "NEEDS_EDITOR" }
+    });
+  });
+
+  it.each(["payments.statewright.json", "payments.json"])("works on a document named %s, as on a .sttw", async name => {
+    const host = createFileHost({ files: memoryFiles({ [name]: readExample(FILE) }) });
+    expect((await host.call("document.summary", {}, { file: name })).result.project.id).toBe("prj_payments");
+    expect((await host.call("projects.open", { path: name })).result.file).toBe(name);
+  });
+
+  it("asks for the path of a .sttw when there is none", async () => {
+    const host = createFileHost({ files: memoryFiles({}) });
+    expect(await host.call("projects.create", { name: "Refund" })).toMatchObject({
+      ok: false,
+      error: { code: "FILE", message: "Give the path to write the new .sttw at (path)" }
+    });
+    expect(await host.call("document.summary")).toMatchObject({
+      ok: false,
+      error: { code: "FILE", message: "Give the path of a .sttw (file), or open one (projects.open)" }
     });
   });
 });
@@ -338,9 +354,9 @@ describe("documents on disk (Node)", () => {
     const dir = await mkdtemp(join(tmpdir(), "statewright-agent-"));
     await writeFile(join(dir, "plain"), "");
     const host = createFileHost({ files: nodeFiles({ cwd: dir }) });
-    expect(await host.call("projects.create", { name: "New", path: "plain/new.statewright.json" })).toMatchObject({
+    expect(await host.call("projects.create", { name: "New", path: "plain/new.sttw" })).toMatchObject({
       ok: false,
-      error: { code: "FILE", details: { file: "plain/new.statewright.json" } }
+      error: { code: "FILE", details: { file: "plain/new.sttw" } }
     });
   });
 
@@ -349,15 +365,15 @@ describe("documents on disk (Node)", () => {
     await mkdir(join(dir, "real"));
     await writeFile(join(dir, "real", FILE), readExample(FILE));
     await chmod(join(dir, "real", FILE), 0o600);
-    await symlink(join("real", FILE), join(dir, "link.statewright.json"));
+    await symlink(join("real", FILE), join(dir, "link.sttw"));
     const host = createFileHost({ files: nodeFiles({ cwd: dir }) });
     const result = await host.call(
       "batch.apply",
       { label: "Rename", commands: [{ type: "node.update", args: { id: "nod_paused", set: { name: "on hold" } } }] },
-      { file: "link.statewright.json" }
+      { file: "link.sttw" }
     );
     expect(result.ok).toBe(true);
-    expect(await readlink(join(dir, "link.statewright.json"))).toBe(join("real", FILE));
+    expect(await readlink(join(dir, "link.sttw"))).toBe(join("real", FILE));
     const real = JSON.parse(await readFile(join(dir, "real", FILE), "utf8"));
     expect(real.canvases.cnv_expiryClock.nodes.nod_paused.name).toBe("on hold");
     expect((await stat(join(dir, "real", FILE))).mode & 0o777).toBe(0o600);
@@ -366,14 +382,14 @@ describe("documents on disk (Node)", () => {
 
   it("says a folder is not a document file it can read", async () => {
     const dir = await mkdtemp(join(tmpdir(), "statewright-agent-"));
-    await mkdir(join(dir, "folder.statewright.json"));
+    await mkdir(join(dir, "folder.sttw"));
     const host = createFileHost({ files: nodeFiles({ cwd: dir }) });
-    expect(await host.call("document.summary", {}, { file: "folder.statewright.json" })).toMatchObject({
+    expect(await host.call("document.summary", {}, { file: "folder.sttw" })).toMatchObject({
       ok: false,
       error: {
         code: "FILE",
-        message: expect.stringMatching(/^Cannot read folder\.statewright\.json: /),
-        details: { file: "folder.statewright.json" }
+        message: expect.stringMatching(/^Cannot read folder\.sttw: /),
+        details: { file: "folder.sttw" }
       }
     });
   });

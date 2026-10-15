@@ -116,7 +116,7 @@ describe("the story of a scenario, as the stage and the scenario page tell it (s
   });
 
   it("tells a flow by its tokens, each edge once, the forks' edges too", () => {
-    const doc = JSON.parse(readExample("payout-batch.statewright.json"));
+    const doc = JSON.parse(readExample("payout-batch.sttw"));
     const story = storyOf(doc, doc.annotations.scenarios.scn_aPayoutIsRefused);
     const [begun, confirmed] = story.frames;
     expect(begun.level).toBe("cnv_payOutBatch");

@@ -1,7 +1,7 @@
 # Statewright
 
 Statewright is a builder for **layered specifications of systems**: architecture views, state machines and procedural
-flows, nested to any depth, stored as one signed JSON document (`*.statewright.json`). It is made to be worked on with
+flows, nested to any depth, stored as one signed JSON document (`*.sttw`). It is made to be worked on with
 **AI coding agents** — Claude Code, Codex, Kimi, Cursor and others — beside a visual Editor where the person sees every
 change an agent makes, and can undo it.
 
@@ -25,8 +25,8 @@ in the Editor, choose **Connect an AI…** and give your agent the code it shows
    [Map your system, level by level](docs/guide/README.md#map-your-system-level-by-level).
 2. **Design together.** The agent interviews you and builds the design top-down, level 0 first, then one level per box
    that needs detail — [Design a system with the person, level by level](docs/guide/README.md#design-a-system-with-the-person-level-by-level).
-   [examples/bookings.statewright.json](examples/bookings.statewright.json) is that playbook's design.
-3. **Build from the design.** Keep the `.statewright.json` in your repository as the source of truth: the agent
+   [examples/bookings.sttw](examples/bookings.sttw) is that playbook's design.
+3. **Build from the design.** Keep the `.sttw` in your repository as the source of truth: the agent
    implements what it says, and when the code must differ it changes the design with you first.
    `statewright contract` writes the design's machines, flows and scenarios as JSON for code
    ([The contract](docs/guide/README.md#the-contract)), and `--check` in CI says when the design has changed and the

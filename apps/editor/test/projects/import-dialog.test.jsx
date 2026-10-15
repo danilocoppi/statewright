@@ -12,7 +12,7 @@ import { readExample } from "../fixtures.js";
 
 const review = extra => ({
   status: "review",
-  fileName: "get-paid.statewright.json",
+  fileName: "get-paid.sttw",
   doc: readExample("get-paid-as-built"),
   migrations: [],
   sections: { content: "changed", layout: "ok", annotations: "ok" },
@@ -49,7 +49,7 @@ describe("ImportDialog", () => {
   it("explains a file changed outside Statewright, part by part", () => {
     render(<ImportDialog plan={review()} onAccept={() => {}} onClose={() => {}} />);
     const dialog = screen.getByRole("dialog", { name: "This file was changed outside Statewright" });
-    expect(dialog.textContent).toContain("get-paid.statewright.json was edited after Statewright last saved it.");
+    expect(dialog.textContent).toContain("get-paid.sttw was edited after Statewright last saved it.");
     expect(dialog.textContent).toMatch(/ContentChanged/);
     expect(dialog.textContent).toMatch(/LayoutUnchanged/);
   });

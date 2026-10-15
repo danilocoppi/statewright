@@ -11,7 +11,7 @@ import { figureHeading } from "statewright";
 
 const EXAMPLES = resolve(import.meta.dirname, "../../../examples");
 const CLI = resolve(import.meta.dirname, "../../../packages/core/src/cli/bin.js");
-const payments = JSON.parse(readFileSync(resolve(EXAMPLES, "payments.statewright.json"), "utf8"));
+const payments = JSON.parse(readFileSync(resolve(EXAMPLES, "payments.sttw"), "utf8"));
 
 /** `statewright <args>`, as a person or an engine runs it on the saved file. */
 const statewright = (...args) => execFileSync(process.execPath, [CLI, ...args], { encoding: "utf8" });

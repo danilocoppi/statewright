@@ -12,12 +12,12 @@ import { toContract } from "statewright/contract";
 
 import { bookingsDriver } from "../../../packages/core/test/fixtures/bookings-api/driver.js";
 
-const BOOKINGS = resolve(import.meta.dirname, "../../../examples/bookings.statewright.json");
+const BOOKINGS = resolve(import.meta.dirname, "../../../examples/bookings.sttw");
 const CLI = resolve(import.meta.dirname, "../../../packages/core/src/cli/bin.js");
 
 test("shows on the canvas the finding statewright conform wrote for a planted bug", async ({ page }) => {
   const dir = mkdtempSync(join(tmpdir(), "statewright-conform-"));
-  const design = join(dir, "bookings.statewright.json");
+  const design = join(dir, "bookings.sttw");
   copyFileSync(BOOKINGS, design);
   const { contract } = await toContract(parse(readFileSync(BOOKINGS, "utf8")).doc);
   const results = await runVectors(contract, bookingsDriver({ plantedBug: true }), { only: "booking.status" });
@@ -29,7 +29,7 @@ test("shows on the canvas the finding statewright conform wrote for a planted bu
 
   await page.goto("/");
   await page.getByLabel("Open file…").setInputFiles({
-    name: "bookings.statewright.json",
+    name: "bookings.sttw",
     mimeType: "application/json",
     buffer: readFileSync(design)
   });

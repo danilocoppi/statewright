@@ -8,7 +8,7 @@ import { parse } from "../../src/serialize/parse.js";
 import { readExample } from "../helpers.js";
 import { clashingDoc, ordersDoc } from "./fixtures.js";
 
-const example = name => parse(readExample(`${name}.statewright.json`)).doc;
+const example = name => parse(readExample(`${name}.sttw`)).doc;
 const rendered = name =>
   readFileSync(new URL(`../../../../examples/rendered/${name}/contract.json`, import.meta.url), "utf8");
 

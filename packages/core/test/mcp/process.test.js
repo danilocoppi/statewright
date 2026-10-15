@@ -62,8 +62,8 @@ function start(args, cwd) {
 describe("statewright mcp (AI interface spec §5)", () => {
   it("lists its tools, and edits, simulates, audits and exports a file through them", async () => {
     const dir = await workspace();
-    await copyFile(EXAMPLE, join(dir, "payments.statewright.json"));
-    const mcp = start(["--file", "payments.statewright.json"], dir);
+    await copyFile(EXAMPLE, join(dir, "payments.sttw"));
+    const mcp = start(["--file", "payments.sttw"], dir);
 
     const hello = await mcp.request("initialize", {
       protocolVersion: "2025-06-18",
@@ -109,27 +109,23 @@ describe("statewright mcp (AI interface spec §5)", () => {
     const audit = await mcp.tool("audit_report", {});
     expect(audit.structuredContent.summary).toMatchObject({ error: 0, scenarios: 3, diverged: 0 });
 
-    const exported = await mcp.tool("export_document", { out: "copy/payments.statewright.json" });
+    const exported = await mcp.tool("export_document", { out: "copy/payments.sttw" });
     expect(exported.structuredContent).toEqual({
-      name: "payments.statewright.json",
-      written: "copy/payments.statewright.json"
+      name: "payments.sttw",
+      written: "copy/payments.sttw"
     });
-    const verified = spawnSync(
-      process.execPath,
-      [BIN, "verify", join(dir, "copy/payments.statewright.json"), "--json"],
-      {
-        encoding: "utf8"
-      }
-    );
+    const verified = spawnSync(process.execPath, [BIN, "verify", join(dir, "copy/payments.sttw"), "--json"], {
+      encoding: "utf8"
+    });
     expect(verified.status).toBe(0);
-    const copy = JSON.parse(await readFile(join(dir, "copy/payments.statewright.json"), "utf8"));
+    const copy = JSON.parse(await readFile(join(dir, "copy/payments.sttw"), "utf8"));
     expect(copy.generator).toMatchObject({ channel: "api", agent: "test-client" });
     expect(copy.annotations.scenarios.scn_verificationStarts.steps).toHaveLength(1);
 
     const { code, stderr, lines } = await mcp.end();
     expect(code).toBe(0);
     for (const line of lines) expect(JSON.parse(line).jsonrpc).toBe("2.0");
-    expect(stderr).toContain("statewright mcp: ready: 42 tools, on payments.statewright.json by default\n");
+    expect(stderr).toContain("statewright mcp: ready: 42 tools, on payments.sttw by default\n");
     expect(stderr).toContain("statewright mcp: connected to test-client\n");
   });
 
@@ -139,15 +135,15 @@ describe("statewright mcp (AI interface spec §5)", () => {
     const answered = new Promise(resolve => mcp.waiting.set(null, resolve));
     mcp.send("{nope");
     expect((await answered).error).toEqual({ code: -32700, message: "Not JSON" });
-    const missing = await mcp.tool("document_summary", { file: "missing.statewright.json" });
+    const missing = await mcp.tool("document_summary", { file: "missing.sttw" });
     expect(missing).toMatchObject({
       isError: true,
-      structuredContent: { error: { code: "FILE", message: "Cannot read missing.statewright.json: no such file" } }
+      structuredContent: { error: { code: "FILE", message: "Cannot read missing.sttw: no such file" } }
     });
     expect((await mcp.tool("document_summary", {})).structuredContent.error.code).toBe("NOT_PAIRED");
-    await copyFile(EXAMPLE, join(dir, "payments.statewright.json"));
-    const relative = await mcp.tool("document_summary", { file: "payments.statewright.json" });
-    const absolute = await mcp.tool("document_summary", { file: join(dir, "payments.statewright.json") });
+    await copyFile(EXAMPLE, join(dir, "payments.sttw"));
+    const relative = await mcp.tool("document_summary", { file: "payments.sttw" });
+    const absolute = await mcp.tool("document_summary", { file: join(dir, "payments.sttw") });
     expect(relative.structuredContent.project.id).toBe("prj_payments");
     expect(absolute.structuredContent).toEqual(relative.structuredContent);
     expect((await mcp.request("ping")).result).toEqual({});
@@ -156,8 +152,8 @@ describe("statewright mcp (AI interface spec §5)", () => {
 
   it("pairs with an Editor tab through its bridge, runs the calls without file there, and writes their out (§6)", async () => {
     const dir = await workspace();
-    await copyFile(EXAMPLE, join(dir, "payments.statewright.json"));
-    const mcp = start(["--file", "payments.statewright.json"], dir);
+    await copyFile(EXAMPLE, join(dir, "payments.sttw"));
+    const mcp = start(["--file", "payments.sttw"], dir);
     await mcp.request("initialize", { protocolVersion: "2025-06-18", clientInfo: { name: "test-client" } });
     const tab = fakeTab(await mcp.address(), {
       answer: ({ name, args }) =>

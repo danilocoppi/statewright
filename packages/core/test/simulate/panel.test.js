@@ -98,7 +98,7 @@ describe("what the editor's panel reads from the engine (simulator spec ยง5.4, ย
     ]);
     expect(locate(doc, "cnv_lifecycle", "nod_expiryClock/nod_gone")).toBeNull();
     expect(locate(doc, "cnv_lifecycle", "nod_clients")).toBeNull();
-    const batch = JSON.parse(readExample("payout-batch.statewright.json"));
+    const batch = JSON.parse(readExample("payout-batch.sttw"));
     expect(locate(batch, "cnv_payOutBatch", "nod_each/nod_pix")).toEqual([
       { canvas: "cnv_payOutBatch", node: "nod_each" },
       { canvas: "cnv_payOne", node: "nod_pix" }
@@ -123,7 +123,7 @@ describe("what the editor's panel reads from the engine (simulator spec ยง5.4, ย
         name: "Cross-border send"
       }
     ]);
-    const batch = JSON.parse(readExample("payout-batch.statewright.json"));
+    const batch = JSON.parse(readExample("payout-batch.sttw"));
     expect(instancesOf(batch, "cnv_payOutBatch")).toEqual([]);
     expect(instancesOf(batch, "cnv_payOne")).toEqual([]);
   });

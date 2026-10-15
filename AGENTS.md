@@ -96,9 +96,9 @@ Never edit these by hand; change their source and run the command.
 | File                            | Source, and the command that builds it                                                  |
 | ------------------------------- | --------------------------------------------------------------------------------------- |
 | `packages/core/README.md`       | `docs/guide/README.md` and the code behind its generated blocks: `npm run readme:build` |
-| `examples/rendered/`            | `examples/*.statewright.json`: `npm run examples:render`                                |
+| `examples/rendered/`            | `examples/*.sttw`: `npm run examples:render`                                            |
 | `packages/core/schema/1.1.json` | `packages/core/src/schema`: `npm run build:schema -w statewright`                       |
-| `examples/*.statewright.json`   | Signed documents: change them through commands, then `npm run examples:normalize`       |
+| `examples/*.sttw`               | Signed documents: change them through commands, then `npm run examples:normalize`       |
 
 ### How work is done here
 

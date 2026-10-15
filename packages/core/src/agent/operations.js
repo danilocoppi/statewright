@@ -313,8 +313,7 @@ export const OPERATIONS = [
   // Export
   {
     name: "export.document",
-    summary:
-      "The signed .statewright.json: as text, written to `out`, or in the Editor saved to its file or downloaded.",
+    summary: "The signed .sttw: as text, written to `out`, or in the Editor saved to its file or downloaded.",
     input: z.strictObject({ out: Out, to: z.enum(["text", "file", "download"]).optional() }),
     result: Written.extend({ name: z.string(), text: z.string().optional() })
   },

@@ -85,7 +85,7 @@ test("shows the payments example's top level within 1 s of opening it, the first
 });
 
 test("pans and zooms a level of 300 boxes, all on screen, at 60 frames a second", async ({ page }) => {
-  await openFile(page, await manyBoxes(300), "many-boxes.statewright.json");
+  await openFile(page, await manyBoxes(300), "many-boxes.sttw");
   await expect(page.locator(".react-flow__node-node")).toHaveCount(300);
   const pane = await page.locator(".react-flow__pane").boundingBox();
   const middle = { x: pane.x + pane.width / 2, y: pane.y + pane.height / 2 };
@@ -124,7 +124,7 @@ test("pans and zooms a level of 300 boxes, all on screen, at 60 frames a second"
 });
 
 test("shows an edit on a level of 300 boxes within 50 ms", async ({ page }) => {
-  await openFile(page, await manyBoxes(300), "many-boxes.statewright.json");
+  await openFile(page, await manyBoxes(300), "many-boxes.sttw");
   const box = '.react-flow__node[data-id="nod_box150"]';
   await page.locator(box).click();
   // The first edits of a page warm it up; then each nudge is timed from the key to the frame that shows it moved.
@@ -135,7 +135,7 @@ test("shows an edit on a level of 300 boxes within 50 ms", async ({ page }) => {
 });
 
 test("shows a step of a machine of 300 states within 50 ms (simulator spec §11)", async ({ page }) => {
-  await openFile(page, await manyStates(300), "many-states.statewright.json");
+  await openFile(page, await manyStates(300), "many-states.sttw");
   await page.getByRole("button", { name: "Simulate" }).click();
   await page.getByRole("dialog", { name: "Simulation" }).getByRole("button", { name: "Start" }).click();
   // The focus is on the run's one move; each Enter takes it, timed from the key to the frame that shows where it led.
@@ -150,7 +150,7 @@ test("shows a step of a machine of 300 states within 50 ms (simulator spec §11)
 });
 
 test("updates the Problems of 2,000 elements within 300 ms of a change", async ({ page }) => {
-  await openFile(page, await manyElements(10, 100), "many-elements.statewright.json");
+  await openFile(page, await manyElements(10, 100), "many-elements.sttw");
   await page.goto(`${new URL(page.url()).pathname}/cnv_machine0`);
   const button = page.getByRole("button", { name: /problems?$/ });
   await expect(button).toHaveText(/^\d+ problems$/);
@@ -163,7 +163,7 @@ test("updates the Problems of 2,000 elements within 300 ms of a change", async (
 test("updates the Problems of 2,000 elements, every scenario run again, within 300 ms of a change (simulator spec §11)", async ({
   page
 }) => {
-  await openFile(page, await manyScenarios(10, 100, 30), "many-scenarios.statewright.json");
+  await openFile(page, await manyScenarios(10, 100, 30), "many-scenarios.sttw");
   await page.goto(`${new URL(page.url()).pathname}/cnv_machine0`);
   const button = page.getByRole("button", { name: /problems?$/ });
   await expect(button).toHaveText(/^\d+ problems$/);

@@ -14,8 +14,8 @@ const FILE = {
   type: "string",
   minLength: 1,
   description:
-    "The .statewright.json to work on, a path the server reads and writes. Without it, the server's --file " +
-    "or the document opened last (projects_open, projects_create)."
+    "The .sttw to work on (or a .statewright.json saved before 0.1.5), a path the server reads and writes. " +
+    "Without it, the server's --file or the document opened last (projects_open, projects_create)."
 };
 
 const ACCEPT_CHANGES = {

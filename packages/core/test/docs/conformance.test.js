@@ -24,7 +24,7 @@ function checkedBlock(name) {
   return match[1];
 }
 
-const bookings = () => parse(readExample("bookings.statewright.json")).doc;
+const bookings = () => parse(readExample("bookings.sttw")).doc;
 
 /** A system's directory: the bookings contract under design/, and the service beside its driver. */
 async function system(files) {
@@ -44,7 +44,7 @@ describe("the guide's conformance (source-of-truth spec §6, §8)", () => {
       "What connects the vectors to the code is a **driver**, written once per machine",
       "`expect((await runVector(vector, driver)).failure).toBeUndefined()`",
       "`steps[0]` at the start, `steps[n]` after step `n`, or `error` with the message of a step that threw",
-      "npx statewright conform design/bookings.statewright.json design/bookings.results.json --write",
+      "npx statewright conform design/bookings.sttw design/bookings.results.json --write",
       "A step whose states differ is a `high` finding (`diverged`) on the transition the design fires there",
       "the Editor shows them as badges on the canvas",
       "The exit code is 1 when a step diverged or threw, when no vector ran, or when the results are for another version"
@@ -125,10 +125,10 @@ describe("the guide's conformance (source-of-truth spec §6, §8)", () => {
     const said = playbook.replace(/\s+/g, " ");
     for (const words of [
       "**1. Keep the design and its contract beside the code.**",
-      "statewright contract design/bookings.statewright.json -o design/bookings.contract.json",
-      "**2. Read what changed, and implement it.** `statewright contract design/bookings.statewright.json --since design/bookings.contract.json`",
+      "statewright contract design/bookings.sttw -o design/bookings.contract.json",
+      "**2. Read what changed, and implement it.** `statewright contract design/bookings.sttw --since design/bookings.contract.json`",
       "**3. Write the driver, once per machine.**",
-      "**4. Run conformance, and show what differs.** `statewright conform design/bookings.statewright.json design/bookings.results.json --write`",
+      "**4. Run conformance, and show what differs.** `statewright conform design/bookings.sttw design/bookings.results.json --write`",
       "which the Editor shows on the canvas",
       "**5. Keep them aligned in CI.** Run `statewright contract <design> --check <contract>`"
     ]) {

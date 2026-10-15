@@ -88,6 +88,12 @@ describe("the repository's documents (source-of-truth spec §8)", () => {
     for (const [line, command] of code.matchAll(/statewright ([a-z]+)/g)) expect(COMMANDS, line).toContain(command);
   });
 
+  it("names a document a .sttw in README.md and AGENTS.md, as Statewright saves it", () => {
+    expect(readme).toContain("one signed JSON document (`*.sttw`)");
+    expect(agents).toContain("`examples/*.sttw`");
+    for (const text of [readme, agents]) expect(text).not.toContain(".statewright.json");
+  });
+
   it("names the source on GitHub and its issues near the top of README.md, and in AGENTS.md", () => {
     const top = readme.slice(0, readme.indexOf("\n## ")).replace(/\s+/g, " ");
     expect(top).toContain(

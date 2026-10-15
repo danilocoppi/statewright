@@ -83,13 +83,13 @@ describe("repository", () => {
   it("removes a project with its file handle and restores it exactly", async () => {
     const repository = await fresh();
     const { summary } = await repository.save(demoDoc(), { now: 1 });
-    await repository.setHandle("prj_demo", { name: "demo.statewright.json" });
+    await repository.setHandle("prj_demo", { name: "demo.sttw" });
     const record = await repository.remove("prj_demo");
     expect(await repository.list()).toEqual([]);
     expect(await repository.getHandle("prj_demo")).toBeUndefined();
     await repository.restore(record);
     expect(await repository.list()).toEqual([summary]);
-    expect(await repository.getHandle("prj_demo")).toEqual({ name: "demo.statewright.json" });
+    expect(await repository.getHandle("prj_demo")).toEqual({ name: "demo.sttw" });
     expect(await repository.remove("prj_none")).toBeNull();
   });
 

@@ -19,11 +19,11 @@ const ADD_EVENT = [
 ];
 
 describe("new", () => {
-  it("creates an empty signed document", async () => {
+  it("creates an empty signed document, a .sttw", async () => {
     const dir = await workspace();
-    const run = await cli(["new", "shop.json", "--name", "Shop", "--agent", "claude-code", "--json"], { cwd: dir });
-    expect(run.json()).toEqual({ ok: true, written: "shop.json", project: "prj_shop", root: "cnv_shop" });
-    const doc = parse(await readFile(join(dir, "shop.json"), "utf8")).doc;
+    const run = await cli(["new", "shop.sttw", "--name", "Shop", "--agent", "claude-code", "--json"], { cwd: dir });
+    expect(run.json()).toEqual({ ok: true, written: "shop.sttw", project: "prj_shop", root: "cnv_shop" });
+    const doc = parse(await readFile(join(dir, "shop.sttw"), "utf8")).doc;
     expect(doc.generator).toMatchObject({ name: "statewright", channel: "cli", agent: "claude-code" });
     expect(await verify(doc)).toEqual({ content: "ok", annotations: "ok", layout: "ok" });
   });
