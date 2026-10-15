@@ -150,4 +150,16 @@ describe("proposals (collaboration spec §7)", () => {
     expect(() => editOperations["history.redo"]({ agent: "claude-code" }, {})).toThrow(/propose/);
     expect(editorStore.getState().doc.canvases.cnv_expiryClock.nodes.nod_elapsed).toBeTruthy();
   });
+
+  it("proposes whatever touches a locked element or level, even with the leave to delete, and lets the person edit it", () => {
+    editorStore.getState().dispatch([{ type: "lock.add", args: { target: "cnv_expiryClock" } }], { label: "Lock" });
+    proposalsStore.getState().setAllowDeletes(true);
+    expect(apply({ commands: REMOVE })).toMatchObject({
+      proposed: "prp_1",
+      forced: "locked",
+      reason: expect.stringMatching(/locked/)
+    });
+    expect(apply({ commands: LATE })).toMatchObject({ proposed: "prp_2", forced: "locked" });
+    expect(editorStore.getState().dispatch(LATE, { label: "Mine" }).ok).toBe(true);
+  });
 });

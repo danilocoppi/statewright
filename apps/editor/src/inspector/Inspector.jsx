@@ -14,6 +14,8 @@ import { editorStore, useEditor } from "@/store/editor";
 import { useInspectorWidth } from "@/stores/inspector";
 import { useView } from "@/stores/view";
 
+import { LockControl } from "@/locks/LockControl";
+
 import { TitleControl } from "./controls/text";
 import { headingOf } from "./describe";
 import { FieldList } from "./FieldList";
@@ -240,6 +242,8 @@ function InspectorIsland() {
                 <FieldList id={id} fields={fields.details} entry={entry} layer="details" />
               </DetailsFrame>
             }
+            {/* Don't let the AI change this: a box, an arrow, a region or the level (collaboration spec §8.2). */}
+            {["node", "edge", "region", "canvas"].includes(entry?.type) && <LockControl id={id} />}
           </div>
           <footer className="border-t border-hairline px-2 py-1.5">
             <button

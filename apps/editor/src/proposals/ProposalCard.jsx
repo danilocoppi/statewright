@@ -107,9 +107,16 @@ export function ProposalCard({ proposal, agent, onNavigate }) {
       <div className="grid gap-0.5">
         <p className="text-read font-medium text-ink">{title}</p>
         {why && <p className="text-label text-sub">{why}</p>}
-        {forced && (
+        {forced === "deletes" && (
           <p className="text-label text-warning">
             {t("proposal.forced", { names: diff.removed.map(item => item.name).join(", ") })}
+          </p>
+        )}
+        {forced === "locked" && (
+          <p className="text-label text-warning">
+            {t("proposal.forcedLocked", {
+              names: [...diff.added, ...diff.changed, ...diff.removed].map(item => item.name).join(", ")
+            })}
           </p>
         )}
         <p className="text-label text-muted">
@@ -193,7 +200,7 @@ export function ProposalCard({ proposal, agent, onNavigate }) {
           </Button>
         </div>
       )}
-      {forced && (
+      {forced === "deletes" && (
         <label className="flex items-center gap-2 text-label text-sub">
           <input
             type="checkbox"

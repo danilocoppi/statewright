@@ -9,6 +9,7 @@ import { layoutClient } from "@/workers";
 
 import { conversationStore } from "@/conversation/store";
 import { indexOf } from "@/lib/derived";
+import { lockedBy } from "@/locks/locked";
 import { diffOf, removes } from "@/proposals/diff";
 import { proposalsStore } from "@/proposals/store";
 
@@ -77,7 +78,12 @@ function applyOrPropose(context, { commands, label, propose, title, why }) {
     const { code, message, details, index } = diff.error;
     throw new AgentError(code, message, { ...details, ...(index === undefined ? {} : { index }) });
   }
-  const forced = removes(diff) && !proposalsStore.getState().allowDeletes;
+  // What is locked is only ever proposed; a removal, unless the person lets the agent delete (spec §7, §8.2).
+  const held = lockedBy(editorStore.getState().doc, diff);
+  const forced =
+    held.length ? "locked"
+    : removes(diff) && !proposalsStore.getState().allowDeletes ? "deletes"
+    : null;
   if (!propose && !forced) return changeAsAgent(commands, label, context);
   // A tab that only reads cannot accept anything: no proposal is kept there.
   if (editorStore.getState().readOnly) throw refusal();
@@ -89,15 +95,22 @@ function applyOrPropose(context, { commands, label, propose, title, why }) {
     agent: context.agent ?? null,
     commands,
     diff,
-    ...(forced ? { forced: "deletes" } : {})
+    ...(forced ? { forced } : {})
   });
   // A line of the conversation keeps it in the history (collaboration spec §7).
   conversationStore.getState().add({ kind: "proposal", id });
   if (!forced) return { proposed: id };
+  if (forced === "locked") {
+    return {
+      proposed: id,
+      forced,
+      reason: `It changes ${held.map(item => item.name).join(", ")}, which the person locked: it is only proposed`
+    };
+  }
   const names = diff.removed.map(item => item.name).join(", ");
   return {
     proposed: id,
-    forced: "deletes",
+    forced,
     reason: `It removes ${names}: whatever removes is proposed, and the person accepts or rejects it`
   };
 }

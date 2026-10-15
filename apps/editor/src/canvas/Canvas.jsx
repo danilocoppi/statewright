@@ -43,6 +43,7 @@ import { editorStore, useEditor } from "@/store/editor";
 import { currentInspectorWidth, useInspectorWidth } from "@/stores/inspector";
 import { useView } from "@/stores/view";
 import { CommentsLayer } from "@/comments/CommentsLayer";
+import { LocksLayer } from "@/locks/LocksLayer";
 import { MarksLayer } from "@/marks/MarksLayer";
 import { ProposalLayer } from "@/proposals/ProposalLayer";
 import { useMarksState } from "@/marks/store";
@@ -648,6 +649,7 @@ function Flow({ onNavigate }) {
           {!presenting && <MarksLayer canvasId={canvasId} />}
           {!presenting && <ProposalLayer canvasId={canvasId} />}
           {!presenting && <CommentsLayer canvasId={canvasId} />}
+          {!presenting && <LocksLayer canvasId={canvasId} />}
           {showMinimap && (
             <MiniMap
               pannable

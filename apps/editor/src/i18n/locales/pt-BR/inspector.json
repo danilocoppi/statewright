@@ -629,5 +629,10 @@
       "from": "Executado por",
       "to": "Executa"
     }
+  },
+  "lock": {
+    "label": "Não deixar a IA mudar isto",
+    "locked": "Travar para a IA",
+    "unlocked": "Destravar para a IA"
   }
 }

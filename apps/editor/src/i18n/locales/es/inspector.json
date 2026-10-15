@@ -629,5 +629,10 @@
       "from": "Realizado por",
       "to": "Realiza"
     }
+  },
+  "lock": {
+    "label": "No dejar que la IA cambie esto",
+    "locked": "Bloquear para la IA",
+    "unlocked": "Desbloquear para la IA"
   }
 }

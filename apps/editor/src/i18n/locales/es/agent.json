@@ -187,6 +187,7 @@
     "refusedSimulating": "Detén la simulación para aceptarla.",
     "otherProject": "se propuso para otro proyecto",
     "deletesOn": "{{agent}} puede eliminar sin preguntar",
-    "turnOff": "Desactivar"
+    "turnOff": "Desactivar",
+    "forcedLocked": "Propuesta porque cambia lo que está bloqueado: {{names}}."
   }
 }

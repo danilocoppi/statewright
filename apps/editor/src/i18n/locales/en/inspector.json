@@ -629,5 +629,10 @@
       "from": "Performed by",
       "to": "Performs"
     }
+  },
+  "lock": {
+    "label": "Don't let the AI change this",
+    "locked": "Lock against the AI",
+    "unlocked": "Unlock for the AI"
   }
 }

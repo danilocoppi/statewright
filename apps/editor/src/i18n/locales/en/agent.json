@@ -187,6 +187,7 @@
     "refusedSimulating": "Stop simulating to accept this.",
     "otherProject": "it was proposed for another project",
     "deletesOn": "{{agent}} may delete without asking",
-    "turnOff": "Turn off"
+    "turnOff": "Turn off",
+    "forcedLocked": "Proposed because it changes what is locked: {{names}}."
   }
 }
