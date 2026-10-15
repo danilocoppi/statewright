@@ -82,7 +82,8 @@ describe("the tool dock", () => {
       "From any state",
       "Entry from outside",
       "Link to another level",
-      "Note"
+      "Note",
+      "Level kind: State machine"
     ]);
     await user.hover(within(dock).getByRole("button", { name: "State" }));
     expect(screen.getByRole("tooltip").textContent).toBe("StateS");

@@ -301,6 +301,27 @@
   },
   "tools": {
     "dock": "Tools",
+    "kind": {
+      "name": "Level kind: {{kind}}",
+      "system": "System",
+      "machine": "State machine",
+      "flow": "Flow",
+      "tip": {
+        "system": "This level is a system: its tools are a system's",
+        "machine": "This level is a state machine: its tools are a state machine's",
+        "flow": "This level is a flow: its tools are a flow's"
+      },
+      "menu": "Levels inside a box",
+      "create": "Create inside {{name}}",
+      "inside": "Inside {{name}}",
+      "open": "Open {{name}}",
+      "hint": {
+        "flow": "Steps in order: actions, checks, loops",
+        "machine": "States and the events that change them",
+        "system": "Services, actors, stores and queues"
+      },
+      "pick": "Select a box to create a level inside it"
+    },
     "select": "Select",
     "note": "Note",
     "link": "Link to another level",
