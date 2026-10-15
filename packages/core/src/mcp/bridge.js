@@ -30,6 +30,8 @@ const MAX_BODY = 64 * 1024 * 1024;
 const MAX_CODE_BODY = 1024;
 /** The largest message from the person (collaboration spec §11: "a message is at most 8 MB"). */
 const MAX_MESSAGE = 8 * 1024 * 1024;
+/** How an image of the marks begins: a PNG, as a data URL. */
+export const PNG_DATA = "data:image/png;base64,";
 /** What `readJson` answers for a body over its limit. */
 const TOO_LARGE = Symbol("too large");
 
@@ -224,15 +226,23 @@ export function createBridge({
 
   /** The person writes to the agent: text (and what goes with it), or Stop. */
   function message(own, body, response) {
-    const { text, action, context, stop } = body;
+    const { text, action, context, marks, image, stop } = body;
     const written = typeof text === "string" && text.trim() !== "";
     if (!written && stop !== true) return send(response, 400, { error: "A message has text, or is a stop" });
     if (action !== undefined && typeof action !== "string") return send(response, 400, { error: "action is a word" });
     if (context !== undefined && !isObject(context)) return send(response, 400, { error: "context is an object" });
+    if (marks !== undefined && !(Array.isArray(marks) && marks.every(isObject))) {
+      return send(response, 400, { error: "marks is a list of marks" });
+    }
+    if (image !== undefined && !(typeof image === "string" && image.startsWith(PNG_DATA))) {
+      return send(response, 400, { error: "image is a PNG, as a data URL" });
+    }
     const { id } = own.inbox.add({
       ...(written ? { text } : {}),
       ...(action !== undefined ? { action } : {}),
       ...(context !== undefined ? { context } : {}),
+      ...(marks !== undefined ? { marks } : {}),
+      ...(image !== undefined ? { image } : {}),
       ...(stop === true ? { stop: true } : {})
     });
     return send(response, 202, { id });

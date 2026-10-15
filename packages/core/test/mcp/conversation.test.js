@@ -189,4 +189,56 @@ describe("the person writes to the agent (collaboration spec §3)", () => {
       "NOT_FOUND"
     );
   });
+
+  it("hands the image over as an image, and says the marks in words on the Channel", async () => {
+    const { tab, call, written } = await served();
+    await tab.send({
+      text: "look",
+      context: { level: { id: "cnv_l", name: "Lifecycle" } },
+      marks: [
+        {
+          kind: "ellipse",
+          level: "cnv_l",
+          colour: "red",
+          meaning: "wrong",
+          encloses: [{ id: "nod_r", name: "running" }],
+          touches: [{ id: "edg_g", name: "go" }]
+        },
+        {
+          kind: "stroke",
+          level: "cnv_l",
+          colour: "green",
+          meaning: "right",
+          from: { id: "nod_r", name: "running" },
+          to: { id: "nod_p", name: "paused" }
+        },
+        {
+          kind: "label",
+          level: "cnv_l",
+          colour: "amber",
+          meaning: "question",
+          text: "needs a timeout",
+          near: { id: "nod_p", name: "paused" }
+        },
+        { kind: "element", level: "cnv_x", element: { id: "nod_e", name: "expiry", kind: "state" } }
+      ],
+      image: "data:image/png;base64,iVBORw0KGgo="
+    });
+    await settle();
+    expect(notifications(written)[0].params.content).toBe(
+      [
+        "look",
+        "",
+        "Level: Lifecycle (cnv_l)",
+        "Marked (red, wrong) on cnv_l: encloses running (nod_r); touches go (edg_g)",
+        "Arrow (green, right) on cnv_l: running (nod_r) → paused (nod_p)",
+        'Label (amber, question) on cnv_l: "needs a timeout" near paused (nod_p)',
+        "For you on cnv_x: expiry (nod_e)",
+        "An image of the marks waits in editor_inbox."
+      ].join("\n")
+    );
+    const read = await call(1, "editor_inbox");
+    expect(read.result.structuredContent.messages[0].image).toBe("attached");
+    expect(read.result.content.at(-1)).toEqual({ type: "image", data: "iVBORw0KGgo=", mimeType: "image/png" });
+  });
 });

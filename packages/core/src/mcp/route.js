@@ -7,6 +7,7 @@ import { operationOfTool } from "../agent/contract.js";
 import { failure, success } from "../agent/errors.js";
 import { EDITOR_ORIGIN } from "../constants.js";
 import { guideSection, readGuide } from "./guide.js";
+import { PNG_DATA } from "./bridge.js";
 import { splitArguments } from "./tools.js";
 
 /**
@@ -85,13 +86,28 @@ const UNSTOPPED = new Set([
 /** How long editor_wait waits unless told (collaboration spec §3.2). */
 const WAIT_SECONDS = 50;
 
+/**
+ * The messages' images as MCP images (collaboration spec §5.4): each message says `image: "attached"`, and the
+ * outcome's `attachments` are the images, in order.
+ */
+function withImages(outcome) {
+  if (!outcome.ok || !Array.isArray(outcome.result?.messages)) return outcome;
+  const attachments = [];
+  const messages = outcome.result.messages.map(message => {
+    if (typeof message.image !== "string") return message;
+    attachments.push({ type: "image", data: message.image.slice(PNG_DATA.length), mimeType: "image/png" });
+    return { ...message, image: "attached" };
+  });
+  return { ...outcome, result: { ...outcome.result, messages }, ...(attachments.length ? { attachments } : {}) };
+}
+
 /** The conversation's tools (collaboration spec §3): on the paired tab's inbox. */
-function converse(editor, tool, args = {}, signal) {
+async function converse(editor, tool, args = {}, signal) {
   if (!editor) return failure("NOT_PAIRED", "This server has no bridge to the Editor: the person cannot write to you");
   const state = editor.state();
   if (state.status === "gone") return state.outcome;
   if (state.status !== "paired") return failure("NOT_PAIRED", `Nobody is paired to write to you: ${howToPair(editor)}`);
-  if (tool === "editor_inbox") return editor.inbox();
+  if (tool === "editor_inbox") return withImages(editor.inbox());
   if (tool === "editor_reply") return editor.reply(args);
   const { seconds = WAIT_SECONDS } = args;
   if (!Number.isInteger(seconds) || seconds < 1 || seconds > 600) {
@@ -99,7 +115,7 @@ function converse(editor, tool, args = {}, signal) {
       path: "seconds"
     });
   }
-  return editor.wait(seconds, signal);
+  return withImages(await editor.wait(seconds, signal));
 }
 
 /** While the person's messages wait unread, an answer says so (collaboration spec §3.2: "Notice while working"). */

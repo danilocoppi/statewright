@@ -2,7 +2,11 @@
 // by editor_wait, editor_inbox, or a reply to it. A stop message bars the agent's next actions until it is read. Pure:
 // the bridge keeps one per paired session and closes it when the session ends.
 
-/** @typedef {{ id: string, at: string, text?: string, action?: string, context?: object, stop?: true }} Message */
+/**
+ * @typedef {{ id: string, at: string, text?: string, action?: string, context?: object, marks?: object[],
+ *   image?: string, stop?: true }} Message `marks`: what the person marked, read (collaboration spec §5.4); `image`: a
+ *   PNG of the marks, as a data URL.
+ */
 
 /**
  * @param {{ now?: () => Date, number?: () => number }} [options] `number`: the next message's number — the bridge
@@ -36,7 +40,7 @@ export function createInbox({ now = () => new Date(), number } = {}) {
     /** Put a message in: `{ text?, action?, context?, stop? }`. */
     add(body) {
       next += 1;
-      const { text, action, context, stop } = body;
+      const { text, action, context, marks, image, stop } = body;
       /** @type {Message} */
       const message = {
         id: `msg_${number ? number() : next}`,
@@ -44,6 +48,8 @@ export function createInbox({ now = () => new Date(), number } = {}) {
         ...(text !== undefined ? { text } : {}),
         ...(action !== undefined ? { action } : {}),
         ...(context !== undefined ? { context } : {}),
+        ...(marks !== undefined ? { marks } : {}),
+        ...(image !== undefined ? { image } : {}),
         ...(stop ? { stop: true } : {})
       };
       unread.push(message);

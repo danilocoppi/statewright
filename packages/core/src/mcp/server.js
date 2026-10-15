@@ -43,7 +43,13 @@ const refuse = (id, code, message) => ({ jsonrpc: "2.0", id, error: { code, mess
 function toolResult(outcome) {
   const content = outcome.ok ? outcome.result : { error: outcome.error };
   const text = JSON.stringify(outcome.ok ? outcome.result : outcome.error);
-  return { content: [{ type: "text", text }], structuredContent: content, ...(outcome.ok ? {} : { isError: true }) };
+  // Images go after the text, as MCP image content (the messages' marks, collaboration spec §5.4).
+  const images = outcome.ok && Array.isArray(outcome.attachments) ? outcome.attachments : [];
+  return {
+    content: [{ type: "text", text }, ...images],
+    structuredContent: content,
+    ...(outcome.ok ? {} : { isError: true })
+  };
 }
 
 /**

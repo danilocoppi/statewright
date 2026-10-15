@@ -70,6 +70,25 @@ export async function serveMcp({ files, file, version, lines, write, log = () =>
   unhear?.();
 }
 
+/** Elements by name and ID: "running (nod_r), paused (nod_p)". */
+const namesOf = items => items.map(item => `${item.name} (${item.id})`).join(", ");
+
+/** A mark of the person's in words (collaboration spec §5.4). */
+function markInWords(mark) {
+  if (mark.kind === "element") return `For you on ${mark.level}: ${namesOf([mark.element])}`;
+  const colour = mark.meaning ? `${mark.colour}, ${mark.meaning}` : mark.colour;
+  if (mark.kind === "label") {
+    return `Label (${colour}) on ${mark.level}: "${mark.text}"${mark.near ? ` near ${namesOf([mark.near])}` : ""}`;
+  }
+  if (mark.from && mark.to)
+    return `Arrow (${colour}) on ${mark.level}: ${namesOf([mark.from])} → ${namesOf([mark.to])}`;
+  const parts = [
+    ...(mark.encloses?.length ? [`encloses ${namesOf(mark.encloses)}`] : []),
+    ...(mark.touches?.length ? [`touches ${namesOf(mark.touches)}`] : [])
+  ];
+  return `Marked (${colour}) on ${mark.level}: ${parts.join("; ") || "nothing on the level"}`;
+}
+
 /**
  * A message as the Channel carries it: its text, then the level and the selection it was written on; meta keys are
  * letters, digits and underscores (Claude Code's contract).
@@ -89,6 +108,8 @@ export function channelOf(message) {
   if (context.selection?.length) {
     lines.push(`Selected: ${context.selection.map(item => `${item.name} (${item.id})`).join(", ")}`);
   }
+  for (const mark of message.marks ?? []) lines.push(markInWords(mark));
+  if (message.image) lines.push("An image of the marks waits in editor_inbox.");
   return {
     content: lines.length ? `${text}\n\n${lines.join("\n")}` : text,
     meta: { message: id, ...(context.level ? { level: context.level.id } : {}) }

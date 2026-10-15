@@ -478,4 +478,19 @@ describe("messages from the person (collaboration spec §3.2)", () => {
     expect((await waiting).result.messages).toEqual([]);
     expect(Date.now() - started).toBeLessThan(500);
   });
+
+  it("takes the marks and an image of them with a message, and only a PNG image (collaboration spec §5.4)", async () => {
+    const { bridge, address } = await bridgeOn();
+    const { tab } = await paired(bridge, address);
+    const marks = [
+      { kind: "rectangle", level: "cnv_a", colour: "red", meaning: "wrong", encloses: [{ id: "nod_a", name: "a" }] }
+    ];
+    expect((await tab.send({ text: "here", marks, image: "data:image/png;base64,iVBORw0KGgo=" })).status).toBe(202);
+    expect(bridge.inbox().result.messages).toMatchObject([
+      { text: "here", marks, image: "data:image/png;base64,iVBORw0KGgo=" }
+    ]);
+    expect((await tab.send({ text: "here", image: "data:image/jpeg;base64,xx" })).status).toBe(400);
+    expect((await tab.send({ text: "here", marks: { kind: "x" } })).status).toBe(400);
+    expect((await tab.send({ text: "here", marks: ["x"] })).status).toBe(400);
+  });
 });
