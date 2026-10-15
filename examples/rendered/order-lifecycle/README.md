@@ -43,6 +43,12 @@ A shop's orders: who places them, who charges them, and the order's lifecycle.
 | Shop | Orders | data |
 | Shop | Payments | command |
 
+| From | Role | To | About |
+| --- | --- | --- | --- |
+| Customer | drives | order.cancelled | order.cancelled |
+| Customer | drives | order.cancelled | order.cancelled |
+| Customer | drives | order.placed | order.placed |
+
 ## Order lifecycle › Order
 
 *machine · subject `order.status` · transitions complete*

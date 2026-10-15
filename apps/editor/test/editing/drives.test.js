@@ -74,7 +74,11 @@ describe("driving a lifecycle from a system's box (mixed levels spec §4.3)", ()
 
   it("a box without one asks whom it acts for, and a new party is made for it", () => {
     connectBoxes(t, "nod_payments", "edg_pay", { x: 0, y: 0 });
-    expect(editingStore.getState().editor).toMatchObject({ type: "receive", needs: "party", options: ["pty_customer"] });
+    expect(editingStore.getState().editor).toMatchObject({
+      type: "receive",
+      needs: "party",
+      options: ["pty_customer"]
+    });
     receiveWith(t, { party: { name: "Payments" } });
     const doc = state().doc;
     const party = doc.canvases.cnv_shop.nodes.nod_payments.party;

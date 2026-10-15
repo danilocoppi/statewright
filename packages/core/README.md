@@ -201,6 +201,11 @@ action's party) and `flows` (the flow each action runs within the step). `statew
 condition in words inside the flow is a question the runtime cannot answer, so bind it to a guard.
 `examples/order-lifecycle.sttw` shows all of it.
 
+On a system level, a lifecycle is a box whose state machine is open as a frame (the Lifecycle tool of the Machine
+tab). A box of the system that acts for a party drives the transitions that party sends: drag the box onto a transition
+inside the frame and it drives it (the transition's `by`); a box with no party is first asked whom it acts for — a
+party of the catalog, or a new one named as typed — and gets it in the same change.
+
 ### Definitions
 
 A definition (`def_*`) is a reusable canvas. Elements whose `inner` is `{ "definition": "def_x" }` are its instances:

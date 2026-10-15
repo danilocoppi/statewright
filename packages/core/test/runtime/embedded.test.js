@@ -49,7 +49,9 @@ describe("a step's effects when an action's flow ran within it (mixed levels spe
     const session = start(doc, { canvas: "cnv_root", at: "2026-01-05T09:00:00Z" }).session;
     const { trace } = step(doc, session, { do: { event: "evt_pay" } });
     const effects = effectsOf(doc, "cnv_root", trace);
-    expect(effects.actions).toEqual([{ action: "Log the card", args: {}, transition: "edg_pay", within: "Charge card" }]);
+    expect(effects.actions).toEqual([
+      { action: "Log the card", args: {}, transition: "edg_pay", within: "Charge card" }
+    ]);
     expect(effects.events.map(item => item.event)).toEqual(["payment.receipt"]);
   });
 });

@@ -52,3 +52,9 @@ describe("the roles in the AI pack (mixed levels spec §7)", () => {
     expect(pack).toContain("- `edg_createdCharging` runs `nod_chargeSteps` — `actions` of `edg_createdCharging`");
   });
 });
+
+describe("a lifecycle's drivers in the documentation (mixed levels spec §4.3)", () => {
+  it("lists what the system's boxes drive in the system level's roles table", () => {
+    expect(toMarkdown(order())).toMatch(/\| Customer \| drives \| order\.placed \|/);
+  });
+});

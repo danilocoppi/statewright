@@ -9,7 +9,7 @@
     "algorithm": "sha256",
     "content": "df1f14c8b3ed4af38404af5061e758b8a532e324c6226924d99bd7ae40bb7eea",
     "annotations": "d4151a638dcf4aabffce3017110ee84688b96bd5a14be18c5435882cb137e3ed",
-    "layout": "4deccda654ef1eb011ebdfd053a843015c33a84e37caa40680a4e7b6c881836d",
+    "layout": "39a777a90e31c4acd7e8e1acd3158faac446a8ac84959045328cdd298fe3d07f",
     "signedAt": "2026-10-15T12:00:00Z"
   },
   "project": {
@@ -592,85 +592,86 @@
       "cnv_orderLifecycle": {
         "nodes": {
           "nod_customer": {
-            "x": 8,
-            "y": 0
+            "x": 0,
+            "y": 4
           },
           "nod_orders": {
-            "x": 0,
-            "y": 88
+            "x": 212,
+            "y": 61,
+            "display": "frame"
           },
           "nod_payments": {
-            "x": 8,
-            "y": 184
+            "x": 2378,
+            "y": 537
           },
           "nod_shop": {
-            "x": 372,
-            "y": 92
+            "x": 2712,
+            "y": 255
           }
         },
         "edges": {
           "edg_customerShop": {
             "points": [
               [
-                148,
-                24
+                140,
+                20
               ],
               [
-                320,
-                24
+                2660,
+                20
               ],
               [
-                320,
-                104
+                2660,
+                267
               ],
               [
-                372,
-                104
+                2712,
+                267
               ]
             ],
             "labelAt": [
-              260,
-              37
+              1365,
+              8
             ]
           },
           "edg_shopOrders": {
             "points": [
               [
-                372,
-                116
+                2712,
+                279
               ],
               [
-                148,
-                116
+                2518,
+                279
               ]
             ],
             "labelAt": [
-              260,
-              129
+              2615,
+              292
             ]
           },
           "edg_shopPayments": {
             "points": [
               [
-                372,
-                128
+                2712,
+                291
               ],
               [
-                320,
-                128
+                2660,
+                291
               ],
               [
-                320,
-                208
+                2660,
+                561
               ],
               [
-                148,
-                208
+                2518,
+                561
               ]
             ],
             "labelAt": [
-              260,
-              221
+              2615,
+              574
             ]
           }
         }
