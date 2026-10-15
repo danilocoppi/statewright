@@ -176,6 +176,7 @@ describe("the platform guide", () => {
       "runs the action's flow",
       "`receivedBy`",
       "`flows`",
+      "`within`",
       "examples/order-lifecycle.sttw"
     ]) {
       expect(section).toContain(words);

@@ -112,6 +112,28 @@ describe("drawing roles on a machine (mixed levels spec §4.1, §4.2, §6)", () 
   });
 });
 
+describe("deleting a sender read from an event's source", () => {
+  it("says which other transitions lose their sender, with Undo", async () => {
+    const { useToastStore } = await import("@/stores/toast");
+    const { doc, root, open } = level;
+    const sourced = applyBatch(doc, [
+      { type: "catalog.update", args: { id: "evt_pay", set: { source: "pty_customer" } } },
+      {
+        type: "edge.add",
+        args: { canvas: root, id: "edg_again", edge: { from: "nod_paid", to: open, on: ["evt_pay"] } }
+      }
+    ]).doc;
+    editorStore.getState().open(sourced, { canvasId: root });
+    state().select(["sends:nod_customer:edg_pay"]);
+    deleteSelection(t);
+    expect(state().doc.catalog.events.evt_pay.source).toBeUndefined();
+    const [notice] = useToastStore.getState().items.slice(-1);
+    expect(notice.message).toBe("roles.alsoLose");
+    notice.actions[0].onClick();
+    expect(state().doc.catalog.events.evt_pay.source).toBe("pty_customer");
+  });
+});
+
 describe("the canvas shows the roles' connectors", () => {
   it("projects each association as an edge of its own type", () => {
     const { edges } = projectLevel(level.doc, level.root);
@@ -126,6 +148,44 @@ describe("the roles' refusals in words", () => {
     const { refusalKey } = await import("@/editing/refusals");
     for (const reason of ["guest", "noMeaning", "already", "notRun", "nothingToReceive"]) {
       expect(refusalKey(reason)).toBe(`refusals.${reason}`);
+    }
+  });
+});
+
+describe("connectors that reach into a frame", () => {
+  it("keys each end with its own frame's path, so React Flow finds both", async () => {
+    const doc = applyBatch(level.doc, [
+      { type: "catalog.add", args: { collection: "parties", id: "pty_ops", item: { kind: "operator", name: "Ops" } } }
+    ]).doc;
+    // A system around the machine: a store holding it as a frame, and a service acting for the customer.
+    const system = structuredClone({
+      ...doc,
+      root: "cnv_shop",
+      canvases: {
+        ...doc.canvases,
+        cnv_shop: {
+          kind: "system",
+          name: "Shop",
+          nodes: {
+            nod_orders: { kind: "store", name: "Orders", inner: { canvas: level.root } },
+            nod_web: { kind: "service", name: "Web", party: "pty_customer" }
+          },
+          edges: {}
+        }
+      }
+    });
+    system.canvases[level.root].edges.edg_pay.by = "pty_customer";
+    let placed = applyBatch(system, [
+      { type: "layout.node.set", args: { canvas: "cnv_shop", id: "nod_orders", x: 0, y: 0, display: "frame" } }
+    ]).doc;
+    placed = applyBatch(placed, await autoLayout(placed, "cnv_shop", { scope: "all" })).doc;
+    const { nodes, edges } = projectLevel(placed, "cnv_shop");
+    const keys = new Set(nodes.map(node => node.id));
+    const drives = edges.filter(edge => edge.type === "association");
+    expect(drives.length).toBeGreaterThan(0);
+    for (const edge of drives) {
+      expect(keys.has(edge.source), edge.source).toBe(true);
+      expect(keys.has(edge.target), edge.target).toBe(true);
     }
   });
 });

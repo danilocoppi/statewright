@@ -20,17 +20,17 @@ This is a generated summary of the Statewright document `prj_orderLifecycle` (fo
 | `nod_chargeDeclined` | end node | Declined | `cnv_chargeCard` |
 | `nod_chargeDone` | end node | Charged | `cnv_chargeCard` |
 | `nod_chargeStart` | start node | nod_chargeStart | `cnv_chargeCard` |
-| `nod_chargeSteps` | steps node | nod_chargeSteps | `cnv_order` |
+| `nod_chargeSteps` | steps node | Charge card | `cnv_order` |
 | `nod_charging` | state node | charging | `cnv_order` |
 | `nod_created` | state node | created | `cnv_order` |
 | `nod_customer` | actor node | Customer | `cnv_orderLifecycle` |
-| `nod_customerHere` | participant node | nod_customerHere | `cnv_order` |
+| `nod_customerHere` | participant node | Customer | `cnv_order` |
 | `nod_init` | initial node | nod_init | `cnv_order` |
 | `nod_markCharged` | assign node | nod_markCharged | `cnv_chargeCard` |
 | `nod_orders` | store node | Orders | `cnv_orderLifecycle` |
 | `nod_paid` | state node | paid | `cnv_order` |
 | `nod_payments` | service node | Payments | `cnv_orderLifecycle` |
-| `nod_paymentsHere` | participant node | nod_paymentsHere | `cnv_order` |
+| `nod_paymentsHere` | participant node | Payments | `cnv_order` |
 | `nod_shop` | service node | Shop | `cnv_orderLifecycle` |
 | `prj_orderLifecycle` | project | Order lifecycle |  |
 | `pty_customer` | party | Customer |  |
@@ -61,6 +61,15 @@ flow
 ### `cnv_order` "Order"
 
 machine · transitions complete · subject order.status
+
+Roles (derived; change the field that holds them):
+
+- `edg_createdCharging` is for `nod_paymentsHere` — `party` of `act_chargeCard`
+- `nod_paid` is for `nod_customerHere` — `party` of `act_sendReceipt`
+- `edg_createdCharging` runs `nod_chargeSteps` — `actions` of `edg_createdCharging`
+- `nod_customerHere` sends `edg_chargingCancelled` — `source` of `evt_orderCancelled`
+- `nod_customerHere` sends `edg_createdCancelled` — `source` of `evt_orderCancelled`
+- `nod_customerHere` sends `edg_createdCharging` — `source` of `evt_orderPlaced`
 
 | Edge | From | To | Triggers | Guard | Effects |
 | --- | --- | --- | --- | --- | --- |

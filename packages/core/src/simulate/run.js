@@ -719,7 +719,7 @@ function take(run, { source, edgeId, edge }, event) {
   });
   runEffects(run, edge.actions, instanceOf(run, source), event, source);
   // A call that triggers the transition runs its endpoint's or webhook's flow (mixed levels spec §4.2).
-  if (edge.via && event?.kind === "call" && embeddedFlowOf(run.doc, edge.via)) {
+  if (edge.via && event?.call === edge.via && embeddedFlowOf(run.doc, edge.via)) {
     const entry = {
       type: "action",
       [run.doc.catalog.endpoints[edge.via] ? "endpoint" : "webhook"]: edge.via,

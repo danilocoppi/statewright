@@ -114,7 +114,7 @@ export function storyFrom(doc, scenario, { start, step, reachedOf }) {
     let answers = recorded ?? [];
     let result = take(answers);
     if (result.status === "error" && result.code === "extraAnswers") {
-      answers = answers.slice(0, result.trace.filter(entry => entry.type === "answered").length);
+      answers = answers.slice(0, result.details.used);
       result = take(answers);
     } else if (result.status === "error" && result.code === "badAnswer") {
       answers = [];

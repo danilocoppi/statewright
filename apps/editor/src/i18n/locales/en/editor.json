@@ -457,6 +457,8 @@
   },
   "roles": {
     "whichAction": "Which action does {{name}} receive?",
-    "actionPlaceholder": "An action run here"
+    "actionPlaceholder": "An action run here",
+    "alsoLose_one": "{{count}} other transition also loses its sender.",
+    "alsoLose_other": "{{count}} other transitions also lose their sender."
   }
 }

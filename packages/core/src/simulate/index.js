@@ -49,9 +49,11 @@ function attempt(doc, session, answers, body, options) {
   try {
     body(run);
     if (run.cursor < run.answers.length) {
+      // `used`: how many answers the step took, those of actions' flows run within it included.
       throw new EngineError(
         "extraAnswers",
-        `${run.answers.length - run.cursor} answer(s) were given that nothing asked for`
+        `${run.answers.length - run.cursor} answer(s) were given that nothing asked for`,
+        { used: run.cursor }
       );
     }
     return { status: "done", session: run.kind === "flow" ? flowSessionOf(run) : sessionOf(run), trace: run.trace };

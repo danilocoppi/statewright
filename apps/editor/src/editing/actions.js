@@ -3,6 +3,7 @@
 import { associate, associationsOf, dissociateCommands } from "statewright";
 
 import { isSimulating } from "@/simulate/store";
+import { toast } from "@/stores/toast";
 import { editorStore } from "@/store/editor";
 import { layoutClient } from "@/workers";
 
@@ -56,12 +57,20 @@ export function deleteSelection(t, label = t("editing.delete")) {
   if (!selection.length || readOnly) return;
   // A role's connector is not stored: deleting it clears what it stands for (mixed levels spec §3).
   const associations = associationsOf(doc, canvasId).filter(item => selection.includes(item.id));
-  const cleared = associations.flatMap(item => dissociateCommands(doc, item).commands);
+  const dissociated = associations.map(item => dissociateCommands(doc, item));
+  const cleared = dissociated.flatMap(item => item.commands);
+  // A sender read from an event's source goes from every transition that event moves: say which, with Undo.
+  const lose = [...new Set(dissociated.flatMap(item => item.alsoLoses))];
   const { ok } = change([...cleared, ...removeCommands(doc, selection)], {
     label,
     at: centreOf(doc, canvasId, selection)
   });
   if (ok) editorStore.getState().select([]);
+  if (ok && lose.length) {
+    toast.info(t("roles.alsoLose", { count: lose.length }), {
+      action: { label: t("menu.undo"), onClick: () => editorStore.getState().undo() }
+    });
+  }
 }
 
 /** Move what is selected by an offset (arrow keys; Shift ×10). Nudges in a row are one undo entry. */

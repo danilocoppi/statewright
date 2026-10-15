@@ -196,8 +196,10 @@ When a transition or a state runs an action whose flow never waits, the simulato
 there: its assigns write the machine's context, the events it emits move the machine, its questions are asked with the
 machine's, and the story says who sends and who receives ("Customer sends order.placed. Payments receives Charge
 card."). A flow that waits runs apart, as before. The contract gives such transitions and states `receivedBy` (each
-action's party) and `flows` (the flow each action runs within the step). `examples/order-lifecycle.sttw` shows all of
-it.
+action's party) and `flows` (the flow each action runs within the step). `statewright/runtime` runs such a flow the same way: the system is asked for the flow's own actions, calls and webhooks
+(each with `within`, the action whose flow asked), not for the action itself, and hears the events the flow raised; a
+condition in words inside the flow is a question the runtime cannot answer, so bind it to a guard.
+`examples/order-lifecycle.sttw` shows all of it.
 
 ### Definitions
 

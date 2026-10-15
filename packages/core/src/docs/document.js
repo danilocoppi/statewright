@@ -42,9 +42,23 @@ function walk(doc) {
 
 /** Display name of any element. */
 function nameOf(doc, index, id) {
-  const value = index.get(id)?.value;
+  const entry = index.get(id);
+  const value = entry?.value;
+  // A guest is named by what it stands for (mixed levels spec §4).
+  if (entry?.type === "node" && isGuest(doc.canvases[entry.canvas].kind, value))
+    return value.label ?? stepText(doc, value);
   return value?.label ?? value?.name ?? value?.code ?? value?.title ?? id;
 }
+
+/** How the AI pack says a role (mixed levels spec §3). */
+const ROLE_PHRASES = {
+  sends: "sends",
+  receives: "is for",
+  runs: "runs",
+  drives: "drives",
+  leadsTo: "leads to",
+  performs: "is done by"
+};
 
 /** Effects (spec §9.5) as short text: `action Refresh quote`, `emit expiry.elapsed`, `assign context.x`. */
 function effectsText(effects, named) {
@@ -538,6 +552,20 @@ export function toAIPack(doc, { guideUrl } = {}) {
     ].filter(Boolean);
     out.push(`### ${code(id)} "${canvas.name}"`, "", `${about.join(" · ")}`, "");
     const edges = sortedKeys(canvas.edges);
+    const roles = associationsOf(doc, id).filter(item =>
+      [item.from, item.to].every(end => canvas.nodes[end] || canvas.edges[end])
+    );
+    if (roles.length) {
+      out.push(
+        "Roles (derived; change the field that holds them):",
+        "",
+        ...roles.map(
+          item =>
+            `- ${code(item.from)} ${ROLE_PHRASES[item.role]} ${code(item.to)} — ${item.owners.map(owner => `${code(item.field)} of ${code(owner)}`).join(", ")}`
+        ),
+        ""
+      );
+    }
     if (!edges.length) {
       out.push("No edges.", "");
       continue;

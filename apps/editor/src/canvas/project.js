@@ -117,19 +117,22 @@ export function projectLevel(source, canvasId, { hidden = [], nameOf = () => und
     data: { part, label: labels.get(partKey(part)) ?? null }
   }));
 
-  // The roles' connectors (mixed levels spec §3): an end that is a transition is held by its source box.
-  const holder = (part, id) => {
-    const canvas = doc.canvases[part.canvas];
-    const box =
-      canvas?.nodes[id] ? id : (Object.values(doc.canvases).find(level => level.edges[id])?.edges[id]?.from ?? id);
-    return partKey({ within: part.within, id: box });
+  // The roles' connectors (mixed levels spec §3): each end keyed with its own frame's path; an end that is a
+  // transition is held by its source box.
+  const boxParts = new Map([...figure.nodes, ...figure.frames].map(part => [part.id, part]));
+  const routes = new Map(figure.edges.map(part => [part.id, part]));
+  const holder = id => {
+    const box = boxParts.get(id);
+    if (box) return partKey(box);
+    const route = routes.get(id);
+    return route ? partKey({ within: route.within, id: route.from }) : id;
   };
   edges.push(
     ...figure.associations.map(part => ({
       id: partKey(part),
       type: "association",
-      source: holder(part, part.from),
-      target: holder(part, part.to),
+      source: holder(part.from),
+      target: holder(part.to),
       ...fixed,
       selectable: own(part),
       focusable: false,

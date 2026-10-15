@@ -40,3 +40,15 @@ describe("the roles in the documentation and the contract (mixed levels spec §7
     }
   });
 });
+
+describe("the roles in the AI pack (mixed levels spec §7)", () => {
+  it("names guests and states each role with the field that holds it", async () => {
+    const { toAIPack } = await import("../../src/docs/document.js");
+    const pack = toAIPack(order());
+    expect(pack).toContain("| `nod_customerHere` | participant node | Customer |");
+    expect(pack).toContain("Roles (derived; change the field that holds them):");
+    expect(pack).toContain("- `nod_customerHere` sends `edg_createdCharging` — `source` of `evt_orderPlaced`");
+    expect(pack).toContain("- `edg_createdCharging` is for `nod_paymentsHere` — `party` of `act_chargeCard`");
+    expect(pack).toContain("- `edg_createdCharging` runs `nod_chargeSteps` — `actions` of `edg_createdCharging`");
+  });
+});

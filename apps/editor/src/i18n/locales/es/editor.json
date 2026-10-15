@@ -457,6 +457,8 @@
   },
   "roles": {
     "whichAction": "¿Qué acción recibe {{name}}?",
-    "actionPlaceholder": "Una acción que corre aquí"
+    "actionPlaceholder": "Una acción que corre aquí",
+    "alsoLose_one": "Otra transición también pierde quién la envía.",
+    "alsoLose_other": "Otras {{count}} transiciones también pierden quién las envía."
   }
 }

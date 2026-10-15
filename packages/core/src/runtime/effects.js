@@ -5,6 +5,14 @@ import { namePath } from "../contract/vectors.js";
 /** A catalog item's name, or its ID. */
 const nameOf = (doc, collection, id) => doc.catalog[collection]?.[id]?.name ?? id;
 
+/** What a flow's step asks the system to do: its action (with its arguments), its call, or its webhook, by name. */
+function stepAction(doc, entry) {
+  if (entry.action) return { action: nameOf(doc, "actions", entry.action), args: entry.args };
+  if (entry.endpoint) return { call: nameOf(doc, "endpoints", entry.endpoint) };
+  if (entry.webhook) return { webhook: nameOf(doc, "webhooks", entry.webhook) };
+  return { call: `${entry.request?.method ?? ""} ${entry.request?.url ?? ""}`.trim() };
+}
+
 /**
  * The effects of a step's trace.
  * @param {any} doc
@@ -28,7 +36,20 @@ export function effectsOf(doc, canvasId, trace) {
         last?.type === "transition" && last.from === entry.at ?
           { transition: last.edge }
         : { state: state(entry.at), on: last?.type === "exited" ? "exit" : "entry" };
-      actions.push({ action: nameOf(doc, "actions", entry.action), args: entry.args, ...owner });
+      // An action whose flow ran within the step was done by the machine (mixed levels spec §4.2): the system is asked
+      // for what its flow asks — its own actions, calls and webhooks — and hears the events it raised.
+      if (entry.steps) {
+        const within = nameOf(doc, "actions", entry.action ?? entry.endpoint ?? entry.webhook);
+        const named =
+          entry.action ? within : (
+            nameOf(doc, entry.endpoint ? "endpoints" : "webhooks", entry.endpoint ?? entry.webhook)
+          );
+        for (const inner of entry.steps) {
+          if (inner.type === "action") actions.push({ ...stepAction(doc, inner), ...owner, within: named });
+          if (inner.type === "emitted")
+            events.push({ event: nameOf(doc, "events", inner.event), payload: inner.payload });
+        }
+      } else actions.push({ action: nameOf(doc, "actions", entry.action), args: entry.args, ...owner });
     }
     if (entry.type === "emitted") events.push({ event: nameOf(doc, "events", entry.event), payload: entry.payload });
     // Only `after` timers move the machine, so only they are the system's to schedule; an SLA warns in the Simulator.

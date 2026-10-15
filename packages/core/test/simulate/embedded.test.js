@@ -150,3 +150,32 @@ describe("an action's flow runs inside the machine's step (mixed levels spec §4
     expect(words).toContain("Raises payment.receipt.");
   });
 });
+
+describe("answers given inside an action's flow", () => {
+  it("count as used when the step is given one too many", () => {
+    const result = pay(orderDoc(), [
+      { kind: "branch", at: "nod_valid", value: true },
+      { kind: "branch", at: "nod_valid", value: false }
+    ]);
+    expect(result).toMatchObject({ status: "error", code: "extraAnswers", details: { used: 1 } });
+  });
+});
+
+describe("an endpoint's flow, run by the call that triggers a transition", () => {
+  it("runs within the step, recorded under the endpoint", () => {
+    const doc = orderDoc();
+    doc.catalog.endpoints.ept_pay = { name: "Pay", method: "POST", path: "/pay", inner: { canvas: "cnv_charge" } };
+    delete doc.catalog.actions.act_charge.inner;
+    const edge = doc.canvases.cnv_root.edges.edg_pay;
+    delete edge.on;
+    delete edge.actions;
+    edge.via = "ept_pay";
+    const result = step(doc, begin(doc), {
+      do: { call: "ept_pay" },
+      answers: [{ kind: "branch", at: "nod_valid", value: true }]
+    });
+    expect(result.status).toBe("done");
+    expect(result.trace.find(entry => entry.endpoint === "ept_pay").steps.length).toBeGreaterThan(0);
+    expect(result.session.active).toEqual(["nod_receipted"]);
+  });
+});

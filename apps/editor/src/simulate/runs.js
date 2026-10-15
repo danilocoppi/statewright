@@ -168,7 +168,7 @@ function replayPoint(doc, state, index) {
   let result = attempt(doc, state, kept.do, answers);
   let reason = null;
   if (result.status === "error" && result.code === "extraAnswers") {
-    answers = answers.slice(0, result.trace.filter(entry => entry.type === "answered").length);
+    answers = answers.slice(0, result.details.used);
     result = attempt(doc, state, kept.do, answers);
     reason = "answers";
   } else if (result.status === "error" && result.code === "badAnswer") {
