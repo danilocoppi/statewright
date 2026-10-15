@@ -1,5 +1,6 @@
 // The open project (spec §4.2). The document is the only truth: every change is a batch of Core commands applied by
 // `dispatch`, recorded with its patches so it can be undone. Components read with `useEditor(selector)`.
+import { freeze } from "immer";
 import { applyBatch, applyPatches, CommandError } from "statewright";
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
@@ -70,7 +71,9 @@ export function createEditorStore({ now = Date.now } = {}) {
       open(doc, { canvasId, readOnly = false } = {}) {
         set({
           ...initialState(),
-          doc,
+          // Frozen all the way down, as every edited document is: what is worked out from a document (its index, its
+          // references, its figures) is kept with it from the first view (performance spec §3 P2).
+          doc: freeze(doc, true),
           readOnly,
           canvasId: canvasId && doc.canvases[canvasId] ? canvasId : doc.root
         });

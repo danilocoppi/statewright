@@ -22,12 +22,12 @@ test("Tab reaches boxes off screen on a level of hundreds, one after the other",
   );
   await page.locator(`.react-flow__node[data-id="${start}"]`).focus();
   const seen = [start];
+  const focused = () => page.evaluate(() => document.activeElement?.closest(".react-flow__node")?.dataset.id ?? null);
   for (let step = 0; step < 40; step += 1) {
     await page.keyboard.press("Tab");
-    await expect
-      .poll(() => page.evaluate(() => document.activeElement?.closest(".react-flow__node")?.dataset.id ?? null))
-      .not.toBe(seen.at(-1));
-    seen.push(await page.evaluate(() => document.activeElement?.closest(".react-flow__node")?.dataset.id ?? null));
+    // The box before may leave the screen before the next is mounted: wait for the next to hold the focus.
+    await expect.poll(async () => ((await focused()) === seen.at(-1) ? null : await focused())).not.toBeNull();
+    seen.push(await focused());
   }
   expect(seen.every(Boolean)).toBe(true);
   expect(new Set(seen).size).toBe(seen.length);

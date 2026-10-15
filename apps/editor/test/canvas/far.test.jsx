@@ -3,7 +3,7 @@ import "../dom.js";
 import "../flow.js";
 import "../i18n.js";
 
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
 
 import { Canvas } from "@/canvas/Canvas";
@@ -32,8 +32,9 @@ describe("far out, boxes draw less (performance spec §3 P2)", () => {
     for (let step = 0; step < 6; step += 1) fireEvent.click(within(zoom).getByRole("button", { name: "Zoom out" }));
     expect(Number.parseInt(within(zoom).getByRole("button", { name: "Zoom to 100 %" }).textContent)).toBeLessThan(40);
     expect(canvas.dataset.far).toBe("true");
+    // Near again once the view holds still.
     fireEvent.click(within(zoom).getByRole("button", { name: "Zoom to 100 %" }));
-    expect(canvas.dataset.far).toBeUndefined();
+    await waitFor(() => expect(canvas.dataset.far).toBeUndefined());
   });
 
   it("draws boxes and arrows plain far out, Core's drawing near", async () => {
@@ -59,6 +60,6 @@ describe("far out, boxes draw less (performance spec §3 P2)", () => {
     expect(far.style.backgroundColor).not.toBe("");
     expect(document.querySelector("[data-far-edge]")).toBeTruthy();
     fireEvent.click(within(zoom).getByRole("button", { name: "Zoom to 100 %" }));
-    expect(box().querySelector("svg g.node")).toBeTruthy();
+    await waitFor(() => expect(box().querySelector("svg g.node")).toBeTruthy());
   });
 });

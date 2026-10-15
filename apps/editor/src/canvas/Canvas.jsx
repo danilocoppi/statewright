@@ -10,7 +10,8 @@ import {
   ReactFlowProvider,
   SelectionMode,
   useReactFlow,
-  useStore
+  useStore,
+  useStoreApi
 } from "@xyflow/react";
 import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -69,6 +70,9 @@ import { useDrag } from "./useDrag";
 import { usePlacement } from "./usePlacement";
 import { clearOfInspector, fitFor, inspectorSpace, ZOOM } from "./viewport";
 import { ZoomIsland } from "./ZoomIsland";
+
+/** How long the view holds still before boxes come near again after a zoom in (ms). */
+const SETTLE_MS = 150;
 
 /** Above this many boxes and arrows, only those on screen are mounted. */
 const MANY_PARTS = 150;
@@ -142,7 +146,27 @@ function Flow({ onNavigate }) {
   const paneWidth = useStore(state => state.width);
   // Far out, names are too small to read: boxes and arrows draw plain (far.js), and the stylesheet stops drawing what
   // text is left (performance spec §3 P2). Crossing the line is the only re-render it makes.
-  const far = useStore(state => state.transform[2] < FAR_ZOOM);
+  // Going far happens at once; coming near waits for the move to end, so a zoom in draws Core's markup only for the
+  // boxes it ends on, not for every box it passes on the way.
+  const zoomedFar = useStore(state => state.transform[2] < FAR_ZOOM);
+  const [stayFar, setStayFar] = useState(zoomedFar);
+  if (zoomedFar && !stayFar) setStayFar(true);
+  const far = zoomedFar || stayFar;
+  const flowStore = useStoreApi();
+  useEffect(() => {
+    if (!stayFar || zoomedFar) return undefined;
+    // Near again once the view has held still for a moment (each move starts the wait again, without a render).
+    let timer = setTimeout(() => setStayFar(false), SETTLE_MS);
+    const stop = flowStore.subscribe((state, before) => {
+      if (state.transform === before.transform) return;
+      clearTimeout(timer);
+      timer = setTimeout(() => setStayFar(false), SETTLE_MS);
+    });
+    return () => {
+      clearTimeout(timer);
+      stop();
+    };
+  }, [stayFar, zoomedFar, flowStore]);
   // Beside the simulation panel, as wide as the person made the inspector.
   const inspector = useInspectorWidth();
   const fit = useMemo(

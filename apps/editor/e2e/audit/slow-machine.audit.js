@@ -24,13 +24,15 @@ async function watchLongTasks(page) {
 }
 const longTasks = page => page.evaluate(() => window.__long ?? []);
 
-/** The longest main-thread task since the last call (each step's own). */
-const longestSince = page =>
-  page.evaluate(() => {
+/** The longest main-thread task since the last call (each step's own, once what it started has run). */
+const longestSince = async page => {
+  await page.waitForTimeout(700);
+  return page.evaluate(() => {
     const tasks = (window.__long ?? []).slice(window.__seen ?? 0);
     window.__seen = (window.__long ?? []).length;
     return tasks.length ? Math.max(...tasks) : 0;
   });
+};
 
 /** Time from a key to the frame after `selector` changes. */
 async function timeKey(page, key, selector) {
@@ -132,13 +134,21 @@ for (const rate of RATES) {
     report(rate, "  … until its Problems are counted", Date.now() - opened);
 
     // The belt network: 524 boxes, 608 belts.
-    const shown = Date.now();
-    await page.goto("/p/prj_airportOperations/cnv_beltNetwork");
-    await page.locator('.react-flow__node[data-id="nod_sorterA"]').waitFor({ timeout: 300000 });
-    await page.waitForFunction(() => document.querySelectorAll(".react-flow__node").length > 500, null, {
+    // The belt network from the project, as a person opens it (the Levels map, ⌘K or a box's interior).
+    const opened2 = Date.now();
+    await page.evaluate(() => window.statewright.call("view.open", { canvas: "cnv_beltNetwork" }));
+    await page.waitForFunction(() => document.querySelectorAll(".react-flow__node-node").length > 50, null, {
       timeout: 300000
     });
-    report(rate, "show the belt network (524 boxes)", Date.now() - shown);
+    report(rate, "open the belt network from the project", Date.now() - opened2);
+    // And the page loaded at it (a reload, or a link to it).
+    const shown = Date.now();
+    await page.goto("/p/prj_airportOperations/cnv_beltNetwork");
+    await page.waitForFunction(() => document.querySelectorAll(".react-flow__node-node").length > 50, null, {
+      timeout: 300000
+    });
+    report(rate, "load the page at the belt network (524 boxes)", Date.now() - shown);
+    report(rate, "  boxes mounted", await page.locator(".react-flow__node-node").count(), "boxes");
     const heap = await page.evaluate(() => performance.memory?.usedJSHeapSize ?? 0);
     report(rate, "JS heap after showing it", heap / 1048576, "MB");
     await page.waitForTimeout(1500);
@@ -192,6 +202,8 @@ for (const rate of RATES) {
 
     // Typing a name in the inspector: each key, to the frame that shows it on the canvas.
     const typed = '.react-flow__node[data-id="nod_mainLineA3"]';
+    await page.evaluate(() => window.statewright.call("view.reveal", { id: "nod_mainLineA3" }));
+    await page.locator(typed).waitFor({ timeout: 60000 });
     await page.evaluate(() => window.statewright.call("view.select", { ids: ["nod_mainLineA3"] }));
     const name = page.getByRole("textbox", { name: "Name", exact: true });
     await expect(name).toHaveValue("Main line A3", { timeout: 60000 });
