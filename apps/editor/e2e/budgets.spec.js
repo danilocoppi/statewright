@@ -259,13 +259,16 @@ test("edits the airport's belt network, 524 boxes, on a computer four times slow
   const pane = await page.locator(".react-flow__pane").boundingBox();
   await page.mouse.move(pane.x + pane.width / 2, pane.y + pane.height / 2);
   const scrolled = await framesDuring(page, async () => {
-    for (let step = 0; step < 24; step += 1) await page.mouse.wheel(step % 2 ? 60 : 0, step < 12 ? -70 : 70);
+    for (let step = 0; step < 48; step += 1) await page.mouse.wheel(step % 2 ? 60 : 0, step < 24 ? -40 : 40);
   });
   const zoomed = await framesDuring(page, async () => {
     await page.keyboard.down("Control");
-    for (let step = 0; step < 16; step += 1) await page.mouse.wheel(0, step < 8 ? -60 : 60);
+    for (let step = 0; step < 48; step += 1) await page.mouse.wheel(0, step < 24 ? -20 : 20);
     await page.keyboard.up("Control");
   });
+  // Enough inputs that the 95th percentile is not the single worst frame.
+  expect(scrolled.length).toBeGreaterThan(40);
+  expect(zoomed.length).toBeGreaterThan(40);
   expect(p95(scrolled)).toBeLessThan(50);
   expect(p95(zoomed)).toBeLessThan(50);
 
@@ -288,7 +291,9 @@ test("edits the airport's belt network, 524 boxes, on a computer four times slow
   const keys = [];
   for (const key of ["c", "d", "e", "f", "g"]) keys.push(await timeKey(page, key, box, "any"));
   expect(median(keys)).toBeLessThan(150);
-  await page.waitForTimeout(700);
+  // Autosave (signing and writing the document) runs a second after the last key: its task counts too.
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible({ timeout: 10000 });
+  await page.waitForTimeout(300);
   const longest = await page.evaluate(() => Math.max(0, ...window.__long));
   expect(longest).toBeLessThan(200);
 });
