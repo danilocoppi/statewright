@@ -8,7 +8,7 @@ import { toContract } from "../../src/contract/index.js";
 import { parse } from "../../src/serialize/parse.js";
 import { readExample } from "../helpers.js";
 
-const bookings = () => parse(readExample("bookings.statewright.json")).doc;
+const bookings = () => parse(readExample("bookings.sttw")).doc;
 
 /** Results of code that reaches every state the design expects, as `change` then edits them. */
 async function resultsOf(doc, change = results => results) {
@@ -51,7 +51,7 @@ describe("conformOf (source-of-truth spec §6)", () => {
   });
 
   it("compares the active states of regions in any order", async () => {
-    const doc = parse(readExample("payments.statewright.json")).doc;
+    const doc = parse(readExample("payments.sttw")).doc;
     const results = await resultsOf(doc, results => {
       for (const vector of results.vectors) for (const step of vector.steps) step.active.reverse();
     });
@@ -99,7 +99,7 @@ describe("conformOf (source-of-truth spec §6)", () => {
   });
 
   it("points at the node the design expects when it fires nothing there, a flow's step among them", async () => {
-    const doc = parse(readExample("payout-batch.statewright.json")).doc;
+    const doc = parse(readExample("payout-batch.sttw")).doc;
     const results = await resultsOf(doc, results => {
       vectorOf(results, "scn_aPayoutIsRefused").steps[0] = { active: [] };
     });

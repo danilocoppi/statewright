@@ -24,7 +24,7 @@ describe("the guide's runtime (source-of-truth spec §7, §8)", () => {
   it("shows an example that runs against the bookings design: started, refused, confirmed, its timer fired", async () => {
     const dir = await workspace();
     mkdirSync(join(dir, "design"));
-    copyFileSync(new URL("examples/bookings.statewright.json", ROOT), join(dir, "design/bookings.statewright.json"));
+    copyFileSync(new URL("examples/bookings.sttw", ROOT), join(dir, "design/bookings.sttw"));
     const code = checkedBlock("runtime")
       .replace('from "statewright/runtime"', `from "${entry("runtime/index.js")}"`)
       .replace('from "statewright"', `from "${entry("index.js")}"`);

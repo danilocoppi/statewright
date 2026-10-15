@@ -69,7 +69,7 @@ describe("a scenario as a page anyone can open (simulator spec §7.2)", () => {
       ["2 days later", "awaiting_funds → awaiting_funds. quote_ttl falls due."],
       ["verify.ended", "paused → running."]
     ]);
-    const batch = uncaptioned(JSON.parse(readExample("payout-batch.statewright.json")));
+    const batch = uncaptioned(JSON.parse(readExample("payout-batch.sttw")));
     const flow = storyIn(await toScenarioPage(batch, "scn_aPayoutIsRefused")).frames;
     expect(flow[0].text).toBe("Waits at the bank confirms. Raises batch.paid.");
     expect(flow[0].answers).toEqual(["Did send a Pix work? It worked.", "Did send a TED work? It failed."]);
@@ -107,7 +107,7 @@ describe("a scenario as a page anyone can open (simulator spec §7.2)", () => {
     );
     expect(html).toContain('<p class="stops" role="status"></p>');
 
-    const batch = JSON.parse(readExample("payout-batch.statewright.json"));
+    const batch = JSON.parse(readExample("payout-batch.sttw"));
     delete batch.annotations.scenarios.scn_aPayoutIsRefused.start.answers;
     const unstarted = await toScenarioPage(batch, "scn_aPayoutIsRefused");
     expect(storyIn(unstarted).frames).toEqual([]);

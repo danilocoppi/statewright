@@ -14,7 +14,7 @@ function edited(name, edit) {
 }
 
 const noLocal = async () => null;
-const read = (text, loadLocal = noLocal) => readImport(text, { fileName: "file.statewright.json", loadLocal });
+const read = (text, loadLocal = noLocal) => readImport(text, { fileName: "file.sttw", loadLocal });
 
 describe("readImport", () => {
   it("refuses a file that is not JSON, such as an image, and imports nothing", async () => {

@@ -28,7 +28,7 @@ describe("the coverage of a design by its scenarios (AI interface spec §8)", ()
   });
 
   it("counts a flow's nodes, the bodies its tokens run included, and a level no scenario reaches as not covered", () => {
-    const coverage = coverageOf(JSON.parse(readExample("payout-batch.statewright.json")));
+    const coverage = coverageOf(JSON.parse(readExample("payout-batch.sttw")));
     expect(coverage.levels.map(short)).toEqual([
       ["cnv_payOne", "8/9", "7/11", 75],
       ["cnv_payOutBatch", "10/11", "10/11", 91],

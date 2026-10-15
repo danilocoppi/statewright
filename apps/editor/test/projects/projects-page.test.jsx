@@ -116,9 +116,20 @@ describe("Projects screen", () => {
   it("opens an intact file at once", async () => {
     renderPage(keeping());
     await screen.findByText(/No projects yet/);
-    await upload(exampleText("payments"), "payments.statewright.json");
+    await upload(exampleText("payments"), "payments.sttw");
     expect(await screen.findByText("Opened prj_payments")).toBeTruthy();
   });
+
+  it.each(["payments.sttw", "payments.statewright.json", "payments.json"])(
+    "opens %s picked in the browser's file dialog, which gives it no type",
+    async name => {
+      renderPage(keeping());
+      expect(await screen.findByText("Drop a .sttw")).toBeTruthy();
+      expect(screen.getByLabelText("Open file…").getAttribute("accept")).toBe(".sttw,.json,application/json");
+      await userEvent.upload(screen.getByLabelText("Open file…"), new File([exampleText("payments")], name));
+      expect(await screen.findByText("Opened prj_payments")).toBeTruthy();
+    }
+  );
 
   it("falls back to the browser's file input when the system picker refuses to open", async () => {
     const refused = vi.fn(async () => {
@@ -144,7 +155,7 @@ describe("Projects screen", () => {
     await screen.findByText(/No projects yet/);
     const raw = JSON.parse(exampleText("get-paid-as-built"));
     raw.canvases.cnv_open.nodes.nod_awaitingPayment.name = "waiting";
-    await upload(JSON.stringify(raw), "get-paid.statewright.json");
+    await upload(JSON.stringify(raw), "get-paid.sttw");
     const dialog = await screen.findByRole("dialog", { name: "This file was changed outside Statewright" });
     await user.click(within(dialog).getByRole("button", { name: "Import and sign" }));
     expect(await screen.findByText("Opened prj_getPaid")).toBeTruthy();
@@ -157,11 +168,11 @@ describe("Projects screen", () => {
     const user = userEvent.setup();
     const repository = keeping();
     await repository.save(readExample("get-paid-as-built"));
-    await repository.setHandle("prj_getPaid", { name: "old.statewright.json" });
+    await repository.setHandle("prj_getPaid", { name: "old.sttw" });
     renderPage(repository);
     const raw = JSON.parse(exampleText("get-paid-as-built"));
     raw.canvases.cnv_open.nodes.nod_awaitingPayment.name = "waiting";
-    await upload(JSON.stringify(raw), "get-paid.statewright.json");
+    await upload(JSON.stringify(raw), "get-paid.sttw");
     const dialog = await screen.findByRole("dialog", { name: "This file was changed outside Statewright" });
     await user.click(within(dialog).getByRole("button", { name: "Import and sign" }));
     expect(await screen.findByText("Opened prj_getPaid")).toBeTruthy();
@@ -208,7 +219,7 @@ describe("Projects screen", () => {
       expect(await screen.findByText(unreadable)).toBeTruthy();
       useToastStore.setState({ items: [] });
     }
-    await upload(exampleText("get-paid-as-built"), "get-paid.statewright.json");
+    await upload(exampleText("get-paid-as-built"), "get-paid.sttw");
     expect(await screen.findByText("Opened prj_getPaid")).toBeTruthy();
     expect(
       await screen.findByText(
@@ -271,7 +282,7 @@ describe("Projects screen", () => {
   it("says so when this browser cannot store an imported file, and stays here", async () => {
     renderPage(fill(keeping()));
     await screen.findByText(/No projects yet/);
-    await upload(exampleText("payments"), "payments.statewright.json");
+    await upload(exampleText("payments"), "payments.sttw");
     expect(await screen.findByText(storageFull)).toBeTruthy();
     expect(screen.queryByText(/^Opened/)).toBeNull();
   });

@@ -7,12 +7,19 @@ import { GENERATOR } from "@/persistence/repository";
 import { downloadFile } from "./download";
 import { slug } from "./names";
 
-/** File types offered by the pickers. */
-// Chrome's pickers refuse an extension longer than 16 characters: `.statewright.json` is 17, and ends in `.json`.
-export const FILE_TYPES = [{ description: "Statewright document", accept: { "application/json": [".json"] } }];
+// Chrome's pickers refuse an extension longer than 16 characters, and a key that is not a MIME type. Files saved before
+// 0.1.5 end in `.statewright.json`, which is 17: `.json` opens them.
+/** File types the open picker offers: a .sttw, and a .json (a .statewright.json saved before 0.1.5 among them). */
+export const OPEN_TYPES = [{ description: "Statewright document", accept: { "application/json": [".sttw", ".json"] } }];
 
-/** The document's file name: "get-paid-as-built.statewright.json". */
-export const documentFileName = doc => `${slug(doc.project.name)}.statewright.json`;
+/** File types the save picker offers: a .sttw. */
+export const SAVE_TYPES = [{ description: "Statewright document", accept: { "application/json": [".sttw"] } }];
+
+/** What the browser's own file input accepts, where there is no picker: the open picker's types. */
+export const OPEN_ACCEPT = [...OPEN_TYPES[0].accept["application/json"], "application/json"].join(",");
+
+/** The document's file name: "get-paid-as-built.sttw". */
+export const documentFileName = doc => `${slug(doc.project.name)}.sttw`;
 
 /** Whether this browser can pick files with a handle (and so save back to them). */
 export const canPickFiles = (env = globalThis) => typeof env.showOpenFilePicker === "function";
@@ -23,7 +30,7 @@ export const canPickFiles = (env = globalThis) => typeof env.showOpenFilePicker 
  */
 export async function pickFile(env = globalThis) {
   try {
-    const [handle] = await env.showOpenFilePicker({ types: FILE_TYPES, multiple: false });
+    const [handle] = await env.showOpenFilePicker({ types: OPEN_TYPES, multiple: false });
     return { file: await handle.getFile(), handle };
   } catch (error) {
     if (error?.name === "AbortError") return null;
@@ -75,7 +82,7 @@ export async function saveToFile(doc, { handle, askLocation = false, env = globa
   }
   if (typeof env.showSaveFilePicker === "function") {
     try {
-      const picked = await env.showSaveFilePicker({ suggestedName: name, types: FILE_TYPES });
+      const picked = await env.showSaveFilePicker({ suggestedName: name, types: SAVE_TYPES });
       await write(picked, text);
       return { method: "file", handle: picked };
     } catch (error) {

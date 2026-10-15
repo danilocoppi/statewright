@@ -6,7 +6,7 @@ import { parse } from "../../src/serialize/parse.js";
 import { minimalDoc, readExample } from "../helpers.js";
 
 const EXAMPLES = ["bookings", "get-paid-as-built", "payments", "payout-batch"];
-const example = name => parse(readExample(`${name}.statewright.json`)).doc;
+const example = name => parse(readExample(`${name}.sttw`)).doc;
 
 /** Every `id` the page defines, and every in-page link it makes. */
 const idsOf = html => new Set([...html.matchAll(/\sid="([^"]+)"/g)].map(match => match[1]));

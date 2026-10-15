@@ -26,6 +26,7 @@ describe("the MCP server's protocol (AI interface spec §5)", () => {
     const { send } = server();
     const { instructions } = (await send({ jsonrpc: "2.0", id: 1, method: "initialize", params: {} })).result;
     for (const words of [
+      "in one signed .sttw document",
       "To work with a person, pair with their Editor: they open https://statewright.cpss.com.br, choose Connect an AI…",
       "on the Projects screen, before any project is open",
       "then projects_create makes the project you design in, in their tab",

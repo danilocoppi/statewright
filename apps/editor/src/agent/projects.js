@@ -88,7 +88,7 @@ export const projectOperations = {
     noPath(path);
     busy();
     const projects = await repository();
-    const plan = await readImport(text, { fileName: "import.statewright.json", loadLocal: id => projects.load(id) });
+    const plan = await readImport(text, { fileName: "import.sttw", loadLocal: id => projects.load(id) });
     if (plan.status === "invalid") {
       throw new AgentError(
         "SCHEMA",

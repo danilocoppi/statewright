@@ -1,4 +1,4 @@
-// A small booking service: the system examples/bookings.statewright.json designs, written as a team would write it,
+// A small booking service: the system examples/bookings.sttw designs, written as a team would write it,
 // with a clock it is given so that tests can move time. `plantedBug` breaks it on purpose: a guest who arrives is not
 // seated.
 

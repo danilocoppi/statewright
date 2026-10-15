@@ -14,7 +14,7 @@ const drawn = figure => LAYERS.flatMap(layer => figure[layer].map(part => part.s
 
 /** An example with every canvas laid out, as the Editor stores it after showing each level. */
 async function placed(name) {
-  let doc = parse(readExample(`${name}.statewright.json`)).doc;
+  let doc = parse(readExample(`${name}.sttw`)).doc;
   for (const canvasId of Object.keys(doc.canvases)) {
     const commands = await autoLayout(doc, canvasId);
     if (commands.length) doc = applyBatch(doc, commands).doc;
@@ -132,7 +132,7 @@ describe("figureOf", () => {
   });
 
   it("draws an edge's findings as a badge under its label, or under the middle of its route", () => {
-    const doc = applyBatch(parse(readExample("bookings.statewright.json")).doc, [
+    const doc = applyBatch(parse(readExample("bookings.sttw")).doc, [
       {
         type: "findings.replace",
         args: {
@@ -156,13 +156,11 @@ describe("figureOf", () => {
     );
     expect(figure.edges.find(part => part.id === "edg_postBookingsRequested").svg).toMatch(/>threw<\/text><\/g>$/);
     expect(figure.bounds.h).toBe(149.5);
-    expect(drawn(figureOf(parse(readExample("bookings.statewright.json")).doc, "cnv_booking"))).not.toContain(
-      BADGE.fill
-    );
+    expect(drawn(figureOf(parse(readExample("bookings.sttw")).doc, "cnv_booking"))).not.toContain(BADGE.fill);
   });
 
   it("marks each badge with its target and codes, and lists its findings' titles for a tooltip", () => {
-    const doc = applyBatch(parse(readExample("bookings.statewright.json")).doc, [
+    const doc = applyBatch(parse(readExample("bookings.sttw")).doc, [
       {
         type: "findings.replace",
         args: {

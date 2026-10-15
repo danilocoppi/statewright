@@ -11,8 +11,8 @@ const examples = new URL("../examples/", import.meta.url);
 const rendered = new URL("rendered/", examples);
 await rm(rendered, { recursive: true, force: true });
 
-for (const file of (await readdir(examples)).filter(name => name.endsWith(".statewright.json")).sort()) {
-  const name = file.replace(/\.statewright\.json$/, "");
+for (const file of (await readdir(examples)).filter(name => name.endsWith(".sttw")).sort()) {
+  const name = file.replace(/\.sttw$/, "");
   const result = parse(await readFile(new URL(file, examples), "utf8"));
   if (!result.ok) throw new Error(`${file} is not valid: ${result.errors[0].path} ${result.errors[0].message}`);
   const dir = new URL(`${name}/`, rendered);

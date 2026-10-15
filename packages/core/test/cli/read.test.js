@@ -14,6 +14,12 @@ async function saved(value, name = "doc.json") {
 }
 
 describe("validate", () => {
+  it.each(["payments.sttw", "payments.statewright.json", "payments.json"])("reads a document named %s", async name => {
+    const run = await cli(["validate", await saved(await readFile(EXAMPLE, "utf8"), name), "--json"]);
+    expect(run.code).toBe(0);
+    expect(run.json()).toMatchObject({ ok: true, errors: [] });
+  });
+
   it("prints the Problems of a valid document and exits 0 without errors", async () => {
     const run = await cli(["validate", EXAMPLE]);
     expect(run.code).toBe(0);

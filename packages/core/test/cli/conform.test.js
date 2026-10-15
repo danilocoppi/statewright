@@ -11,12 +11,12 @@ import { verify } from "../../src/signature.js";
 import { bookingsDriver } from "../fixtures/bookings-api/driver.js";
 import { cli, workspace } from "./helpers.js";
 
-const BOOKINGS = fileURLToPath(new URL("../../../../examples/bookings.statewright.json", import.meta.url));
+const BOOKINGS = fileURLToPath(new URL("../../../../examples/bookings.sttw", import.meta.url));
 
 /** A directory with a copy of bookings and the results of the booking service, with or without the planted bug. */
 async function system({ plantedBug = false } = {}) {
   const dir = await workspace();
-  await copyFile(BOOKINGS, join(dir, "bookings.statewright.json"));
+  await copyFile(BOOKINGS, join(dir, "bookings.sttw"));
   const { contract } = await toContract(parse(await readFile(BOOKINGS, "utf8")).doc);
   const results = await runVectors(contract, bookingsDriver({ plantedBug }), {
     only: "booking.status",
@@ -27,12 +27,12 @@ async function system({ plantedBug = false } = {}) {
 }
 
 const findingsOf = async dir =>
-  parse(await readFile(join(dir, "bookings.statewright.json"), "utf8")).doc.annotations.findings ?? {};
+  parse(await readFile(join(dir, "bookings.sttw"), "utf8")).doc.annotations.findings ?? {};
 
 describe("statewright conform (source-of-truth spec §6)", () => {
   it("passes when the code does what the design says, the vectors of other levels not run (exit 0)", async () => {
     const dir = await system();
-    const run = await cli(["conform", "bookings.statewright.json", "results.json"], { cwd: dir });
+    const run = await cli(["conform", "bookings.sttw", "results.json"], { cwd: dir });
     expect(run).toMatchObject({ code: 0, stderr: "" });
     expect(run.stdout).toBe(
       "# Conformance of Bookings\n\n" +
@@ -49,22 +49,22 @@ describe("statewright conform (source-of-truth spec §6)", () => {
 
   it("reports a planted bug on the transition it breaks (exit 1), and writes nothing without --write", async () => {
     const dir = await system({ plantedBug: true });
-    const before = await readFile(join(dir, "bookings.statewright.json"), "utf8");
-    const run = await cli(["conform", "bookings.statewright.json", "results.json"], { cwd: dir });
+    const before = await readFile(join(dir, "bookings.sttw"), "utf8");
+    const run = await cli(["conform", "bookings.sttw", "results.json"], { cwd: dir });
     expect(run.code).toBe(1);
     expect(run.stdout).toContain(
       '- **high** Scenario "A confirmed guest is seated", step 2 (guest.arrived): the design expects seated; the code ' +
         "is in confirmed (`edg_confirmedSeated`)\n"
     );
-    expect(await readFile(join(dir, "bookings.statewright.json"), "utf8")).toBe(before);
+    expect(await readFile(join(dir, "bookings.sttw"), "utf8")).toBe(before);
   });
 
   it("keeps the findings with --write, source conformance, the specification's signature intact; the next run replaces them", async () => {
     const dir = await system({ plantedBug: true });
-    const run = await cli(["conform", "bookings.statewright.json", "results.json", "--write"], { cwd: dir });
+    const run = await cli(["conform", "bookings.sttw", "results.json", "--write"], { cwd: dir });
     expect(run.code).toBe(1);
     expect(run.stdout).toMatch(
-      /\n\nWrote 3 finding\(s\) to bookings\.statewright\.json, source conformance: the Editor shows them\.\n$/
+      /\n\nWrote 3 finding\(s\) to bookings\.sttw, source conformance: the Editor shows them\.\n$/
     );
     expect((await findingsOf(dir)).fnd_diverged).toEqual({
       code: "diverged",
@@ -75,23 +75,23 @@ describe("statewright conform (source-of-truth spec §6)", () => {
       targets: ["edg_confirmedSeated"],
       source: "conformance"
     });
-    const doc = parse(await readFile(join(dir, "bookings.statewright.json"), "utf8")).doc;
+    const doc = parse(await readFile(join(dir, "bookings.sttw"), "utf8")).doc;
     expect(await verify(doc)).toMatchObject({ content: "ok", annotations: "ok" });
 
     const fixed = await system();
     await copyFile(join(fixed, "results.json"), join(dir, "results.json"));
-    expect((await cli(["conform", "bookings.statewright.json", "results.json", "--write"], { cwd: dir })).code).toBe(0);
+    expect((await cli(["conform", "bookings.sttw", "results.json", "--write"], { cwd: dir })).code).toBe(0);
     expect(Object.keys(await findingsOf(dir))).toEqual(["fnd_notRun", "fnd_notRun2"]);
   });
 
   it("prints the report as JSON with --json or --format json", async () => {
     const dir = await system({ plantedBug: true });
-    const run = await cli(["conform", "bookings.statewright.json", "results.json", "--json"], { cwd: dir });
+    const run = await cli(["conform", "bookings.sttw", "results.json", "--json"], { cwd: dir });
     expect(run.code).toBe(1);
     expect(run.json()).toMatchObject({
       ok: false,
       same: true,
-      file: "bookings.statewright.json",
+      file: "bookings.sttw",
       results: { file: "results.json", runner: "vitest" },
       written: null,
       summary: { vectors: 5, passed: 2, diverged: 1, notRun: 2 },
@@ -100,7 +100,7 @@ describe("statewright conform (source-of-truth spec §6)", () => {
       ]),
       coverage: [expect.objectContaining({ machine: "cnv_booking", proved: 4 })]
     });
-    const formatted = await cli(["conform", "bookings.statewright.json", "results.json", "--format", "json"], {
+    const formatted = await cli(["conform", "bookings.sttw", "results.json", "--format", "json"], {
       cwd: dir
     });
     expect(JSON.parse(formatted.stdout)).toEqual(run.json());
@@ -110,7 +110,7 @@ describe("statewright conform (source-of-truth spec §6)", () => {
     const dir = await system();
     const results = JSON.parse(await readFile(join(dir, "results.json"), "utf8"));
     await writeFile(join(dir, "old.json"), JSON.stringify({ ...results, contract: "0".repeat(64) }));
-    const run = await cli(["conform", "bookings.statewright.json", "old.json", "--json"], { cwd: dir });
+    const run = await cli(["conform", "bookings.sttw", "old.json", "--json"], { cwd: dir });
     expect(run.code).toBe(1);
     expect(run.json()).toMatchObject({
       ok: false,
@@ -122,21 +122,21 @@ describe("statewright conform (source-of-truth spec §6)", () => {
   it("refuses results that are not results, a format it does not know, and a design changed by hand (exit 2)", async () => {
     const dir = await system();
     await writeFile(join(dir, "nope.json"), '{ "results": "2" }');
-    expect(await cli(["conform", "bookings.statewright.json", "nope.json"], { cwd: dir })).toMatchObject({
+    expect(await cli(["conform", "bookings.sttw", "nope.json"], { cwd: dir })).toMatchObject({
       code: 2,
       stderr: 'statewright: nope.json is not a results file of format 1 (format "2")\n'
     });
     await writeFile(join(dir, "steps.json"), '{ "results": "1", "contract": "x", "vectors": [{ "id": "scn_a" }] }');
-    expect((await cli(["conform", "bookings.statewright.json", "steps.json"], { cwd: dir })).stderr).toBe(
+    expect((await cli(["conform", "bookings.sttw", "steps.json"], { cwd: dir })).stderr).toBe(
       "statewright: steps.json vectors[0] needs steps (a list) or skipped (a reason)\n"
     );
-    expect(
-      (await cli(["conform", "bookings.statewright.json", "results.json", "--format", "html"], { cwd: dir })).stderr
-    ).toBe('statewright: Unknown format "html"; use md or json\n');
-    const raw = JSON.parse(await readFile(join(dir, "bookings.statewright.json"), "utf8"));
+    expect((await cli(["conform", "bookings.sttw", "results.json", "--format", "html"], { cwd: dir })).stderr).toBe(
+      'statewright: Unknown format "html"; use md or json\n'
+    );
+    const raw = JSON.parse(await readFile(join(dir, "bookings.sttw"), "utf8"));
     raw.canvases.cnv_booking.nodes.nod_seated.name = "sat";
-    await writeFile(join(dir, "bookings.statewright.json"), JSON.stringify(raw));
-    const changed = await cli(["conform", "bookings.statewright.json", "results.json", "--write"], { cwd: dir });
+    await writeFile(join(dir, "bookings.sttw"), JSON.stringify(raw));
+    const changed = await cli(["conform", "bookings.sttw", "results.json", "--write"], { cwd: dir });
     expect(changed.code).toBe(2);
     expect(changed.stderr).toMatch(/was changed outside Statewright; review the change and pass --accept-changes/);
   });

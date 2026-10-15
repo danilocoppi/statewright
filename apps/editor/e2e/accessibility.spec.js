@@ -11,7 +11,7 @@ import { startMcp } from "./mcp.js";
 
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const EXAMPLES = resolve(import.meta.dirname, "../../../examples");
-const exampleText = name => readFileSync(resolve(EXAMPLES, `${name}.statewright.json`), "utf8");
+const exampleText = name => readFileSync(resolve(EXAMPLES, `${name}.sttw`), "utf8");
 
 /** No WCAG 2.2 A or AA violation on the page as it is now; each violation is named with where it is. */
 async function expectAccessible(page, screen) {
@@ -56,12 +56,12 @@ for (const theme of ["light", "dark"]) {
       await expectAccessible(page, "A file that can't be opened");
       await page.keyboard.press("Escape");
 
-      await upload(page, exampleText("get-paid-as-built"), "get-paid.statewright.json");
+      await upload(page, exampleText("get-paid-as-built"), "get-paid.sttw");
       await page.waitForURL(/\/p\/prj_getPaid$/);
       await page.goto("/");
       const changed = JSON.parse(exampleText("get-paid-as-built"));
       changed.canvases.cnv_open.nodes.nod_awaitingPayment.name = "waiting";
-      await upload(page, JSON.stringify(changed, null, 2), "get-paid.statewright.json");
+      await upload(page, JSON.stringify(changed, null, 2), "get-paid.sttw");
       await expect(page.getByRole("dialog", { name: "This file was changed outside Statewright" })).toBeVisible();
       await expectAccessible(page, "A file changed outside Statewright");
       await page.keyboard.press("Escape");

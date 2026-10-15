@@ -7,11 +7,13 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     for (const name of ["showOpenFilePicker", "showSaveFilePicker"]) {
       const real = window[name];
-      window[name] = (...args) =>
-        real.apply(window, args).catch(error => {
+      window[name] = (...args) => {
+        window.__asked = [...(window.__asked ?? []), args[0]];
+        return real.apply(window, args).catch(error => {
           window.__pickers = [...(window.__pickers ?? []), `${name}: ${error.name}`];
           throw error;
         });
+      };
     }
   });
 });
@@ -30,5 +32,11 @@ test("opens Chrome's file pickers for Open file and Save to file", async ({ page
   await expect
     .poll(() => page.evaluate(() => window.__pickers))
     .toEqual(["showOpenFilePicker: AbortError", "showSaveFilePicker: AbortError"]);
+  // Chrome took a .sttw, and a .json (files saved before 0.1.5 end in .statewright.json), under a MIME type.
+  const types = { description: "Statewright document" };
+  expect(await page.evaluate(() => window.__asked)).toEqual([
+    { types: [{ ...types, accept: { "application/json": [".sttw", ".json"] } }], multiple: false },
+    { suggestedName: "payments.sttw", types: [{ ...types, accept: { "application/json": [".sttw"] } }] }
+  ]);
   expect(errors).toEqual([]);
 });

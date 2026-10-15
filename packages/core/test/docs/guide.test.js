@@ -73,6 +73,19 @@ describe("the platform guide", () => {
     }
   });
 
+  it("names a document a .sttw, says files saved before 0.1.5 still open, and starts the quick start with one", () => {
+    const section = source
+      .slice(source.indexOf("\n### Documents\n"), source.indexOf("\n## Reading a diagram\n"))
+      .replace(/\s+/g, " ");
+    expect(section).toContain(
+      "A document is one JSON file, by convention named `*.sttw`. Files saved before 0.1.5 end in `.statewright.json`; " +
+        "they open as they are."
+    );
+    expect(source).toContain('npx statewright new orders.sttw --name "Orders"');
+    // The old name, only to say that such files still open.
+    expect(source.match(/\.statewright\.json/g)).toHaveLength(1);
+  });
+
   it("tells how a flow runs: its tokens, the questions only a flow asks, how it ends, and the example that shows it", () => {
     const section = source.slice(
       source.indexOf("\n## Simulating and scenarios\n"),
@@ -90,7 +103,7 @@ describe("the platform guide", () => {
     ]) {
       expect(section).toContain(words);
     }
-    expect(section).toContain("examples/payout-batch.statewright.json");
+    expect(section).toContain("examples/payout-batch.sttw");
   });
 
   it("tells how to simulate in the editor: the panel, its keys, and scenarios saved, followed and accepted", () => {
@@ -181,9 +194,9 @@ describe("the platform guide", () => {
     );
     const said = section.replace(/\s+/g, " ");
     for (const words of [
-      "npx statewright contract design/bookings.statewright.json -o design/bookings.contract.json",
-      "npx statewright contract design/bookings.statewright.json --since design/bookings.contract.json",
-      "npx statewright contract design/bookings.statewright.json --check design/bookings.contract.json",
+      "npx statewright contract design/bookings.sttw -o design/bookings.contract.json",
+      "npx statewright contract design/bookings.sttw --since design/bookings.contract.json",
+      "npx statewright contract design/bookings.sttw --check design/bookings.contract.json",
       "Commit the contract beside the design: it is the version of the design the code was last aligned with.",
       "`--check` belongs in CI: it exits 1 once the design has changed and the committed contract has not.",
       "Agents get the same contract from `export_contract`; in the Editor it is **Export → Contract**",
@@ -196,7 +209,7 @@ describe("the platform guide", () => {
     for (const key of ["**`source`**", "**`machines`**", "**`flows`**", "**`vectors`**", "**`stale`**"]) {
       expect(section).toContain(key);
     }
-    const { contract } = await toContract(parse(readExample("bookings.statewright.json")).doc);
+    const { contract } = await toContract(parse(readExample("bookings.sttw")).doc);
     expect(JSON.parse(checkedBlock("contract-vector"))).toEqual(
       contract.vectors.find(vector => vector.id === "scn_aGuestDoesNotCome")
     );
@@ -302,7 +315,7 @@ describe("the platform guide", () => {
       expect(outcome, `${tool} ${JSON.stringify(args)}`).toMatchObject({ ok: true });
       return outcome.result;
     };
-    expect(await call("projects_create", { name: "Bookings", path: "bookings.statewright.json" })).toMatchObject({
+    expect(await call("projects_create", { name: "Bookings", path: "bookings.sttw" })).toMatchObject({
       project: { id: "prj_bookings" }
     });
     expect((await call("batch_apply", JSON.parse(checkedBlock("level-0")))).created).toContain("nod_bookingApi");
@@ -328,7 +341,7 @@ describe("the platform guide", () => {
     }
   });
 
-  it("keeps the playbook's design as examples/bookings.statewright.json, its scenarios covering every level (source-of-truth spec §11)", async () => {
+  it("keeps the playbook's design as examples/bookings.sttw, its scenarios covering every level (source-of-truth spec §11)", async () => {
     const { doc } = applyBatch(
       applyBatch(
         applyBatch(createDocument({ name: "Bookings" }), JSON.parse(checkedBlock("level-0")).commands).doc,
@@ -336,7 +349,7 @@ describe("the platform guide", () => {
       ).doc,
       JSON.parse(checkedBlock("notifier")).commands
     );
-    const example = parse(readExample("bookings.statewright.json")).doc;
+    const example = parse(readExample("bookings.sttw")).doc;
     for (const part of ["project", "root", "catalog", "definitions", "canvases"]) {
       expect(example[part], part).toEqual(doc[part]);
     }
@@ -348,7 +361,7 @@ describe("the platform guide", () => {
       "The guest is told it is declined"
     ]);
     expect(source.replace(/\s+/g, " ")).toContain(
-      "the design it builds, with five scenarios, is in the repository as `examples/bookings.statewright.json`"
+      "the design it builds, with five scenarios, is in the repository as `examples/bookings.sttw`"
     );
     const { summary } = auditOf(example);
     expect(summary).toMatchObject({ error: 0, warning: 0, scenarios: 5, diverged: 0, coverage: 100 });
@@ -389,7 +402,7 @@ describe("the platform guide", () => {
       expect(outcome, `${tool} ${JSON.stringify(args)}`).toMatchObject({ ok: true });
       return outcome.result;
     };
-    await call("projects_create", { name: "Bookings as built", path: "bookings-as-built.statewright.json" });
+    await call("projects_create", { name: "Bookings as built", path: "bookings-as-built.sttw" });
     for (const name of ["map-level-0", "map-machine", "map-findings"])
       await call("batch_apply", JSON.parse(checkedBlock(name)));
     const saved = [];

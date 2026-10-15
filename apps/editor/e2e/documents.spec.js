@@ -8,7 +8,7 @@ import { parse, verify } from "statewright";
 import { toSVG } from "statewright/render";
 
 const EXAMPLES = resolve(import.meta.dirname, "../../../examples");
-const exampleText = name => readFileSync(resolve(EXAMPLES, `${name}.statewright.json`), "utf8");
+const exampleText = name => readFileSync(resolve(EXAMPLES, `${name}.sttw`), "utf8");
 
 /** The example's text after a hand edit, so its signature no longer matches. */
 function edited(name, edit) {
@@ -40,7 +40,7 @@ test.beforeEach(async ({ page }) => {
 test("imports an intact file, lists it, and exports the level as exactly Core's SVG", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByText(/No projects yet/)).toBeVisible();
-  await importFile(page, exampleText("payments"), "payments.statewright.json");
+  await importFile(page, exampleText("payments"), "payments.sttw");
   await expect(page).toHaveURL(/\/p\/prj_payments$/);
   await expect(page.getByTestId("canvas").locator(".react-flow__node-node").first()).toBeVisible();
 
@@ -61,7 +61,7 @@ test("reviews a file changed outside Statewright, imports it signed, and saves i
   await importFile(
     page,
     edited("get-paid-as-built", raw => (raw.canvases.cnv_open.nodes.nod_awaitingPayment.name = "waiting")),
-    "get-paid.statewright.json"
+    "get-paid.sttw"
   );
   const dialog = page.getByRole("dialog", { name: "This file was changed outside Statewright" });
   await expect(dialog).toContainText("Content");
@@ -70,12 +70,12 @@ test("reviews a file changed outside Statewright, imports it signed, and saves i
 
   await page.getByRole("button", { name: /^Get paid \(as built\)/ }).click();
   const saved = await download(page, () => page.getByRole("menuitem", { name: "Save to file" }).click());
-  expect(saved.name).toBe("get-paid-as-built.statewright.json");
+  expect(saved.name).toBe("get-paid-as-built.sttw");
   const result = parse(saved.bytes.toString("utf8"));
   expect(result.ok).toBe(true);
   expect(result.doc.canvases.cnv_open.nodes.nod_awaitingPayment.name).toBe("waiting");
   expect(await verify(result.doc)).toEqual({ content: "ok", annotations: "ok", layout: "ok" });
-  await expect(page.getByText("Downloaded get-paid-as-built.statewright.json")).toBeVisible();
+  await expect(page.getByText("Downloaded get-paid-as-built.sttw")).toBeVisible();
 });
 
 test("refuses a file that is not a Statewright document and imports nothing", async ({ page }) => {
@@ -89,7 +89,7 @@ test("refuses a file that is not a Statewright document and imports nothing", as
 
 test("exports the level as a PNG at twice its size", async ({ page }) => {
   await page.goto("/");
-  await importFile(page, exampleText("get-paid-as-built"), "get-paid.statewright.json");
+  await importFile(page, exampleText("get-paid-as-built"), "get-paid.sttw");
   await expect(page.getByTestId("canvas").locator(".react-flow__node-node").first()).toBeVisible();
   await page.getByRole("button", { name: "Export" }).click();
   const png = await download(page, () => page.getByRole("menuitem", { name: /Image \(PNG/ }).click());
@@ -102,7 +102,7 @@ test("exports the level as a PNG at twice its size", async ({ page }) => {
 
 test("opens a project read-only in a second tab until that tab takes over", async ({ page, context }) => {
   await page.goto("/");
-  await importFile(page, exampleText("payments"), "payments.statewright.json");
+  await importFile(page, exampleText("payments"), "payments.sttw");
   await expect(page.getByTestId("canvas")).toBeVisible();
 
   const second = await context.newPage();

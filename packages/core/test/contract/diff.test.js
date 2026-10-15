@@ -5,7 +5,7 @@ import { diffContracts, toChangesMarkdown, toContract } from "../../src/contract
 import { parse } from "../../src/serialize/parse.js";
 import { readExample } from "../helpers.js";
 
-const bookings = () => parse(readExample("bookings.statewright.json")).doc;
+const bookings = () => parse(readExample("bookings.sttw")).doc;
 const contractOf = async doc => (await toContract(doc)).contract;
 
 describe("diffContracts (source-of-truth spec §5)", () => {

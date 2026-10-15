@@ -13,7 +13,7 @@ const rendered = (name, file) =>
   readFileSync(new URL(`../../../examples/rendered/${name}/${file}`, import.meta.url), "utf8");
 
 describe.each(["bookings", "get-paid-as-built", "payments"])("examples/%s", name => {
-  const doc = parse(readExample(`${name}.statewright.json`)).doc;
+  const doc = parse(readExample(`${name}.sttw`)).doc;
 
   it("has no errors", () => {
     expect(check(doc).filter(problem => problem.severity === "error")).toEqual([]);

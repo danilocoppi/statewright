@@ -26,7 +26,7 @@
     "machineHint": "States and transitions",
     "flow": "Flow",
     "flowHint": "Steps, if, while, switch",
-    "drop": "Drop a .statewright.json",
+    "drop": "Drop a .sttw",
     "dropHint": "or click to open a file"
   },
   "examples": {
@@ -55,7 +55,7 @@
   "storeFailed": "Couldn't store the project in this browser ({{reason}}). Delete projects you no longer need, then try again.",
   "drop": {
     "title": "Drop to open",
-    "hint": "A Statewright document (.statewright.json)"
+    "hint": "A Statewright document (.sttw)"
   },
   "emptyGuide": "Read how Statewright works",
   "unreadable": "The copy of {{name}} in this browser can't be read. Open its file to replace it.",

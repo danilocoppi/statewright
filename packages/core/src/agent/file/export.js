@@ -40,7 +40,7 @@ export const exportOperations = {
     const read = await context.read(context.file, "read", () => context.files.read(context.file));
     if (!read) throw new AgentError("FILE", `Cannot read ${context.file}: no such file`, { file: context.file });
     const { text } = read;
-    return exported(context, out, `${slug(doc.project.name)}.statewright.json`, text);
+    return exported(context, out, `${slug(doc.project.name)}.sttw`, text);
   },
   "export.svg": async ({ doc }, { canvas, out }, context) => {
     const level = canvasOf(doc, canvas);

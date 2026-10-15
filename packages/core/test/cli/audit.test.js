@@ -31,7 +31,7 @@ describe("statewright audit (AI interface spec §8)", () => {
 
   it("exits 1 when the document has errors, and 2 for an unknown format or level", async () => {
     const dir = await workspace();
-    const file = join(dir, "broken.statewright.json");
+    const file = join(dir, "broken.sttw");
     const doc = JSON.parse(await readFile(EXAMPLE, "utf8"));
     // A second initial node in the expiry clock: an error (machine.multipleInitial).
     const broken = applyBatch(doc, [

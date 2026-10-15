@@ -4,7 +4,7 @@ import { parse } from "../../src/serialize/parse.js";
 import { readExample } from "../helpers.js";
 
 const EXAMPLES = ["bookings", "get-paid-as-built", "payments", "payout-batch"];
-const example = name => parse(readExample(`${name}.statewright.json`)).doc;
+const example = name => parse(readExample(`${name}.sttw`)).doc;
 
 /** A row as the Markdown writes it. */
 const markdownRow = cells =>

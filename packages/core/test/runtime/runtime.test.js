@@ -11,7 +11,7 @@ import { docOf, machine } from "../simulate/helpers.js";
 import { small, tableDoc } from "./fixtures.js";
 
 const AT = "2026-01-05T09:00:00Z";
-const bookings = () => parse(readExample("bookings.statewright.json")).doc;
+const bookings = () => parse(readExample("bookings.sttw")).doc;
 const table = async (guards = small) => (await createRuntime(tableDoc(), { guards })).machine("table.status");
 
 /** What createRuntime throws, as plain data. */
@@ -74,7 +74,7 @@ describe("createRuntime (source-of-truth spec §7)", () => {
     expect(() => runtime.machine("table.status")).toThrow(
       expect.objectContaining({ code: "machine", message: "No machine of the design runs on its own as table.status" })
     );
-    const payments = await createRuntime(parse(readExample("payments.statewright.json")).doc, {
+    const payments = await createRuntime(parse(readExample("payments.sttw")).doc, {
       guards: { "Scaled payout": () => false }
     });
     // The cross-border send is the interior of a state of the lifecycle: it runs inside it, not on its own.
@@ -221,7 +221,7 @@ describe("a machine of the runtime (source-of-truth spec §7)", () => {
   });
 
   it("runs a machine with regions: its state is the list of the active ones, by path", async () => {
-    const runtime = await createRuntime(parse(readExample("payments.statewright.json")).doc, {
+    const runtime = await createRuntime(parse(readExample("payments.sttw")).doc, {
       guards: { "Scaled payout": () => false }
     });
     const lifecycle = runtime.machine("cnv_lifecycle");

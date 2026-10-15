@@ -1,3 +1,4 @@
+import { readdirSync } from "node:fs";
 import Ajv2020 from "ajv/dist/2020.js";
 import { describe, expect, it } from "vitest";
 import { toJSONSchema } from "../src/schema/index.js";
@@ -9,12 +10,14 @@ import { readExample } from "./helpers.js";
 
 const validateJsonSchema = new Ajv2020({ strict: false, validateFormats: false }).compile(toJSONSchema());
 
-describe.each([
-  "bookings.statewright.json",
-  "get-paid-as-built.statewright.json",
-  "payments.statewright.json",
-  "payout-batch.statewright.json"
-])("%s", name => {
+describe("the examples", () => {
+  it("are .sttw documents, the name Statewright saves under", () => {
+    const files = readdirSync(new URL("../../../examples/", import.meta.url)).filter(name => name.includes("."));
+    expect(files).toEqual(["bookings.sttw", "get-paid-as-built.sttw", "payments.sttw", "payout-batch.sttw"]);
+  });
+});
+
+describe.each(["bookings.sttw", "get-paid-as-built.sttw", "payments.sttw", "payout-batch.sttw"])("%s", name => {
   const text = readExample(name);
   const result = parse(text);
 

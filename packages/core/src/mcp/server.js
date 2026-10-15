@@ -18,7 +18,7 @@ const INVALID_PARAMS = -32602;
  */
 const INSTRUCTIONS = [
   "Statewright designs systems as layered specifications: architecture views, state machines and flows nested to any",
-  "depth, in one signed .statewright.json document.",
+  "depth, in one signed .sttw document.",
   `To work with a person, pair with their Editor: they open ${EDITOR_ORIGIN}, choose Connect an AI… on the Projects`,
   "screen, before any project is open (or in a project's menu, or ⌘K), and read you its code; call editor_pair with",
   "it. Every tool without `file` then works in their tab, where they see each of your changes and can undo it; then",

@@ -8,7 +8,7 @@ export function readExample(name) {
 
 /** A deep copy of the parsed payments example. */
 export function paymentsDoc() {
-  return JSON.parse(readExample("payments.statewright.json"));
+  return JSON.parse(readExample("payments.sttw"));
 }
 
 /** The smallest valid document: one empty system canvas. */

@@ -41,7 +41,7 @@ export function createFileHost({ files, agent, file: initial, operations = {} })
       return { project: { id: doc.project.id, name: doc.project.name }, file: path };
     },
     "projects.create": async (_session, { name, kind, path }) => {
-      if (!path) throw new AgentError("FILE", "Give the path to write the new .statewright.json at (path)");
+      if (!path) throw new AgentError("FILE", "Give the path to write the new .sttw at (path)");
       if (await touching(path, "read", () => files.stat(path))) {
         throw new AgentError("FILE", `${path} already exists`, { file: path });
       }
@@ -133,7 +133,7 @@ export function createFileHost({ files, agent, file: initial, operations = {} })
     try {
       session = !handler.withoutFile && target ? await open(target) : null;
       if (!session && !handler.withoutFile) {
-        throw new AgentError("FILE", "Give the path of a .statewright.json (file), or open one (projects.open)");
+        throw new AgentError("FILE", "Give the path of a .sttw (file), or open one (projects.open)");
       }
       if (operation.writes && session.changed && !acceptChanges) {
         throw new AgentError(

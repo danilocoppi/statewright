@@ -20,7 +20,7 @@ import { REPOSITORY } from "@/config/app";
 import { RenameDialog } from "@/features/editor/RenameDialog";
 import { copyOf } from "@/files/import";
 import { newProject } from "@/files/new-project";
-import { canPickFiles, documentFileName, pickFile, saveToFile } from "@/files/save-file";
+import { OPEN_ACCEPT, canPickFiles, documentFileName, pickFile, saveToFile } from "@/files/save-file";
 import { whileClosed } from "@/persistence/lock";
 import { toast } from "@/stores/toast";
 
@@ -239,7 +239,7 @@ export default function ProjectsPage() {
       <input
         ref={fileInput}
         type="file"
-        accept=".json,application/json"
+        accept={OPEN_ACCEPT}
         aria-label={t("actions.openFile")}
         hidden
         onChange={event => {

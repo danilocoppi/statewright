@@ -88,7 +88,7 @@ describe("Editor page", () => {
     renderEditor(repository, "/p/prj_getPaid");
     const notice = (await screen.findByText(/can't keep projects/)).closest("[role='status']");
     await user.click(within(notice).getByRole("button", { name: "Save to file" }));
-    await waitFor(() => expect(files.map(file => file.name)).toEqual(["get-paid-as-built.statewright.json"]));
+    await waitFor(() => expect(files.map(file => file.name)).toEqual(["get-paid-as-built.sttw"]));
   });
 
   it("explains when the project is not in this browser", async () => {
@@ -171,7 +171,7 @@ describe("Editor page", () => {
     ).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Download a copy" }));
     await waitFor(() => expect(files).toHaveLength(1));
-    expect(files[0].name).toBe("checkout.statewright.json");
+    expect(files[0].name).toBe("checkout.sttw");
     expect(JSON.parse(await files[0].blob.text()).project.name).toBe("Checkout");
   });
 

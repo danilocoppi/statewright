@@ -7,8 +7,8 @@ import { nodeFiles } from "../../src/cli/node-files.js";
 import { serveMcp } from "../../src/mcp/serve.js";
 import { readExample } from "../helpers.js";
 
-const PAYMENTS = readExample("payments.statewright.json");
-const GET_PAID = readExample("get-paid-as-built.statewright.json");
+const PAYMENTS = readExample("payments.sttw");
+const GET_PAID = readExample("get-paid-as-built.sttw");
 
 /** Serve these messages, one per line, and collect the answers by id. */
 async function serve(messages, { files = memoryFiles({}), file, editor, guide } = {}) {
@@ -104,17 +104,17 @@ describe("the MCP server at work (AI interface spec §5)", () => {
       HELLO,
       call(1, "document_summary"),
       call(2, "view_open", { canvas: "cnv_a" }),
-      call(3, "projects_create", { name: "Refund", kind: "flow", path: "refund.statewright.json" }),
+      call(3, "projects_create", { name: "Refund", kind: "flow", path: "refund.sttw" }),
       call(4, "level_get", { canvas: "cnv_refund" })
     ]);
     expect(byId[1].result).toMatchObject({ isError: true, structuredContent: { error: { code: "NOT_PAIRED" } } });
     expect(byId[1].result.structuredContent.error.message).toBe(
-      "document.summary has no document to work on: pass file (the path of a .statewright.json), start the server " +
+      "document.summary has no document to work on: pass file (the path of a .sttw), start the server " +
         "with --file, or ask the person to open the Statewright Editor (https://statewright.cpss.com.br) and its " +
         "Connect an AI… (on the Projects screen, or a project's menu or ⌘K) and call editor_pair with the code it shows"
     );
     expect(byId[2].result.structuredContent.error.code).toBe("NOT_PAIRED");
-    expect(byId[3].result.structuredContent.written).toBe("refund.statewright.json");
+    expect(byId[3].result.structuredContent.written).toBe("refund.sttw");
     expect(byId[4].result.structuredContent.kind).toBe("flow");
   });
 
@@ -194,7 +194,7 @@ describe("the MCP server at work (AI interface spec §5)", () => {
 
   it("knows one file by any of its paths: its undo, its run and its hold are the same", async () => {
     const dir = await mkdtemp(join(tmpdir(), "statewright-mcp-"));
-    await copyFile(new URL("../../../../examples/payments.statewright.json", import.meta.url), join(dir, "p.json"));
+    await copyFile(new URL("../../../../examples/payments.sttw", import.meta.url), join(dir, "p.json"));
     const absolute = join(dir, "p.json");
     const rename = {
       label: "Rename",
