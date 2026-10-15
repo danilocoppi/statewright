@@ -131,25 +131,22 @@ for (const rate of RATES) {
     for (let time = 0; time < 5; time += 1) nudges.push(await timeKey(page, "ArrowRight", box));
     report(rate, "nudge a box (edit shown)", median(nudges));
 
-    // Problems after a change: delete the box, from the key to the Problems count changing.
+    // Problems after a change: delete a box whose open comment is a Problem, from the key to the count changing.
     const problems = "[data-area='actions'] button";
+    await page.evaluate(() => window.statewright.call("view.select", { ids: ["nod_edsD5"] }));
+    await page.waitForTimeout(500);
     report(rate, "delete a box → Problems updated", await timeKey(page, "Delete", problems));
     report(rate, "undo → Problems updated", await timeKey(page, "ControlOrMeta+z", problems));
 
     // Typing a name in the inspector: each key, to the frame that shows it on the canvas.
-    await page
-      .locator(box)
-      .click({ timeout: 60000 })
-      .catch(() => {});
-    await page.keyboard.press("Shift+I");
-    const name = page.getByRole("textbox", { name: /^Name$/ }).first();
-    if (await name.isVisible().catch(() => false)) {
-      await name.click();
-      await name.press("End");
-      const keys = [];
-      for (const key of ["x", "y", "z", "w"]) keys.push(await timeKey(page, key, box));
-      report(rate, "type in the name (each key shown)", median(keys));
-    }
+    await page.evaluate(id => window.statewright.call("view.select", { ids: [id] }), visible);
+    const name = page.getByRole("textbox", { name: "Name", exact: true });
+    await name.waitFor({ timeout: 60000 });
+    await name.click();
+    await name.press("End");
+    const keys = [];
+    for (const key of ["x", "y", "z", "w", "v"]) keys.push(await timeKey(page, key, box));
+    report(rate, "type in the name (each key shown)", median(keys));
 
     const long = await longTasks(page);
     report(rate, "long tasks during the session", long.length, "tasks");
