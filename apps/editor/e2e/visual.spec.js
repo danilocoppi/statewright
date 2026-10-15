@@ -516,6 +516,19 @@ for (const theme of ["light", "dark"]) {
       await expect(panel).toHaveScreenshot(`problems-group-${theme}.png`, { maxDiffPixelRatio: 0.001 });
     });
 
+    test("shows the Levels map with a level's elements open", async ({ page }) => {
+      await page.goto("/");
+      await page.getByRole("button", { name: /^Payments/ }).click();
+      await expect(page).toHaveURL(/\/p\/prj_payments$/);
+      await settled(page);
+      await page.getByRole("button", { name: /^Payments/ }).click();
+      await page.getByRole("menuitem", { name: "Levels…" }).click();
+      const levels = page.getByRole("dialog", { name: "Levels" });
+      await levels.getByRole("button", { name: "Show the elements of Lifecycle engine" }).click();
+      await page.mouse.move(8, 892);
+      await expect(levels).toHaveScreenshot(`levels-map-${theme}.png`, { maxDiffPixelRatio: 0.001 });
+    });
+
     test("shows the support popover open above its badge, on the Projects screen", async ({ page }) => {
       await page.goto("/");
       await expect(page.getByRole("button", { name: /^Payments/ })).toBeVisible();

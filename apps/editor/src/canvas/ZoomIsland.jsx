@@ -1,6 +1,7 @@
 import { useReactFlow, useStore, useViewport } from "@xyflow/react";
 import { useTranslation } from "react-i18next";
 
+import { catalogStore } from "@/catalog/state";
 import { IconButton } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Island } from "@/components/ui/Island";
@@ -10,7 +11,10 @@ import { currentInspectorWidth } from "@/stores/inspector";
 import { MOTION, prefersReducedMotion } from "./useLevelView";
 import { fitFor } from "./viewport";
 
-/** Zoom out, the zoom level (back to 100 %), zoom in, and fit the level (spec §6.1, bottom left). */
+/**
+ * Zoom out, the zoom level (back to 100 %), zoom in, and fit the level (spec §6.1, bottom left); then the catalog,
+ * as G opens it — not while simulating, when the catalog is not offered.
+ */
 export function ZoomIsland() {
   const { t } = useTranslation("editor");
   const flow = useReactFlow();
@@ -54,6 +58,18 @@ export function ZoomIsland() {
       >
         {t("zoom.fit")}
       </button>
+      {!simulating && (
+        <>
+          <span aria-hidden="true" className="mx-1 h-4 border-l border-hairline" />
+          <IconButton
+            label={t("inspector:catalog.label")}
+            aria-keyshortcuts="G"
+            onClick={() => catalogStore.getState().show()}
+          >
+            <Icon name="catalog" />
+          </IconButton>
+        </>
+      )}
     </Island>
   );
 }

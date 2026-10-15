@@ -16,7 +16,7 @@ export function indexOf(doc) {
 
 /**
  * The path of levels down to a level — what Core's `pathTo(doc, canvasId)` gives — from one walk of the levels per
- * document. Null for a level no tree reaches.
+ * document; a level nothing reaches starts its own path. Null for a canvas that is not there.
  * @returns {Array<{ canvas: string, via: string | null, definition: string | null }> | null}
  */
 export function levelPathOf(doc, canvasId) {
@@ -30,7 +30,7 @@ export function levelPathOf(doc, canvasId) {
       for (const child of tree.children) walk(child, path);
     };
     const trees = hierarchy(doc);
-    for (const tree of [trees.root, ...trees.catalog, ...trees.definitions]) walk(tree, []);
+    for (const tree of [trees.root, ...trees.catalog, ...trees.definitions, ...trees.unattached]) walk(tree, []);
     paths.set(doc, found);
   }
   return found.get(canvasId) ?? null;

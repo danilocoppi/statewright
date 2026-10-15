@@ -80,6 +80,29 @@ test("opens a group of catalog Problems to list each item, and opens the catalog
   await expect(group).toHaveAttribute("aria-expanded", "true");
 });
 
+test("finds an element on any level from the Levels map, and shows it selected", async ({ page }) => {
+  await openExample(page, "Payments");
+  await page.waitForURL(/\/p\/prj_payments$/);
+  await page.getByRole("button", { name: /^Payments/ }).click();
+  await page.getByRole("menuitem", { name: "Levels…" }).click();
+  const levels = page.getByRole("dialog", { name: "Levels" });
+  await expect(levels.getByRole("searchbox", { name: "Find a level or an element" })).toBeFocused();
+  await page.keyboard.type("paused");
+  await levels
+    .getByRole("button", { name: /^paused/ })
+    .first()
+    .click();
+  await expect(levels).toBeHidden();
+  await expect(page).toHaveURL(/\/cnv_expiryClock$/);
+  await expect(box(page, "nod_paused").locator(".sw-selection")).toBeVisible();
+});
+
+test("opens the catalog from its button beside the zoom", async ({ page }) => {
+  await openExample(page, "Payments");
+  await page.getByRole("toolbar", { name: "Zoom" }).getByRole("button", { name: "Catalog" }).click();
+  await expect(page.getByTestId("catalog-sheet")).toBeVisible();
+});
+
 test("draws the diagram with its light colours, and with its dark ones in the dark theme", async ({ page }) => {
   await openExample(page, "Get paid");
   await expect(page).toHaveURL(/\/p\/prj_getPaid$/);

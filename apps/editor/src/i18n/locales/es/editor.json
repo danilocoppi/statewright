@@ -105,8 +105,18 @@
   },
   "levels": {
     "title": "Niveles",
+    "search": "Buscar un nivel o un elemento",
     "implementations": "Implementaciones",
     "definitions": "Definiciones",
+    "unattached": "Niveles sueltos",
+    "unattachedHint": "No son el nivel superior, el interior de un elemento ni el cuerpo de una definición.",
+    "elements_one": "{{count}} elemento",
+    "elements_other": "{{count}} elementos",
+    "showElements": "Mostrar los elementos de {{name}}",
+    "usedBy": "Usada por {{name}} en {{level}}",
+    "unused": "No se usa en ningún lugar",
+    "implements": "Implementa {{name}}",
+    "nothing": "Nada coincide.",
     "shownAbove": "ya aparece arriba"
   },
   "zoom": {

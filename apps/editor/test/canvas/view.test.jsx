@@ -8,6 +8,7 @@ import { legendFor } from "statewright";
 import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
 
 import { Canvas } from "@/canvas/Canvas";
+import { catalogStore } from "@/catalog/state";
 import { editorStore } from "@/store/editor";
 import { useView, VIEW_DEFAULTS } from "@/stores/view";
 
@@ -46,6 +47,16 @@ describe("the canvas's tools", () => {
     expect(level().textContent).toBe("83%");
     fireEvent.click(within(zoom).getByRole("button", { name: "Fit" }));
     expect(Number.parseInt(level().textContent)).toBeLessThanOrEqual(100);
+  });
+
+  it("opens the catalog from the zoom island", async () => {
+    await show("payments", "cnv_lifecycle");
+    const zoom = screen.getByRole("toolbar", { name: "Zoom" });
+    const catalog = within(zoom).getByRole("button", { name: "Catalog" });
+    expect(catalog.getAttribute("aria-keyshortcuts")).toBe("G");
+    fireEvent.click(catalog);
+    expect(catalogStore.getState().open).toBe(true);
+    act(() => catalogStore.getState().close());
   });
 
   it("shows the level's legend when asked, in the document's wording", async () => {

@@ -17,6 +17,8 @@ const PATHS = {
   image: "M2.5 3.5h11v9h-11zM2.5 10.5l3-3 2.5 2.5 2-2 3.5 3.5M10.5 6h.01",
   copy: "M5.5 5.5h7v7h-7zM3.5 10.5v-7h7",
   doc: "M4 2.5h8v11H4zM6 5.5h4M6 8h4M6 10.5h2.5",
+  // The catalog: a card box, its cards behind it, a label on its front.
+  catalog: "M2.5 6.5h11v7h-11zM3.5 4.5h9M4.5 2.5h7M6.5 9.5h3",
   book: "M8 4.5C6.8 3.6 5 3.2 2.5 3.2v9c2.5 0 4.3.4 5.5 1.3 1.2-.9 3-1.3 5.5-1.3v-9c-2.5 0-4.3.4-5.5 1.3zM8 4.5v9",
   sparkle: "M8 2.5v3M8 10.5v3M2.5 8h3M10.5 8h3M4.5 4.5l1.5 1.5M10 10l1.5 1.5M11.5 4.5 10 6M6 10l-1.5 1.5",
   sun: "M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M12.6 3.4l-1 1M4.4 11.6l-1 1",
