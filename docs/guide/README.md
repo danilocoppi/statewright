@@ -780,6 +780,13 @@ too, each with Undo.
   default) run out, or the person writes to you instead, it answers `{ answered: false }` and the question stays open:
   do not ask it again; their later answer reaches you as a message with `answers: { question, … }`. Your other calls go
   on while you wait.
+- **Propose** what is large, structural or not asked for: `batch_apply { commands, label, propose: true, title, why }`
+  changes nothing and answers `{ proposed: "prp_…" }`. The person sees it in the conversation and drawn on the canvas
+  (new parts as ghosts, removed ones red, changed ones with "~"), steps through it, and accepts — one change of yours,
+  undone in one Undo — or rejects it with a reason. Their answer reaches you as a message with `proposal: { id,
+accepted, reason?, stale? }`; `stale` says it no longer applied to the document as it was then. A batch that removes
+  anything is always proposed (`forced: "deletes"`) unless the person lets you delete without asking for the session.
+  Proposals need the Editor: on files, `propose` is refused (`NOT_ALLOWED`).
 - **Stop.** When the person presses Stop, every call but the conversation's answers `STOPPED` until you read
   `editor_inbox`; then go on only as they say.
 - **The Channel.** Claude Code can bring each message to you as a turn of its own, even while it waits for the person
@@ -817,7 +824,7 @@ figure, cropped to them — comes as an image in the answer of `editor_wait` or 
 | `detail`    | Detail the box in a level of its own, top-down, as the playbook says; confirm the outline first.             |
 | `names`     | Propose clearer names as options (`editor_ask`); rename only what the person chooses.                        |
 
-A message reads `{ id, text, action?, context: { project, level, selection }, marks?, image?, answers? }`.
+A message reads `{ id, text, action?, context: { project, level, selection }, marks?, image?, answers?, proposal? }`.
 The bar shows the person whether you are
 working (a call in the last 5 seconds), listening (waiting with `editor_wait`, or reached by the Channel) or away (their
 message waits as _not read yet_). The conversation lasts as long as the pairing: nothing of it goes into the document.
@@ -914,6 +921,8 @@ edges on the canvas carry `data-id`, the document's ID. `editor_state` (or `stat
 | `conversation-tool`           | each marking tool of the conversation (data-tool)                  | per item |
 | `conversation-question`       | each open question of the agent's (data-question)                  | per item |
 | `conversation-quick`          | each quick request, something selected (data-action)               | per item |
+| `conversation-proposal`       | each proposal of the agent's waiting (data-proposal)               | per item |
+| `proposal-layer`              | the canvas: the proposal shown, drawn                              | yes      |
 | `marks-colour`                | the marks' colours, a drawing tool in hand                         | yes      |
 | `marks-layer`                 | the canvas: the person's marks for the agent                       | yes      |
 | `simulation-panel`            | the simulation panel                                               | yes      |

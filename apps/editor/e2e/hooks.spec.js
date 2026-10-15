@@ -182,6 +182,16 @@ test("finds every hook on its screen, once where it is unique (§7.5)", async ({
     await page.locator('[data-testid="conversation-tool"][data-tool="mark"]').click();
     await page.locator(".react-flow__node-node").first().click();
     await shows("conversation-quick");
+    await mcp.tool("batch_apply", {
+      label: "Rename",
+      propose: true,
+      commands: [{ type: "node.update", args: { id: "nod_complianceHold", set: { name: "hold" } } }]
+    });
+    await shows("conversation-proposal");
+    await page.getByTestId("conversation-proposal").getByRole("button", { name: "Show" }).click();
+    await shows("proposal-layer");
+    await page.getByTestId("conversation-proposal").getByRole("button", { name: "Reject" }).click();
+    await page.getByTestId("conversation-proposal").getByRole("button", { name: "Reject it" }).click();
     await page.locator('[data-testid="conversation-tool"][data-tool="mark"]').click();
     const other = await page.context().newPage();
     await other.goto("/p/prj_payments");

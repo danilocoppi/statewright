@@ -640,6 +640,49 @@ for (const theme of ["light", "dark"]) {
       }
     });
 
+    test("shows a proposal drawn on the canvas, and its card", async ({ page }) => {
+      await page.goto("/");
+      await page.getByRole("button", { name: /^Payments/ }).click();
+      await expect(page).toHaveURL(/\/p\/prj_payments$/);
+      await page.goto("/p/prj_payments/cnv_expiryClock");
+      await settled(page);
+      const mcp = await startMcp({ agent: "claude-code" });
+      try {
+        await page.getByTestId("project-menu").click();
+        await page.getByTestId("project-menu-connect").click();
+        await page.getByTestId("connect-address").fill(mcp.address);
+        await page.getByTestId("connect-address").press("Enter");
+        await expect(page.getByTestId("connect-status")).toHaveText("Waiting for the agent…");
+        await mcp.pair(await page.getByTestId("connect-code").textContent());
+        await expect(page.getByTestId("connect-dialog")).toBeHidden();
+        await mcp.tool("batch_apply", {
+          label: "Late payers",
+          propose: true,
+          title: "A state for late payers, and no more stopped",
+          why: "a payment can come after the deadline",
+          commands: [
+            {
+              type: "node.add",
+              args: { canvas: "cnv_expiryClock", id: "nod_late", node: { kind: "state", name: "late" } }
+            },
+            {
+              type: "edge.add",
+              args: { canvas: "cnv_expiryClock", id: "edg_elapsedLate", edge: { from: "nod_elapsed", to: "nod_late" } }
+            },
+            { type: "node.update", args: { id: "nod_paused", set: { name: "on hold" } } },
+            { type: "node.remove", args: { id: "nod_stopped" } }
+          ]
+        });
+        const card = page.getByTestId("conversation-proposal");
+        await card.getByRole("button", { name: "Show" }).click();
+        await expect(page.locator('[data-proposed="add"][data-id="nod_late"]')).toBeVisible();
+        await page.mouse.move(8, 892);
+        await expect(page).toHaveScreenshot(`proposal-${theme}.png`, { maxDiffPixelRatio: 0.001 });
+      } finally {
+        await mcp.stop();
+      }
+    });
+
     test("shows the support popover open above its badge, on the Projects screen", async ({ page }) => {
       await page.goto("/");
       await expect(page.getByRole("button", { name: /^Payments/ })).toBeVisible();

@@ -310,7 +310,9 @@ describe("the platform guide", () => {
       "editor_ask { question, options?, multiple?, pick?, seconds? }",
       "answers: { question, … }",
       "| `review`    |",
-      "| `fill`      |"
+      "| `fill`      |",
+      "propose: true, title, why",
+      'forced: "deletes"'
     ]) {
       expect(conversation.ok && conversation.result.text, said).toContain(said);
     }

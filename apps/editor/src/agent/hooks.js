@@ -73,6 +73,8 @@ export const HOOKS = [
   { id: "conversation-tool", where: "each marking tool of the conversation (data-tool)", unique: false },
   { id: "conversation-question", where: "each open question of the agent's (data-question)", unique: false },
   { id: "conversation-quick", where: "each quick request, something selected (data-action)", unique: false },
+  { id: "conversation-proposal", where: "each proposal of the agent's waiting (data-proposal)", unique: false },
+  { id: "proposal-layer", where: "the canvas: the proposal shown, drawn", unique: true },
   { id: "marks-colour", where: "the marks' colours, a drawing tool in hand", unique: true },
   { id: "marks-layer", where: "the canvas: the person's marks for the agent", unique: true },
   { id: "simulation-panel", where: "the simulation panel", unique: true },
