@@ -12,7 +12,7 @@ import {
   useReactFlow,
   useStore
 } from "@xyflow/react";
-import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
@@ -565,6 +565,41 @@ function Flow({ onNavigate }) {
     editingStore.getState().open({ type: "menu", x: point.x - bounds.left, y: point.y - bounds.top });
   }, [menu, flow, doc, canvasId, selection]);
 
+  // React Flow hands its handlers to every box and arrow: kept the same across renders (each calling the latest), an
+  // edit draws again only the parts it changed (performance spec §3 P2).
+  const on = useHandlers({
+    nodesChange: onChange,
+    edgesChange: onChange,
+    nodeDoubleClick: (_event, node) => {
+      // A box with an interior opens, a link is followed; any other box or note is renamed in place.
+      if (node.data.part?.interior) open(node);
+      else if (node.data.follow) followRef(node.id);
+      else if (!locked && node.selectable !== false) editingStore.getState().open({ type: "name", id: node.id });
+    },
+    paneClick: event => {
+      if (tool) place(tool, pointAt(event));
+      else editorStore.getState().select([]);
+    },
+    nodeDragStop: drag.onDrop,
+    nodeMouseEnter: (_event, node) => setHovered(node.id),
+    nodeMouseLeave: () => setHovered(null),
+    connectStart: connect.onConnectStart,
+    connect: connect.onConnect,
+    connectEnd: connect.onConnectEnd,
+    validConnection: connection => !connectRefusal(doc, canvasId, connection.source, connection.target),
+    nodeContextMenu: (event, node) => openMenu(event, node.selectable === false ? null : node.id),
+    edgeContextMenu: (event, edge) => openMenu(event, edge.selectable === false ? null : edge.id),
+    edgeDoubleClick: (_event, edge) => {
+      if (!locked && edge.selectable !== false && hasTrigger(doc, canvasId, edge.id)) {
+        editingStore.getState().open({ type: "trigger", edgeId: edge.id });
+      }
+    },
+    paneContextMenu: event => openMenu(event, null),
+    selectionContextMenu: event => openMenu(event, undefined),
+    moveEnd: (_event, viewport) =>
+      framedRef.current === canvasId && editorStore.getState().setViewport(canvasId, viewport)
+  });
+
   return (
     <div
       ref={container}
@@ -597,38 +632,24 @@ function Flow({ onNavigate }) {
           edges={edges}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
-          onNodesChange={onChange}
-          onEdgesChange={onChange}
-          onNodeDoubleClick={(_event, node) => {
-            // A box with an interior opens, a link is followed; any other box or note is renamed in place.
-            if (node.data.part?.interior) open(node);
-            else if (node.data.follow) followRef(node.id);
-            else if (!locked && node.selectable !== false) editingStore.getState().open({ type: "name", id: node.id });
-          }}
-          onPaneClick={event => {
-            if (tool) place(tool, pointAt(event));
-            else editorStore.getState().select([]);
-          }}
-          onNodeDragStop={drag.onDrop}
-          onNodeMouseEnter={(_event, node) => setHovered(node.id)}
-          onNodeMouseLeave={() => setHovered(null)}
-          onConnectStart={connect.onConnectStart}
-          onConnect={connect.onConnect}
-          onConnectEnd={connect.onConnectEnd}
-          isValidConnection={connection => !connectRefusal(doc, canvasId, connection.source, connection.target)}
+          onNodesChange={on.nodesChange}
+          onEdgesChange={on.edgesChange}
+          onNodeDoubleClick={on.nodeDoubleClick}
+          onPaneClick={on.paneClick}
+          onNodeDragStop={on.nodeDragStop}
+          onNodeMouseEnter={on.nodeMouseEnter}
+          onNodeMouseLeave={on.nodeMouseLeave}
+          onConnectStart={on.connectStart}
+          onConnect={on.connect}
+          onConnectEnd={on.connectEnd}
+          isValidConnection={on.validConnection}
           connectionLineComponent={ConnectionLine}
-          onNodeContextMenu={(event, node) => openMenu(event, node.selectable === false ? null : node.id)}
-          onEdgeContextMenu={(event, edge) => openMenu(event, edge.selectable === false ? null : edge.id)}
-          onEdgeDoubleClick={(_event, edge) => {
-            if (!locked && edge.selectable !== false && hasTrigger(doc, canvasId, edge.id)) {
-              editingStore.getState().open({ type: "trigger", edgeId: edge.id });
-            }
-          }}
-          onPaneContextMenu={event => openMenu(event, null)}
-          onSelectionContextMenu={event => openMenu(event, undefined)}
-          onMoveEnd={(_event, viewport) =>
-            framedRef.current === canvasId && editorStore.getState().setViewport(canvasId, viewport)
-          }
+          onNodeContextMenu={on.nodeContextMenu}
+          onEdgeContextMenu={on.edgeContextMenu}
+          onEdgeDoubleClick={on.edgeDoubleClick}
+          onPaneContextMenu={on.paneContextMenu}
+          onSelectionContextMenu={on.selectionContextMenu}
+          onMoveEnd={on.moveEnd}
           nodesDraggable={!locked && !marking}
           nodesConnectable={!locked}
           edgesFocusable={false}
@@ -723,6 +744,25 @@ function Flow({ onNavigate }) {
  * @param {{ onNavigate?: (canvasId: string) => void }} props `onNavigate` shows another level (the page changes the
  *   address; the canvas follows the store).
  */
+/**
+ * Handlers that keep their identity across renders, each calling the latest one given: what React Flow passes on to
+ * every box and arrow (memoized on their props) then does not make them all draw again.
+ * @template {Record<string, Function | undefined>} T
+ * @param {T} handlers
+ * @returns {T}
+ */
+function useHandlers(handlers) {
+  const latest = useRef(handlers);
+  useLayoutEffect(() => {
+    latest.current = handlers;
+  });
+  const names = Object.keys(handlers).join(" ");
+  return useMemo(
+    () => Object.fromEntries(names.split(" ").map(name => [name, (...args) => latest.current[name]?.(...args)])),
+    [names]
+  );
+}
+
 export function Canvas({ onNavigate }) {
   const open = useEditor(state => Boolean(state.doc));
   return (
