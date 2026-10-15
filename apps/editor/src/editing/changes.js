@@ -1,7 +1,7 @@
 // The changes the canvas makes (spec §7.2–§7.3), as Core command batches: add a box or a note where the person
 // clicks, move, nudge, remove, rename, align and distribute, and make a region of selected states. Pure functions of
 // the document; the editor dispatches what they return as one change.
-import { applyBatch, buildIndex, figureOf, prefixOf } from "statewright";
+import { applyBatch, buildIndex, figureOf, isGuest, prefixOf, stepText } from "statewright";
 
 import { idsFor } from "./ids";
 import { NAME_REQUIRED } from "./tools";
@@ -215,7 +215,17 @@ export function renameCommands(doc, id, text) {
   if (entry?.type === "note") {
     return value && value !== entry.value.text ? [{ type: "note.update", args: { id, set: { text: value } } }] : [];
   }
-  if (entry?.type !== "node" || value === (entry.value.name ?? "")) return [];
+  if (entry?.type !== "node") return [];
+  // A guest has no name: it shows its label, else what it stands for (mixed levels spec §4.1).
+  if (isGuest(doc.canvases[entry.canvas].kind, entry.value)) {
+    const label = entry.value.label;
+    if (value === (label ?? stepText(doc, entry.value))) return [];
+    if (!value || value === stepText(doc, entry.value)) {
+      return label === undefined ? [] : [{ type: "node.update", args: { id, unset: ["label"] } }];
+    }
+    return [{ type: "node.update", args: { id, set: { label: value } } }];
+  }
+  if (value === (entry.value.name ?? "")) return [];
   if (value) return [{ type: "node.update", args: { id, set: { name: value } } }];
   return NAME_REQUIRED.has(entry.value.kind) ? [] : [{ type: "node.update", args: { id, unset: ["name"] } }];
 }

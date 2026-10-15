@@ -1,4 +1,4 @@
-import { buildIndex } from "statewright";
+import { buildIndex, isGuest, stepText } from "statewright";
 import { useTranslation } from "react-i18next";
 
 import { editorStore } from "@/store/editor";
@@ -19,7 +19,11 @@ export function Rename({ part, note = false }) {
   const { t } = useTranslation("editor");
   const { doc } = editorStore.getState();
   const entry = buildIndex(doc).get(part.id);
-  const value = (note ? entry?.value.text : entry?.value.name) ?? "";
+  const guest = entry?.type === "node" && isGuest(doc.canvases[entry.canvas].kind, entry.value);
+  const value =
+    (note ? entry?.value.text
+    : guest ? (entry.value.label ?? stepText(doc, entry.value))
+    : entry?.value.name) ?? "";
   const close = () => {
     editingStore.getState().close();
     focusBox(part.id);

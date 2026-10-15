@@ -125,3 +125,64 @@ describe("placing a guest", () => {
     expect(after.layout.canvases[doc.root].nodes[id].display).toBe("frame");
   });
 });
+
+describe("connecting guests (M1: they take no part in the level's transitions)", () => {
+  it("refuses a connection to or from a guest, and a box dragged out of one", async () => {
+    const { connectRefusal, startRefusal } = await import("@/editing/connect");
+    const doc = project("machine");
+    const placed = placeCommands(doc, doc.root, toolById("machine", "participantActor"), at, {
+      party: { name: "Customer" }
+    });
+    const after = run(doc, placed.commands);
+    const state = Object.keys(after.canvases[doc.root].nodes).find(
+      id => after.canvases[doc.root].nodes[id].kind === "state"
+    );
+    expect(connectRefusal(after, doc.root, placed.id, state)).toBe("guest");
+    expect(connectRefusal(after, doc.root, state, placed.id)).toBe("guest");
+    expect(startRefusal(after, doc.root, placed.id)).toBe("guest");
+  });
+});
+
+describe("naming guests", () => {
+  it("renames a guest through its label, and gives it back its party's name when emptied", async () => {
+    const { renameCommands } = await import("@/editing/changes");
+    const doc = project("machine");
+    const placed = placeCommands(doc, doc.root, toolById("machine", "participantActor"), at, {
+      party: { name: "Customer" }
+    });
+    const after = run(doc, placed.commands);
+    expect(renameCommands(after, placed.id, "Customer")).toEqual([]);
+    const renamed = run(after, renameCommands(after, placed.id, "Buyer"));
+    expect(renamed.canvases[doc.root].nodes[placed.id].label).toBe("Buyer");
+    const back = run(renamed, renameCommands(renamed, placed.id, ""));
+    expect(back.canvases[doc.root].nodes[placed.id].label).toBeUndefined();
+  });
+
+  it("finds a guest by what it stands for", async () => {
+    const { elementName } = await import("@/inspector/references");
+    const { buildIndex } = await import("statewright");
+    const doc = project("machine");
+    const placed = placeCommands(doc, doc.root, toolById("machine", "participantActor"), at, {
+      party: { name: "Customer" }
+    });
+    const after = run(doc, placed.commands);
+    expect(elementName(after, buildIndex(after).get(placed.id), kind => kind)).toBe("Customer");
+  });
+});
+
+describe("choosing a participant's party", () => {
+  it("offers a party of another kind by the name typed, rather than nothing", async () => {
+    const { partyOptions } = await import("@/editing/choices");
+    const doc = project("machine");
+    doc.catalog.parties.pty_bank = { kind: "external", name: "Bank" };
+    const options = partyOptions(
+      key => key,
+      doc,
+      toolById("machine", "participantActor"),
+      () => {}
+    )("Bank");
+    expect(options.map(option => [option.id, option.meta])).toEqual([
+      ["pty_bank", "inspector:choices.partyKind.external"]
+    ]);
+  });
+});

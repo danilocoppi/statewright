@@ -1,12 +1,13 @@
 // The coverage of a design by its scenarios (AI interface spec §8): which states (machines) or nodes (flows) and which
 // edges the scenarios' runs reach, level by level.
+import { isGuest } from "../roles/kinds.js";
 import { compareText } from "../rules/facts.js";
 import { locate, storyOf } from "../simulate/index.js";
 
-/** The nodes of a level that count: a machine's states, a flow's every node. */
+/** The nodes of a level that count: a machine's states, a flow's every node but its guests. */
 const countedNodes = canvas =>
   Object.entries(canvas.nodes)
-    .filter(([, node]) => canvas.kind === "flow" || node.kind === "state")
+    .filter(([, node]) => (canvas.kind === "flow" ? !isGuest("flow", node) : node.kind === "state"))
     .map(([id]) => id);
 
 /** The levels a run can go through: every machine and flow canvas. */

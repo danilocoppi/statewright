@@ -202,6 +202,7 @@
     "secondInitial": "This region already starts at an initial node.",
     "wrongKind": "These boxes belong on another kind of level.",
     "missingLevel": "The level this link leads to is not in this project.",
+    "guest": "A guest takes no part in this level's transitions or steps.",
     "arrangeFailed": "This level could not be arranged. Try Auto-layout again.",
     "INVALID_ARGS": "Statewright cannot make that change.",
     "NOT_FOUND": "Something this change needs is not in the project.",

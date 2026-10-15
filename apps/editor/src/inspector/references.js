@@ -1,7 +1,7 @@
 // Fields that name other things (spec §7.4: "Fields that reference the catalog use the same completion as the trigger
 // editor, with Create …"): finding catalog items and elements by name, and creating a catalog item in the same change
 // as its use.
-import { CATALOG_COLLECTIONS, toCamel } from "statewright";
+import { CATALOG_COLLECTIONS, isGuest, stepText, toCamel } from "statewright";
 
 import { eventName } from "@/editing/triggers";
 import { idsFor } from "@/editing/ids";
@@ -95,7 +95,10 @@ export function elementName(doc, entry, unnamed) {
     const end = id => nodes[id]?.name ?? unnamed(nodes[id]?.kind);
     return value.name ?? `${end(value.from)} → ${end(value.to)}`;
   }
-  if (type === "node") return value.name ?? unnamed(value.kind);
+  if (type === "node") {
+    if (isGuest(doc.canvases[entry.canvas].kind, value)) return value.label ?? stepText(doc, value);
+    return value.name ?? unnamed(value.kind);
+  }
   return value.name ?? value.label ?? value.title ?? entry.id;
 }
 

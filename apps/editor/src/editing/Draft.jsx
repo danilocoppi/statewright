@@ -6,6 +6,7 @@ import { useEditor } from "@/store/editor";
 
 import { placeTool } from "./actions";
 import { CatalogPicker } from "./CatalogPicker";
+import { partyOptions, stateOptions } from "./choices";
 import { NameEditor } from "./NameEditor";
 import { ghostSize } from "./place";
 import { editingStore } from "./state";
@@ -16,9 +17,6 @@ import { matches } from "./triggers";
 /** The room the draft's label ("New state") takes above its box, at 100 %. */
 const LABEL = 20;
 
-/** The parties a participant tool offers: the parties of its kind (operators with people), by name. */
-const PARTY_KINDS = { human: ["human", "operator"], system: ["system"], external: ["external"] };
-
 /** The `editor:tools` keys of what a tool asks before its box is added, and of the field's placeholder. */
 const ASKS = {
   action: ["pickAction", "actionPlaceholder"],
@@ -26,47 +24,6 @@ const ASKS = {
   party: ["pickParty", "partyPlaceholder"],
   state: ["pickState", "statePlaceholder"]
 };
-
-/** The parties of a participant tool's kind that match what is typed, then a new one named so. */
-function partyOptions(t, doc, tool, onPick) {
-  return query => {
-    const typed = query.trim();
-    const kinds = PARTY_KINDS[tool.partyKind] ?? [];
-    const found = Object.entries(doc.catalog.parties)
-      .filter(([, party]) => kinds.includes(party.kind) && party.name.toLowerCase().includes(typed.toLowerCase()))
-      .sort(([, a], [, b]) => a.name.localeCompare(b.name))
-      .slice(0, 6);
-    const known = Object.values(doc.catalog.parties).some(party => party.name === typed);
-    return [
-      ...(typed && !known ?
-        [
-          {
-            id: "create",
-            create: true,
-            label: t("tools.createParty", { name: typed }),
-            onPick: () => onPick({ party: { name: typed } })
-          }
-        ]
-      : []),
-      ...found.map(([id, party]) => ({ id, label: party.name, onPick: () => onPick({ party: { id } }) }))
-    ];
-  };
-}
-
-/** The states of the document's state machines that match what is typed, each with its level's name. */
-function stateOptions(doc, onPick) {
-  return query => {
-    const typed = query.trim().toLowerCase();
-    return Object.values(doc.canvases)
-      .filter(canvas => canvas.kind === "machine")
-      .flatMap(canvas =>
-        Object.entries(canvas.nodes)
-          .filter(([, node]) => node.kind === "state" && node.name.toLowerCase().includes(typed))
-          .map(([id, node]) => ({ id, label: node.name, meta: canvas.name, onPick: () => onPick({ target: id }) }))
-      )
-      .slice(0, 8);
-  };
-}
 
 /**
  * The choice a box needs before it is added: the action a flow step performs (or embedded steps show), the level a

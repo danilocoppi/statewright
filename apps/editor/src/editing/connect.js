@@ -1,12 +1,12 @@
 // Connecting boxes (spec §7.2): what a new edge looks like on each kind of canvas, the box a drag to empty space
 // creates, and what the canvas refuses before Core is asked — what the format forbids, said in plain words.
-import { applyBatch, CommandError } from "statewright";
+import { applyBatch, CommandError, isGuest } from "statewright";
 
 import { regionAt } from "./changes";
 import { idsFor } from "./ids";
 
 /**
- * @typedef {"elsewhere" | "intoStart" | "fromTerminal" | "initialOnce" | "crossRegion" | "secondInitial"} Refusal
+ * @typedef {"elsewhere" | "intoStart" | "fromTerminal" | "initialOnce" | "crossRegion" | "secondInitial" | "guest"} Refusal
  *   Keys of `editor:refusals` (with Core's error codes for anything else Core refuses).
  */
 
@@ -47,6 +47,9 @@ export function connectRefusal(doc, canvasId, from, to) {
   const source = canvas.nodes[from];
   const target = canvas.nodes[to];
   if (!source || !target) return "elsewhere";
+  // A guest's role comes from its fields (mixed levels spec §3); shortcuts may still link to it.
+  const linking = source.kind === "ref" || target.kind === "ref";
+  if (!linking && (isGuest(canvas.kind, source) || isGuest(canvas.kind, target))) return "guest";
   if (canvas.kind === "machine") {
     if (NOT_TARGETS.has(target.kind)) return "intoStart";
     if (source.kind === "state" && source.terminal) return "fromTerminal";
@@ -64,11 +67,12 @@ export function connectRefusal(doc, canvasId, from, to) {
 
 /**
  * Why nothing can start from a box, or null: a terminal state has no way out, an initial node leads to one state.
- * @returns {"fromTerminal" | "initialOnce" | null}
+ * @returns {"fromTerminal" | "initialOnce" | "guest" | null}
  */
 export function startRefusal(doc, canvasId, from) {
   const canvas = doc.canvases[canvasId];
   const node = canvas.nodes[from];
+  if (node && isGuest(canvas.kind, node)) return "guest";
   if (canvas.kind !== "machine" || !node) return null;
   if (node.kind === "state" && node.terminal) return "fromTerminal";
   if (node.kind === "initial" && outgoing(canvas, from).length) return "initialOnce";

@@ -202,6 +202,7 @@
     "secondInitial": "Esta região já começa em um nó inicial.",
     "wrongKind": "Estas caixas pertencem a outro tipo de nível.",
     "missingLevel": "O nível para onde este link leva não está neste projeto.",
+    "guest": "Um convidado não participa das transições nem dos passos deste nível.",
     "arrangeFailed": "Não foi possível organizar este nível. Tente Organizar de novo.",
     "INVALID_ARGS": "O Statewright não consegue fazer essa mudança.",
     "NOT_FOUND": "Algo de que essa mudança precisa não está no projeto.",

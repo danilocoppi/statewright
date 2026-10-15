@@ -13,6 +13,7 @@ import {
 } from "./context.js";
 import { fail } from "./errors.js";
 import { removeElements } from "./remove.js";
+import { isGuest } from "../roles/kinds.js";
 
 const SCHEMAS = { system: SystemEdge, machine: MachineEdge, flow: FlowEdge };
 const NOT_TARGETS = new Set(["initial", "entry", "any"]);
@@ -34,6 +35,16 @@ export function checkEdgeEnds(canvas, edgeId, edge, nodeOf = nodeId => canvas.no
     fail(
       "NOT_ALLOWED",
       `Edge "${edgeId}": edges touching a ref node must have kind "link", and links must touch a ref node`,
+      { id: edgeId }
+    );
+  }
+  // Guests stand for elements of other kinds (mixed levels spec §3): their roles are read from fields, not drawn as the
+  // level's own transitions or steps. Shortcuts may still link to them.
+  if (edge.kind !== "link" && (isGuest(canvas.kind, from) || isGuest(canvas.kind, to))) {
+    const guest = isGuest(canvas.kind, from) ? from : to;
+    fail(
+      "NOT_ALLOWED",
+      `Edge "${edgeId}": a ${guest.kind} guest takes no part in this level's ${canvas.kind === "machine" ? "transitions" : "steps"}; its role is set by its fields`,
       { id: edgeId }
     );
   }
