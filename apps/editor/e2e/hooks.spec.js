@@ -163,6 +163,11 @@ test("finds every hook on its screen, once where it is unique (§7.5)", async ({
     await expect(page.getByTestId("connect-status")).toHaveText("Waiting for the agent…");
     await mcp.pair(await page.getByTestId("connect-code").textContent());
     await shows("actions-agent", "actions-disconnect");
+    await shows("conversation-bar", "conversation-field", "conversation-send");
+    await page.getByTestId("conversation-field").fill("hello");
+    await page.getByTestId("conversation-field").press("Enter");
+    await page.getByRole("button", { name: "Conversation history" }).click();
+    await shows("conversation-history", "conversation-line");
     const other = await page.context().newPage();
     await other.goto("/p/prj_payments");
     await other.getByTestId("project-menu").click();

@@ -1011,6 +1011,11 @@ edges on the canvas carry `data-id`, the document's ID. `editor_state` (or `stat
 | `connect-status`              | Connect an AI…: waiting, connected, or why it cannot pair          | yes      |
 | `connect-address`             | Connect an AI…: the address of the agent's server                  | yes      |
 | `handover-dialog`             | another tab asks to take over the agent, open                      | yes      |
+| `conversation-bar`            | the editor, while an agent is paired: the conversation             | yes      |
+| `conversation-field`          | the conversation: the field to write in                            | yes      |
+| `conversation-send`           | the conversation: Send, or Stop while the agent works              | yes      |
+| `conversation-history`        | the conversation: its history, open                                | yes      |
+| `conversation-line`           | each line of the conversation (data-kind)                          | per item |
 | `simulation-panel`            | the simulation panel                                               | yes      |
 | `simulation-move`             | each move of the run shown                                         | per item |
 | `simulation-step`             | each step of the run                                               | per item |

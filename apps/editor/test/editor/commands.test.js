@@ -3,6 +3,7 @@ import "../dom.js";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { connection } from "@/agent/connection";
 import { editingStore } from "@/editing/state";
 import { editorCommands } from "@/features/editor/commands";
 import { editorStore } from "@/store/editor";
@@ -98,6 +99,18 @@ describe("the commands ⌘K lists", () => {
     notes.run();
     expect(useView.getState().notes).toBe(false);
     expect(commands().find(command => command.id === "layer-notes").name).toContain("inspector:palette.commands.show");
+  });
+
+  it("offers writing to the paired agent, with M, only while one is paired (collaboration spec §4)", () => {
+    editorStore.getState().open(readExample("payments"), { canvasId: "cnv_runtime" });
+    expect(commands().find(command => command.id === "message")).toBeUndefined();
+    connection.store.setState({ status: "connected", agent: "claude-code" });
+    try {
+      const message = commands().find(command => command.id === "message");
+      expect(message).toMatchObject({ keys: "M", name: 'agent:conversation.command {"agent":"claude-code"}' });
+    } finally {
+      connection.store.setState({ status: "off", agent: null });
+    }
   });
 
   it("runs what it says: a tool in hand, the catalog, the levels, the guide", async () => {

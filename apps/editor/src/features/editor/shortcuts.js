@@ -32,7 +32,7 @@ const onCanvas = target =>
 /**
  * @typedef {"save" | "saveCopy" | "exportSVG" | "undo" | "redo" | "up" | "selectAll" | "duplicate" | "delete" |
  *   "arrow" | "select" | "menu" | "region" | "rename" | "trigger" | "tool" | "insert" | "layout" | "fit" | "zoomIn" |
- *   "zoomOut" | "inspector" | "catalog" | "levels" | "palette" | "nextArea" | "previousArea"} Shortcut
+ *   "zoomOut" | "inspector" | "catalog" | "levels" | "message" | "palette" | "nextArea" | "previousArea"} Shortcut
  */
 
 /**
@@ -46,7 +46,8 @@ const onCanvas = target =>
  *   edge's trigger editor opens (with no edge selected, Enter on a box opens it); "tool": a letter, the tool with that key on this kind of level (spec §7.1); "tab": 1, 2 or 3, the dock's System, Machine or Flow tab (mixed levels spec §6); "insert":
  *   `/`, insert anything by name (spec §7.2); "layout": ⇧A or ⇧L, lay the level out again; "fit": ⇧F or ⇧1;
  *   "zoomIn", "zoomOut": ⌘+ and ⌘− (spec §7.3); "inspector": ⇧I, show or hide the inspector (the level's details with nothing selected);
- *   "catalog": G, the catalog sheet (spec §7.5); "levels": L, the Levels dialog, the project's map (spec §6.3); "palette": ⌘K, search and commands (spec §7.8), also from a field; "nextArea", "previousArea": F6 and ⇧F6, the focus moves
+ *   "catalog": G, the catalog sheet (spec §7.5); "levels": L, the Levels dialog, the project's map (spec §6.3); "message": M, the
+ *   conversation's field, while an agent is paired (collaboration spec §4); "palette": ⌘K, search and commands (spec §7.8), also from a field; "nextArea", "previousArea": F6 and ⇧F6, the focus moves
  *   to the next or previous area of the editor (areas.js), also from a field.
  */
 export function shortcutFor(event, { mac }) {
@@ -85,6 +86,7 @@ export function shortcutFor(event, { mac }) {
   if (key === "enter" && !event.shiftKey && onCanvas(event.target)) return "trigger";
   if (key === "g" && !event.shiftKey) return "catalog";
   if (key === "l" && !event.shiftKey) return "levels";
+  if (key === "m" && !event.shiftKey) return "message";
   if (/^[a-z]$/.test(key) && !event.shiftKey) return "tool";
   if (/^[1-3]$/.test(key) && !event.shiftKey) return "tab";
   if (key === "/") return "insert";

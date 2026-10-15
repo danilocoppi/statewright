@@ -198,6 +198,11 @@ describe("editing keys", () => {
     expect(shortcutFor(press("k", { ctrlKey: true }, inside), pc)).toBeNull();
   });
 
+  it("writes to the paired agent with M (collaboration spec §4)", () => {
+    expect(shortcutFor(press("m"), pc)).toBe("message");
+    expect(shortcutFor(press("m", {}, document.createElement("input")), pc)).toBeNull();
+  });
+
   it("opens the levels with L, on every kind of level", () => {
     expect(shortcutFor(press("l"), pc)).toBe("levels");
     expect(shortcutFor(press("l"), mac)).toBe("levels");

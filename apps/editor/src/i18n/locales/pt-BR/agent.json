@@ -51,5 +51,37 @@
       "server": "O servidor parou: {{agent}} está desconectado.",
       "lost": "A conexão com {{agent}} caiu."
     }
+  },
+  "conversation": {
+    "label": "Conversa com {{agent}}",
+    "field": "Escreva para {{agent}}",
+    "placeholder": "Escreva para {{agent}}…",
+    "send": "Enviar",
+    "stop": "Parar",
+    "history": "Histórico da conversa",
+    "you": "Você",
+    "command": "Escrever para {{agent}}",
+    "chips": {
+      "selection_one": "{{count}} selecionado",
+      "selection_other": "{{count}} selecionados",
+      "leave": "Não enviar {{label}}"
+    },
+    "status": {
+      "working": "trabalhando",
+      "listening": "ouvindo",
+      "away": "ausente: as mensagens esperam até ele ler"
+    },
+    "state": {
+      "sending": "enviando…",
+      "sent": "enviada",
+      "read": "lida",
+      "failed": "não enviada",
+      "unread": "ainda não lida"
+    },
+    "stopAsked": "Você pediu a {{agent}} para parar",
+    "change": "Mudou: {{label}}",
+    "undo": "Desfazer",
+    "show": "Ver",
+    "empty": "Escreva para {{agent}}: o que você selecionar vai junto com a mensagem."
   }
 }

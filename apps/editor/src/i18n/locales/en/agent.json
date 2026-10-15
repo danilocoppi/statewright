@@ -51,5 +51,37 @@
       "server": "The server stopped: {{agent}} is disconnected.",
       "lost": "The connection to {{agent}} was lost."
     }
+  },
+  "conversation": {
+    "label": "Conversation with {{agent}}",
+    "field": "Write to {{agent}}",
+    "placeholder": "Write to {{agent}}…",
+    "send": "Send",
+    "stop": "Stop",
+    "history": "Conversation history",
+    "you": "You",
+    "command": "Write to {{agent}}",
+    "chips": {
+      "selection_one": "{{count}} selected",
+      "selection_other": "{{count}} selected",
+      "leave": "Leave out {{label}}"
+    },
+    "status": {
+      "working": "working",
+      "listening": "listening",
+      "away": "away: messages wait until it reads them"
+    },
+    "state": {
+      "sending": "sending…",
+      "sent": "sent",
+      "read": "read",
+      "failed": "not sent",
+      "unread": "not read yet"
+    },
+    "stopAsked": "You asked {{agent}} to stop",
+    "change": "Changed: {{label}}",
+    "undo": "Undo",
+    "show": "Show",
+    "empty": "Write to {{agent}}: what you select goes with your message."
   }
 }

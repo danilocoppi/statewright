@@ -2,9 +2,11 @@
 // can be done to the level and the selection now, the tools of the level, the layers, the theme and the language.
 import { executableOf } from "statewright/simulate";
 
+import { connection } from "@/agent/connection";
 import { LAYERS } from "@/canvas/project";
 import { catalogStore } from "@/catalog/state";
 import { LANGUAGES } from "@/config/app";
+import { focusConversation } from "@/conversation/focus";
 import {
   copySelection,
   deleteSelection,
@@ -142,6 +144,13 @@ export function editorCommands({
     ),
     ...when(Boolean(parent), "up", words("up"), "Esc", () => editorStore.getState().setCanvas(parent?.canvas)),
     ...when(true, "levels", words("levels"), "L", onLevels),
+    ...when(
+      connection.store.getState().status === "connected",
+      "message",
+      t("agent:conversation.command", { agent: connection.store.getState().agent ?? t("agent:change.anAgent") }),
+      "M",
+      focusConversation
+    ),
     ...when(true, "connect", t("agent:pairing.menu"), undefined, onConnect),
     ...when(true, "guide", words("guide"), undefined, () => openGuide()),
     // Once the palette has closed and given the focus back: until then the page outside it is inert.

@@ -5,6 +5,10 @@ import { Link, useNavigate, useParams } from "react-router";
 
 import { ConnectDialog } from "@/agent/ConnectDialog";
 import { PairedBadge } from "@/agent/PairedBadge";
+import { connection } from "@/agent/connection";
+import { usePairing } from "@/agent/pairing";
+import { ConversationBar } from "@/conversation/ConversationBar";
+import { focusConversation } from "@/conversation/focus";
 import { useRepository } from "@/app/repository";
 import { Canvas } from "@/canvas/Canvas";
 import { followSelection, returnFromRef, watchFollows } from "@/canvas/follow";
@@ -18,6 +22,7 @@ import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { Kbd } from "@/components/ui/Chip";
 import { Island } from "@/components/ui/Island";
+import { cn } from "@/lib/cn";
 import {
   ARROWS,
   copySelection,
@@ -197,6 +202,7 @@ export default function EditorPage() {
   const simulating = useSimulation(state => state.mode !== null);
   const running = useSimulation(state => state.mode === "run");
   const presenting = useSimulation(state => state.stage);
+  const paired = usePairing(connection, state => state.status === "connected");
   const problemsButton = useRef(null);
   const closeProblems = () => {
     setProblems(false);
@@ -324,6 +330,11 @@ export default function EditorPage() {
       if (action === "nextArea" || action === "previousArea") return void moveToArea(action === "previousArea");
       if (action === "catalog") return catalogStore.getState().show();
       if (action === "levels") return setLevels(true);
+      if (action === "message") {
+        // M writes to the paired agent; without one, nothing happens (it is no tool's key).
+        if (focusConversation()) event.preventDefault();
+        return;
+      }
       if (action === "fit" || action === "zoomIn" || action === "zoomOut") return editingStore.getState().zoom(action);
       if (action === "insert") {
         if (editorStore.getState().readOnly) return;
@@ -490,8 +501,16 @@ export default function EditorPage() {
           {!readOnly && !simulating && <ToolDock />}
           {/* At the bottom right, under the minimap and the legend (Canvas.jsx stacks them above it). */}
           <SupportBadge />
+          {/* While an agent is paired, the conversation at the bottom centre (collaboration spec §4). */}
+          {paired && <ConversationBar onNavigate={id => navigate(levelUrl(doc, id))} />}
           {!readOnly && !simulating && insertHint && (
-            <Island className="pointer-events-none fixed bottom-9 left-1/2 z-10 flex h-9 -translate-x-1/2 items-center gap-1.5 px-3.5 text-ui text-sub">
+            <Island
+              className={cn(
+                "pointer-events-none fixed left-1/2 z-10 flex h-9 -translate-x-1/2 items-center gap-1.5 px-3.5 text-ui text-sub",
+                // Above the conversation while an agent is paired.
+                paired ? "bottom-28" : "bottom-9"
+              )}
+            >
               <Trans t={t} i18nKey="insert.hint" components={{ key: <Kbd /> }} />
             </Island>
           )}

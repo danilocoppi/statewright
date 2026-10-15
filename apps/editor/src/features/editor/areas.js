@@ -3,7 +3,18 @@
 // passing through every box of the level on the way.
 
 /** The areas, in the order F6 visits them; each is marked `data-area` where it is drawn. */
-export const AREAS = ["project", "levels", "actions", "problems", "simulation", "inspector", "tools", "canvas", "zoom"];
+export const AREAS = [
+  "project",
+  "levels",
+  "actions",
+  "problems",
+  "simulation",
+  "inspector",
+  "tools",
+  "canvas",
+  "zoom",
+  "conversation"
+];
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]';

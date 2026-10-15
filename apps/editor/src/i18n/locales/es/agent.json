@@ -51,5 +51,37 @@
       "server": "El servidor se detuvo: {{agent}} está desconectado.",
       "lost": "Se perdió la conexión con {{agent}}."
     }
+  },
+  "conversation": {
+    "label": "Conversación con {{agent}}",
+    "field": "Escribe a {{agent}}",
+    "placeholder": "Escribe a {{agent}}…",
+    "send": "Enviar",
+    "stop": "Detener",
+    "history": "Historial de la conversación",
+    "you": "Tú",
+    "command": "Escribir a {{agent}}",
+    "chips": {
+      "selection_one": "{{count}} seleccionado",
+      "selection_other": "{{count}} seleccionados",
+      "leave": "No enviar {{label}}"
+    },
+    "status": {
+      "working": "trabajando",
+      "listening": "escuchando",
+      "away": "ausente: los mensajes esperan hasta que los lea"
+    },
+    "state": {
+      "sending": "enviando…",
+      "sent": "enviado",
+      "read": "leído",
+      "failed": "no enviado",
+      "unread": "aún no leído"
+    },
+    "stopAsked": "Pediste a {{agent}} que se detenga",
+    "change": "Cambió: {{label}}",
+    "undo": "Deshacer",
+    "show": "Ver",
+    "empty": "Escribe a {{agent}}: lo que selecciones va con tu mensaje."
   }
 }
