@@ -57,6 +57,12 @@ export function deleteSelection(t, label = t("editing.delete")) {
   if (!selection.length || readOnly) return;
   // A role's connector is not stored: deleting it clears what it stands for (mixed levels spec §3).
   const associations = associationsOf(doc, canvasId).filter(item => selection.includes(item.id));
+  // A connector that is what its step is (a leads-to's event) is not deleted on its own: say why.
+  const kept = associations.map(item => dissociateCommands(doc, item).refusal).find(Boolean);
+  if (kept) {
+    editingStore.getState().refuse({ reason: kept, at: centreOf(doc, canvasId, selection) });
+    return;
+  }
   const cleared = associations.flatMap(item => dissociateCommands(doc, item).commands);
   const commands = [...cleared, ...removeCommands(doc, selection)];
   // A connector stands for a field another connector may read too (an event's source, a transition's `by` that two
@@ -263,7 +269,7 @@ function askAbout(edgeId, boxId) {
 export function connectBoxes(t, from, to, at) {
   const { doc, canvasId, readOnly } = current();
   if (readOnly) return null;
-  if (["machine", "system"].includes(doc.canvases[canvasId].kind) && isRolePair(doc, canvasId, from, to)) {
+  if (isRolePair(doc, canvasId, from, to)) {
     return connectRole(t, from, to, at);
   }
   const refusal = connectRefusal(doc, canvasId, from, to);
@@ -294,13 +300,20 @@ export function connectRole(t, from, to, at, choice = {}) {
   }
   if (result.needs) {
     // A place that runs several actions asks which; a box with no party asks whom it acts for.
-    editingStore
-      .getState()
-      .open({ type: "receive", from, to, at, needs: result.needs, options: result.actions ?? result.parties });
+    editingStore.getState().open({
+      type: "receive",
+      from,
+      to,
+      at,
+      needs: result.needs,
+      options: result.actions ?? result.parties ?? result.events
+    });
     return null;
   }
   const { ok } = change(result.commands, { label: t(`editing.role.${result.role}`), at });
   if (!ok) return null;
+  // A webhook's or an action's party is the catalog's: the other flows that use it change too.
+  if (result.alsoChanges?.length) toast.info(t("roles.alsoChanges", { count: result.alsoChanges.length }));
   // Embedded steps are drawn from the place that runs them.
   const id = result.role === "runs" ? `runs:${to}:${from}` : `${result.role}:${from}:${to}`;
   editorStore.getState().select([id]);
@@ -310,7 +323,8 @@ export function connectRole(t, from, to, at, choice = {}) {
 /**
  * What the `receive` editor asked was answered — the action a participant receives, or the party a box acts for
  * (`{ id }` or a new one `{ name }`): draw the connector with it.
- * @param {string | { party: { id: string } | { name: string } }} choice An action's ID, or the party.
+ * @param {string | { party: { id: string } | { name: string } } | { event: string }} choice An action's ID, the
+ *   party, or the event a step leads to a state by.
  */
 export function receiveWith(t, choice) {
   const editor = editingStore.getState().editor;

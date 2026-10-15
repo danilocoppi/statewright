@@ -64,15 +64,12 @@ export function isRolePair(doc, canvasId, from, to) {
 export function connectRefusal(doc, canvasId, from, to) {
   const canvas = doc.canvases[canvasId];
   // A role's connector writes the field that holds its meaning (mixed levels spec §3): Core judges what it means.
-  if (["machine", "system"].includes(canvas.kind) && canvas.nodes[from] && isRolePair(doc, canvasId, from, to)) {
+  if (canvas.nodes[from] && isRolePair(doc, canvasId, from, to)) {
     return inWords(canvas.kind, associationRefusal(doc, canvasId, from, to));
   }
   const source = canvas.nodes[from];
   const target = canvas.nodes[to];
   if (!source || !target) return "elsewhere";
-  // On other levels, guests take no part in the level's own connections yet; shortcuts may still link to them.
-  const linking = source.kind === "ref" || target.kind === "ref";
-  if (!linking && (isGuest(canvas.kind, source) || isGuest(canvas.kind, target))) return "guest";
   if (canvas.kind === "machine") {
     if (NOT_TARGETS.has(target.kind)) return "intoStart";
     if (source.kind === "state" && source.terminal) return "fromTerminal";

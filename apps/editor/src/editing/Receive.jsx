@@ -24,17 +24,30 @@ export function Receive({ editor }) {
   const section = useRef(null);
   useInside(section);
   const party = editor.needs === "party";
+  const event = editor.needs === "event";
   const box = doc.canvases[canvasId].nodes[party ? editor.from : editor.to];
   const who = box?.label ?? box?.name ?? doc.catalog.parties[box?.party]?.name ?? editor.to;
   const options = query => {
     const typed = query.trim();
     const named = editor.options
-      .map(id => ({ id, name: (party ? doc.catalog.parties : doc.catalog.actions)[id]?.name ?? id }))
+      .map(id => ({
+        id,
+        name:
+          (party ? doc.catalog.parties
+          : event ? doc.catalog.events
+          : doc.catalog.actions)[id]?.name ?? id
+      }))
       .filter(item => item.name.toLowerCase().includes(typed.toLowerCase()))
       .map(item => ({
         id: item.id,
         label: item.name,
-        onPick: () => receiveWith(t, party ? { party: { id: item.id } } : item.id)
+        onPick: () =>
+          receiveWith(
+            t,
+            party ? { party: { id: item.id } }
+            : event ? { event: item.id }
+            : item.id
+          )
       }));
     const known = Object.values(doc.catalog.parties).some(item => item.name === typed);
     const create =
@@ -50,7 +63,12 @@ export function Receive({ editor }) {
       : [];
     return [...create, ...named];
   };
-  const title = t(party ? "roles.whichParty" : "roles.whichAction", { name: who });
+  const state =
+    event && box?.target && Object.values(doc.canvases).find(level => level.nodes[box.target])?.nodes[box.target];
+  const title =
+    event ?
+      t("roles.whichEvent", { name: state?.name ?? box?.target })
+    : t(party ? "roles.whichParty" : "roles.whichAction", { name: who });
   return (
     <section
       ref={section}
@@ -68,7 +86,11 @@ export function Receive({ editor }) {
       <p className="mb-2 text-ui text-sub">{title}</p>
       <CatalogPicker
         label={title}
-        placeholder={t(party ? "tools.partyPlaceholder" : "roles.actionPlaceholder")}
+        placeholder={t(
+          party ? "tools.partyPlaceholder"
+          : event ? "roles.eventPlaceholder"
+          : "roles.actionPlaceholder"
+        )}
         options={options}
         initial={party ? (box?.name ?? "") : ""}
       />

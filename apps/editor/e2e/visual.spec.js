@@ -5,7 +5,7 @@
 // (mockup 06); plan D1, the documentation page's cover and a level's part; plan A3, an agent's toast and note (AI
 // interface spec §7.3); plan A4, Connect an AI… (§7.4); a finding badge's details, beside it; a Problems marker's
 // details, beside it; the level's kind under the tool dock, its menu open; the support popover above its badge; and
-// plan M2, a machine's roles; plan M3, a lifecycle framed on a system.
+// plan M2, a machine's roles; plan M3, a lifecycle framed on a system; plan M4, a flow's roles.
 // After a deliberate change of look, update the pictures with
 // `npm run e2e -w @statewright/editor -- e2e/visual.spec.js --update-snapshots=all` and look at every one before
 // committing it.
@@ -118,6 +118,58 @@ const LIFECYCLE = shop => [
     }
   },
   { type: "layout.node.set", args: { canvas: shop, id: "nod_orders", x: 0, y: 0, display: "frame" } }
+];
+
+/** A checkout flow in two lanes, Shop and Payments; its call performed by Payments, its emit leading to `paid`. */
+const FLOW_ROLES = flow => [
+  {
+    type: "catalog.add",
+    args: { collection: "parties", id: "pty_customer", item: { kind: "human", name: "Customer" } }
+  },
+  {
+    type: "catalog.add",
+    args: { collection: "parties", id: "pty_payments", item: { kind: "system", name: "Payments" } }
+  },
+  { type: "catalog.add", args: { collection: "events", id: "evt_paid", item: { name: "order.paid" } } },
+  {
+    type: "catalog.add",
+    args: { collection: "endpoints", id: "ept_pay", item: { name: "Pay", method: "POST", path: "/pay" } }
+  },
+  { type: "canvas.create", args: { kind: "machine", name: "Order", id: "cnv_life" } },
+  { type: "node.add", args: { canvas: "cnv_life", id: "nod_open", node: { kind: "state", name: "open" } } },
+  {
+    type: "node.add",
+    args: { canvas: "cnv_life", id: "nod_paid", node: { kind: "state", name: "paid", outcome: "success" } }
+  },
+  {
+    type: "edge.add",
+    args: { canvas: "cnv_life", id: "edg_paid", edge: { from: "nod_open", to: "nod_paid", on: ["evt_paid"] } }
+  },
+  {
+    type: "node.add",
+    args: { canvas: flow, id: "nod_call", node: { kind: "call", endpoint: "ept_pay", party: "pty_payments" } }
+  },
+  { type: "node.add", args: { canvas: flow, id: "nod_tell", node: { kind: "emit", event: "evt_paid" } } },
+  {
+    type: "node.add",
+    args: { canvas: flow, id: "nod_payments", node: { kind: "participant", party: "pty_payments" } }
+  },
+  { type: "node.add", args: { canvas: flow, id: "nod_paidHere", node: { kind: "state", target: "nod_paid" } } },
+  { type: "edge.remove", args: { id: "edg_startEnd" } },
+  { type: "edge.add", args: { canvas: flow, id: "edg_toCall", edge: { from: "nod_start", to: "nod_call" } } },
+  { type: "edge.add", args: { canvas: flow, id: "edg_toTell", edge: { from: "nod_call", to: "nod_tell" } } },
+  { type: "edge.add", args: { canvas: flow, id: "edg_toEnd", edge: { from: "nod_tell", to: "nod_end" } } },
+  {
+    type: "lane.add",
+    args: {
+      id: "lne_shop",
+      lane: { canvas: flow, label: "Shop", nodes: ["nod_start", "nod_tell", "nod_end"], party: "pty_customer" }
+    }
+  },
+  {
+    type: "lane.add",
+    args: { id: "lne_payments", lane: { canvas: flow, label: "Payments", nodes: ["nod_call"], party: "pty_payments" } }
+  }
 ];
 
 /** Wait until the level is drawn and still: arranged and stored, its fonts in, its view no longer moving. */
@@ -333,6 +385,31 @@ for (const theme of ["light", "dark"]) {
       await page.mouse.move(8, 892);
       await settled(page);
       await expect(page).toHaveScreenshot(`lifecycle-${theme}.png`, { maxDiffPixelRatio: 0.001 });
+    });
+
+    test("shows a flow's roles: a step performed by a participant, a step that leads to a state, lanes of parties", async ({
+      page
+    }) => {
+      await page.goto("/");
+      await page.getByRole("button", { name: /^Flow/ }).click();
+      const dialog = page.getByRole("dialog", { name: "New project" });
+      await dialog.getByRole("textbox", { name: "Name" }).fill("Checkout");
+      await dialog.getByRole("button", { name: "Create project" }).click();
+      await expect(page.getByTestId("canvas")).toBeVisible();
+      const call = (name, args) =>
+        page.evaluate(([name, args]) => globalThis.statewright.call(name, args), [name, args]);
+      const flow = (await call("document.get")).result.document.root;
+      await call("batch.apply", { label: "Roles", commands: FLOW_ROLES(flow) });
+      const callAt = async () => (await call("document.get")).result.document.layout?.canvases?.[flow]?.nodes?.nod_call;
+      await expect.poll(callAt).toBeTruthy();
+      await settled(page);
+      await page.getByRole("button", { name: "Auto-layout" }).click();
+      await expect(page.locator(".react-flow__node.sw-ai")).toHaveCount(0, { timeout: 5000 });
+      await expect(page.getByTestId("toast")).toHaveCount(0, { timeout: 8000 });
+      await page.keyboard.press("Shift+F");
+      await page.mouse.move(8, 892);
+      await settled(page);
+      await expect(page).toHaveScreenshot(`flow-roles-${theme}.png`, { maxDiffPixelRatio: 0.001 });
     });
 
     test("shows a badge's findings beside it", async ({ page }) => {

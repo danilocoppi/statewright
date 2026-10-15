@@ -60,8 +60,18 @@ function checkoutDoc() {
   };
   doc.annotations = {
     lanes: {
-      lne_shop: { canvas: "cnv_checkout", label: "Shop", nodes: ["nod_start", "nod_tell", "nod_end"], party: "pty_customer" },
-      lne_payments: { canvas: "cnv_checkout", label: "Payments", nodes: ["nod_call", "nod_hook"], party: "pty_payments" }
+      lne_shop: {
+        canvas: "cnv_checkout",
+        label: "Shop",
+        nodes: ["nod_start", "nod_tell", "nod_end"],
+        party: "pty_customer"
+      },
+      lne_payments: {
+        canvas: "cnv_checkout",
+        label: "Payments",
+        nodes: ["nod_call", "nod_hook"],
+        party: "pty_payments"
+      }
     }
   };
   return doc;
@@ -98,7 +108,9 @@ describe("roles on a flow (mixed levels spec §4.4)", () => {
     const doc = checkoutDoc();
     const after = run(doc, associate(doc, "cnv_checkout", "nod_call", "nod_paymentsHere"));
     expect(after.canvases.cnv_checkout.nodes.nod_call.party).toBe("pty_payments");
-    const performs = associationsOf(after, "cnv_checkout").find(item => item.id === "performs:nod_call:nod_paymentsHere");
+    const performs = associationsOf(after, "cnv_checkout").find(
+      item => item.id === "performs:nod_call:nod_paymentsHere"
+    );
     const back = applyBatch(after, dissociateCommands(after, performs).commands).doc;
     expect(back.canvases.cnv_checkout.nodes.nod_call.party).toBeUndefined();
   });
@@ -124,7 +136,10 @@ describe("roles on a flow (mixed levels spec §4.4)", () => {
   });
 
   it("a leads-to connector cannot be deleted: the event is what the step is", () => {
-    const doc = run(checkoutDoc(), associate(checkoutDoc(), "cnv_checkout", "nod_tell", "nod_paidHere", { event: "evt_paid" }));
+    const doc = run(
+      checkoutDoc(),
+      associate(checkoutDoc(), "cnv_checkout", "nod_tell", "nod_paidHere", { event: "evt_paid" })
+    );
     const leads = associationsOf(doc, "cnv_checkout").find(item => item.role === "leadsTo");
     expect(dissociateCommands(doc, leads)).toEqual({ commands: [], alsoLoses: [], refusal: "isTheStep" });
   });
@@ -144,7 +159,9 @@ describe("lanes with a party (mixed levels spec §4.4, R5)", () => {
     const doc = checkoutDoc();
     doc.annotations.lanes.lne_shop.label = "Storefront";
     const placed = applyBatch(doc, await autoLayout(doc, "cnv_checkout", { scope: "all" })).doc;
-    const svg = figureOf(placed, "cnv_checkout").lanes.map(lane => lane.svg).join("");
+    const svg = figureOf(placed, "cnv_checkout")
+      .lanes.map(lane => lane.svg)
+      .join("");
     expect(svg).toContain("STOREFRONT · CUSTOMER");
     expect(svg).toContain(">PAYMENTS<");
   });
@@ -153,5 +170,25 @@ describe("lanes with a party (mixed levels spec §4.4, R5)", () => {
     const doc = checkoutDoc();
     const { trace } = start(doc, { canvas: "cnv_checkout", at: "2026-01-05T09:00:00Z" });
     expect(trace.find(entry => entry.endpoint === "ept_pay")).toMatchObject({ party: "pty_payments" });
+  });
+});
+
+describe("lanes laid out as rows (mixed levels spec §7)", () => {
+  it("gives each lane a band of its own, its caption above it", async () => {
+    const doc = checkoutDoc();
+    const commands = await autoLayout(doc, "cnv_checkout", { scope: "all" });
+    const placed = applyBatch(doc, commands).doc;
+    const { createGeometry } = await import("../../src/layout/index.js");
+    const geometry = createGeometry(placed);
+    const at = placed.layout.canvases.cnv_checkout.nodes;
+    const band = lane =>
+      doc.annotations.lanes[lane].nodes.map(id => ({
+        top: at[id].y,
+        bottom: at[id].y + geometry.size("cnv_checkout", id).h
+      }));
+    const [first, second] = [band("lne_shop"), band("lne_payments")].sort((a, b) => a[0].top - b[0].top);
+    expect(Math.max(...first.map(item => item.bottom)) + 20).toBeLessThanOrEqual(
+      Math.min(...second.map(item => item.top))
+    );
   });
 });

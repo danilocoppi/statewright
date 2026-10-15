@@ -205,6 +205,8 @@
     "guest": "Un invitado no participa de las transiciones ni de los pasos de este nivel.",
     "noMeaning": "Estos dos no tienen un papel juntos: un participante envía una transición o recibe la acción de un estado; los pasos corren en una transición o un estado.",
     "noDrive": "Una caja del sistema conduce una transición de un ciclo de vida mostrado aquí como marco: suéltala sobre una.",
+    "noLeadingEvent": "Ningún evento lleva la máquina a ese estado: da primero un evento a una de sus transiciones.",
+    "isTheStep": "Este conector es el propio paso: su evento lleva allí. Borra el paso o cambia su evento.",
     "already": "Ya es así.",
     "notRun": "Esa acción no corre allí.",
     "nothingToReceive": "Allí no corre nada que alguien pueda recibir.",
@@ -461,6 +463,10 @@
     "whichParty": "¿Por quién actúa {{name}}?",
     "actionPlaceholder": "Una acción que corre aquí",
     "alsoLose_one": "Otro conector también se va: decía lo mismo.",
-    "alsoLose_other": "Otros {{count}} conectores también se van: decían lo mismo."
+    "alsoLose_other": "Otros {{count}} conectores también se van: decían lo mismo.",
+    "whichEvent": "¿Qué evento lleva a {{name}}?",
+    "eventPlaceholder": "Un evento que lleva allí",
+    "alsoChanges_one": "El webhook o la acción se comparte: otro flujo también cambia.",
+    "alsoChanges_other": "El webhook o la acción se comparte: otros {{count}} flujos también cambian."
   }
 }

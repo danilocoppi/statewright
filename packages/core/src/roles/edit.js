@@ -149,6 +149,8 @@ function flowRole(doc, canvasId, from, to, choice) {
     if (step.kind !== "emit") return { refusal: "noMeaning" };
     const events = eventsInto(doc, target.target);
     if (!events.length) return { refusal: "noLeadingEvent" };
+    // A step that already emits an event leading there already leads there.
+    if (choice.event === undefined && events.includes(step.event)) return { refusal: "already" };
     const event = choice.event ?? (events.length === 1 ? events[0] : undefined);
     if (event === undefined) return { needs: "event", events };
     if (!events.includes(event)) return { refusal: "noLeadingEvent" };

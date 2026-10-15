@@ -103,11 +103,19 @@ async function runElk(geometry, canvasId, nodeIds) {
   const senders = new Set(
     roles.flatMap(edge => edge.sources).filter(id => canvas.kind === "system" || isGuest(canvas.kind, canvas.nodes[id]))
   );
+  // Guests a connector reaches (a receiver, embedded steps, a state guest, a performer) come last.
+  const reached = new Set(
+    roles.flatMap(edge => edge.targets).filter(id => !senders.has(id) && isGuest(canvas.kind, canvas.nodes[id]))
+  );
   const order = readingOrder(canvas, nodeIds);
   const graph = {
     id: "root",
     layoutOptions: OPTIONS,
-    children: [...order.filter(id => senders.has(id)), ...order.filter(id => !senders.has(id))].map(id => ({
+    children: [
+      ...order.filter(id => senders.has(id)),
+      ...order.filter(id => !senders.has(id) && !reached.has(id)),
+      ...order.filter(id => reached.has(id))
+    ].map(id => ({
       id,
       ...sizeOf(geometry, canvasId, id),
       ...(STARTS.has(canvas.nodes[id].kind) ?
@@ -195,6 +203,38 @@ async function layoutNodes(geometry, canvasId, nodeIds) {
   return merged;
 }
 
+/** Room above a lane's band for its caption. */
+const LANE_CAPTION = 26;
+
+/**
+ * Lanes as rows (mixed levels spec §7): each lane of the level takes a band of its own, in the order they first appear
+ * from the top, its nodes keeping their places across; nodes in no lane go below. A node in two lanes stays in the first.
+ * Moving nodes across bands leaves routes behind, so the level's edges are drawn the default way.
+ */
+function laneRows(doc, canvasId, block, geometry) {
+  const lanes = Object.entries(doc.annotations?.lanes ?? {})
+    .filter(([, lane]) => lane.canvas === canvasId)
+    .sort(([a], [b]) => (a < b ? -1 : 1));
+  if (!lanes.length) return;
+  const taken = new Set();
+  const groups = lanes
+    .map(([, lane]) => lane.nodes.filter(id => block.nodes.has(id) && !taken.has(id) && taken.add(id)))
+    .filter(ids => ids.length);
+  const rest = [...block.nodes.keys()].filter(id => !taken.has(id));
+  const top = ids => Math.min(...ids.map(id => block.nodes.get(id).y));
+  groups.sort((a, b) => top(a) - top(b));
+  if (rest.length) groups.push(rest);
+  let cursor = Math.min(...[...block.nodes.values()].map(position => position.y));
+  for (const [index, ids] of groups.entries()) {
+    const caption = index < groups.length - (rest.length ? 1 : 0) ? LANE_CAPTION : 0;
+    const shift = cursor + caption - top(ids);
+    for (const id of ids) block.nodes.get(id).y += shift;
+    const bottom = Math.max(...ids.map(id => block.nodes.get(id).y + geometry.size(canvasId, id).h));
+    cursor = bottom + GAP / 2;
+  }
+  block.edges.clear();
+}
+
 /**
  * Commands that store a block's positions and routes (keeping each node's w and h, and its display while it still has
  * an interior: removing an interior leaves its display behind, and `layout.node.set` refuses it).
@@ -246,6 +286,7 @@ async function layoutCanvas(doc, canvasId, scope, visited) {
   const full = scope === "all" || missing.length === all.length;
   if (full) {
     const block = await layoutNodes(geometry, canvasId, all);
+    laneRows(working, canvasId, block, geometry);
     return [...commands, ...commandsFor(working, canvasId, block, sortedKeys(canvas.edges))];
   }
   if (!missing.length) return commands;

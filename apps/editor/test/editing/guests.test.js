@@ -127,7 +127,7 @@ describe("placing a guest", () => {
 });
 
 describe("connecting guests", () => {
-  it("judges a machine's guest connections by their role, and keeps flow guests out of the flow's steps", async () => {
+  it("judges a machine's guest connections by their role, and a flow's by theirs", async () => {
     const { connectRefusal, emptyRefusal, startRefusal } = await import("@/editing/connect");
     const doc = project("machine");
     const placed = placeCommands(doc, doc.root, toolById("machine", "participantActor"), at, {
@@ -149,7 +149,7 @@ describe("connecting guests", () => {
     const start = Object.keys(withBuyer.canvases[flow.root].nodes).find(
       id => withBuyer.canvases[flow.root].nodes[id].kind === "start"
     );
-    expect(connectRefusal(withBuyer, flow.root, start, buyer.id)).toBe("guest");
+    expect(connectRefusal(withBuyer, flow.root, start, buyer.id)).toBe("noMeaning");
     expect(startRefusal(withBuyer, flow.root, buyer.id)).toBe("guest");
   });
 });

@@ -185,6 +185,7 @@
     "actionFor": "ejecuta {{action}}, para {{party}}",
     "webhook": "envía {{webhook}}",
     "call": "llama a {{call}}",
+    "callBy": "llama a {{call}}, por {{party}}",
     "emitted": "lanza {{event}}",
     "assigned": "{{path}} = {{value}}",
     "armed": "activa {{timer}}",

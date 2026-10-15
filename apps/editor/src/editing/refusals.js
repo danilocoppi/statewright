@@ -17,6 +17,8 @@ const CANVAS = [
   "guest",
   "noMeaning",
   "noDrive",
+  "noLeadingEvent",
+  "isTheStep",
   "already",
   "notRun",
   "nothingToReceive"

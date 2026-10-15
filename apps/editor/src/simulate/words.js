@@ -370,11 +370,13 @@ export function traceLine(doc, top, entry, t) {
             t("simulate:trace.action", { action: doc.catalog.actions[entry.action]?.name ?? entry.action })
           : entry.webhook ?
             t("simulate:trace.webhook", { webhook: doc.catalog.webhooks[entry.webhook]?.name ?? entry.webhook })
-          : t("simulate:trace.call", {
+          : t(entry.party ? "simulate:trace.callBy" : "simulate:trace.call", {
               call:
                 entry.endpoint ?
                   inputLabel(doc, { call: entry.endpoint }, t)
-                : `${entry.request?.method ?? ""} ${entry.request?.url ?? ""}`.trim()
+                : `${entry.request?.method ?? ""} ${entry.request?.url ?? ""}`.trim(),
+              // Who performs it (mixed levels spec §4.4): its party, else its lane's.
+              party: doc.catalog.parties[entry.party]?.name ?? entry.party
             })
       };
     case "emitted":
