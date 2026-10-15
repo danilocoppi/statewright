@@ -39,7 +39,7 @@ function withScenario(value) {
 
 describe("scenarios in the document (format 1.1, spec §4)", () => {
   it("is format 1.1 or later", () => {
-    expect(FORMAT_VERSION).toBe("1.2");
+    expect(FORMAT_VERSION).toBe("1.3");
   });
 
   it("accepts a scenario: where it starts, what was done, what was answered and where each step got to", () => {

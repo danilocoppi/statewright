@@ -1,5 +1,5 @@
 /** Format version written by this package (`"MAJOR.MINOR"`). */
-export const FORMAT_VERSION = "1.2";
+export const FORMAT_VERSION = "1.3";
 
 /** Name stamped into `generator.name`. */
 export const GENERATOR_NAME = "statewright";
@@ -30,7 +30,9 @@ export const ID_PREFIXES = Object.freeze({
   finding: "fnd",
   note: "nte",
   lane: "lne",
-  scenario: "scn"
+  scenario: "scn",
+  comment: "cmt",
+  lock: "lck"
 });
 
 /** Catalog collection name → ID prefix of its items. Order is the serialization order. */

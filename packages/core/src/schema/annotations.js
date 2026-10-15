@@ -82,13 +82,46 @@ export const Scenario = obj(
   { description: "A recorded run of a machine or a flow (simulator spec §4)." }
 );
 
+/** One entry of a comment's thread: who said what, when. */
+export const CommentEntry = obj(
+  {
+    author: z.enum(["person", "agent"]),
+    name: z.string().min(1).optional(),
+    text: z.string().min(1),
+    at: z.iso.datetime()
+  },
+  { description: "What the person or the agent said in a comment's thread." }
+);
+
+export const Comment = obj(
+  {
+    canvas: idOf("cnv"),
+    target: anyId().optional(),
+    at: obj({ x: z.number(), y: z.number() }, { description: "A point of the level." }).optional(),
+    status: z.enum(["open", "resolved"]),
+    thread: z.array(CommentEntry).min(1)
+  },
+  {
+    description:
+      "A review comment on an element or a point of a level, open until resolved (collaboration spec §8.1); never " +
+      "drawn in the figure or the documentation."
+  }
+);
+
+export const Lock = obj(
+  { target: idOf("nod", "edg", "rgn", "cnv"), note: z.string().min(1).optional() },
+  { description: "Don't touch: the agent's changes to this element or level are only proposed (spec §8.2)." }
+);
+
 export const Annotations = obj(
   {
     findings: mapOf("fnd", Finding).optional(),
     notes: mapOf("nte", Note).optional(),
     focus: z.array(idOf("nod", "edg")).optional(),
     lanes: mapOf("lne", Lane).optional(),
-    scenarios: mapOf("scn", Scenario).optional()
+    scenarios: mapOf("scn", Scenario).optional(),
+    comments: mapOf("cmt", Comment).optional(),
+    locks: mapOf("lck", Lock).optional()
   },
   { description: "Describes the specification without being part of it (spec §13)." }
 );

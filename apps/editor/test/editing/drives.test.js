@@ -11,7 +11,7 @@ const state = () => editorStore.getState();
 /** A shop whose Orders store shows the order's lifecycle as a frame; Web acts for the customer, Payments for nobody. */
 function shopDoc() {
   return {
-    statewright: "1.2",
+    statewright: "1.3",
     project: { id: "prj_shop", name: "Shop" },
     root: "cnv_shop",
     catalog: {

@@ -17,6 +17,7 @@ test("serves the guide's files beside the app, and sends every other address to 
   const figure = await request.get("/guide/payments/cnv_runtime.svg");
   expect(figure.headers()["content-type"]).toContain("image/svg+xml");
   expect(await (await request.get("/llms.txt")).text()).toMatch(/^# Statewright\n\n> Statewright is a builder/);
+  expect(await (await request.get("/schema/1.3.json")).json()).toEqual(schema("1.3"));
   expect(await (await request.get("/schema/1.2.json")).json()).toEqual(schema("1.2"));
   expect(await (await request.get("/schema/1.1.json")).json()).toEqual(schema("1.1"));
   expect(await (await request.get("/schema/1.0.json")).json()).toEqual(schema("1.0"));

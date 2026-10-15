@@ -39,13 +39,13 @@ const issues = doc => documentSchema.safeParse(doc).error?.issues.map(issue => i
 
 describe("guests in the document (format 1.2, mixed levels spec §5)", () => {
   it("is format 1.2", () => {
-    expect(FORMAT_VERSION).toBe("1.2");
+    expect(FORMAT_VERSION).toBe("1.3");
   });
 
   it("brings a 1.1 document to 1.2, changing only the version", () => {
     const raw = { ...minimalDoc(), statewright: "1.1" };
-    expect(migrate(raw)).toEqual({ ok: true, doc: minimalDoc(), log: ["1.1 → 1.2"] });
-    expect(migrate({ ...minimalDoc(), statewright: "1.0" }).log).toEqual(["1.0 → 1.1", "1.1 → 1.2"]);
+    expect(migrate(raw)).toEqual({ ok: true, doc: minimalDoc(), log: ["1.1 → 1.2", "1.2 → 1.3"] });
+    expect(migrate({ ...minimalDoc(), statewright: "1.0" }).log).toEqual(["1.0 → 1.1", "1.1 → 1.2", "1.2 → 1.3"]);
   });
 
   it("accepts participants, embedded steps and state guests", () => {

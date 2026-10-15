@@ -1273,7 +1273,7 @@ the design or of its scenarios:
 ```json
 {
   "results": "1",
-  "contract": "c64725aca0ec535bee281e47a2bdd0edac24a0b093ee74be8f39d0ae86ea3b40",
+  "contract": "df627e4ae0bb2e09b4cb8cf6a749b830c668568cbdf07d751468d2086eac4f01",
   "runner": "node",
   "vectors": [
     { "id": "scn_aBookingIsDeclined", "steps": [{ "active": ["requested"] }, { "active": ["declined"] }] },
@@ -2467,9 +2467,10 @@ Findings of other sources are left alone, and annotation changes never change th
 ## Format reference
 
 The JSON Schema of format 1.2 ships with the package as `statewright/schema.json`, is printed by `statewright schema`
-and is served by the platform at `/schema/1.2.json`. The schemas of formats 1.1 and 1.0 stay at `/schema/1.1.json` and
+and is served by the platform at `/schema/1.3.json`. The schemas of formats 1.2, 1.1 and 1.0 stay at `/schema/1.2.json`, `/schema/1.1.json` and
 `/schema/1.0.json` for the files that still point to them; Statewright reads those files and writes them back in format
-1.2. Format 1.2 adds guests (participants, embedded steps, state guests) and the `party` fields they read.
+1.3. Format 1.3 adds review comments and locks (`annotations.comments`, `annotations.locks`); format 1.2 added guests
+(participants, embedded steps, state guests) and the `party` fields they read.
 
 <!-- generated:schema-reference -->
 
@@ -2482,7 +2483,7 @@ A Statewright document.
 | Field | Type | Notes |
 | --- | --- | --- |
 | `$schema?` | string |  |
-| `statewright` | "1.2" |  |
+| `statewright` | "1.3" |  |
 | `generator?` | Generator |  |
 | `signature?` | Signature |  |
 | `project` | Project |  |
@@ -3359,6 +3360,8 @@ Describes the specification without being part of it (spec §13).
 | `focus?` | (nod_* \| edg_*)[] |
 | `lanes?` | map lne_* → Lane |
 | `scenarios?` | map scn_* → { name, description?, canvas, start, steps } |
+| `comments?` | map cmt_* → { canvas, target?, at?, status, thread } |
+| `locks?` | map lck_* → { target, note? } |
 
 #### Finding
 

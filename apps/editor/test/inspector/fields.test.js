@@ -93,8 +93,11 @@ describe("every field of format 1.0 is editable somewhere (spec §13, E4)", () =
     expect(keysOf(documentSchema).filter(key => !elements.includes(key) && !ELSEWHERE[`document.${key}`])).toEqual([]);
     // Findings, notes and lanes are elements with fields; focus is "Look here" on boxes and arrows; scenarios are
     // recorded by simulating (format 1.1).
-    expect(keysOf(Annotations)).toEqual(["findings", "notes", "focus", "lanes", "scenarios"]);
+    expect(keysOf(Annotations)).toEqual(["findings", "notes", "focus", "lanes", "scenarios", "comments", "locks"]);
     expect(ELSEWHERE["document.annotations.focus"]).toBeTruthy();
+    // Comments are written in their threads on the canvas; locks are switched in the inspector (format 1.3).
+    expect(ELSEWHERE["document.annotations.comments"]).toBeTruthy();
+    expect(ELSEWHERE["document.annotations.locks"]).toBeTruthy();
     expect(ELSEWHERE["document.annotations.scenarios"]).toBeTruthy();
     const node = keysIn(fieldsOfKind("node", { canvasKind: "machine", kind: "state" }));
     const edge = keysIn(fieldsOfKind("edge", { canvasKind: "machine", kind: "transition" }));

@@ -1,16 +1,16 @@
 {
-  "statewright": "1.2",
+  "statewright": "1.3",
   "generator": {
     "name": "statewright",
-    "version": "0.1.0",
+    "version": "0.1.5",
     "channel": "cli"
   },
   "signature": {
     "algorithm": "sha256",
-    "content": "c78956dd9c6094dff800d4df5ae99b51bbda04f1501c26097e7650e6f5708886",
+    "content": "31b22553e684bbf528879065ff36d6975373f78b52244bb8b38bb261deb6c14f",
     "annotations": "353f660bc27cf99fe6b7ba41269ca233fb51c05d338fec1e206a7da99df7e10e",
     "layout": "c3a4d9dd2dd1bcc63988f76940f59f20a7a77bc340bfc0004120ae3f343a6991",
-    "signedAt": "2026-10-12T12:00:00Z"
+    "signedAt": "2026-10-15T12:38:30Z"
   },
   "project": {
     "id": "prj_payoutBatch",

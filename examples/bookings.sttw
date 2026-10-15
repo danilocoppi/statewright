@@ -1,16 +1,16 @@
 {
-  "statewright": "1.2",
+  "statewright": "1.3",
   "generator": {
     "name": "statewright",
-    "version": "0.1.1",
-    "channel": "api"
+    "version": "0.1.5",
+    "channel": "cli"
   },
   "signature": {
     "algorithm": "sha256",
-    "content": "8548f253fec3d7fd6f09767766350effa2701a8f2792267793a71a5a3f538b08",
+    "content": "64c61a2c633ba959f3894a19934adbc6cb46a1ca600582990e0234f71f5be1a3",
     "annotations": "37451c33880e38f087617a714808a49b65e7f72910ccde56960a1211e74e3053",
     "layout": "5aa622e4f73a7f26d254b71250e1825b4275da0ce503d675d4a753287ff5e186",
-    "signedAt": "2026-10-14T08:31:23Z"
+    "signedAt": "2026-10-15T12:38:30Z"
   },
   "project": {
     "id": "prj_bookings",

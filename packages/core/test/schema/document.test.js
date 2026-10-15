@@ -41,7 +41,7 @@ describe("documentSchema", () => {
 
   it("requires a format version it knows", () => {
     const doc = minimalDoc();
-    doc.statewright = "1.3";
+    doc.statewright = "1.4";
     expect(issuesOf(doc).length).toBeGreaterThan(0);
   });
 });

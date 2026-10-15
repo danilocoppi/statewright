@@ -58,14 +58,15 @@ describe("the documentation as a page (documentation page spec)", () => {
   });
 
   it("opens on a cover: the root's kind and stage, the name, the description, pills and the numbers that are not 0", async () => {
-    const html = await toDocumentPage(example("payments"));
+    const doc = example("payments");
+    const html = await toDocumentPage(doc);
     const cover = partOf(html, "header", "cover");
     expect(cover).toContain('<p class="kicker">system · target</p>');
     expect(cover).toContain("<h1>Payments</h1>");
     expect(cover).toContain("Reference project for a payments platform drawn as state machines");
     expect(cover).toMatch(/<span class="pill"><span>Stage<\/span><strong>target<\/strong><\/span>/);
     expect(cover).toMatch(/<span>Levels<\/span><strong>4 machines · 1 system<\/strong>/);
-    expect(cover).toMatch(/<span>Written by<\/span><strong>Statewright 0\.1\.0<\/strong>/);
+    expect(cover).toContain(`<span>Written by</span><strong>Statewright ${doc.generator.version}</strong>`);
     const stats = [...cover.matchAll(/<strong class="number">(\d+)<\/strong><span class="label">([^<]+)<\/span>/g)];
     expect(stats.map(match => `${match[1]} ${match[2]}`)).toEqual([
       "5 levels",

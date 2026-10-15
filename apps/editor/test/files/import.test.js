@@ -59,8 +59,8 @@ describe("readImport", () => {
     const old = await sign({ ...readExample("payments"), statewright: "1.0" }, { channel: "cli" });
     const plan = await read(JSON.stringify(old, null, 2));
     expect(plan.status).toBe("open");
-    expect(plan.migrations).toEqual(["1.0 → 1.1", "1.1 → 1.2"]);
-    expect(plan.doc.statewright).toBe("1.2");
+    expect(plan.migrations).toEqual(["1.0 → 1.1", "1.1 → 1.2", "1.2 → 1.3"]);
+    expect(plan.doc.statewright).toBe("1.3");
   });
 
   it("opens the local copy directly when the file holds the same document, whoever signed it", async () => {

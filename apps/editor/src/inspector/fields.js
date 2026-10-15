@@ -426,6 +426,9 @@ export const ELSEWHERE = {
   "document.root": "The project's top level, made with the project.",
   "document.annotations.focus": "Details of a box or arrow: Look here.",
   "document.annotations.scenarios": "Simulating a machine or a flow: Save as scenario.",
+  "document.annotations.comments": "The canvas: a comment's pin opens its thread (Comment, on the canvas menu).",
+  "document.annotations.locks":
+    "The inspector: Don't let the AI change this, for a box, an arrow, a region or a level.",
   "layout.node.x": "Moving the box on the canvas.",
   "layout.node.y": "Moving the box on the canvas.",
   "layout.note.x": "Moving the note on the canvas.",

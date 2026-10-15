@@ -169,8 +169,8 @@
     }
   ],
   "source": {
-    "content": "8548f253fec3d7fd6f09767766350effa2701a8f2792267793a71a5a3f538b08",
-    "format": "1.2",
+    "content": "64c61a2c633ba959f3894a19934adbc6cb46a1ca600582990e0234f71f5be1a3",
+    "format": "1.3",
     "name": "Bookings",
     "project": "prj_bookings"
   },

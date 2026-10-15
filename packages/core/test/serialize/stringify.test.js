@@ -29,7 +29,7 @@ describe("stringify", () => {
       "definitions",
       "canvases"
     ]);
-    expect(text.startsWith('{\n  "statewright": "1.2",')).toBe(true);
+    expect(text.startsWith('{\n  "statewright": "1.3",')).toBe(true);
     expect(text.endsWith("}\n")).toBe(true);
   });
 
