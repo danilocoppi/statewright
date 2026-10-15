@@ -73,8 +73,50 @@ async function inEditor(editor, files, name, args) {
   return success({ ...result, written: out });
 }
 
+/** The tools a stop leaves working: the conversation's, leaving the pairing, and the guide. */
+const UNSTOPPED = new Set([
+  "editor_wait",
+  "editor_inbox",
+  "editor_reply",
+  "editor_disconnect",
+  "editor_pair",
+  "guide_read"
+]);
+/** How long editor_wait waits unless told (collaboration spec §3.2). */
+const WAIT_SECONDS = 240;
+
+/** The conversation's tools (collaboration spec §3): on the paired tab's inbox. */
+function converse(editor, tool, args = {}) {
+  if (!editor) return failure("NOT_PAIRED", "This server has no bridge to the Editor: the person cannot write to you");
+  const state = editor.state();
+  if (state.status === "gone") return state.outcome;
+  if (state.status !== "paired") return failure("NOT_PAIRED", `Nobody is paired to write to you: ${howToPair(editor)}`);
+  if (tool === "editor_inbox") return editor.inbox();
+  if (tool === "editor_reply") return editor.reply(args);
+  const { seconds = WAIT_SECONDS } = args;
+  if (!Number.isInteger(seconds) || seconds < 1 || seconds > 600) {
+    return failure("BAD_ARGUMENTS", "Invalid arguments for editor_wait: seconds must be a whole number from 1 to 600", {
+      path: "seconds"
+    });
+  }
+  return editor.wait(seconds);
+}
+
+/** While the person's messages wait unread, an answer says so (collaboration spec §3.2: "Notice while working"). */
+function withNotice(editor, outcome) {
+  const unread = editor?.state().status === "paired" ? (editor.unread?.() ?? 0) : 0;
+  if (!unread || !outcome.ok || typeof outcome.result !== "object" || outcome.result === null) return outcome;
+  if (Array.isArray(outcome.result)) return outcome;
+  return {
+    ...outcome,
+    result: { ...outcome.result, inbox: { unread, note: "The person wrote to you: read editor_inbox" } }
+  };
+}
+
 /**
- * Run a tool: an operation of the contract, the bridge's own (`editor_pair`, `editor_disconnect`), or `guide_read`.
+ * Run a tool: an operation of the contract, the bridge's own (`editor_pair`, `editor_disconnect`, the conversation's
+ * `editor_wait`, `editor_inbox`, `editor_reply`), or `guide_read`. While the paired person's Stop waits unread, every
+ * other tool answers `STOPPED`; while their messages wait, every answer says so.
  * @param {{ host: ReturnType<typeof import("../agent/file-host.js").createFileHost>,
  *   editor?: ReturnType<typeof import("./bridge.js").createBridge> | null,
  *   files: import("../agent/memory-files.js").Files, agent?: string, guide?: () => Promise<string> }} where `host`:
@@ -84,7 +126,17 @@ async function inEditor(editor, files, name, args) {
  * @param {object} toolArgs The tool's arguments, `file` and `acceptChanges` among them.
  * @returns {Promise<{ ok: true, result: any } | { ok: false, error: object }>}
  */
-export async function route({ host, editor, files, agent, guide = readGuide }, tool, toolArgs) {
+export async function route(where, tool, toolArgs) {
+  const { editor } = where;
+  if (!UNSTOPPED.has(tool) && editor?.state().status === "paired" && editor.stopping?.()) {
+    return failure("STOPPED", "The person asked you to stop: read editor_inbox, then go on only as they say");
+  }
+  if (["editor_wait", "editor_inbox", "editor_reply"].includes(tool)) return converse(editor, tool, toolArgs);
+  return withNotice(editor, await run(where, tool, toolArgs));
+}
+
+/** A tool other than the conversation's. */
+async function run({ host, editor, files, agent, guide = readGuide }, tool, toolArgs) {
   if (tool === "guide_read") return readSection(guide, toolArgs);
   if (tool === "editor_pair") return pair(editor, toolArgs, agent);
   if (tool === "editor_disconnect") return editor ? editor.disconnect() : success({ disconnected: false });

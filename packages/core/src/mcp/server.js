@@ -29,6 +29,9 @@ const INSTRUCTIONS = [
   "level; declare events, endpoints and parties in the catalog and reference them by ID; do not invent what you do",
   "not know; after each batch read problems_list and fix the errors; point at what you changed with view_point, and",
   "show behaviour with scenario_present.",
+  "While paired, the person may write to you from the Editor: messages arrive as",
+  '<channel source="statewright" message="msg_…"> (Claude Code with the channel), or through editor_wait and',
+  "editor_inbox; answer with editor_reply. When an answer carries inbox, read editor_inbox before going on.",
   "A tool answers JSON: its result, or, with isError, { code, message, details } saying what to do."
 ].join(" ");
 
@@ -64,7 +67,8 @@ export function createMcpServer({ version, tools, call, log = () => {} }) {
       log(`connected to ${client.name ?? "a client"}`);
       return answer(id, {
         protocolVersion: PROTOCOL_VERSIONS.includes(asked) ? asked : PROTOCOL_VERSIONS[0],
-        capabilities: { tools: { listChanged: false } },
+        // The Channel (collaboration spec §3.2): Claude Code started with it turns the person's messages into turns.
+        capabilities: { tools: { listChanged: false }, experimental: { "claude/channel": {} } },
         serverInfo: { name: "statewright", version },
         instructions: INSTRUCTIONS
       });

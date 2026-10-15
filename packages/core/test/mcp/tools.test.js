@@ -9,9 +9,12 @@ describe("the contract's operations as MCP tools (AI interface spec §5)", () =>
       ...OPERATIONS.map(operation => operation.name.replace(".", "_")),
       "editor_pair",
       "editor_disconnect",
+      "editor_wait",
+      "editor_inbox",
+      "editor_reply",
       "guide_read"
     ]);
-    expect(tools).toHaveLength(42);
+    expect(tools).toHaveLength(45);
     for (const tool of tools) expect(tool.name).toMatch(/^[a-z]+_[a-zA-Z]+$/);
   });
 
@@ -32,6 +35,25 @@ describe("the contract's operations as MCP tools (AI interface spec §5)", () =>
       additionalProperties: false
     });
     expect(byName.editor_pair.inputSchema.properties).not.toHaveProperty("file");
+  });
+
+  it("waits for the person's messages, reads them and answers them in the Editor (collaboration spec §3)", () => {
+    const byName = Object.fromEntries(toolsOf().map(tool => [tool.name, tool]));
+    expect(byName.editor_wait.inputSchema).toEqual({
+      type: "object",
+      properties: { seconds: expect.objectContaining({ type: "integer", minimum: 1, maximum: 600 }) },
+      additionalProperties: false
+    });
+    expect(byName.editor_inbox.inputSchema).toEqual({ type: "object", properties: {}, additionalProperties: false });
+    expect(byName.editor_reply.inputSchema).toMatchObject({
+      required: ["text"],
+      additionalProperties: false,
+      properties: { text: { type: "string", minLength: 1 }, to: { type: "string" }, point: { type: "array" } }
+    });
+    for (const name of ["editor_wait", "editor_inbox", "editor_reply"]) {
+      expect(byName[name].description.length).toBeGreaterThan(60);
+      expect(byName[name].inputSchema.properties).not.toHaveProperty("file");
+    }
   });
 
   it("reads the guide, a section at a time, without changing anything (AI interface plan A5)", () => {
@@ -93,6 +115,8 @@ describe("the contract's operations as MCP tools (AI interface spec §5)", () =>
       "run_state",
       "scenario_replay",
       "audit_report",
+      "editor_wait",
+      "editor_inbox",
       "guide_read"
     ]);
     for (const tool of toolsOf()) expect(tool.annotations.openWorldHint).toBe(false);

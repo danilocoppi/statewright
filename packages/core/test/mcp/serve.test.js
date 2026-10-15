@@ -61,7 +61,7 @@ describe("the MCP server at work (AI interface spec §5)", () => {
       ],
       { files, file: "payments.json" }
     );
-    expect(logged[0]).toBe("ready: 42 tools, on payments.json by default");
+    expect(logged[0]).toBe("ready: 45 tools, on payments.json by default");
     expect(byId[1].result.structuredContent.project.id).toBe("prj_payments");
     expect(byId[3].result.structuredContent.project.id).toBe(JSON.parse(GET_PAID).project.id);
   });

@@ -61,7 +61,7 @@ describe("the MCP server's protocol (AI interface spec §5)", () => {
       id: 1,
       result: {
         protocolVersion: "2025-03-26",
-        capabilities: { tools: { listChanged: false } },
+        capabilities: { tools: { listChanged: false }, experimental: { "claude/channel": {} } },
         serverInfo: { name: "statewright", version: "1.2.3" },
         instructions: expect.stringContaining("batch_apply")
       }

@@ -34,14 +34,20 @@ export async function serveMcp({ files, file, version, lines, write, log = () =>
     }
     return host;
   };
-  // Tool calls run one after the other, in the order they came: one may open the document the next works on.
+  // Tool calls run one after the other, in the order they came: one may open the document the next works on. Waiting
+  // for the person (editor_wait) runs beside them, so it never holds the agent's other calls (collaboration spec §3.2).
   let calls = Promise.resolve();
   const call = (tool, args) => {
+    if (tool === "editor_wait") return hostNow().then(made => made.call(tool, args));
     const done = calls.then(async () => (await hostNow()).call(tool, args));
     calls = done.catch(() => {});
     return done;
   };
   const server = createMcpServer({ version, tools, log, call });
+  // Each message the person writes reaches Claude Code started with the Channel as a turn of its own.
+  const unhear = editor?.onMessage?.(message =>
+    write(JSON.stringify({ jsonrpc: "2.0", method: "notifications/claude/channel", params: channelOf(message) }))
+  );
   log(`ready: ${tools.length} tools${file ? `, on ${file} by default` : ""}`);
   const pending = new Set();
   for await (const line of lines) {
@@ -52,4 +58,30 @@ export async function serveMcp({ files, file, version, lines, write, log = () =>
     answered.finally(() => pending.delete(answered));
   }
   await Promise.all(pending);
+  unhear?.();
+}
+
+/**
+ * A message as the Channel carries it: its text, then the level and the selection it was written on; meta keys are
+ * letters, digits and underscores (Claude Code's contract).
+ * @param {import("./inbox.js").Message} message
+ * @returns {{ content: string, meta: Record<string, string> }}
+ */
+export function channelOf(message) {
+  const { id, text, stop, context = {} } = message;
+  if (stop) {
+    return {
+      content: "The person asked you to stop: read editor_inbox, then go on only as they say.",
+      meta: { message: id, stop: "true" }
+    };
+  }
+  const lines = [];
+  if (context.level) lines.push(`Level: ${context.level.name} (${context.level.id})`);
+  if (context.selection?.length) {
+    lines.push(`Selected: ${context.selection.map(item => `${item.name} (${item.id})`).join(", ")}`);
+  }
+  return {
+    content: lines.length ? `${text}\n\n${lines.join("\n")}` : text,
+    meta: { message: id, ...(context.level ? { level: context.level.id } : {}) }
+  };
 }

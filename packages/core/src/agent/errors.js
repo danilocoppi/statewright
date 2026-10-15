@@ -14,6 +14,7 @@ export const AGENT_ERROR_CODES = Object.freeze([
   "BUSY",
   "TIMEOUT",
   "NOT_PAIRED",
+  "STOPPED",
   "FILE",
   "INTERNAL"
 ]);

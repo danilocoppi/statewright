@@ -58,6 +58,55 @@ const BRIDGE_TOOLS = [
     description: "End the pairing with the Editor: calls without file run on the server's --file again.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     annotations: { readOnlyHint: false, openWorldHint: false }
+  },
+  {
+    name: "editor_wait",
+    description:
+      "Wait for the person to write to you from the paired Editor (collaboration spec §3.2): answers their unread " +
+      "messages, now read, as soon as there are some — at once when some wait — or { messages: [] } when the time is " +
+      "up. Call it whenever you have finished what they asked, so you are listening; other calls go on meanwhile. " +
+      "A message has text, and may carry the level, the selection and what they marked. Errors: BAD_ARGUMENTS, " +
+      "NOT_PAIRED, EDITOR_GONE.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        seconds: {
+          type: "integer",
+          minimum: 1,
+          maximum: 600,
+          description: "How long to wait at most (default 240)."
+        }
+      },
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: true, openWorldHint: false }
+  },
+  {
+    name: "editor_inbox",
+    description:
+      "Read the person's unread messages from the paired Editor, now read, without waiting. Read them when an answer " +
+      "carries inbox, and when a call answers STOPPED (the person asked you to stop: their message says why). " +
+      "Errors: NOT_PAIRED, EDITOR_GONE.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    annotations: { readOnlyHint: true, openWorldHint: false }
+  },
+  {
+    name: "editor_reply",
+    description:
+      "Answer the person in the paired Editor's conversation: your text, the message it answers (to: msg_…), and the " +
+      "elements you mean (point: their IDs, which the person can click to see them). Errors: BAD_ARGUMENTS, " +
+      "NOT_FOUND, NOT_PAIRED, EDITOR_GONE.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        text: { type: "string", minLength: 1, description: "What you say." },
+        to: { type: "string", description: "The message you answer: msg_…" },
+        point: { type: "array", items: { type: "string" }, description: "IDs of the elements you mean." }
+      },
+      required: ["text"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, openWorldHint: false }
   }
 ];
 

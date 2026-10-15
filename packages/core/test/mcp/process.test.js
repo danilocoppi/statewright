@@ -73,7 +73,7 @@ describe("statewright mcp (AI interface spec §5)", () => {
     expect(hello.result).toMatchObject({ protocolVersion: "2025-06-18", serverInfo: { name: "statewright" } });
     mcp.send(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }));
     const { tools } = (await mcp.request("tools/list")).result;
-    expect(tools).toHaveLength(42);
+    expect(tools).toHaveLength(45);
     expect(tools.map(item => item.name)).toEqual(expect.arrayContaining(["batch_apply", "run_step", "audit_report"]));
 
     const applied = await mcp.tool("batch_apply", {
@@ -125,7 +125,7 @@ describe("statewright mcp (AI interface spec §5)", () => {
     const { code, stderr, lines } = await mcp.end();
     expect(code).toBe(0);
     for (const line of lines) expect(JSON.parse(line).jsonrpc).toBe("2.0");
-    expect(stderr).toContain("statewright mcp: ready: 42 tools, on payments.sttw by default\n");
+    expect(stderr).toContain("statewright mcp: ready: 45 tools, on payments.sttw by default\n");
     expect(stderr).toContain("statewright mcp: connected to test-client\n");
   });
 

@@ -164,7 +164,15 @@ describe("the agent contract (AI interface spec §4)", () => {
     expect(failure(thrown)).toMatchObject({ ok: false, error: { code: "NOT_FOUND", details: { index: 1 } } });
     expect(failure(new TypeError("boom"))).toEqual({ ok: false, error: { code: "INTERNAL", message: "boom" } });
     expect(AGENT_ERROR_CODES).toEqual(
-      expect.arrayContaining(["SCHEMA", "NOT_FOUND", "BAD_ARGUMENTS", "NEEDS_EDITOR", "EDITOR_GONE", "INTERNAL"])
+      expect.arrayContaining([
+        "SCHEMA",
+        "NOT_FOUND",
+        "BAD_ARGUMENTS",
+        "NEEDS_EDITOR",
+        "EDITOR_GONE",
+        "STOPPED",
+        "INTERNAL"
+      ])
     );
   });
 });
