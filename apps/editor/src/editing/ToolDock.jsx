@@ -7,13 +7,15 @@ import { Island } from "@/components/ui/Island";
 import { cn } from "@/lib/cn";
 import { useEditor } from "@/store/editor";
 
+import { LevelKind } from "./LevelKind";
 import { TOOL_TYPE } from "./place";
 import { editingStore, useEditing } from "./state";
 import { toolsFor } from "./tools";
 
 /**
- * The tool dock (spec §6.1, §7.1, mockups 07–08): the tools of the level's kind, each with its key. Click a tool,
- * then the canvas — or drag the tool onto it. Up and Down move along the dock.
+ * The tool dock (spec §6.1, §7.1, mockups 07–08): the tools of the level's kind, each with its key, and under them the
+ * level's kind, which leads to a level of another kind. Click a tool, then the canvas — or drag the tool onto it. Up
+ * and Down move along the dock.
  */
 export function ToolDock() {
   const { t } = useTranslation("editor");
@@ -24,11 +26,13 @@ export function ToolDock() {
   if (!kind) return null;
   const tools = toolsFor(kind);
 
+  // The tools, then the level's kind.
+  const count = tools.length + 1;
   const onKeyDown = (event, index) => {
     const step = { ArrowDown: 1, ArrowUp: -1 }[event.key];
     if (!step) return;
     event.preventDefault();
-    buttons.current[(index + step + tools.length) % tools.length]?.focus();
+    buttons.current[(index + step + count) % count]?.focus();
   };
 
   return (
@@ -81,6 +85,14 @@ export function ToolDock() {
           </div>
         </Fragment>
       ))}
+      <div className="mx-1.5 my-0.5 border-t border-hairline" />
+      <LevelKind
+        kind={kind}
+        buttonRef={element => (buttons.current[tools.length] = element)}
+        onKeyDown={event => onKeyDown(event, tools.length)}
+        tip={tip === "kind"}
+        onTip={shown => setTip(shown ? "kind" : null)}
+      />
     </Island>
   );
 }

@@ -126,6 +126,12 @@ export function MenuList({ id, label, sections, onClose, onTab = onClose, classN
 
 /** Between a menu's button and the menu (`top-[calc(100%+8px)]`), and kept free below the menu, in pixels. */
 const GAP = 8;
+/** Where the menu opens: under its button, aligned to one of its sides; or beside it, rising from its bottom. */
+const PLACES = {
+  start: "top-[calc(100%+8px)] left-0",
+  end: "top-[calc(100%+8px)] right-0",
+  right: "bottom-0 left-[calc(100%+10px)]"
+};
 const MARGIN = 16;
 /** The least height a menu is given, however close to the bottom its button is. */
 const MIN_ROOM = 160;
@@ -133,27 +139,32 @@ const MIN_ROOM = 160;
 /**
  * A dropdown menu (WAI-ARIA menu button): click or ArrowDown opens it; arrows, Home and End move; Enter or Space
  * runs the item; Esc closes and returns focus to the trigger; a click outside closes it.
- * @param {{ label: string, sections: MenuSection[], align?: "start" | "end", className?: string,
- *   menuClassName?: string, trigger: (props: object) => import("react").ReactNode, testId?: string }} props `trigger`
- *   renders the button; spread the props it receives onto it. `menuClassName` sizes the popup (for example `w-80`).
- *   `testId`: the hook of the button (AI interface spec §7.5); the menu is `<testId>-list`, an item `<testId>-<id>`.
+ * @param {{ label: string, sections: MenuSection[], align?: "start" | "end", side?: "bottom" | "right",
+ *   className?: string, menuClassName?: string, trigger: (props: object) => import("react").ReactNode,
+ *   testId?: string }} props `trigger` renders the button; spread the props it receives onto it. `side: "right"` opens
+ *   the menu beside the button, its bottom at the button's (a dock at the window's left edge). `menuClassName` sizes the
+ *   popup (for example `w-80`). `testId`: the hook of the button (AI interface spec §7.5); the menu is
+ *   `<testId>-list`, an item `<testId>-<id>`.
  */
-export function Menu({ label, sections, align = "end", className, menuClassName, trigger, testId }) {
+export function Menu({ label, sections, align = "end", side = "bottom", className, menuClassName, trigger, testId }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
   const triggerRef = useRef(null);
   const menuId = useId();
-  // The room below the button: a menu taller than it scrolls, so its last items can be reached in a short window.
+  // The room below the button (above its bottom, beside it): a menu taller than it scrolls, so its last items can be
+  // reached in a short window.
   const [room, setRoom] = useState(null);
 
   useLayoutEffect(() => {
     if (!open) return;
-    const measure = () =>
-      setRoom(Math.max(MIN_ROOM, innerHeight - containerRef.current.getBoundingClientRect().bottom - GAP - MARGIN));
+    const measure = () => {
+      const { bottom } = containerRef.current.getBoundingClientRect();
+      setRoom(Math.max(MIN_ROOM, side === "right" ? bottom - MARGIN : innerHeight - bottom - GAP - MARGIN));
+    };
     measure();
     addEventListener("resize", measure);
     return () => removeEventListener("resize", measure);
-  }, [open]);
+  }, [open, side]);
 
   useEffect(() => {
     if (!open) return;
@@ -194,8 +205,8 @@ export function Menu({ label, sections, align = "end", className, menuClassName,
           onTab={() => setOpen(false)}
           style={{ maxHeight: room ?? undefined }}
           className={cn(
-            "absolute top-[calc(100%+8px)] overflow-y-auto overscroll-contain",
-            align === "end" ? "right-0" : "left-0",
+            "absolute overflow-y-auto overscroll-contain",
+            PLACES[side === "right" ? "right" : align],
             menuClassName
           )}
         />

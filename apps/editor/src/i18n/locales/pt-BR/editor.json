@@ -301,6 +301,27 @@
   },
   "tools": {
     "dock": "Ferramentas",
+    "kind": {
+      "name": "Tipo de nível: {{kind}}",
+      "system": "Sistema",
+      "machine": "Máquina de estados",
+      "flow": "Fluxo",
+      "tip": {
+        "system": "Este nível é um sistema: as ferramentas são as de um sistema",
+        "machine": "Este nível é uma máquina de estados: as ferramentas são as de uma máquina de estados",
+        "flow": "Este nível é um fluxo: as ferramentas são as de um fluxo"
+      },
+      "menu": "Níveis dentro de uma caixa",
+      "create": "Criar dentro de {{name}}",
+      "inside": "Dentro de {{name}}",
+      "open": "Abrir {{name}}",
+      "hint": {
+        "flow": "Passos em ordem: ações, verificações, laços",
+        "machine": "Estados e os eventos que os mudam",
+        "system": "Serviços, atores, armazenamentos e filas"
+      },
+      "pick": "Selecione uma caixa para criar um nível dentro dela"
+    },
     "select": "Selecionar",
     "note": "Nota",
     "link": "Link para outro nível",

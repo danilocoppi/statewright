@@ -233,6 +233,20 @@ test.describe("with the legend and the minimap on, in a window 560 px high", () 
   });
 });
 
+test.describe("in a window 560 px high", () => {
+  test.use({ viewport: { width: 1280, height: 560 } });
+
+  test("keeps the tool dock, the level's kind under it, clear of the islands at the top", async ({ page }) => {
+    await openPayments(page);
+    await page.goto("/p/prj_payments/cnv_lifecycle");
+    await settled(page);
+    const dock = await page.getByRole("toolbar", { name: "Tools" }).boundingBox();
+    const project = await page.locator('[data-area="project"]').boundingBox();
+    expect(dock.y).toBeGreaterThanOrEqual(project.y + project.height + 8);
+    await expect(page.getByRole("button", { name: "Level kind: State machine" })).toBeInViewport({ ratio: 1 });
+  });
+});
+
 test("never shows the levels as a sliver: hidden where they lack room, or the level shown named in full", async ({
   page
 }) => {

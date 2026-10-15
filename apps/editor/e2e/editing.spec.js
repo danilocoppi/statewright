@@ -183,3 +183,32 @@ test("pastes from the canvas menu where the menu was opened, not where Paste is 
   expect(Math.abs(placed.x - at.x)).toBeLessThan(3);
   expect(Math.abs(placed.y - at.y)).toBeLessThan(3);
 });
+
+test("creates a flow inside a service from the level's kind under the dock, opens it, and Undo takes it back", async ({
+  page
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /^Payments/ }).click();
+  await page.waitForURL(/\/p\/prj_payments$/);
+  const dock = page.getByRole("toolbar", { name: "Tools" });
+  const kind = dock.getByRole("button", { name: "Level kind: System" });
+  await expect(kind).toHaveText("System");
+  await expect(page.getByText("Arranging this level…")).toHaveCount(0);
+  await box(page, "Scheduler").click();
+
+  await kind.click();
+  const menu = page.getByRole("menu", { name: "Levels inside a box" });
+  await expect(menu.getByRole("group", { name: "Create inside Scheduler" })).toBeVisible();
+  await menu.getByRole("menuitem", { name: /^Flow/ }).click();
+  await page.waitForURL(/\/p\/prj_payments\/cnv_scheduler$/);
+  await expect(dock.getByRole("button", { name: "Level kind: Flow" })).toHaveText("Flow");
+  await expect(dock.getByRole("button", { name: "If / else" })).toBeVisible();
+  await expect(dock.getByRole("button", { name: "Service" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: /^Undo Add an interior/ }).click();
+  await page.waitForURL(/\/p\/prj_payments$/);
+  await expect(kind).toBeVisible();
+  await box(page, "Scheduler").click();
+  await kind.click();
+  await expect(menu.getByRole("menuitem", { name: /^Flow/ })).toBeVisible();
+});

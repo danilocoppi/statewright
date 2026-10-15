@@ -273,6 +273,12 @@ The editor is the platform's web app: it draws each level of a document as its f
 stays in the browser. A double-click or Enter on a box with a second outline opens its level; Esc goes back up. A
 selected box shows in the inspector: what a reviewer needs first, the technical details on request.
 
+The tool dock on the left holds the tools of the level shown. A level is a system, a state machine or a flow, and holds
+only its kind's elements, so the tools cannot switch; under them, the level's kind says which it is, and its menu leads
+to a level of another kind. Select a box that can hold one (a system's box, a state, a loop or a subflow) and choose
+**Create inside** → Flow, State machine or System, as the inspector's **Interior** adds it: the new level opens, with
+its tools in the dock, and one Undo takes it back. A box that already has a level offers to **Open** it instead.
+
 Search and commands (⌘K, or Ctrl+K on Windows and Linux) lists every command with its keys: Shift+F fits the level in
 the view (Shift+1 too), Shift+A lays it out again (Shift+L too). These keys act where the focus is:
 

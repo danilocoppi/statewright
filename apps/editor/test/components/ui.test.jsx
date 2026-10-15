@@ -83,6 +83,27 @@ describe("Menu", () => {
     }
   });
 
+  it("opens beside its button, rising from its bottom, and scrolls when taller than the window above", async () => {
+    const user = userEvent.setup();
+    render(
+      <Menu
+        label="Kind"
+        side="right"
+        trigger={props => <Button {...props}>Kind</Button>}
+        sections={[{ items: [{ id: "flow", label: "Flow", onSelect: () => {} }] }]}
+      />
+    );
+    const button = screen.getByRole("button", { name: "Kind" });
+    vi.spyOn(button.parentElement, "getBoundingClientRect").mockReturnValue({ top: 380, bottom: 412 });
+    await user.click(button);
+    const menu = screen.getByRole("menu", { name: "Kind" });
+    expect(menu.className).toContain("left-[calc(100%+10px)]");
+    expect(menu.className).toContain("bottom-0");
+    expect(menu.className).not.toContain("top-[calc(100%+8px)]");
+    // The window above the button's bottom, less a 16 px margin.
+    expect(menu.style.maxHeight).toBe("396px");
+  });
+
   it("closes on a click outside and ignores clicks on disabled items", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
