@@ -75,4 +75,28 @@ describe("live Problems", () => {
     editor.getState().close();
     expect(problems.getState().version).toBeNull();
   });
+
+  it("runs one check at a time, then the latest document's (performance spec §3 P3)", async () => {
+    const waiting = [];
+    const request = vi.fn((_type, { doc }) => new Promise(resolve => waiting.push(() => resolve(check(doc)))));
+    const { editor, problems } = setup(request);
+    editor.getState().open(demoDoc());
+    await vi.advanceTimersByTimeAsync(CHECK_DELAY_MS);
+    expect(request).toHaveBeenCalledTimes(1);
+    // Five changes while the first check runs: none is sent yet.
+    for (const name of ["A", "B", "C", "D", "E"]) {
+      editor.getState().dispatch(rename(name), { label: "Rename" });
+      await vi.advanceTimersByTimeAsync(CHECK_DELAY_MS);
+    }
+    expect(request).toHaveBeenCalledTimes(1);
+    // The first answers: the latest document is checked next, once.
+    waiting.shift()();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(request.mock.calls[1][1].doc.project.name).toBe("E");
+    waiting.shift()();
+    await vi.advanceTimersByTimeAsync(CHECK_DELAY_MS);
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(problems.getState().version).toBe(editor.getState().version);
+  });
 });
