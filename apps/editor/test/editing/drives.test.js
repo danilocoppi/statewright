@@ -65,6 +65,8 @@ describe("driving a lifecycle from a system's box (mixed levels spec §4.3)", ()
   it("judges a box onto a framed transition by what it would mean", () => {
     expect(connectRefusal(state().doc, "cnv_shop", "nod_web", "edg_pay")).toBeNull();
     expect(connectRefusal(state().doc, "cnv_shop", "nod_payments", "edg_pay")).toBeNull();
+    // What means nothing on a system is said in a system's words.
+    expect(connectRefusal(state().doc, "cnv_shop", "nod_web", "edg_start_missing")).toBe("noDrive");
   });
 
   it("a box with a party drives the transition at once", () => {
@@ -86,5 +88,21 @@ describe("driving a lifecycle from a system's box (mixed levels spec §4.3)", ()
     expect(doc.canvases.cnv_order.edges.edg_pay.by).toBe(party);
     state().undo();
     expect(state().doc.canvases.cnv_shop.nodes.nod_payments.party).toBeUndefined();
+  });
+});
+
+describe("deleting a connector another box shares", () => {
+  it("says the other box's connector goes too, with Undo", async () => {
+    const { useToastStore } = await import("@/stores/toast");
+    const { deleteSelection } = await import("@/editing/actions");
+    const doc = shopDoc();
+    doc.canvases.cnv_shop.nodes.nod_mobile = { kind: "service", name: "Mobile", party: "pty_customer" };
+    doc.canvases.cnv_order.edges.edg_pay.by = "pty_customer";
+    editorStore.getState().open(doc, { canvasId: "cnv_shop" });
+    state().select(["drives:nod_web:edg_pay"]);
+    deleteSelection(t);
+    expect(state().doc.canvases.cnv_order.edges.edg_pay.by).toBeUndefined();
+    const [notice] = useToastStore.getState().items.slice(-1);
+    expect(notice.message).toBe("roles.alsoLose");
   });
 });

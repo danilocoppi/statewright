@@ -553,8 +553,9 @@ export function toAIPack(doc, { guideUrl } = {}) {
     ].filter(Boolean);
     out.push(`### ${code(id)} "${canvas.name}"`, "", `${about.join(" · ")}`, "");
     const edges = sortedKeys(canvas.edges);
+    // A connector belongs to the level of an end it touches (a lifecycle's drivers to the system that frames it).
     const roles = associationsOf(doc, id).filter(item =>
-      [item.from, item.to].every(end => canvas.nodes[end] || canvas.edges[end])
+      [item.from, item.to].some(end => canvas.nodes[end] || canvas.edges[end])
     );
     if (roles.length) {
       out.push(

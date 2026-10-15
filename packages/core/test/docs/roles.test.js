@@ -57,4 +57,11 @@ describe("a lifecycle's drivers in the documentation (mixed levels spec §4.3)",
   it("lists what the system's boxes drive in the system level's roles table", () => {
     expect(toMarkdown(order())).toMatch(/\| Customer \| drives \| order\.placed \|/);
   });
+
+  it("states them in the AI pack too", async () => {
+    const { toAIPack } = await import("../../src/docs/document.js");
+    expect(toAIPack(order())).toContain(
+      "- `nod_customer` drives `edg_createdCharging` — `source` of `evt_orderPlaced`"
+    );
+  });
 });

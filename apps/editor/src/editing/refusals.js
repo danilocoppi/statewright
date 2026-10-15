@@ -16,6 +16,7 @@ const CANVAS = [
   // A guest's connections, and a role's connector (mixed levels spec §3).
   "guest",
   "noMeaning",
+  "noDrive",
   "already",
   "notRun",
   "nothingToReceive"

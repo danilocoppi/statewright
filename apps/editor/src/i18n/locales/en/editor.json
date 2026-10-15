@@ -204,6 +204,7 @@
     "missingLevel": "The level this link leads to is not in this project.",
     "guest": "A guest takes no part in this level's transitions or steps.",
     "noMeaning": "These two have no role together: a participant sends a transition or receives a state's action; steps run at a transition or a state.",
+    "noDrive": "A box of a system drives a transition of a lifecycle shown here as a frame: drop it on one.",
     "already": "That is already so.",
     "notRun": "That action does not run there.",
     "nothingToReceive": "Nothing runs there that someone could receive.",
@@ -459,7 +460,7 @@
     "whichAction": "Which action does {{name}} receive?",
     "whichParty": "Whom does {{name}} act for?",
     "actionPlaceholder": "An action run here",
-    "alsoLose_one": "{{count}} other transition also loses its sender.",
-    "alsoLose_other": "{{count}} other transitions also lose their sender."
+    "alsoLose_one": "{{count}} other connector goes too: it said the same.",
+    "alsoLose_other": "{{count}} other connectors go too: they said the same."
   }
 }

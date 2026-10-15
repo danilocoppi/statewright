@@ -39,6 +39,9 @@ export function edgeFor(doc, canvasId, from, to) {
   return { from, to };
 }
 
+/** A role's refusal in the words of the level's kind: on a system, what a box can drive. */
+export const inWords = (kind, reason) => (kind === "system" && reason === "noMeaning" ? "noDrive" : reason);
+
 /**
  * Whether a connection between two elements of a level would be a role's connector (mixed levels spec §3): it ends at
  * a transition, or a guest is at one end (shortcuts link to anything).
@@ -62,7 +65,7 @@ export function connectRefusal(doc, canvasId, from, to) {
   const canvas = doc.canvases[canvasId];
   // A role's connector writes the field that holds its meaning (mixed levels spec §3): Core judges what it means.
   if (["machine", "system"].includes(canvas.kind) && canvas.nodes[from] && isRolePair(doc, canvasId, from, to)) {
-    return associationRefusal(doc, canvasId, from, to);
+    return inWords(canvas.kind, associationRefusal(doc, canvasId, from, to));
   }
   const source = canvas.nodes[from];
   const target = canvas.nodes[to];

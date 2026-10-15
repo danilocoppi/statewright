@@ -83,6 +83,12 @@ Roles (derived; change the field that holds them):
 
 system
 
+Roles (derived; change the field that holds them):
+
+- `nod_customer` drives `edg_chargingCancelled` — `source` of `evt_orderCancelled`
+- `nod_customer` drives `edg_createdCancelled` — `source` of `evt_orderCancelled`
+- `nod_customer` drives `edg_createdCharging` — `source` of `evt_orderPlaced`
+
 | Edge | From | To | Kind | References |
 | --- | --- | --- | --- | --- |
 | `edg_customerShop` | `nod_customer` | `nod_shop` | command | evt_orderPlaced |

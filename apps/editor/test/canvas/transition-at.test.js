@@ -43,3 +43,34 @@ describe("the transition under a point where a connection is dropped", () => {
     expect(transitionAt(edges, { x: 60, y: 60 })).toBeNull();
   });
 });
+
+describe("which transitions a drop can land on", () => {
+  const edges = [
+    edge(
+      "edg_webApi",
+      [
+        [0, 0],
+        [100, 0]
+      ],
+      { x: 30, y: -8, w: 40, h: 14 }
+    ),
+    edge(
+      "nod_orders/edg_pay",
+      [
+        [0, 100],
+        [100, 100]
+      ],
+      { x: 30, y: 92, w: 40, h: 14 }
+    )
+  ];
+
+  it("on a system, only a lifecycle's, inside a frame — never the system's own connections", () => {
+    expect(transitionAt(edges, { x: 50, y: 2 }, { framed: true })).toBeNull();
+    expect(transitionAt(edges, { x: 50, y: 99 }, { framed: true })).toBe("edg_pay");
+  });
+
+  it("on a machine, only the level's own", () => {
+    expect(transitionAt(edges, { x: 50, y: 99 }, { framed: false })).toBeNull();
+    expect(transitionAt(edges, { x: 50, y: 2 }, { framed: false })).toBe("edg_webApi");
+  });
+});

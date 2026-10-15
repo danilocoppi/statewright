@@ -29,8 +29,11 @@ function toSegment([x1, y1], [x2, y2], { x, y }) {
  * units — on the level or inside a frame, where the pointer passes through the picture. Null when none.
  * @param {Array<{ type: string, data: { part: { id: string, points: number[][] }, label?: object } }>} edges
  * @param {{ x: number, y: number }} point In canvas coordinates.
+ * @param {{ framed?: boolean }} [where] `framed`: only transitions inside a frame (a lifecycle on a system); false: only
+ *   the level's own; left out: any.
  */
-export function transitionAt(edges, point) {
+export function transitionAt(edges, point, { framed } = {}) {
+  edges = framed === undefined ? edges : edges.filter(edge => edge.id.includes("/") === framed);
   for (const { type, data } of edges) {
     const box = type === "figure" ? data.label : null;
     if (box && point.x >= box.x && point.x <= box.x + box.w && point.y >= box.y && point.y <= box.y + box.h) {
@@ -98,7 +101,7 @@ export function useConnect(t, flow) {
     // the pointer is meant rather than the frame's box.
     const kind = doc.canvases[canvasId].kind;
     const roleStart = kind === "system" || isGuest(kind, doc.canvases[canvasId].nodes[source]);
-    const transition = roleStart ? transitionAt(flow.getEdges(), at) : null;
+    const transition = roleStart ? transitionAt(flow.getEdges(), at, { framed: kind === "system" }) : null;
     const frame = target && event.target?.closest?.(".react-flow__node-frame");
     if (transition && (!target || frame)) {
       connectBoxes(t, source, transition, at);

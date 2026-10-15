@@ -1,6 +1,6 @@
 // What the editor's keys and menus do to the current level's selection (spec §7.3): select all, delete, nudge,
 // duplicate, copy and paste — each one change, refused where it would happen when Core says no.
-import { associate, associationsOf, dissociateCommands } from "statewright";
+import { applyBatch, associate, associationsOf, dissociateCommands } from "statewright";
 
 import { isSimulating } from "@/simulate/store";
 import { toast } from "@/stores/toast";
@@ -18,7 +18,7 @@ import {
 } from "./changes";
 import { copyOf, duplicateCommands, pasteCommands } from "./clipboard";
 import { idsFor } from "./ids";
-import { asksAfterConnect, connectCommands, connectRefusal, isRolePair, placeRefusal } from "./connect";
+import { asksAfterConnect, connectCommands, connectRefusal, inWords, isRolePair, placeRefusal } from "./connect";
 import { placeCommands } from "./place";
 import { change, editingStore } from "./state";
 
@@ -57,20 +57,35 @@ export function deleteSelection(t, label = t("editing.delete")) {
   if (!selection.length || readOnly) return;
   // A role's connector is not stored: deleting it clears what it stands for (mixed levels spec §3).
   const associations = associationsOf(doc, canvasId).filter(item => selection.includes(item.id));
-  const dissociated = associations.map(item => dissociateCommands(doc, item));
-  const cleared = dissociated.flatMap(item => item.commands);
-  // A sender read from an event's source goes from every transition that event moves: say which, with Undo.
-  const lose = [...new Set(dissociated.flatMap(item => item.alsoLoses))];
-  const { ok } = change([...cleared, ...removeCommands(doc, selection)], {
+  const cleared = associations.flatMap(item => dissociateCommands(doc, item).commands);
+  const commands = [...cleared, ...removeCommands(doc, selection)];
+  // A connector stands for a field another connector may read too (an event's source, a transition's `by` that two
+  // boxes of one party drive): say how many others go with it, with Undo.
+  const lose = cleared.length ? othersLost(doc, commands, associations) : 0;
+  const { ok } = change(commands, {
     label,
     at: centreOf(doc, canvasId, selection)
   });
   if (ok) editorStore.getState().select([]);
-  if (ok && lose.length) {
-    toast.info(t("roles.alsoLose", { count: lose.length }), {
+  if (ok && lose) {
+    toast.info(t("roles.alsoLose", { count: lose }), {
       action: { label: t("menu.undo"), onClick: () => editorStore.getState().undo() }
     });
   }
+}
+
+/** How many connectors, anywhere in the document, a change takes away besides those chosen. */
+function othersLost(doc, commands, chosen) {
+  const all = source =>
+    Object.keys(source.canvases).flatMap(canvasId => associationsOf(source, canvasId).map(item => item.id));
+  let after;
+  try {
+    after = new Set(all(applyBatch(doc, commands).doc));
+  } catch {
+    return 0;
+  }
+  const picked = new Set(chosen.map(item => item.id));
+  return new Set(all(doc).filter(id => !after.has(id) && !picked.has(id))).size;
 }
 
 /** Move what is selected by an offset (arrow keys; Shift ×10). Nudges in a row are one undo entry. */
@@ -274,7 +289,7 @@ export function connectRole(t, from, to, at, choice = {}) {
   if (readOnly) return null;
   const result = associate(doc, canvasId, from, to, choice);
   if (result.refusal) {
-    editingStore.getState().refuse({ reason: result.refusal, at });
+    editingStore.getState().refuse({ reason: inWords(doc.canvases[canvasId].kind, result.refusal), at });
     return null;
   }
   if (result.needs) {

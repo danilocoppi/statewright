@@ -204,6 +204,7 @@
     "missingLevel": "El nivel al que lleva este enlace no está en este proyecto.",
     "guest": "Un invitado no participa de las transiciones ni de los pasos de este nivel.",
     "noMeaning": "Estos dos no tienen un papel juntos: un participante envía una transición o recibe la acción de un estado; los pasos corren en una transición o un estado.",
+    "noDrive": "Una caja del sistema conduce una transición de un ciclo de vida mostrado aquí como marco: suéltala sobre una.",
     "already": "Ya es así.",
     "notRun": "Esa acción no corre allí.",
     "nothingToReceive": "Allí no corre nada que alguien pueda recibir.",
@@ -459,7 +460,7 @@
     "whichAction": "¿Qué acción recibe {{name}}?",
     "whichParty": "¿Por quién actúa {{name}}?",
     "actionPlaceholder": "Una acción que corre aquí",
-    "alsoLose_one": "Otra transición también pierde quién la envía.",
-    "alsoLose_other": "Otras {{count}} transiciones también pierden quién las envía."
+    "alsoLose_one": "Otro conector también se va: decía lo mismo.",
+    "alsoLose_other": "Otros {{count}} conectores también se van: decían lo mismo."
   }
 }
