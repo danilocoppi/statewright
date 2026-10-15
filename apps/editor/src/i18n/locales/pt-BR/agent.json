@@ -69,7 +69,8 @@
     "status": {
       "working": "trabalhando",
       "listening": "ouvindo",
-      "away": "ausente: as mensagens esperam até ele ler"
+      "away": "ausente",
+      "awayHint": "As mensagens esperam até ele ler"
     },
     "state": {
       "sending": "enviando…",

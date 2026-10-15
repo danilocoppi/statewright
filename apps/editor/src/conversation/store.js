@@ -18,7 +18,7 @@ export const WORKING_MS = 5000;
  * @typedef {PersonLine | AgentLine | ChangeLine | StopLine} Line
  */
 
-const EMPTY = { lines: [], draft: "", historyOpen: false, listening: false, channel: false, lastCall: 0 };
+const EMPTY = { lines: [], read: [], draft: "", historyOpen: false, listening: false, channel: false, lastCall: 0 };
 
 /** A conversation's store; the Editor keeps one (`conversationStore`), tests make their own. */
 export function createConversationStore() {
@@ -34,10 +34,16 @@ export function createConversationStore() {
     },
     /** Change a line: a person's message once sent (its id), or failed. */
     update: (key, patch) =>
-      set(state => ({ lines: state.lines.map(line => (line.key === key ? { ...line, ...patch } : line)) })),
+      set(state => {
+        // The agent may have read it before its number came back from the bridge: then it is read already.
+        const read = patch.id && patch.state === "sent" && state.read.includes(patch.id);
+        const change = read ? { ...patch, state: "read" } : patch;
+        return { lines: state.lines.map(line => (line.key === key ? { ...line, ...change } : line)) };
+      }),
     /** The agent read these messages. */
     markRead: ids =>
       set(state => ({
+        read: [...state.read, ...ids],
         lines: state.lines.map(line =>
           line.id && ids.includes(line.id) && "state" in line ? { ...line, state: "read" } : line
         )

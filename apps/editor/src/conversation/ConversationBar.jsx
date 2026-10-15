@@ -83,7 +83,11 @@ function showElement(id, onNavigate) {
 function Status({ status }) {
   const { t } = useTranslation("agent");
   return (
-    <span className="flex shrink-0 items-center gap-1.5 text-label text-muted" data-status={status}>
+    <span
+      className="flex shrink-0 items-center gap-1.5 text-label text-muted"
+      data-status={status}
+      title={status === "away" ? t("conversation.status.awayHint") : undefined}
+    >
       <span
         aria-hidden="true"
         className={cn(

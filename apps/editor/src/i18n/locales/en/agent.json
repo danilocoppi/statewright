@@ -69,7 +69,8 @@
     "status": {
       "working": "working",
       "listening": "listening",
-      "away": "away: messages wait until it reads them"
+      "away": "away",
+      "awayHint": "Messages wait until it reads them"
     },
     "state": {
       "sending": "sending…",

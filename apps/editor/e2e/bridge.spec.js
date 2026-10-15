@@ -81,7 +81,10 @@ test("an agent pairs by the code the Editor shows, builds, simulates, presents a
       "edg_requestedApproved",
       "edg_approvedPaid"
     ]);
-    await expect(page.getByTestId("toast")).toContainText("AI · claude-code: A refund's states");
+    // Paired, the agent's change is a line of the conversation (collaboration spec §4).
+    await expect(page.locator('[data-testid="conversation-line"][data-kind="change"]')).toContainText(
+      "claude-code · Changed: A refund's states"
+    );
     expect(await mcp.tool("layout_arrange", { canvas: "cnv_refund" })).not.toHaveProperty("error");
     await mcp.tool("batch_apply", REFUSED);
     await expect(page.locator('.react-flow__node.sw-ai[data-id="nod_refused"]')).toBeVisible();
@@ -89,7 +92,11 @@ test("an agent pairs by the code the Editor shows, builds, simulates, presents a
     await expect(page.getByTestId("project-menu-undo")).toContainText("Undo A state for refused refunds (AI)");
     await page.keyboard.press("Escape");
     // The person undoes the agent's last change from the Editor.
-    await page.getByTestId("toast").filter({ hasText: "refused" }).getByRole("button", { name: "Undo" }).click();
+    await page
+      .locator('[data-testid="conversation-line"][data-kind="change"]')
+      .filter({ hasText: "refused" })
+      .getByRole("button", { name: "Undo" })
+      .click();
     await expect(page.locator('.react-flow__node[data-id="nod_refused"]')).toHaveCount(0);
     const level = await mcp.tool("level_get", { canvas: "cnv_refund" });
     expect(level.nodes.map(node => node.id).sort()).toEqual([

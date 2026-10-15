@@ -714,7 +714,9 @@ offers Undo, and the history names it, as `Undo <label> (AI)`.
 ### Setting up `statewright mcp`
 
 `statewright mcp` is an MCP server on stdio: every operation is a tool (`batch_apply`, `run_step`, `audit_report`, …),
-plus `editor_pair` and `editor_disconnect`, and `guide_read`, which reads this guide a section at a time, offline.
+plus `editor_pair` and `editor_disconnect`, the conversation's `editor_wait`, `editor_inbox` and `editor_reply`
+([Working with the person in the Editor](#working-with-the-person-in-the-editor)), and `guide_read`, which reads this
+guide a section at a time, offline.
 [AI agents: start here](#ai-agents-start-here) gives the command for each client. In Claude Code:
 
 ```sh
@@ -756,6 +758,30 @@ call after it the pairing's token. When the bridge takes another port (`47616`),
 `editor_pair`'s answers: type that address in Connect an AI…. Chrome asks once whether the page may reach your local
 network: allow it. Your document travels only between the tab and the `statewright mcp` your agent started on your
 computer; what the agent then sends to its own model is yours and the agent's choice.
+
+### Working with the person in the Editor
+
+While you are paired, a bar at the bottom of the Editor is your conversation with the person: they write there, with
+the level they look at and what they selected going along, and they read your answers there. Your changes show there
+too, each with Undo.
+
+- **Listen.** When you have finished what they asked, call `editor_wait` (it waits up to `seconds`, 240 by default,
+  and answers their messages as soon as they write). Your other calls go on while it waits.
+- **Notice.** While their messages wait unread, every answer you get carries `inbox: { unread }`: read them with
+  `editor_inbox` before you go on.
+- **Answer** with `editor_reply { text, to, point }`: `to` is the message you answer (`msg_…`), `point` the IDs of the
+  elements you mean, which the person can click to see. Say what you did and what you need; do not guess what they
+  meant — ask.
+- **Stop.** When the person presses Stop, every call but the conversation's answers `STOPPED` until you read
+  `editor_inbox`; then go on only as they say.
+- **The Channel.** Claude Code can bring each message to you as a turn of its own, even while it waits for the person
+  in the terminal: start it with `claude --dangerously-load-development-channels server:statewright` (Channels are a
+  research preview; the flag may change). Messages then arrive as `<channel source="statewright" message="msg_…">`;
+  answer them with `editor_reply` all the same. Without it, `editor_wait` is how you listen.
+
+A message reads `{ id, text, context: { project, level, selection } }`. The bar shows the person whether you are
+working (a call in the last 5 seconds), listening (waiting with `editor_wait`, or reached by the Channel) or away (their
+message waits as _not read yet_). The conversation lasts as long as the pairing: nothing of it goes into the document.
 
 ### `window.statewright`
 

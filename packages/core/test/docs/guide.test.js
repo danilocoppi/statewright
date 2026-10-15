@@ -8,6 +8,7 @@ import { createFileHost } from "../../src/agent/file-host.js";
 import { memoryFiles } from "../../src/agent/memory-files.js";
 import { auditOf } from "../../src/audit/index.js";
 import { toContract } from "../../src/contract/index.js";
+import { guideSection } from "../../src/mcp/guide.js";
 import { applyBatch } from "../../src/commands/index.js";
 import { createDocument } from "../../src/create.js";
 import { renderGuide } from "../../src/docs/guide.js";
@@ -294,8 +295,21 @@ describe("the platform guide", () => {
     expect(source).toContain("| `guide [section]` ");
     expect(source).toContain("(`statewright guide start-here`)");
     expect(source.replace(/\s+/g, " ")).toContain(
-      "plus `editor_pair` and `editor_disconnect`, and `guide_read`, which reads this guide a section at a time, offline."
+      "plus `editor_pair` and `editor_disconnect`, the conversation's `editor_wait`, `editor_inbox` and `editor_reply` " +
+        "([Working with the person in the Editor](#working-with-the-person-in-the-editor)), and `guide_read`, which " +
+        "reads this guide a section at a time, offline."
     );
+    // The conversation (collaboration spec §10): how an agent listens, reads, answers and stops.
+    const conversation = guideSection(source, "working-with-the-person-in-the-editor");
+    for (const said of [
+      "editor_wait",
+      "inbox: { unread }",
+      "editor_reply { text, to, point }",
+      "STOPPED",
+      "--dangerously-load-development-channels server:statewright"
+    ]) {
+      expect(conversation.ok && conversation.result.text, said).toContain(said);
+    }
   });
 
   it("tells how to work with AI agents: the server, pairing with the Editor, window.statewright, the operations, the hooks and auditing (AI interface spec §12)", () => {

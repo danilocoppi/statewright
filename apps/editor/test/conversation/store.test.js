@@ -15,6 +15,14 @@ describe("the conversation with the agent (collaboration spec §4)", () => {
     ]);
   });
 
+  it("knows a message read before its own number came back from the bridge", () => {
+    const store = createConversationStore();
+    const key = store.getState().add({ kind: "person", text: "hi", chips: [], state: "sending" });
+    store.getState().markRead(["msg_1"]);
+    store.getState().update(key, { id: "msg_1", state: "sent" });
+    expect(store.getState().lines[0].state).toBe("read");
+  });
+
   it("says the agent works within 5 s of a call, listens while it waits or by the Channel, and is away otherwise", () => {
     const base = { listening: false, channel: false, lastCall: 0 };
     expect(statusOf(base, 10_000)).toBe("away");

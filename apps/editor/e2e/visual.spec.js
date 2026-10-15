@@ -15,6 +15,7 @@ import { expect, test } from "@playwright/test";
 
 import { getPaidWithFindings } from "./fixtures/findings.js";
 import { paymentsWithProblems } from "./fixtures/problems.js";
+import { startMcp } from "./mcp.js";
 
 const EXAMPLES = [
   {
@@ -527,6 +528,40 @@ for (const theme of ["light", "dark"]) {
       await levels.getByRole("button", { name: "Show the elements of Lifecycle engine" }).click();
       await page.mouse.move(8, 892);
       await expect(levels).toHaveScreenshot(`levels-map-${theme}.png`, { maxDiffPixelRatio: 0.001 });
+    });
+
+    test("shows the conversation with a paired agent, its history open", async ({ page }) => {
+      await page.goto("/");
+      await page.getByRole("button", { name: /^Payments/ }).click();
+      await expect(page).toHaveURL(/\/p\/prj_payments$/);
+      await page.goto("/p/prj_payments/cnv_lifecycle");
+      await settled(page);
+      const mcp = await startMcp({ agent: "claude-code" });
+      try {
+        await page.getByTestId("project-menu").click();
+        await page.getByTestId("project-menu-connect").click();
+        await page.getByTestId("connect-address").fill(mcp.address);
+        await page.getByTestId("connect-address").press("Enter");
+        await expect(page.getByTestId("connect-status")).toHaveText("Waiting for the agent…");
+        await mcp.pair(await page.getByTestId("connect-code").textContent());
+        await expect(page.getByTestId("connect-dialog")).toBeHidden();
+        await page.locator('.react-flow__node[data-id="nod_expiryClock"]').click();
+        await page.getByTestId("conversation-field").fill("The expiry clock should pause while the payer verifies.");
+        await page.getByTestId("conversation-field").press("Enter");
+        const { messages } = await mcp.tool("editor_inbox");
+        await mcp.tool("editor_reply", {
+          text: "It does: verify.started pauses it, and verify.ended resumes it with the time given back.",
+          to: messages[0].id,
+          point: ["nod_paused"]
+        });
+        const bar = page.getByTestId("conversation-bar");
+        await bar.getByRole("button", { name: "Conversation history" }).click();
+        await expect(bar.locator("[data-status]")).toHaveAttribute("data-status", "away", { timeout: 8000 });
+        await page.mouse.move(8, 892);
+        await expect(bar).toHaveScreenshot(`conversation-${theme}.png`, { maxDiffPixelRatio: 0.001 });
+      } finally {
+        await mcp.stop();
+      }
     });
 
     test("shows the support popover open above its badge, on the Projects screen", async ({ page }) => {

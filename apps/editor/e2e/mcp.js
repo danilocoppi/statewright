@@ -15,6 +15,8 @@ export async function startMcp({ agent = "e2e-agent", args = [] } = {}) {
   const dir = await mkdtemp(join(tmpdir(), "statewright-e2e-"));
   const child = spawn(process.execPath, [BIN, "mcp", "--port", "0", ...args], { cwd: dir, stdio: "pipe" });
   const waiting = new Map();
+  /** What the server sent of its own accord: the Channel's notifications (collaboration spec §3.2). */
+  const notifications = [];
   let stdout = "";
   let stderr = "";
   child.stdout.setEncoding("utf8");
@@ -24,7 +26,8 @@ export async function startMcp({ agent = "e2e-agent", args = [] } = {}) {
     while ((end = stdout.indexOf("\n")) >= 0) {
       const message = JSON.parse(stdout.slice(0, end));
       stdout = stdout.slice(end + 1);
-      waiting.get(message.id)?.(message);
+      if (message.method) notifications.push(message);
+      else waiting.get(message.id)?.(message);
     }
   });
   child.stderr.on("data", chunk => (stderr += chunk));
@@ -48,6 +51,7 @@ export async function startMcp({ agent = "e2e-agent", args = [] } = {}) {
     address,
     tool,
     stderr: () => stderr,
+    notifications: () => [...notifications],
     /** Pair with the tab that shows `code`: tried again until the tab's code has reached the bridge. */
     async pair(code) {
       for (;;) {
