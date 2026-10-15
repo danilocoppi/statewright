@@ -8,6 +8,7 @@ export * from "./query/index.js";
 export * from "./commands/index.js";
 export { check, listRules } from "./rules/index.js";
 export { ROLES, associationsOf, performerOf } from "./roles/index.js";
+export { associate, associationRefusal, dissociateCommands } from "./roles/edit.js";
 export { GUEST_KINDS, isGuest } from "./roles/kinds.js";
 export { DOCUMENT_KINDS, createDocument } from "./create.js";
 export { slug } from "./names.js";
