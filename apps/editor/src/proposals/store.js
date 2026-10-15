@@ -38,6 +38,9 @@ export function createProposalsStore({ send = tellAgent } = {}) {
       list: [],
       /** @type {string | null} */
       shown: null,
+      /** A new part to bring into view once it is drawn (‹ › on a proposal): `{ level, id }`. */
+      focus: null,
+      setFocus: focus => set({ focus }),
       allowDeletes: false,
       send,
       /** Keep a batch as a proposal: its ID. */
@@ -56,8 +59,16 @@ export function createProposalsStore({ send = tellAgent } = {}) {
         const proposal = get().list.find(item => item.id === id && item.state === "waiting");
         if (!proposal) return { ok: false, reason: "no such proposal waits" };
         const editor = editorStore.getState();
-        if (editor.readOnly) return { ok: false, reason: i18n.t("agent:change.undoReadOnly") };
-        if (isSimulating()) return { ok: false, reason: i18n.t("agent:change.undoHeld") };
+        if (editor.readOnly) return { ok: false, reason: i18n.t("agent:proposal.refusedReadOnly") };
+        if (isSimulating()) return { ok: false, reason: i18n.t("agent:proposal.refusedSimulating") };
+        // Proposed for another project than the one open: it never applies here.
+        if (proposal.project && editor.doc?.project.id !== proposal.project) {
+          const stale = i18n.t("agent:proposal.otherProject");
+          update(id, { state: "stale", stale });
+          set({ shown: nextShown(id) });
+          await answer(proposal, { accepted: false, stale });
+          return { ok: false, reason: stale, stale: true };
+        }
         const result = editor.dispatch(proposal.commands, {
           label: proposal.title,
           origin: "ai",
@@ -96,7 +107,7 @@ export function createProposalsStore({ send = tellAgent } = {}) {
       /** The pairing ended: no proposals, and the agent may no longer delete without asking. */
       clear: () => {
         next = 0;
-        set({ list: [], shown: null, allowDeletes: false });
+        set({ list: [], shown: null, allowDeletes: false, focus: null });
       }
     };
   });

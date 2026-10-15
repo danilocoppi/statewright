@@ -98,4 +98,56 @@ describe("proposals (collaboration spec §7)", () => {
     simulationStore.setState({ mode: null });
     expect(proposalsStore.getState().list[0].state).toBe("waiting");
   });
+
+  it("shows the next proposal waiting once the one shown is accepted", async () => {
+    apply({ commands: LATE, propose: true, title: "First" });
+    apply({
+      commands: [{ type: "node.update", args: { id: "nod_paused", set: { name: "x" } } }],
+      propose: true,
+      title: "Second"
+    });
+    proposalsStore.getState().show("prp_1");
+    await proposalsStore.getState().accept("prp_1");
+    expect(proposalsStore.getState().shown).toBe("prp_2");
+    expect(proposalsStore.getState().list[1].state).toBe("waiting");
+  });
+
+  it("never applies a proposal to another project than its own", async () => {
+    apply({ commands: LATE, propose: true, title: "For payments" });
+    const other = structuredClone(readExample("payments"));
+    other.project.id = "prj_other";
+    act(() => editorStore.getState().open(other, { canvasId: "cnv_expiryClock" }));
+    const before = editorStore.getState().doc;
+    expect(await proposalsStore.getState().accept("prp_1")).toMatchObject({ ok: false, stale: true });
+    expect(editorStore.getState().doc).toBe(before);
+  });
+
+  it("refuses to propose in a tab that only reads, and says why it cannot accept while simulating", async () => {
+    apply({ commands: LATE, propose: true, title: "Late" });
+    simulationStore.setState({ mode: "start" });
+    expect((await proposalsStore.getState().accept("prp_1")).reason).toMatch(/Stop simulating to accept/);
+    simulationStore.setState({ mode: null });
+    act(() => editorStore.setState({ readOnly: true }));
+    expect(() => apply({ commands: LATE, propose: true, title: "Again" })).toThrow(/read-only/);
+  });
+
+  it("keeps the details of a batch Core refuses", () => {
+    let thrown;
+    try {
+      apply({ commands: [{ type: "catalog.remove", args: { id: "evt_payinDetected" } }] });
+    } catch (error) {
+      thrown = error;
+    }
+    expect(thrown?.code).toBe("IN_USE");
+    expect(thrown?.details?.usages?.length).toBeGreaterThan(0);
+  });
+
+  it("refuses to let the agent redo a removal the person undid", () => {
+    proposalsStore.getState().setAllowDeletes(true);
+    apply({ commands: REMOVE });
+    proposalsStore.getState().setAllowDeletes(false);
+    editorStore.getState().undo();
+    expect(() => editOperations["history.redo"]({ agent: "claude-code" }, {})).toThrow(/propose/);
+    expect(editorStore.getState().doc.canvases.cnv_expiryClock.nodes.nod_elapsed).toBeTruthy();
+  });
 });

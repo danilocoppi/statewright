@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { isSimulating } from "@/simulate/store";
-import { editorStore } from "@/store/editor";
+import { editorStore, useEditor } from "@/store/editor";
 
-import { summaryOf } from "./diff";
+import { diffOf, summaryOf, whereToShow } from "./diff";
 import { proposalsStore, useProposals } from "./store";
 
 /** A value as a change shows it: short. */
@@ -40,7 +40,12 @@ export function ProposalCard({ proposal, agent, onNavigate }) {
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
   const [refused, setRefused] = useState(null);
-  const { id, title, why, diff, forced, state } = proposal;
+  const { id, title, why, forced, state } = proposal;
+  // What it would do to the document as it is now, which is what Accept applies it to.
+  const doc = useEditor(store => store.doc);
+  const live = useMemo(() => diffOf(doc, proposal.commands), [doc, proposal.commands]);
+  const diff = live.ok ? live : proposal.diff;
+  const [where, setWhere] = useState(null);
   const steps = stepsOf(diff);
   const summary = summaryOf(diff);
   const counts = [
@@ -49,18 +54,29 @@ export function ProposalCard({ proposal, agent, onNavigate }) {
     ...(summary.changed ? [t("proposal.changed", { count: summary.changed })] : [])
   ].join(", ");
 
-  /** Go to a change: its level, the element brought into view; the proposal drawn. */
+  /**
+   * Go to a change: its level — for a level the batch makes, the level of the box that would hold it — and the
+   * element brought into view (a new one once its ghost is drawn); the proposal drawn.
+   */
   const go = index => {
     setStep(index);
     const target = steps[index];
     proposalsStore.getState().show(id);
-    if (!target?.level) return;
+    if (!target?.level) return setWhere(null);
     const editor = editorStore.getState();
-    if (target.level !== editor.canvasId) onNavigate(target.level);
-    if (target.mark !== "+" && !isSimulating()) editor.reveal(target.level, target.id);
+    const shown = whereToShow(editor.doc, diff.preview, target.level);
+    setWhere(shown);
+    if (!shown.level) return;
+    if (shown.level !== editor.canvasId) onNavigate(shown.level);
+    if (shown.fresh) {
+      if (shown.owner && editor.doc.canvases[shown.level]?.nodes[shown.owner]) editor.reveal(shown.level, shown.owner);
+      return;
+    }
+    if (target.mark === "+") proposalsStore.getState().setFocus({ level: target.level, id: target.id });
+    else if (!isSimulating()) editor.reveal(target.level, target.id);
   };
 
-  if (state === "stale") {
+  if (state === "stale" || !live.ok) {
     return (
       <section
         data-testid="conversation-proposal"
@@ -69,7 +85,9 @@ export function ProposalCard({ proposal, agent, onNavigate }) {
         className="mb-1.5 grid gap-2 rounded-control border border-warning/50 bg-warning-soft px-3 py-2.5"
       >
         <p className="text-read font-medium text-ink">{title}</p>
-        <p className="text-label text-warning">{t("proposal.stale", { reason: proposal.stale })}</p>
+        <p className="text-label text-warning">
+          {t("proposal.stale", { reason: proposal.stale ?? live.error?.message })}
+        </p>
         <div className="flex justify-end">
           <Button size="sm" variant="ghost" onClick={() => proposalsStore.getState().dismiss(id)}>
             {t("proposal.dismiss")}
@@ -155,7 +173,10 @@ export function ProposalCard({ proposal, agent, onNavigate }) {
         </span>
       </div>
       {step >= 0 && steps[step] && (
-        <p className="text-label text-sub">{`${steps[step].mark} ${steps[step].name} (${steps[step].kind})`}</p>
+        <p className="text-label text-sub">
+          {`${steps[step].mark} ${steps[step].name} (${steps[step].kind})`}
+          {where?.fresh ? ` ${t("proposal.newLevel")}` : ""}
+        </p>
       )}
       {rejecting && (
         <div className="flex items-center gap-1.5">

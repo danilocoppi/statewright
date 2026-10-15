@@ -111,4 +111,44 @@ describe("a proposal in the conversation (collaboration spec §7)", () => {
     await user.click(card().getByRole("button", { name: "Dismiss" }));
     expect(document.querySelector('[data-testid="conversation-proposal"]')).toBeNull();
   });
+
+  it("counts against the document as it is now, and steps into a new level from the box that holds it", async () => {
+    const user = userEvent.setup();
+    propose({ title: "Remove elapsed", commands: [{ type: "node.remove", args: { id: "nod_elapsed" } }] });
+    const before = card().getByText(/removed/).textContent;
+    act(() => {
+      editorStore
+        .getState()
+        .dispatch(
+          [{ type: "edge.add", args: { canvas: "cnv_expiryClock", edge: { from: "nod_paused", to: "nod_elapsed" } } }],
+          { label: "One more" }
+        );
+    });
+    expect(card().getByText(/removed/).textContent).not.toBe(before);
+    act(() => proposalsStore.getState().clear());
+    propose({
+      propose: true,
+      title: "Detail elapsed",
+      commands: [
+        {
+          type: "canvas.create",
+          args: { id: "cnv_elapsedDetail", kind: "machine", name: "Elapsed in detail", owner: "nod_elapsed" }
+        },
+        {
+          type: "node.add",
+          args: { canvas: "cnv_elapsedDetail", id: "nod_notify", node: { kind: "state", name: "notify" } }
+        }
+      ]
+    });
+    await user.click(card().getByRole("button", { name: "Next change" }));
+    expect(onNavigate).toHaveBeenLastCalledWith("cnv_expiryClock");
+    expect(card().getByText(/on a new level/)).toBeTruthy();
+  });
+
+  it("lets the person take back the leave to delete without asking, in the bar", async () => {
+    const user = userEvent.setup();
+    act(() => proposalsStore.getState().setAllowDeletes(true));
+    await user.click(document.querySelector('[data-testid="conversation-deletes"]'));
+    expect(proposalsStore.getState().allowDeletes).toBe(false);
+  });
 });

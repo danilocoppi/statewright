@@ -20,7 +20,7 @@ import { chipsOf, contextOf } from "./context";
 import { answerWords } from "./answers";
 import { QUICK } from "./quick";
 import { ProposalCard } from "@/proposals/ProposalCard";
-import { useProposals } from "@/proposals/store";
+import { proposalsStore, useProposals } from "@/proposals/store";
 
 import { Question } from "./Question";
 import { WORKING_MS, conversationStore, statusOf, useConversation } from "./store";
@@ -290,6 +290,7 @@ export function ConversationBar({ onNavigate }) {
   const lines = useConversation(state => state.lines);
   const draft = useConversation(state => state.draft);
   const proposals = useProposals(state => state.list);
+  const allowDeletes = useProposals(state => state.allowDeletes);
   const action = useConversation(state => state.action);
   const historyOpen = useConversation(state => state.historyOpen);
   const listening = useConversation(state => state.listening);
@@ -517,8 +518,20 @@ export function ConversationBar({ onNavigate }) {
             className="max-h-[9lh] [field-sizing:content] min-h-[1lh] resize-none bg-transparent text-read text-ink outline-none placeholder:text-muted"
           />
         </div>
-        <span className="mb-2 hidden sm:flex">
+        <span className="mb-2 hidden flex-col items-end gap-0.5 sm:flex">
           <Status status={status} />
+          {/* The leave to delete without asking, shown while it holds, and taken back here (spec §7). */}
+          {allowDeletes && (
+            <button
+              type="button"
+              data-testid="conversation-deletes"
+              title={t("proposal.turnOff")}
+              onClick={() => proposalsStore.getState().setAllowDeletes(false)}
+              className="text-label text-warning hover:underline"
+            >
+              {t("proposal.deletesOn", { agent })} · {t("proposal.turnOff")}
+            </button>
+          )}
         </span>
         <Button
           variant={stopping ? "secondary" : "primary"}

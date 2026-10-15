@@ -79,4 +79,30 @@ describe("a proposal drawn on the canvas (collaboration spec §7)", () => {
     await new Promise(resolve => setTimeout(resolve, 30));
     expect(drawn("change")).toEqual([]);
   });
+
+  it("places the ghost against the document as it is now, not as it was when proposed", async () => {
+    act(() => {
+      propose({
+        title: "One",
+        commands: [
+          { type: "node.add", args: { canvas: "cnv_expiryClock", id: "nod_one", node: { kind: "state", name: "one" } } }
+        ]
+      });
+      propose({
+        title: "Two",
+        commands: [
+          { type: "node.add", args: { canvas: "cnv_expiryClock", id: "nod_two", node: { kind: "state", name: "two" } } }
+        ]
+      });
+    });
+    await act(async () => {
+      await proposalsStore.getState().accept("prp_1");
+    });
+    act(() => proposalsStore.getState().show("prp_2"));
+    await waitFor(() => expect(drawn("add")).toEqual(["nod_two"]));
+    const one = editorStore.getState().doc.layout.canvases.cnv_expiryClock.nodes.nod_one;
+    const ghost = document.querySelector('[data-proposed="add"][data-id="nod_two"]');
+    const at = [Number(ghost.getAttribute("x")), Number(ghost.getAttribute("y"))];
+    expect(one ? at[0] === one.x && at[1] === one.y : true).toBe(false);
+  });
 });

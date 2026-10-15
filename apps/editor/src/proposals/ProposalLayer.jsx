@@ -1,12 +1,13 @@
-import { ViewportPortal } from "@xyflow/react";
-import { useEffect, useState } from "react";
+import { ViewportPortal, useReactFlow } from "@xyflow/react";
+import { useEffect, useMemo, useState } from "react";
 import { applyBatch } from "statewright";
 
 import { geometryOf } from "@/marks/payload";
 import { useEditor } from "@/store/editor";
 import { layoutClient } from "@/workers";
 
-import { useProposals } from "./store";
+import { diffOf } from "./diff";
+import { proposalsStore, useProposals } from "./store";
 
 const empty = { boxes: [], regions: [], lines: [] };
 const points = line => line.points.map(point => point.join(",")).join(" ");
@@ -20,16 +21,21 @@ const points = line => line.points.map(point => point.join(",")).join(" ");
 export function ProposalLayer({ canvasId }) {
   const doc = useEditor(state => state.doc);
   const proposal = useProposals(state => state.list.find(item => item.id === state.shown && item.state === "waiting"));
+  const focus = useProposals(state => state.focus);
+  const flow = useReactFlow();
+  // Against the document as it is now: where the new parts would stand, what would go, what would change.
+  const live = useMemo(() => (proposal && doc ? diffOf(doc, proposal.commands) : null), [proposal, doc]);
+  const diff = live?.ok ? live : null;
   const [ghosts, setGhosts] = useState({ key: null, geometry: empty });
   const here = item => item.level === canvasId;
-  const added = new Set((proposal?.diff.added ?? []).filter(here).map(item => item.id));
+  const added = new Set((diff?.added ?? []).filter(here).map(item => item.id));
   const key = proposal && added.size ? `${proposal.id}:${canvasId}` : null;
 
   // Where the new parts would stand: the preview, its new boxes placed.
   useEffect(() => {
-    if (!key) return undefined;
+    if (!key || !diff) return undefined;
     let current = true;
-    const { preview } = proposal.diff;
+    const { preview } = diff;
     layoutClient()
       .request("layout", { doc: preview, canvasId, scope: "missing" })
       .then(commands => {
@@ -41,11 +47,20 @@ export function ProposalLayer({ canvasId }) {
     return () => {
       current = false;
     };
-  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [key, diff]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!proposal || !doc?.canvases[canvasId]) return null;
-  const removed = new Set(proposal.diff.removed.filter(here).map(item => item.id));
-  const changed = new Set(proposal.diff.changed.filter(here).map(item => item.id));
+  // A new part asked for (‹ › on the card): into view once its ghost is drawn.
+  useEffect(() => {
+    if (!focus || focus.level !== canvasId || ghosts.key !== key) return;
+    const part = ghosts.geometry.boxes.find(box => box.id === focus.id);
+    if (!part) return;
+    flow.setCenter(part.x + part.width / 2, part.y + part.height / 2, { zoom: flow.getZoom(), duration: 200 });
+    proposalsStore.getState().setFocus(null);
+  }, [focus, ghosts, key, canvasId, flow]);
+
+  if (!proposal || !diff || !doc?.canvases[canvasId]) return null;
+  const removed = new Set(diff.removed.filter(here).map(item => item.id));
+  const changed = new Set(diff.changed.filter(here).map(item => item.id));
   if (!added.size && !removed.size && !changed.size) return null;
   const now = removed.size || changed.size ? geometryOf(doc, canvasId) : empty;
   const ghost = ghosts.key === key ? ghosts.geometry : empty;

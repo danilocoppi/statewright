@@ -15,6 +15,8 @@ import { indexOf } from "@/lib/derived";
 function describe(doc, index, id) {
   const entry = index.get(id);
   const item = itemOf(doc, index, id);
+  // A level is shown on itself.
+  if (entry?.type === "canvas") return { id, name: entry.value.name ?? id, kind: "canvas", level: id };
   if (item) return { id, name: item.name, kind: item.kind, level: item.level ?? null };
   return { id, name: entry?.value?.name ?? id, kind: entry?.type ?? "element", level: entry?.canvas ?? null };
 }
@@ -40,7 +42,7 @@ const valueAt = (doc, path) => path.reduce((value, key) => (value == null ? unde
  * @param {any} doc
  * @param {Array<{ type: string, args?: object }>} commands
  * @returns {{ ok: true, preview: any, added: Item[], removed: Item[], changed: Change[], levels: string[] } |
- *   { ok: false, error: { code: string, message: string, index?: number } }}
+ *   { ok: false, error: { code: string, message: string, details?: object, index?: number } }}
  */
 export function diffOf(doc, commands) {
   let applied;
@@ -52,6 +54,7 @@ export function diffOf(doc, commands) {
       error: {
         code: error.code ?? "INTERNAL",
         message: error.message,
+        ...(error.details !== undefined ? { details: error.details } : {}),
         ...(error.index !== undefined ? { index: error.index } : {})
       }
     };
@@ -97,3 +100,24 @@ export const summaryOf = diff => ({
   changed: diff.changed.length,
   levels: diff.levels.length
 });
+
+/**
+ * Where a change can be shown in the document as it is: its own level, or — for a level the batch makes — the level
+ * of the box that would hold it (that box, if it is there already, to bring into view).
+ * @returns {{ level: string | null, owner: string | null, fresh: boolean }}
+ */
+export function whereToShow(doc, preview, level) {
+  let at = level;
+  let owner = null;
+  for (let step = 0; at && !doc.canvases[at] && step < 16; step += 1) {
+    const holder = Object.entries(preview.canvases).flatMap(([canvasId, canvas]) =>
+      Object.entries(canvas.nodes)
+        .filter(([, node]) => node.inner?.canvas === at)
+        .map(([id]) => ({ canvasId, id }))
+    )[0];
+    if (!holder) return { level: null, owner: null, fresh: true };
+    at = holder.canvasId;
+    owner = holder.id;
+  }
+  return { level: at ?? null, owner, fresh: at !== level };
+}

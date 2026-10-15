@@ -181,6 +181,12 @@
       "stale": "no longer applies",
       "dismissed": "dismissed"
     },
-    "refused": "Not now: {{reason}}"
+    "refused": "Not now: {{reason}}",
+    "newLevel": "(on a new level)",
+    "refusedReadOnly": "This tab only reads the project: accept it in the tab that edits it.",
+    "refusedSimulating": "Stop simulating to accept this.",
+    "otherProject": "it was proposed for another project",
+    "deletesOn": "{{agent}} may delete without asking",
+    "turnOff": "Turn off"
   }
 }

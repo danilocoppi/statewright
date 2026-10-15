@@ -1,13 +1,14 @@
 // The Editor host's editing (AI interface spec §4.2: edit; §7.3): an agent's batch is one history entry of its own,
 // `origin: "ai"`, made visible on the canvas and in a toast; an agent undoes and redoes only its own entries.
 import { AgentError, problemsChange } from "statewright/agent";
-import { check } from "statewright";
+import { applyPatches, check } from "statewright";
 
 import { isSimulating } from "@/simulate/store";
 import { editorStore } from "@/store/editor";
 import { layoutClient } from "@/workers";
 
 import { conversationStore } from "@/conversation/store";
+import { indexOf } from "@/lib/derived";
 import { diffOf, removes } from "@/proposals/diff";
 import { proposalsStore } from "@/proposals/store";
 
@@ -48,13 +49,24 @@ function ownEntry(entry, agent, word) {
     throw new AgentError("NOT_AI_CHANGE", `The last change to ${word} is not yours: only the person can ${word} it`);
 }
 
+const paired = () => connection.store.getState().status === "connected";
+
+/** What redoing an entry would remove: the IDs there now and gone after. */
+function removedBy(entry) {
+  const { doc } = editorStore.getState();
+  const after = applyPatches(doc, entry.patches);
+  const before = indexOf(doc);
+  const next = indexOf(after);
+  return [...before.entries.keys()].filter(id => before.get(id)?.type !== "project" && !next.has(id));
+}
+
 /**
  * An agent's batch while it is paired (collaboration spec §7): kept as a proposal when it asks, or when it removes
  * anything and the person has not let it delete without asking; applied otherwise.
  */
 function applyOrPropose(context, { commands, label, propose, title, why }) {
-  const paired = connection.store.getState().status === "connected";
-  if (!paired) {
+  const isPaired = paired();
+  if (!isPaired) {
     if (propose) {
       throw new AgentError("NOT_ALLOWED", "proposals need the person's conversation: pair with the Editor first");
     }
@@ -62,12 +74,15 @@ function applyOrPropose(context, { commands, label, propose, title, why }) {
   }
   const diff = diffOf(editorStore.getState().doc, commands);
   if (!diff.ok) {
-    const { code, message, index } = diff.error;
-    throw new AgentError(code, message, index === undefined ? undefined : { index });
+    const { code, message, details, index } = diff.error;
+    throw new AgentError(code, message, { ...details, ...(index === undefined ? {} : { index }) });
   }
   const forced = removes(diff) && !proposalsStore.getState().allowDeletes;
   if (!propose && !forced) return changeAsAgent(commands, label, context);
+  // A tab that only reads cannot accept anything: no proposal is kept there.
+  if (editorStore.getState().readOnly) throw refusal();
   const id = proposalsStore.getState().propose({
+    project: editorStore.getState().doc.project.id,
     title: title ?? label,
     ...(why ? { why } : {}),
     label,
@@ -100,6 +115,14 @@ export const editOperations = {
   "history.redo": ({ agent }) => {
     const entry = editorStore.getState().history.future[0];
     ownEntry(entry, agent, "redo");
+    // Redoing a removal the person undid needs their yes again (collaboration spec §7).
+    const removed = paired() && !proposalsStore.getState().allowDeletes ? removedBy(entry) : [];
+    if (removed.length) {
+      throw new AgentError(
+        "NOT_ALLOWED",
+        `That change removes ${removed.join(", ")}, and the person undid it: propose it again (batch_apply with propose)`
+      );
+    }
     const refused = refusal();
     if (refused) throw refused;
     editorStore.getState().redo();

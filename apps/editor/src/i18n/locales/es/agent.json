@@ -181,6 +181,12 @@
       "stale": "ya no se aplica",
       "dismissed": "descartada"
     },
-    "refused": "Ahora no: {{reason}}"
+    "refused": "Ahora no: {{reason}}",
+    "newLevel": "(en un nivel nuevo)",
+    "refusedReadOnly": "Esta pestaña solo lee el proyecto: acéptala en la pestaña que lo edita.",
+    "refusedSimulating": "Detén la simulación para aceptarla.",
+    "otherProject": "se propuso para otro proyecto",
+    "deletesOn": "{{agent}} puede eliminar sin preguntar",
+    "turnOff": "Desactivar"
   }
 }
