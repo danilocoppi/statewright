@@ -5,7 +5,7 @@ import { edgeLabel } from "statewright";
 import { indexOf } from "@/lib/derived";
 
 /** A selected element as the agent reads it: its ID, name, kind and level. */
-function itemOf(doc, index, id) {
+export function itemOf(doc, index, id) {
   const entry = index.get(id);
   if (!entry) return null;
   const { value } = entry;
