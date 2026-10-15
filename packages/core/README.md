@@ -206,6 +206,13 @@ tab). A box of the system that acts for a party drives the transitions that part
 inside the frame and it drives it (the transition's `by`); a box with no party is first asked whom it acts for — a
 party of the catalog, or a new one named as typed — and gets it in the same change.
 
+On a flow level, drag an emit step onto a state guest and it leads to that state: its event becomes one that moves the
+state's machine there (asked which, when several do). Drag a call, webhook or action step onto a participant and it is
+performed by that party (a call's own `party`; a webhook's or action's party is the catalog's, shared by every flow
+that uses it). A lane with a `party` performs the steps in it that name no party of their own; layout gives each lane
+a band of its own, captioned with its party. The contract says who performs each flow step (`performedBy`), and the
+simulation names who performs a call.
+
 ### Definitions
 
 A definition (`def_*`) is a reusable canvas. Elements whose `inner` is `{ "definition": "def_x" }` are its instances:

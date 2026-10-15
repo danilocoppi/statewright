@@ -7,9 +7,9 @@
   },
   "signature": {
     "algorithm": "sha256",
-    "content": "df1f14c8b3ed4af38404af5061e758b8a532e324c6226924d99bd7ae40bb7eea",
-    "annotations": "d4151a638dcf4aabffce3017110ee84688b96bd5a14be18c5435882cb137e3ed",
-    "layout": "39a777a90e31c4acd7e8e1acd3158faac446a8ac84959045328cdd298fe3d07f",
+    "content": "ed916a3b73d89bf5e0c0d027ab3ff8355b395ef9656bd610a12d658518ab0af3",
+    "annotations": "607529fb6eac20904a141efd98a99c1763730535185b12040aeeff7f5ec8b792",
+    "layout": "058b782ed82ecfef3993094298bf3c3c20b1df811eff20522476f09fd71af0f4",
     "signedAt": "2026-10-15T12:00:00Z"
   },
   "project": {
@@ -54,7 +54,17 @@
       }
     },
     "guards": {},
-    "endpoints": {},
+    "endpoints": {
+      "ept_pay": {
+        "name": "Pay",
+        "method": "POST",
+        "path": "/orders/pay",
+        "request": null,
+        "responses": {
+          "200": null
+        }
+      }
+    },
     "webhooks": {},
     "timers": {},
     "statuses": {},
@@ -127,6 +137,54 @@
           "from": "nod_cardAccepted",
           "to": "nod_chargeDeclined",
           "kind": "false"
+        }
+      }
+    },
+    "cnv_checkout": {
+      "kind": "flow",
+      "name": "Checkout",
+      "caption": "How the shop checks an order out: Payments is called, then the order is placed, which takes it to charging.",
+      "nodes": {
+        "nod_chargingHere": {
+          "kind": "state",
+          "target": "nod_charging"
+        },
+        "nod_checkoutDone": {
+          "kind": "end",
+          "name": "Checked out",
+          "outcome": "success"
+        },
+        "nod_checkoutStart": {
+          "kind": "start"
+        },
+        "nod_payCall": {
+          "kind": "call",
+          "name": "Authorise payment",
+          "endpoint": "ept_pay",
+          "party": "pty_payments"
+        },
+        "nod_paymentsInFlow": {
+          "kind": "participant",
+          "party": "pty_payments"
+        },
+        "nod_placeOrder": {
+          "kind": "emit",
+          "name": "Place the order",
+          "event": "evt_orderPlaced"
+        }
+      },
+      "edges": {
+        "edg_checkoutEnd": {
+          "from": "nod_placeOrder",
+          "to": "nod_checkoutDone"
+        },
+        "edg_checkoutPay": {
+          "from": "nod_checkoutStart",
+          "to": "nod_payCall"
+        },
+        "edg_checkoutPlace": {
+          "from": "nod_payCall",
+          "to": "nod_placeOrder"
         }
       }
     },
@@ -247,7 +305,10 @@
         },
         "nod_shop": {
           "kind": "service",
-          "name": "Shop"
+          "name": "Shop",
+          "inner": {
+            "canvas": "cnv_checkout"
+          }
         }
       },
       "edges": {
@@ -273,6 +334,26 @@
     }
   },
   "annotations": {
+    "lanes": {
+      "lne_customer": {
+        "canvas": "cnv_checkout",
+        "label": "Customer",
+        "nodes": [
+          "nod_checkoutStart",
+          "nod_placeOrder",
+          "nod_checkoutDone"
+        ],
+        "party": "pty_customer"
+      },
+      "lne_payments": {
+        "canvas": "cnv_checkout",
+        "label": "Payments",
+        "nodes": [
+          "nod_payCall"
+        ],
+        "party": "pty_payments"
+      }
+    },
     "scenarios": {
       "scn_aDeclinedCard": {
         "name": "A declined card",
@@ -451,6 +532,34 @@
           }
         }
       },
+      "cnv_checkout": {
+        "nodes": {
+          "nod_chargingHere": {
+            "x": 508,
+            "y": 228
+          },
+          "nod_checkoutDone": {
+            "x": 508,
+            "y": 33
+          },
+          "nod_checkoutStart": {
+            "x": 0,
+            "y": 52
+          },
+          "nod_payCall": {
+            "x": 84,
+            "y": 140
+          },
+          "nod_paymentsInFlow": {
+            "x": 296,
+            "y": 251
+          },
+          "nod_placeOrder": {
+            "x": 296,
+            "y": 26
+          }
+        }
+      },
       "cnv_order": {
         "nodes": {
           "nod_cancelled": {
@@ -606,7 +715,7 @@
           },
           "nod_shop": {
             "x": 2712,
-            "y": 255
+            "y": 251
           }
         },
         "edges": {
@@ -622,11 +731,11 @@
               ],
               [
                 2660,
-                267
+                265
               ],
               [
                 2712,
-                267
+                265
               ]
             ],
             "labelAt": [
@@ -654,11 +763,11 @@
             "points": [
               [
                 2712,
-                291
+                293
               ],
               [
                 2660,
-                291
+                293
               ],
               [
                 2660,

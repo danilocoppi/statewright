@@ -188,6 +188,13 @@ describe("the platform guide", () => {
     for (const words of ["drives", "inside the frame", "whom it acts for"]) expect(section).toContain(words);
   });
 
+  it("tells how a flow's steps lead to a state, who performs them, and lanes of a party (mixed levels plan M4)", () => {
+    const section = sectionOf("### Guests: elements of other kinds");
+    for (const words of ["leads to", "drag an emit step onto a state guest", "performed by", "`performedBy`", "band"]) {
+      expect(section).toContain(words);
+    }
+  });
+
   it("tells where the findings on an edge are drawn (source-of-truth spec §6)", () => {
     const section = source.slice(source.indexOf("\n## Reading a diagram\n"), source.indexOf("\n## Using the editor\n"));
     expect(section).toContain("The codes of the\nfindings on an edge are a badge under its label");

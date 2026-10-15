@@ -17,6 +17,12 @@
 | Charge card |  |  | Charges the order's total to the customer's card. |
 | Send receipt |  |  |  |
 
+### Endpoints
+
+| Endpoint | Request | Auth | Description |
+| --- | --- | --- | --- |
+| Pay | POST /orders/pay |  |  |
+
 ### Parties
 
 | Party | Kind | Description |
@@ -95,6 +101,32 @@ The customer places the order; the card is accepted, so the charge's own steps c
 Starts 2026-03-02T10:00:00Z.
 
 1. order.placed — Customer places the order. Payments charges the card: accepted.
+
+## Order lifecycle › Checkout
+
+*flow*
+
+How the shop checks an order out: Payments is called, then the order is placed, which takes it to charging.
+
+| Element | Kind | Notes |
+| --- | --- | --- |
+| charging | state |  |
+| Checked out | end |  |
+| nod_checkoutStart | start |  |
+| Authorise payment | call |  |
+| Payments | participant |  |
+| Place the order | emit |  |
+
+| From | To | What |
+| --- | --- | --- |
+| Place the order | Checked out |  |
+| start | Authorise payment |  |
+| Authorise payment | Place the order |  |
+
+| From | Role | To | About |
+| --- | --- | --- | --- |
+| Place the order | leads to | charging | order.placed |
+| Authorise payment | is done by | Payments |  |
 
 ## Charge card
 

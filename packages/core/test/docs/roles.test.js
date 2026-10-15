@@ -65,3 +65,17 @@ describe("a lifecycle's drivers in the documentation (mixed levels spec §4.3)",
     );
   });
 });
+
+describe("a flow's roles in the example (mixed levels spec §4.4)", () => {
+  it("lists what leads to a state and who performs a step, and says who performs each step in the contract", async () => {
+    const markdown = toMarkdown(order());
+    expect(markdown).toMatch(/\| Place the order \| leads to \| charging \| order\.placed \|/);
+    expect(markdown).toMatch(/\| Authorise payment \| is done by \| Payments \|/);
+    const { contract } = await toContract(order());
+    const steps = contract.flows.find(flow => flow.id === "cnv_checkout").steps;
+    expect(Object.fromEntries(steps.map(step => [step.id, step.performedBy]))).toMatchObject({
+      nod_payCall: "Payments",
+      nod_placeOrder: "Customer"
+    });
+  });
+});

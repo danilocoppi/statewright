@@ -9,11 +9,15 @@ This is a generated summary of the Statewright document `prj_orderLifecycle` (fo
 | `act_chargeCard` | action | Charge card |  |
 | `act_sendReceipt` | action | Send receipt |  |
 | `cnv_chargeCard` | canvas | Charge card |  |
+| `cnv_checkout` | canvas | Checkout |  |
 | `cnv_order` | canvas | Order |  |
 | `cnv_orderLifecycle` | canvas | Order lifecycle |  |
+| `ept_pay` | endpoint | Pay |  |
 | `evt_orderCancelled` | event | order.cancelled |  |
 | `evt_orderPlaced` | event | order.placed |  |
 | `evt_paymentCaptured` | event | payment.captured |  |
+| `lne_customer` | lane | Customer |  |
+| `lne_payments` | lane | Payments |  |
 | `nod_cancelled` | state node | cancelled | `cnv_order` |
 | `nod_captured` | emit node | nod_captured | `cnv_chargeCard` |
 | `nod_cardAccepted` | if node | nod_cardAccepted | `cnv_chargeCard` |
@@ -22,6 +26,9 @@ This is a generated summary of the Statewright document `prj_orderLifecycle` (fo
 | `nod_chargeStart` | start node | nod_chargeStart | `cnv_chargeCard` |
 | `nod_chargeSteps` | steps node | Charge card | `cnv_order` |
 | `nod_charging` | state node | charging | `cnv_order` |
+| `nod_chargingHere` | state node | charging | `cnv_checkout` |
+| `nod_checkoutDone` | end node | Checked out | `cnv_checkout` |
+| `nod_checkoutStart` | start node | nod_checkoutStart | `cnv_checkout` |
 | `nod_created` | state node | created | `cnv_order` |
 | `nod_customer` | actor node | Customer | `cnv_orderLifecycle` |
 | `nod_customerHere` | participant node | Customer | `cnv_order` |
@@ -29,8 +36,11 @@ This is a generated summary of the Statewright document `prj_orderLifecycle` (fo
 | `nod_markCharged` | assign node | nod_markCharged | `cnv_chargeCard` |
 | `nod_orders` | store node | Orders | `cnv_orderLifecycle` |
 | `nod_paid` | state node | paid | `cnv_order` |
+| `nod_payCall` | call node | Authorise payment | `cnv_checkout` |
 | `nod_payments` | service node | Payments | `cnv_orderLifecycle` |
 | `nod_paymentsHere` | participant node | Payments | `cnv_order` |
+| `nod_paymentsInFlow` | participant node | Payments | `cnv_checkout` |
+| `nod_placeOrder` | emit node | Place the order | `cnv_checkout` |
 | `nod_shop` | service node | Shop | `cnv_orderLifecycle` |
 | `prj_orderLifecycle` | project | Order lifecycle |  |
 | `pty_customer` | party | Customer |  |
@@ -42,6 +52,7 @@ This is a generated summary of the Statewright document `prj_orderLifecycle` (fo
 
 - `cnv_orderLifecycle` "Order lifecycle" [system]
   - `nod_orders` → `cnv_order` "Order" [machine]
+  - `nod_shop` → `cnv_checkout` "Checkout" [flow]
 - `act_chargeCard` → `cnv_chargeCard` "Charge card" [flow]
 
 ## Canvases
@@ -57,6 +68,21 @@ flow
 | `edg_chargeEnd` | `nod_captured` | `nod_chargeDone` |  |  |
 | `edg_chargeMark` | `nod_markCharged` | `nod_captured` |  |  |
 | `edg_chargeRefused` | `nod_cardAccepted` | `nod_chargeDeclined` | false |  |
+
+### `cnv_checkout` "Checkout"
+
+flow
+
+Roles (derived; change the field that holds them):
+
+- `nod_placeOrder` leads to `nod_chargingHere` — `event` of `nod_placeOrder`
+- `nod_payCall` is done by `nod_paymentsInFlow` — `party` of `nod_payCall`
+
+| Edge | From | To | Kind | References |
+| --- | --- | --- | --- | --- |
+| `edg_checkoutEnd` | `nod_placeOrder` | `nod_checkoutDone` |  |  |
+| `edg_checkoutPay` | `nod_checkoutStart` | `nod_payCall` |  |  |
+| `edg_checkoutPlace` | `nod_payCall` | `nod_placeOrder` |  |  |
 
 ### `cnv_order` "Order"
 
