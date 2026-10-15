@@ -84,7 +84,8 @@ function subtree(doc, canvasId, via, definition, ancestors) {
  * Levels of detail as trees: from the root canvas, from catalog items with an implementation flow,
  * and from every definition body (for libraries/navigation).
  * @param {any} doc
- * @returns {{ root: TreeNode, catalog: TreeNode[], definitions: TreeNode[] }}
+ * @returns {{ root: TreeNode, catalog: TreeNode[], definitions: TreeNode[], unattached: TreeNode[] }} `unattached`: the
+ *   levels none of the others reaches (spec §22 canvas.orphan), with the levels inside them.
  */
 export function hierarchy(doc) {
   const catalog = [];
@@ -97,7 +98,40 @@ export function hierarchy(doc) {
   const definitions = Object.entries(doc.definitions)
     .filter(([, definition]) => doc.canvases[definition.canvas])
     .map(([id, definition]) => subtree(doc, definition.canvas, null, id, new Set()));
-  return { root: subtree(doc, doc.root, null, null, new Set()), catalog, definitions };
+  const root = subtree(doc, doc.root, null, null, new Set());
+  return { root, catalog, definitions, unattached: unattached(doc, [root, ...catalog, ...definitions]) };
+}
+
+/** Every canvas in a tree. */
+function walk(tree, into = new Set()) {
+  into.add(tree.canvas);
+  for (const child of tree.children) walk(child, into);
+  return into;
+}
+
+/**
+ * Levels no tree reaches (canvas.orphan), as trees of their own: those that no other unattached level enters first,
+ * then any left over (unattached levels that enter each other in a ring).
+ */
+function unattached(doc, trees) {
+  const seen = new Set();
+  for (const tree of trees) walk(tree, seen);
+  const left = Object.keys(doc.canvases).filter(id => !seen.has(id));
+  const entered = new Set(
+    left.flatMap(id =>
+      Object.values(doc.canvases[id].nodes ?? {})
+        .map(node => interior(doc, node.inner)?.canvas)
+        .filter(child => child && child !== id)
+    )
+  );
+  const found = [];
+  for (const id of [...left.filter(id => !entered.has(id)), ...left]) {
+    if (seen.has(id)) continue;
+    const tree = subtree(doc, id, null, null, new Set());
+    walk(tree, seen);
+    found.push(tree);
+  }
+  return found;
 }
 
 function findPath(tree, canvasId) {
@@ -111,7 +145,8 @@ function findPath(tree, canvasId) {
 
 /**
  * Breadcrumb to an element: the chain of canvases from a tree root down to the canvas that is (or contains) `id`.
- * Searches the root tree first, then catalog implementations, then definition bodies. Null when unreachable.
+ * Searches the root tree first, then catalog implementations, then definition bodies, then unattached levels. Null
+ * when the element is on no level.
  * @param {any} doc
  * @param {string} id A canvas, node, edge or region ID.
  * @returns {Array<{ canvas: string, via: string|null, definition: string|null }> | null}
@@ -122,7 +157,7 @@ export function pathTo(doc, id) {
   const canvasId = entry.type === "canvas" ? id : entry.canvas;
   if (!canvasId) return null;
   const trees = hierarchy(doc);
-  for (const tree of [trees.root, ...trees.catalog, ...trees.definitions]) {
+  for (const tree of [trees.root, ...trees.catalog, ...trees.definitions, ...trees.unattached]) {
     const path = findPath(tree, canvasId);
     if (path) return path.map(({ canvas, via, definition }) => ({ canvas, via, definition }));
   }

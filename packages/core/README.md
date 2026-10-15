@@ -298,6 +298,7 @@ opens, but verification reports the changed part, and the CLI refuses to re-sign
 | `canvas.orphan` | warning | A non-root canvas is not referenced by any inner or definition. |
 | `canvas.multiOwner` | error | A canvas is the interior of more than one owner (reuse goes through definitions). |
 | `canvas.dense` | warning | A canvas has more than 12 nodes (suggests moving detail into a level). |
+| `definition.unused` | warning | A definition has no instance and no reference points at it. |
 | `definition.cycle` | error | Definitions contain each other (directly or through other levels). |
 | `canvas.cycle` | error | Own interiors contain each other, so the levels never end. |
 | `machine.region` | error | On a machine with regions every node declares one; without regions no node does. |

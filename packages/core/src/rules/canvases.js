@@ -74,6 +74,19 @@ export default [
     }
   },
   {
+    code: "definition.unused",
+    severity: "warning",
+    description: "A definition has no instance and no reference points at it.",
+    check(facts, report) {
+      const used = new Set(
+        facts.refs.filter(ref => ref.section === "content" && ref.source !== ref.target).map(ref => ref.target)
+      );
+      for (const [id] of sorted(facts.doc.definitions)) {
+        if (!used.has(id)) report({ target: id, message: `${facts.describe(id)} is not used anywhere` });
+      }
+    }
+  },
+  {
     code: "definition.cycle",
     severity: "error",
     description: "Definitions contain each other (directly or through other levels).",

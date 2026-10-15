@@ -101,3 +101,19 @@ describe("definition.cycle / canvas.cycle", () => {
     expect([...targets(doc, "definition.cycle"), ...targets(doc, "canvas.cycle")]).toEqual([]);
   });
 });
+
+describe("definition.unused", () => {
+  it("reports a definition nothing uses, as an instance or through a reference", () => {
+    const doc = cleanDoc();
+    doc.canvases.cnv_body = { kind: "flow", name: "Body", nodes: {}, edges: {} };
+    doc.definitions.def_body = { kind: "flow", name: "Body", canvas: "cnv_body" };
+    expect(problems(doc, "definition.unused").map(problem => [problem.target, problem.severity])).toEqual([
+      ["def_body", "warning"]
+    ]);
+    doc.canvases.cnv_m.nodes.nod_see = { kind: "ref", name: "see", target: "def_body" };
+    expect(targets(doc, "definition.unused")).toEqual([]);
+    delete doc.canvases.cnv_m.nodes.nod_see;
+    doc.canvases.cnv_root.nodes.nod_use = { kind: "service", name: "Use", inner: { definition: "def_body" } };
+    expect(targets(doc, "definition.unused")).toEqual([]);
+  });
+});

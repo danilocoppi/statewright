@@ -191,6 +191,24 @@ describe("hierarchy / pathTo", () => {
   });
 });
 
+describe("hierarchy: unattached levels", () => {
+  it("lists levels that no tree reaches, with the levels inside them, and finds the way to them", () => {
+    const doc = minimalDoc();
+    doc.canvases.cnv_lost = {
+      kind: "system",
+      name: "Lost",
+      nodes: { nod_box: { kind: "service", name: "Box", inner: { canvas: "cnv_lostInside" } } },
+      edges: {}
+    };
+    doc.canvases.cnv_lostInside = { kind: "flow", name: "Inside", nodes: {}, edges: {} };
+    const { unattached } = hierarchy(doc);
+    expect(unattached.map(tree => tree.canvas)).toEqual(["cnv_lost"]);
+    expect(unattached[0].children.map(child => [child.canvas, child.via])).toEqual([["cnv_lostInside", "nod_box"]]);
+    expect(pathTo(doc, "nod_box")).toEqual([{ canvas: "cnv_lost", via: null, definition: null }]);
+    expect(hierarchy(minimalDoc()).unattached).toEqual([]);
+  });
+});
+
 describe("robustness", () => {
   it("ignores x- keys on shaped containers", () => {
     const doc = minimalDoc();
@@ -211,7 +229,9 @@ describe("robustness", () => {
       cycle: false,
       children: []
     });
-    expect(pathTo(dangling, "cnv_root")).toBeNull();
+    // The canvas the root should have been is reached by no tree: it is an unattached level, still found.
+    expect(hierarchy(dangling).unattached.map(tree => tree.canvas)).toEqual(["cnv_root"]);
+    expect(pathTo(dangling, "cnv_root")).toEqual([{ canvas: "cnv_root", via: null, definition: null }]);
 
     const cyclic = minimalDoc();
     cyclic.canvases.cnv_root.nodes.nod_self = { kind: "service", inner: { canvas: "cnv_root" } };
