@@ -23,7 +23,7 @@ codex plugin marketplace add danilocoppi/statewright
 codex plugin add statewright@statewright
 ```
 
-The server runs `npx -y statewright@latest mcp` and needs Node.js 22.12 or newer. If you registered it before with
+The server runs `npx -y statewright@<version> mcp`, the version the plugin was released with, and needs Node.js 22.12 or newer. If you registered it before with
 `claude mcp add` or `codex mcp add`, remove that entry (`claude mcp remove statewright`, `codex mcp remove statewright`)
 so the tools are not listed twice.
 

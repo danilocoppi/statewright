@@ -24,6 +24,8 @@
       "Pair with my Statewright Editor and design the architecture of this project.",
       "Model the checkout flow of this codebase as a state machine.",
       "Audit this .statewright.json and fix its problems."
-    ]
+    ],
+    "composerIcon": "./.claude-plugin/icon.png",
+    "logo": "./.claude-plugin/icon.png"
   }
 }
