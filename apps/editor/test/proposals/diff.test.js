@@ -11,7 +11,10 @@ describe("the difference a batch makes (collaboration spec §7)", () => {
     const doc = readExample("payments");
     const diff = diffOf(doc, [
       { type: "node.add", args: { canvas: "cnv_expiryClock", id: "nod_late", node: { kind: "state", name: "late" } } },
-      { type: "edge.add", args: { canvas: "cnv_expiryClock", id: "edg_runningLate", edge: { from: "nod_running", to: "nod_late" } } }
+      {
+        type: "edge.add",
+        args: { canvas: "cnv_expiryClock", id: "edg_runningLate", edge: { from: "nod_running", to: "nod_late" } }
+      }
     ]);
     expect(diff.ok).toBe(true);
     expect(diff.added).toEqual([
@@ -50,7 +53,9 @@ describe("the difference a batch makes (collaboration spec §7)", () => {
 
   it("counts a move as no change of meaning, and nothing removed", () => {
     const doc = readExample("payments");
-    const diff = diffOf(doc, [{ type: "layout.node.set", args: { canvas: "cnv_expiryClock", id: "nod_paused", x: 10, y: 20 } }]);
+    const diff = diffOf(doc, [
+      { type: "layout.node.set", args: { canvas: "cnv_expiryClock", id: "nod_paused", x: 10, y: 20 } }
+    ]);
     expect(diff).toMatchObject({ ok: true, added: [], removed: [], changed: [] });
     expect(removes(diff)).toBe(false);
   });

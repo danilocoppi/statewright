@@ -7,6 +7,10 @@ import { isSimulating } from "@/simulate/store";
 import { editorStore } from "@/store/editor";
 import { layoutClient } from "@/workers";
 
+import { diffOf, removes } from "@/proposals/diff";
+import { proposalsStore } from "@/proposals/store";
+
+import { connection } from "./connection";
 import { announce } from "./notice";
 
 /** Why a change cannot be made now: the tab is read-only, or a simulation holds the document. */
@@ -43,8 +47,45 @@ function ownEntry(entry, agent, word) {
     throw new AgentError("NOT_AI_CHANGE", `The last change to ${word} is not yours: only the person can ${word} it`);
 }
 
+/**
+ * An agent's batch while it is paired (collaboration spec §7): kept as a proposal when it asks, or when it removes
+ * anything and the person has not let it delete without asking; applied otherwise.
+ */
+function applyOrPropose(context, { commands, label, propose, title, why }) {
+  const paired = connection.store.getState().status === "connected";
+  if (!paired) {
+    if (propose) {
+      throw new AgentError("NOT_ALLOWED", "proposals need the person's conversation: pair with the Editor first");
+    }
+    return changeAsAgent(commands, label, context);
+  }
+  const diff = diffOf(editorStore.getState().doc, commands);
+  if (!diff.ok) {
+    const { code, message, index } = diff.error;
+    throw new AgentError(code, message, index === undefined ? undefined : { index });
+  }
+  const forced = removes(diff) && !proposalsStore.getState().allowDeletes;
+  if (!propose && !forced) return changeAsAgent(commands, label, context);
+  const id = proposalsStore.getState().propose({
+    title: title ?? label,
+    ...(why ? { why } : {}),
+    label,
+    agent: context.agent ?? null,
+    commands,
+    diff,
+    ...(forced ? { forced: "deletes" } : {})
+  });
+  if (!forced) return { proposed: id };
+  const names = diff.removed.map(item => item.name).join(", ");
+  return {
+    proposed: id,
+    forced: "deletes",
+    reason: `It removes ${names}: whatever removes is proposed, and the person accepts or rejects it`
+  };
+}
+
 export const editOperations = {
-  "batch.apply": (context, { commands, label }) => changeAsAgent(commands, label, context),
+  "batch.apply": (context, args) => applyOrPropose(context, args),
   "history.undo": ({ agent }) => {
     const entry = editorStore.getState().history.past.at(-1);
     ownEntry(entry, agent, "undo");

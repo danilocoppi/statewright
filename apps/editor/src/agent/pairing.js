@@ -9,6 +9,7 @@ import { createStore } from "zustand/vanilla";
 
 import { conversationStore } from "@/conversation/store";
 import { marksStore } from "@/marks/store";
+import { proposalsStore } from "@/proposals/store";
 
 import { APP } from "@/config/app";
 
@@ -98,7 +99,8 @@ export function createPairing({
   random,
   onEnd = () => {},
   conversation = conversationStore,
-  marks = marksStore
+  marks = marksStore,
+  proposals = proposalsStore
 } = {}) {
   const saved = (() => {
     try {
@@ -135,6 +137,8 @@ export function createPairing({
     conversation.getState().clear();
     // The marks too, and the tool in hand: nothing is left to mark for (collaboration spec §5).
     marks.getState().reset();
+    // The proposals end with it, and the agent may no longer delete without asking.
+    proposals.getState().clear();
     onEnd(reason, own.agent);
   }
 

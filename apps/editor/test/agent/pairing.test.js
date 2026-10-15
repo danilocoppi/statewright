@@ -13,6 +13,7 @@ import {
 
 import { createConversationStore } from "@/conversation/store";
 import { createMarksStore } from "@/marks/store";
+import { createProposalsStore } from "@/proposals/store";
 
 import { createBridge } from "../../../../packages/core/src/mcp/bridge.js";
 
@@ -44,7 +45,8 @@ function tab({
   storage = memoryStorage(),
   fetch: request = fromPage(origin),
   conversation = createConversationStore(),
-  marks = createMarksStore()
+  marks = createMarksStore(),
+  proposals = createProposalsStore()
 } = {}) {
   const hellos = [];
   const ends = [];
@@ -58,10 +60,21 @@ function tab({
     storage,
     onEnd: (reason, agent) => ends.push({ reason, agent }),
     conversation,
-    marks
+    marks,
+    proposals
   });
   opened.push(() => pairing.disconnect());
-  return { pairing, hellos, ends, calls, storage, conversation, marks, state: () => pairing.store.getState() };
+  return {
+    pairing,
+    hellos,
+    ends,
+    calls,
+    storage,
+    conversation,
+    marks,
+    proposals,
+    state: () => pairing.store.getState()
+  };
 }
 
 /** The agent brings the code the tab shows, once it has reached the bridge. */
@@ -275,8 +288,10 @@ describe("the conversation through the pairing (collaboration spec §3)", () => 
     talk().add({ kind: "person", text: "hi", chips: [], state: "sent" });
     paired.marks.getState().setTool("rectangle");
     paired.marks.getState().add({ level: "cnv_a", kind: "label", colour: "red", at: [0, 0], text: "x" });
+    paired.proposals.setState({ list: [{ id: "prp_1", state: "waiting" }], allowDeletes: true });
     paired.pairing.disconnect();
     expect(talk().lines).toEqual([]);
+    expect(paired.proposals.getState()).toMatchObject({ list: [], shown: null, allowDeletes: false });
     // The marks and the tool in hand go with the pairing (collaboration spec §5: "until … the pairing ends").
     expect(paired.marks.getState()).toMatchObject({ tool: null, marks: [], forAI: [], shown: null });
     expect(await paired.pairing.send({ text: "late" })).toEqual({ error: "not paired" });
