@@ -121,5 +121,32 @@
     "cancel": "Cancelar",
     "answered": "Respondiste: {{answer}}",
     "failed": "La respuesta no llegó a {{agent}}: inténtalo de nuevo."
+  },
+  "quick": {
+    "label": "Pedidos rápidos",
+    "explain": {
+      "label": "Explicar",
+      "words": "Explica qué hace esto y por qué."
+    },
+    "review": {
+      "label": "Revisar",
+      "words": "Revisa esto: problemas, huecos e incoherencias."
+    },
+    "fill": {
+      "label": "Completar lo que falta",
+      "words": "Completa lo que falta aquí: pregúntame lo que no sepas."
+    },
+    "scenarios": {
+      "label": "Escribir escenarios",
+      "words": "Escribe escenarios que pasen por esto."
+    },
+    "detail": {
+      "label": "Detallar en un nivel",
+      "words": "Detalla esto en un nivel propio."
+    },
+    "names": {
+      "label": "Sugerir nombres",
+      "words": "Sugiere nombres más claros para estos."
+    }
   }
 }

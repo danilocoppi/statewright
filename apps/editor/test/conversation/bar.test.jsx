@@ -179,4 +179,32 @@ describe("the conversation bar (collaboration spec §4)", () => {
     expect(sent.at(-1)).not.toHaveProperty("marks");
     expect(marksStore.getState().marks).toHaveLength(1);
   });
+
+  it("offers quick requests on what is selected, whose words fill the field and whose action goes with it", async () => {
+    const user = userEvent.setup();
+    expect(within(bar()).queryByRole("group", { name: "Quick requests" })).toBeNull();
+    act(() => editorStore.getState().select(["nod_expiryClock"], "cnv_lifecycle"));
+    const quick = within(bar()).getByRole("group", { name: "Quick requests" });
+    expect(
+      within(quick)
+        .getAllByRole("button")
+        .map(button => button.textContent)
+    ).toEqual([
+      "Explain",
+      "Review",
+      "Fill in what is missing",
+      "Write scenarios",
+      "Detail in a level",
+      "Suggest names"
+    ]);
+    await user.click(within(quick).getByRole("button", { name: "Review" }));
+    expect(field().value).toBe("Review this: Problems, gaps and inconsistencies.");
+    fireEvent.change(field(), { target: { value: "Review it against the payout rules." } });
+    await user.type(field(), "{Enter}");
+    expect(sent.at(-1)).toMatchObject({ text: "Review it against the payout rules.", action: "review" });
+    await user.click(within(bar()).getByRole("button", { name: "Explain" }));
+    await user.clear(field());
+    await user.type(field(), "just a question{Enter}");
+    expect(sent.at(-1)).not.toHaveProperty("action");
+  });
 });

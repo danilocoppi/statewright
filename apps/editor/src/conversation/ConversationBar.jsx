@@ -18,6 +18,7 @@ import { editorStore, useEditor } from "@/store/editor";
 
 import { chipsOf, contextOf } from "./context";
 import { answerWords } from "./answers";
+import { QUICK } from "./quick";
 import { Question } from "./Question";
 import { WORKING_MS, conversationStore, statusOf, useConversation } from "./store";
 
@@ -270,6 +271,7 @@ export function ConversationBar({ onNavigate }) {
   const selection = useEditor(state => state.view.selections[state.canvasId]);
   const lines = useConversation(state => state.lines);
   const draft = useConversation(state => state.draft);
+  const action = useConversation(state => state.action);
   const historyOpen = useConversation(state => state.historyOpen);
   const listening = useConversation(state => state.listening);
   const channel = useConversation(state => state.channel);
@@ -314,6 +316,10 @@ export function ConversationBar({ onNavigate }) {
   const last = [...lines].reverse().find(line => line.kind === "agent" || line.kind === "change");
   const lastSaid = [...lines].reverse().find(line => line.kind === "agent");
   const stopping = status === "working" && !draft.trim();
+  // Quick requests while something is selected or marked, and the field is empty or holds a request's words.
+  const offerQuick =
+    (Boolean(selection?.length) || drawnMarks.length > 0 || drawnForAI.length > 0) &&
+    (!draft.trim() || QUICK.some(name => draft === t(`quick.${name}.words`)));
 
   // The newest line in view as the history grows.
   useEffect(() => {
@@ -336,6 +342,7 @@ export function ConversationBar({ onNavigate }) {
     const image = marks.length ? await imageOf(doc, canvasId, drawn).catch(() => null) : null;
     const answer = await connection.send({
       text,
+      ...(action ? { action } : {}),
       context,
       ...(marks.length ? { marks } : {}),
       ...(image ? { image } : {})
@@ -387,6 +394,29 @@ export function ConversationBar({ onNavigate }) {
         .map(line => (
           <Question key={line.key} line={line} agent={agent} />
         ))}
+      {/* On what is selected or marked, the usual asks in one click (collaboration spec §6.2). */}
+      {offerQuick && (
+        <div role="group" aria-label={t("quick.label")} className="flex flex-wrap gap-1 px-1 pb-1.5">
+          {QUICK.map(name => (
+            <button
+              key={name}
+              type="button"
+              data-testid="conversation-quick"
+              data-action={name}
+              onClick={() => {
+                conversationStore.getState().request(name, t(`quick.${name}.words`));
+                field.current?.focus();
+              }}
+              className={cn(
+                "rounded-full border border-control-border px-2.5 py-0.5 text-label text-sub hover:border-accent hover:text-accent",
+                action === name && "border-accent bg-accent-soft text-accent"
+              )}
+            >
+              {t(`quick.${name}.label`)}
+            </button>
+          ))}
+        </div>
+      )}
       {!historyOpen && last && (
         <ol className="px-2.5">
           <Line line={last} agent={agent} status={status} onNavigate={onNavigate} />

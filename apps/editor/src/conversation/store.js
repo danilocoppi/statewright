@@ -70,7 +70,10 @@ export function createConversationStore() {
       })),
     /** The elements an option of a question means, rung on the canvas while the pointer rests on it. */
     setHover: ids => set({ hover: ids }),
-    setDraft: draft => set({ draft }),
+    /** The field's text; emptied, it is no longer a quick request. */
+    setDraft: draft => set(state => ({ draft, action: draft.trim() ? state.action : null })),
+    /** A quick request (spec §6.2): its words in the field, its action with the message. */
+    request: (action, words) => set({ action, draft: words }),
     toggleHistory: () => set(state => ({ historyOpen: !state.historyOpen })),
     setListening: ({ listening, channel }) => set({ listening: Boolean(listening), channel: Boolean(channel) }),
     /** The agent called just now. */

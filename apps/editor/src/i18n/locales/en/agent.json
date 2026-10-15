@@ -121,5 +121,32 @@
     "cancel": "Cancel",
     "answered": "You answered: {{answer}}",
     "failed": "The answer did not reach {{agent}}: try again."
+  },
+  "quick": {
+    "label": "Quick requests",
+    "explain": {
+      "label": "Explain",
+      "words": "Explain what this does and why."
+    },
+    "review": {
+      "label": "Review",
+      "words": "Review this: Problems, gaps and inconsistencies."
+    },
+    "fill": {
+      "label": "Fill in what is missing",
+      "words": "Fill in what is missing here: ask me what you do not know."
+    },
+    "scenarios": {
+      "label": "Write scenarios",
+      "words": "Write scenarios that run through this."
+    },
+    "detail": {
+      "label": "Detail in a level",
+      "words": "Detail this in a level of its own."
+    },
+    "names": {
+      "label": "Suggest names",
+      "words": "Suggest clearer names for these."
+    }
   }
 }
