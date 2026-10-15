@@ -11,6 +11,7 @@ export const HOOKS = [
   { id: "projects-card", where: "each project of the Projects screen", unique: false },
   { id: "projects-new", where: "the Projects screen: New project", unique: true },
   { id: "projects-open-file", where: "the Projects screen: Open file…", unique: true },
+  { id: "projects-connect", where: "the Projects screen: Connect an AI…", unique: true },
   { id: "project-island", where: "the editor: the project's island", unique: true },
   { id: "project-menu", where: "the editor: the project menu's button", unique: true },
   { id: "project-menu-list", where: "the project menu, open", unique: true },

@@ -132,6 +132,33 @@ test("an agent pairs by the code the Editor shows, builds, simulates, presents a
   }
 });
 
+test("pairs from the Projects screen, before any project is open, and the agent's new project opens in the tab", async ({
+  page
+}) => {
+  const mcp = await startMcp({ agent: "claude-code" });
+  try {
+    await page.goto("/");
+    await page.getByTestId("projects-connect").click();
+    await page.getByTestId("connect-address").fill(mcp.address);
+    await page.getByTestId("connect-address").press("Enter");
+    await expect(page.getByTestId("connect-status")).toHaveText("Waiting for the agent…");
+    const code = await page.getByTestId("connect-code").textContent();
+    expect(await mcp.pair(code)).toEqual({ paired: true, agent: "claude-code", address: mcp.address });
+    await expect(page.getByTestId("connect-dialog")).toBeHidden();
+    await expect(page.getByTestId("actions-agent")).toHaveText(/claude-code/);
+    await expect(page.getByTestId("projects-connect")).toBeHidden();
+
+    expect((await mcp.tool("editor_state")).project ?? null).toBeNull();
+    expect(await mcp.tool("projects_create", { name: "Onboarding", kind: "flow" })).toEqual({
+      project: { id: "prj_onboarding", name: "Onboarding" }
+    });
+    await expect(page).toHaveURL(/\/p\/prj_onboarding$/);
+    await expect(page.getByTestId("actions-agent")).toHaveText(/claude-code/);
+  } finally {
+    await mcp.stop();
+  }
+});
+
 test("ends the pairing when the person disconnects or closes the tab: the agent is told the Editor has gone", async ({
   page,
   context

@@ -24,7 +24,7 @@ test("finds every hook on its screen, once where it is unique (§7.5)", async ({
 
   // The Projects screen, with nothing kept yet; then payments, from its example.
   await page.goto("/");
-  await shows("projects-new", "projects-open-file");
+  await shows("projects-new", "projects-open-file", "projects-connect");
   await page.getByRole("button", { name: /^Payments/ }).click();
   await page.waitForURL(/\/p\/prj_payments$/);
   await expect(page.getByText("Saved", { exact: true })).toBeVisible();

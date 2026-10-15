@@ -36,7 +36,7 @@ const BRIDGE_TOOLS = [
     name: "editor_pair",
     description:
       `Pair with the person's Statewright Editor: they open the Editor (${EDITOR_ORIGIN}) and its Connect an AI… ` +
-      "(the project menu, or ⌘K) and read you its code. Calls without file then run in that tab, and the person sees " +
+      "(on the Projects screen, or a project's menu or ⌘K) and read you its code. Calls without file then run in that tab, and the person sees " +
       "your changes as yours. " +
       "Errors: BAD_ARGUMENTS, NOT_FOUND, NOT_ALLOWED, TIMEOUT.",
     inputSchema: {

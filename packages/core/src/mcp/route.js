@@ -16,7 +16,7 @@ import { splitArguments } from "./tools.js";
 function howToPair(editor) {
   const address = editor?.address?.();
   return (
-    `ask the person to open the Statewright Editor (${EDITOR_ORIGIN}) and its Connect an AI… (the project menu, or ⌘K)` +
+    `ask the person to open the Statewright Editor (${EDITOR_ORIGIN}) and its Connect an AI… (on the Projects screen, or a project's menu or ⌘K)` +
     `${address ? `, at the address ${address},` : ""} and call editor_pair with the code it shows`
   );
 }

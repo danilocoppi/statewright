@@ -51,9 +51,9 @@ The first start downloads the package, and some clients wait only seconds for a 
 `npx statewright --version` once before you register it. Without an MCP client, the command line does the same work on
 files (`npx statewright --help`).
 
-**2. Pair with the person's Editor.** Ask them to open the Editor at https://statewright.cpss.com.br, open a project
-there, any one (a new empty project, or an example), and choose **Connect an AI…** in the project menu (or ⌘K): it is
-only there, inside a project. Chrome may ask to let the page reach the local network: they allow it. They read you a
+**2. Pair with the person's Editor.** Ask them to open the Editor at https://statewright.cpss.com.br and choose
+**Connect an AI…** on the Projects screen, before any project is open (it is also in a project's menu, and ⌘K). Chrome
+may ask to let the page reach the local network: they allow it. They read you a
 code such as `K7Q-2MX`: call `editor_pair { "code": "K7Q-2MX", "agent": "<your name>" }`. From then on every tool
 without `file` works in their tab: each change you make glows on the canvas, carries your name in the history, and
 they can undo it. Once paired, `projects_create` makes the project you design in, in their tab. To work on a document
@@ -647,7 +647,7 @@ the Editor tab paired with the server; without either, on the server's `--file` 
 
 ### Pairing with the Editor
 
-1. In the Editor (https://statewright.cpss.com.br), **Connect an AI…** (the project menu, or ⌘K) shows a code such as
+1. In the Editor (https://statewright.cpss.com.br), **Connect an AI…** (on the Projects screen, or a project's menu or ⌘K) shows a code such as
    `K7Q-2MX`, valid five minutes, and the address of the server it looks for (`127.0.0.1:47615`, editable).
 2. Give the code to your agent: it calls `editor_pair { code }`.
 3. The Editor says "Connected to <agent>", and the actions island shows the agent's name with **Disconnect**.
@@ -699,6 +699,7 @@ edges on the canvas carry `data-id`, the document's ID. `editor_state` (or `stat
 | `projects-card`               | each project of the Projects screen                                | per item |
 | `projects-new`                | the Projects screen: New project                                   | yes      |
 | `projects-open-file`          | the Projects screen: Open file…                                    | yes      |
+| `projects-connect`            | the Projects screen: Connect an AI…                                | yes      |
 | `project-island`              | the editor: the project's island                                   | yes      |
 | `project-menu`                | the editor: the project menu's button                              | yes      |
 | `project-menu-list`           | the project menu, open                                             | yes      |

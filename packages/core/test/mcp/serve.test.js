@@ -111,7 +111,7 @@ describe("the MCP server at work (AI interface spec §5)", () => {
     expect(byId[1].result.structuredContent.error.message).toBe(
       "document.summary has no document to work on: pass file (the path of a .statewright.json), start the server " +
         "with --file, or ask the person to open the Statewright Editor (https://statewright.cpss.com.br) and its " +
-        "Connect an AI… (the project menu, or ⌘K) and call editor_pair with the code it shows"
+        "Connect an AI… (on the Projects screen, or a project's menu or ⌘K) and call editor_pair with the code it shows"
     );
     expect(byId[2].result.structuredContent.error.code).toBe("NOT_PAIRED");
     expect(byId[3].result.structuredContent.written).toBe("refund.statewright.json");
@@ -131,7 +131,7 @@ describe("the MCP server at work (AI interface spec §5)", () => {
       code: "NOT_PAIRED",
       message:
         "view.open needs the person's Editor: ask the person to open the Statewright Editor " +
-        "(https://statewright.cpss.com.br) and its Connect an AI… (the project menu, or ⌘K) and call editor_pair " +
+        "(https://statewright.cpss.com.br) and its Connect an AI… (on the Projects screen, or a project's menu or ⌘K) and call editor_pair " +
         "with the code it shows"
     });
     expect(byId[2].result.structuredContent.error.code).toBe("NEEDS_EDITOR");
@@ -367,7 +367,7 @@ describe("the MCP server with an Editor tab paired (AI interface spec §5: routi
     );
     for (const id of [1, 2]) {
       expect(byId[id].result.structuredContent.error.message).toContain(
-        "and its Connect an AI… (the project menu, or ⌘K), at the address 127.0.0.1:47616,"
+        "and its Connect an AI… (on the Projects screen, or a project's menu or ⌘K), at the address 127.0.0.1:47616,"
       );
     }
   });

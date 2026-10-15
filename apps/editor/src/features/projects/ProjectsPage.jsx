@@ -3,6 +3,10 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
 import { applyBatch } from "statewright";
 
+import { ConnectDialog } from "@/agent/ConnectDialog";
+import { connection } from "@/agent/connection";
+import { PairedBadge } from "@/agent/PairedBadge";
+import { usePairing } from "@/agent/pairing";
 import { useRepository } from "@/app/repository";
 import { BrandMark } from "@/components/BrandMark";
 import { LanguageMenu, ThemeMenu } from "@/components/PreferenceMenus";
@@ -39,7 +43,10 @@ function useNow() {
 
 /** The Projects screen (spec §6.2, mockup 03). */
 export default function ProjectsPage() {
-  const { t } = useTranslation(["projects", "files"]);
+  const { t } = useTranslation(["projects", "files", "agent"]);
+  // An agent can pair before any project is open (AI interface spec §7.4): it then lists, opens or creates one.
+  const [connecting, setConnecting] = useState(false);
+  const paired = usePairing(connection, state => state.status === "connected");
   const repository = useRepository();
   const navigate = useNavigate();
   const importer = useImport();
@@ -175,7 +182,16 @@ export default function ProjectsPage() {
             <h1 className="text-page font-semibold tracking-tight">{t("title")}</h1>
             <p className="mt-1.5 text-sub">{t("lede")}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            {paired ?
+              <span className="flex items-center gap-1">
+                <PairedBadge />
+              </span>
+            : <Button onClick={() => setConnecting(true)} data-testid="projects-connect">
+                <Icon name="sparkle" size={14} />
+                {t("agent:pairing.menu")}
+              </Button>
+            }
             <Button onClick={openFile} data-testid="projects-open-file">
               <Icon name="upload" size={14} />
               {t("actions.openFile")}
@@ -232,6 +248,7 @@ export default function ProjectsPage() {
           if (file) importer.importFile(file);
         }}
       />
+      {connecting && <ConnectDialog onClose={() => setConnecting(false)} />}
       <SupportBadge />
       <DropOverlay onDrop={importer.importFile} />
       <ImportDialog plan={importer.plan} onAccept={importer.accept} onClose={importer.dismiss} />

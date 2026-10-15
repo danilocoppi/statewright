@@ -19,7 +19,7 @@ describe("the contract's operations as MCP tools (AI interface spec §5)", () =>
     const byName = Object.fromEntries(toolsOf().map(tool => [tool.name, tool]));
     expect(byName.editor_pair.description).toMatch(/^Pair with the person's Statewright Editor: .* Errors: /);
     expect(byName.editor_pair.description).toContain(
-      "they open the Editor (https://statewright.cpss.com.br) and its Connect an AI… (the project menu, or ⌘K)"
+      "they open the Editor (https://statewright.cpss.com.br) and its Connect an AI… (on the Projects screen, or a project's menu or ⌘K)"
     );
     expect(byName.editor_pair.inputSchema).toMatchObject({
       required: ["code"],

@@ -231,7 +231,7 @@ describe("the platform guide", () => {
       '{ "mcpServers": { "statewright": { "command": "npx", "args": ["statewright", "mcp"] } } }'
     );
     expect(source.replace(/\s+/g, " ")).toContain(
-      "1. In the Editor (https://statewright.cpss.com.br), **Connect an AI…** (the project menu, or ⌘K) shows a code " +
+      "1. In the Editor (https://statewright.cpss.com.br), **Connect an AI…** (on the Projects screen, or a project's menu or ⌘K) shows a code " +
         "such as `K7Q-2MX`"
     );
     expect(source).toContain("it calls `editor_pair { code }`");
@@ -277,12 +277,12 @@ describe("the platform guide", () => {
     for (const words of [
       "start a new session (or reload the client's MCP servers) so its tools appear",
       "open the Editor at https://statewright.cpss.com.br",
-      // Connect an AI… is in a project's menu: the person opens one before pairing, even with nothing to keep.
-      "open a project there, any one (a new empty project, or an example), and choose **Connect an AI…**",
+      // Connect an AI… is on the Projects screen too: nothing needs to be open before pairing.
+      "choose **Connect an AI…** on the Projects screen, before any project is open",
       "Once paired, `projects_create` makes the project you design in, in their tab",
       // A client that waits only seconds for a server would give up while npx downloads the package the first time.
       "run `npx statewright --version` once before you register it",
-      "choose **Connect an AI…** in the project menu (or ⌘K)",
+      "(it is also in a project's menu, and ⌘K)",
       '`editor_pair { "code": "K7Q-2MX", "agent": "<your name>" }`',
       "with `guide_read` (or `npx statewright guide <section>`)",
       "[Design a system with the person, level by level](#design-a-system-with-the-person-level-by-level)",

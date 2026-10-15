@@ -337,7 +337,7 @@ export function createBridge({
         return fail(
           "NOT_FOUND",
           `No Editor tab shows the code ${shownCode(normal)}: ask the person to open Connect an AI… in the Editor ` +
-            `(the project menu, or ⌘K) and read you the code it shows; ${here}`,
+            `(on the Projects screen, or a project's menu or ⌘K) and read you the code it shows; ${here}`,
           { address }
         );
       }
