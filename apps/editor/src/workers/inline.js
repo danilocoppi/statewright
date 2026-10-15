@@ -5,13 +5,18 @@ import { serve } from "./protocol";
 /** One end of an in-page channel: messages posted here arrive, a task later and as a copy, at the other end. */
 function end() {
   const target = new EventTarget();
+  // The event of the same realm as its target: a message posted just before a test's environment is torn down is
+  // dispatched after it, when the global MessageEvent may be another realm's.
+  const Message = globalThis.MessageEvent;
   return {
     target,
+    Message,
     other: null,
     addEventListener: (type, listener) => target.addEventListener(type, listener),
     postMessage(data) {
       const copy = structuredClone(data);
-      setTimeout(() => this.other.target.dispatchEvent(new MessageEvent("message", { data: copy })));
+      const other = this.other;
+      setTimeout(() => other.target.dispatchEvent(new other.Message("message", { data: copy })));
     }
   };
 }
