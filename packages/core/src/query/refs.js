@@ -234,6 +234,17 @@ export function createRefCollector() {
       push("annotations", id, "target", [...base, "target"], note.target, null, "element");
     },
 
+    comment(id, comment) {
+      const base = ["annotations", "comments", id];
+      push("annotations", id, "canvas", [...base, "canvas"], comment.canvas, ["cnv"], "element");
+      push("annotations", id, "target", [...base, "target"], comment.target, null, "element");
+    },
+
+    lock(id, lock) {
+      const base = ["annotations", "locks", id];
+      push("annotations", id, "target", [...base, "target"], lock.target, ["nod", "edg", "rgn", "cnv"], "element");
+    },
+
     focus(list) {
       (Array.isArray(list) ? list : []).forEach((target, index) =>
         push("annotations", null, "focus", ["annotations", "focus", index], target, ["nod", "edg"], "splice")
@@ -313,6 +324,8 @@ export function collectRefs(doc) {
   collect.focus(annotations.focus);
   for (const [id, lane] of Object.entries(annotations.lanes ?? {})) collect.lane(id, lane);
   for (const [id, scenario] of Object.entries(annotations.scenarios ?? {})) collect.scenario(id, scenario);
+  for (const [id, comment] of Object.entries(annotations.comments ?? {})) collect.comment(id, comment);
+  for (const [id, lock] of Object.entries(annotations.locks ?? {})) collect.lock(id, lock);
   for (const [canvasId, canvasLayout] of Object.entries(doc.layout?.canvases ?? {})) {
     collect.layoutCanvas(canvasId, canvasLayout);
   }

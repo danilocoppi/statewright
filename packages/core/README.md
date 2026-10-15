@@ -333,6 +333,7 @@ opens, but verification reports the changed part, and the CLI refuses to re-sign
 | `expr.operator` | warning | A JSON Logic expression uses an operator outside the standard set. |
 | `layout.overlap` | warning | Nodes or edge labels overlap in the stored layout (run statewright layout --all to recompute it). |
 | `scenario.diverged` | warning | Running a saved scenario again no longer gives what it recorded. |
+| `comment.open` | incomplete | A review comment is open: answer it, change what it asks, or resolve it. |
 
 <!-- /generated:rules -->
 
@@ -815,6 +816,13 @@ Every change to a document is a command `{ "type": "node.add", "args": { … } }
 | `note.add` | `note`, `id?` | Add a note to a canvas, floating or attached to one of its nodes or edges. |
 | `note.update` | `id`, `set?`, `unset?` | Change a note's text, tone, target or canvas. |
 | `note.remove` | `id` | Remove a note. |
+| `comment.add` | `canvas`, `target?`, `at?`, `id?`, `text`, `author?`, `name?`, `time?` | Open a review comment on an element of a level, or at a point of it, with its first words (collaboration spec §8.1). An open comment is a Problem (comment.open) until resolved; comments are never drawn in the figure. |
+| `comment.reply` | `id`, `text`, `author?`, `name?`, `time?` | Answer in a comment's thread. |
+| `comment.resolve` | `id` | Resolve a comment: it stays, no longer a Problem. |
+| `comment.reopen` | `id` | Open a resolved comment again. |
+| `comment.remove` | `id` | Remove a comment and its thread. |
+| `lock.add` | `target`, `note?`, `id?` | Lock a box, an arrow, a region or a level (collaboration spec §8.2): an agent's change to it is only proposed. |
+| `lock.remove` | `id` | Unlock what a lock held. |
 | `focus.set` | `ids` | Replace the list of highlighted nodes and edges (an empty list clears it). |
 | `lane.add` | `lane`, `id?` | Add a lane: an unboxed caption above a row of nodes of one canvas. |
 | `lane.update` | `id`, `set?`, `unset?` | Change a lane's label or nodes. |

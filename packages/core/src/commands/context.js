@@ -151,7 +151,7 @@ export function ensure(object, key) {
 export function tidy(doc) {
   const annotations = doc.annotations;
   if (annotations) {
-    for (const key of ["findings", "notes", "lanes", "scenarios"]) {
+    for (const key of ["findings", "notes", "lanes", "scenarios", "comments", "locks"]) {
       if (annotations[key] && Object.keys(annotations[key]).length === 0) delete annotations[key];
     }
     if (Array.isArray(annotations.focus) && annotations.focus.length === 0) delete annotations.focus;

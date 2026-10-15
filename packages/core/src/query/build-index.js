@@ -50,7 +50,9 @@ export function buildIndex(doc) {
     ["findings", "finding"],
     ["notes", "note"],
     ["lanes", "lane"],
-    ["scenarios", "scenario"]
+    ["scenarios", "scenario"],
+    ["comments", "comment"],
+    ["locks", "lock"]
   ]) {
     for (const [id, value] of Object.entries(annotations[section] ?? {})) {
       add(id, { type, value, path: ["annotations", section, id] });

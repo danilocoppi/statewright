@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Finding, Lane, Note, Scenario } from "../schema/annotations.js";
+import { Comment, Finding, Lane, Lock, Note, Scenario } from "../schema/annotations.js";
 import { executableOf } from "../simulate/executable.js";
 import {
   allocateId,
@@ -43,6 +43,31 @@ function checkNote(ctx, id, note) {
     fail("NOT_ALLOWED", `The note target "${note.target}" is not on canvas "${note.canvas}"`, { id });
   }
 }
+
+/** A comment's target must be on its level (or be the level). */
+function checkComment(ctx, id, comment) {
+  validate(Comment, comment, ["annotations", "comments", id]);
+  checkRefs(ctx, refsOf("comment", id, comment));
+  const target = comment.target && ctx.index.get(comment.target);
+  if (target?.canvas !== undefined && target.canvas !== comment.canvas) {
+    fail("NOT_ALLOWED", `The comment's target "${comment.target}" is not on canvas "${comment.canvas}"`, { id });
+  }
+}
+
+/** One entry of a comment's thread: the person's unless said otherwise, now unless told when. */
+const entryOf = ({ text, author = "person", name, time }) => ({
+  author,
+  ...(name !== undefined ? { name } : {}),
+  text,
+  at: time ?? new Date().toISOString()
+});
+
+const Said = {
+  text: z.string().min(1),
+  author: z.enum(["person", "agent"]).optional(),
+  name: z.string().min(1).optional(),
+  time: z.iso.datetime().optional().describe("When it was said (default: now)")
+};
 
 function checkLane(ctx, id, lane) {
   validate(Lane, lane, ["annotations", "lanes", id]);
@@ -151,6 +176,88 @@ export default [
     args: z.strictObject({ id: z.string() }),
     run(ctx, { id }) {
       requireEntry(ctx, id, ["note"]);
+      removeElements(ctx.doc, [id]);
+    }
+  },
+  {
+    type: "comment.add",
+    description:
+      "Open a review comment on an element of a level, or at a point of it, with its first words (collaboration " +
+      "spec §8.1). An open comment is a Problem (comment.open) until resolved; comments are never drawn in the figure.",
+    args: z.strictObject({
+      canvas: z.string(),
+      target: z.string().optional(),
+      at: z.strictObject({ x: z.number(), y: z.number() }).optional(),
+      id: z.string().optional(),
+      ...Said
+    }),
+    run(ctx, { canvas, target, at, id, ...said }) {
+      const commentId = allocateId(ctx, "cmt", "comment", id);
+      const value = {
+        canvas,
+        ...(target !== undefined ? { target } : {}),
+        ...(at !== undefined ? { at } : {}),
+        status: "open",
+        thread: [entryOf(said)]
+      };
+      checkComment(ctx, commentId, value);
+      ensure(ensure(ctx.doc, "annotations"), "comments")[commentId] = value;
+    }
+  },
+  {
+    type: "comment.reply",
+    description: "Answer in a comment's thread.",
+    args: z.strictObject({ id: z.string(), ...Said }),
+    run(ctx, { id, ...said }) {
+      const entry = requireEntry(ctx, id, ["comment"]);
+      entry.value.thread.push(entryOf(said));
+      checkComment(ctx, id, entry.value);
+    }
+  },
+  {
+    type: "comment.resolve",
+    description: "Resolve a comment: it stays, no longer a Problem.",
+    args: z.strictObject({ id: z.string() }),
+    run(ctx, { id }) {
+      requireEntry(ctx, id, ["comment"]).value.status = "resolved";
+    }
+  },
+  {
+    type: "comment.reopen",
+    description: "Open a resolved comment again.",
+    args: z.strictObject({ id: z.string() }),
+    run(ctx, { id }) {
+      requireEntry(ctx, id, ["comment"]).value.status = "open";
+    }
+  },
+  {
+    type: "comment.remove",
+    description: "Remove a comment and its thread.",
+    args: z.strictObject({ id: z.string() }),
+    run(ctx, { id }) {
+      requireEntry(ctx, id, ["comment"]);
+      removeElements(ctx.doc, [id]);
+    }
+  },
+  {
+    type: "lock.add",
+    description:
+      "Lock a box, an arrow, a region or a level (collaboration spec §8.2): an agent's change to it is only proposed.",
+    args: z.strictObject({ target: z.string(), note: z.string().min(1).optional(), id: z.string().optional() }),
+    run(ctx, { target, note, id }) {
+      const lockId = allocateId(ctx, "lck", "lock", id);
+      const value = { target, ...(note !== undefined ? { note } : {}) };
+      validate(Lock, value, ["annotations", "locks", lockId]);
+      checkRefs(ctx, refsOf("lock", lockId, value));
+      ensure(ensure(ctx.doc, "annotations"), "locks")[lockId] = value;
+    }
+  },
+  {
+    type: "lock.remove",
+    description: "Unlock what a lock held.",
+    args: z.strictObject({ id: z.string() }),
+    run(ctx, { id }) {
+      requireEntry(ctx, id, ["lock"]);
       removeElements(ctx.doc, [id]);
     }
   },

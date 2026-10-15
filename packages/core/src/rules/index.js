@@ -1,5 +1,6 @@
 import canvasRules from "./canvases.js";
 import catalogRules from "./catalog.js";
+import commentRules from "./comments.js";
 import { compareText, createFacts } from "./facts.js";
 import flowRules from "./flow.js";
 import layoutRules from "./layout.js";
@@ -44,7 +45,8 @@ const RULES = [
   ...roleRules,
   ...catalogRules,
   ...layoutRules,
-  ...scenarioRules
+  ...scenarioRules,
+  ...commentRules
 ];
 
 /**
