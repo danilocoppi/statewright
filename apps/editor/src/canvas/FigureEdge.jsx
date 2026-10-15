@@ -1,3 +1,4 @@
+import { EdgeLabelRenderer } from "@xyflow/react";
 import { use } from "react";
 
 import { useProblems } from "@/problems/store";
@@ -19,6 +20,41 @@ function markerAt(part, label) {
 }
 
 const TONE = { error: "fill-danger", warning: "fill-warning", incomplete: "fill-muted" };
+
+/** The finding badge Core drew on an edge's route or label: where it is, and the element and codes it is about. */
+function badgeIn(svg) {
+  const found =
+    /<g class="badge" data-target="([^"]+)" data-codes="([^"]+)">(?:<title>[^<]*<\/title>)?<rect x="([-\d.]+)" y="([-\d.]+)" width="([-\d.]+)" height="([-\d.]+)"/.exec(
+      svg
+    );
+  if (!found) return null;
+  const [, target, codes, x, y, w, h] = found;
+  return { target, codes, x: Number(x), y: Number(y), w: Number(w), h: Number(h) };
+}
+
+/**
+ * Where the pointer reaches an edge's badge: above every edge, since each edge's wide invisible path (and the edges
+ * drawn after it) would otherwise cover the badge Core drew, and its findings would never show (FindingPopover).
+ */
+function BadgeHit({ badge }) {
+  return (
+    <EdgeLabelRenderer>
+      <span
+        className="badge-hit nopan"
+        data-target={badge.target}
+        data-codes={badge.codes}
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          transform: `translate(${badge.x}px, ${badge.y}px)`,
+          width: badge.w,
+          height: badge.h,
+          pointerEvents: "all"
+        }}
+      />
+    </EdgeLabelRenderer>
+  );
+}
 
 /** The dashes Core draws an edge with (a timer's dots, a failure's dashes): the run's colour keeps them. */
 const dashOf = svg => /stroke-dasharray="([^"]+)"/.exec(svg)?.[1];
@@ -173,11 +209,13 @@ export function FigureEdge({ data, selected, sourceX, sourceY, targetX, targetY 
   if (data.moving) return <Preview sourceX={sourceX} sourceY={sourceY} targetX={targetX} targetY={targetY} />;
   const d = pathOf(part.points);
   const [x, y] = markerAt(part, label);
+  const badge = badgeIn(part.svg + (label?.svg ?? ""));
   return (
     <>
       {(selected || highlighted) && <path d={d} fill="none" className="sw-edge-halo stroke-accent" strokeWidth={6} />}
       <g dangerouslySetInnerHTML={{ __html: part.svg + (label?.svg ?? "") }} />
       <path d={d} fill="none" stroke="transparent" strokeWidth={14} className="react-flow__edge-interaction" />
+      {badge && <BadgeHit badge={badge} />}
       {data.mark?.fired && <FiredMark mark={data.mark} d={d} part={part} label={label} />}
       {data.mark && !data.mark.fired && <EdgeMark id={part.id} mark={data.mark} d={d} part={part} label={label} />}
       {severity && (

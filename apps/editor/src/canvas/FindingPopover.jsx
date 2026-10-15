@@ -117,7 +117,8 @@ export function FindingPopover({ container }) {
     const canvas = container.current;
     if (!canvas) return;
     const wait = timers.current;
-    const badgeOf = event => event.target.closest?.(".badge") ?? null;
+    // A box's badge is Core's markup; an edge's is reached through the hit area above the edges (FigureEdge).
+    const badgeOf = event => event.target.closest?.(".badge, .badge-hit") ?? null;
     const onOver = event => {
       const badge = badgeOf(event);
       if (!badge || event.pointerType === "touch" || event.buttons) return;

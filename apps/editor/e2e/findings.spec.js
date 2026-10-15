@@ -88,10 +88,59 @@ test("shows an edge's findings from its badge too", async ({ page }) => {
       ]
     })
   );
-  const badge = page.locator('.badge[data-target="edg_runningPaused"]');
+  // An edge's badge takes the pointer through its hit area, above every edge.
+  const badge = page.locator('.badge-hit[data-target="edg_runningPaused"]');
   await badge.hover();
   const details = page.getByTestId("canvas-finding");
   await expect(details).toBeVisible();
   await expect(details.getByText("Medium", { exact: true })).toBeVisible();
   await expect(details.getByRole("heading", { name: "The clock never resumes" })).toBeVisible();
+});
+
+test("lets the pointer reach every edge's badge, even where an edge meets a box", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /^Get paid/ }).click();
+  await page.waitForURL(/\/p\/prj_getPaid$/);
+  for (const canvas of ["cnv_transaction", "cnv_open"]) {
+    await page.goto(`/p/prj_getPaid/${canvas}`);
+    await expect(page.locator(".react-flow__node").first()).toBeVisible();
+    const answer = await page.evaluate(
+      canvasId => globalThis.statewright.call("level.get", { canvas: canvasId }),
+      canvas
+    );
+    const ids = (answer.result ?? answer).edges.map(edge => edge.id);
+    const applied = await page.evaluate(
+      ([canvasId, edgeIds]) =>
+        globalThis.statewright.call("batch.apply", {
+          label: `Findings on every edge of ${canvasId}`,
+          commands: edgeIds.map((id, index) => ({
+            type: "finding.upsert",
+            args: {
+              id: `fnd_${canvasId.slice(4)}${index}`,
+              finding: { code: `E${index}`, title: `About ${id}`, severity: "low", targets: [id] }
+            }
+          }))
+        }),
+      [canvas, ids]
+    );
+    expect(applied.error ?? null, canvas).toBeNull();
+    for (const id of ids) {
+      const badge = page.locator(`.badge[data-target="${id}"]`);
+      await expect(badge, id).toHaveCount(1);
+      const reached = await badge.evaluate(element => {
+        const { x, y, width, height } = element.getBoundingClientRect();
+        const hit = document.elementFromPoint(x + width / 2, y + height / 2);
+        const reached = element.contains(hit) || hit?.closest(".badge-hit")?.dataset.target === element.dataset.target;
+        return reached ? "badge" : (hit?.className?.baseVal ?? hit?.className ?? hit?.tagName);
+      });
+      expect(reached, id).toBe("badge");
+    }
+    // And resting on it shows its findings.
+    const last = ids.at(-1);
+    await page.mouse.move(0, 0);
+    const box = await page.locator(`.badge[data-target="${last}"]`).boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(page.getByTestId("canvas-finding")).toContainText(`About ${last}`);
+    await page.keyboard.press("Escape");
+  }
 });
