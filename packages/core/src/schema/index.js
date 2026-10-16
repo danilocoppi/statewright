@@ -9,7 +9,8 @@ export {
   WebhookDef,
   TimerDef,
   StatusDef,
-  PartyDef
+  PartyDef,
+  HighlightDef
 } from "./catalog.js";
 export { Canvas, SystemNode, SystemEdge, MachineNode, MachineEdge, FlowNode, FlowEdge, RegionDef } from "./canvas.js";
 export {

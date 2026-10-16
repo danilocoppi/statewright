@@ -359,6 +359,9 @@ export function fieldsOfKind(type, { canvasKind, kind, collection, value } = {})
       section("findings", "findings")
     ];
   }
+  // A highlight is a look, not an element of the system: its name and meaning (highlights spec §6; plan H2 adds the
+  // rest of its editor).
+  if (type === "catalog" && collection === "highlights") return [name(true), DESCRIPTION];
   if (type === "catalog") {
     const own = CATALOG_FIELDS[collection];
     return [own[0], ...common(...own.slice(1))];
@@ -437,7 +440,11 @@ export const ELSEWHERE = {
   "layout.edge.labelAt": "Auto-layout, or Details of an arrow: Reset route.",
   "layout.legend.labels": "The project's details: Legend wording.",
   "node.*.highlights": "Highlights: the Editor's field arrives with plan H2 (highlights spec §6).",
-  "edge.*.highlights": "Highlights: the Editor's field arrives with plan H2 (highlights spec §6)."
+  "edge.*.highlights": "Highlights: the Editor's field arrives with plan H2 (highlights spec §6).",
+  "catalog.highlights.colour": "A highlight's look: its editor arrives with plan H2 (highlights spec §6).",
+  "catalog.highlights.border": "A highlight's look: its editor arrives with plan H2 (highlights spec §6).",
+  "catalog.highlights.fill": "A highlight's look: its editor arrives with plan H2 (highlights spec §6).",
+  "catalog.highlights.chip": "A highlight's look: its editor arrives with plan H2 (highlights spec §6)."
 };
 
 /**

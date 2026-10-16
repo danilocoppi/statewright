@@ -11,6 +11,7 @@ import {
   FlowEdge,
   FlowNode,
   GuardDef,
+  HighlightDef,
   homeKind,
   Lane,
   MachineEdge,
@@ -37,7 +38,8 @@ export const CATALOG_SCHEMAS = {
   webhooks: WebhookDef,
   timers: TimerDef,
   statuses: StatusDef,
-  parties: PartyDef
+  parties: PartyDef,
+  highlights: HighlightDef
 };
 
 const NODES = { system: SystemNode, machine: MachineNode, flow: FlowNode };

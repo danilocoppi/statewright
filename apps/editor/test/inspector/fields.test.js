@@ -178,4 +178,12 @@ describe("the fields of an element", () => {
     });
     expect(fieldsFor(doc, "nod_nothing")).toBeNull();
   });
+
+  it("opens a highlight: its name and meaning, without the fields of an element of the system", () => {
+    const marked = structuredClone(doc);
+    marked.catalog.highlights.hlt_critical = { name: "Critical", description: "Must not fail.", colour: "red" };
+    const highlight = fieldsFor(marked, "hlt_critical");
+    expect(highlight.basics.map(field => field.key)).toEqual(["name", "description"]);
+    expect(highlight.details.map(field => field.key)).not.toContain("provenance");
+  });
 });
