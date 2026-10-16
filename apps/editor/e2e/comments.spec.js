@@ -75,19 +75,19 @@ test("a comment answered and resolved by the agent; a locked level whose change 
   }
 });
 
-test("a document of format 1.2 opens and is kept as 1.3", async ({ page }) => {
+test("a document of format 1.2 opens and is kept in the current format", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("button", { name: /^Payments/ })).toBeVisible();
   // The payments example as it was published in format 1.2, signed.
   await page
     .getByLabel("Open file…")
     .setInputFiles(fileURLToPath(new URL("./fixtures/payments-1.2.sttw", import.meta.url)));
-  await expect(page.getByText(/Updated from format 1\.2 to 1\.3/)).toBeVisible();
+  await expect(page.getByText(/Updated from format 1\.2 to 1\.4/)).toBeVisible();
   const mcp = await startMcp({ agent: "claude-code" });
   try {
     await pair(page, mcp);
     const { document } = await mcp.tool("document_get");
-    expect(document.statewright).toBe("1.3");
+    expect(document.statewright).toBe("1.4");
   } finally {
     await mcp.stop();
   }
