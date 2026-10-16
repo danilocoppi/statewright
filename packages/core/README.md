@@ -116,7 +116,7 @@ open as they are. It holds the project, a **catalog** of shared items, reusable 
 (diagrams), **annotations** and **layout**. Everything with an ID lives in a map keyed by that ID: `nod_running`,
 `evt_payinConfirmed`, `cnv_lifecycle`. The prefix says what the element is (`cnv` canvas, `nod` node, `edg` edge, `rgn`
 region, `def` definition, `typ` type, `evt` event, `act` action, `grd` guard, `ept` endpoint, `whk` webhook, `tmr`
-timer, `sts` status, `pty` party, `fnd` finding, `nte` note, `lne` lane).
+timer, `sts` status, `pty` party, `hlt` highlight, `fnd` finding, `nte` note, `lne` lane).
 IDs are unique in the document and **never change**, even when an element is renamed.
 
 Documents are strict: unknown keys are rejected (this catches typos), except keys starting with `x-`, which are kept
@@ -240,8 +240,9 @@ Definitions may contain instances of other definitions, but never of themselves.
 
 Things that diagrams mention are declared once in the catalog and referenced by ID: `types` (data contracts), `events`
 (`payin.confirmed`), `actions`, `guards` (named predicates), `endpoints` (`POST /payments`), `webhooks`, `timers`,
-`statuses` (public status values) and `parties` (who acts: humans, operators, systems, external providers). Renaming a
-catalog item never breaks its references.
+`statuses` (public status values), `parties` (who acts: humans, operators, systems, external providers) and
+`highlights` (named looks for boxes and arrows, see [Reading a diagram](#reading-a-diagram)). Renaming a catalog item
+never breaks its references.
 
 ### Reality and confidence
 
@@ -353,7 +354,7 @@ plain.
 
 - Chips at the top left, in order: provenance (`NEW`, `FIX`, `LEGACY`, `DEFECT`, `IMPLIED`), the kind (`ACTOR`,
   `EXTERNAL`, `STORE`, `QUEUE`, `WHILE`, …), `FINAL` for terminal states, the category (`WAITS`, `HOLD`, `LIVE`), then
-  your tags.
+  your tags, then the tags of your highlights.
 - Pills at the top right: the public statuses the state maps to, coloured by each status's tone.
 - A badge at the bottom right: the codes of the findings on the element (`H1 · H3`). Its tooltip lists their titles;
   in the Editor, the pointer resting on it shows each finding whole, with its source and evidence.
@@ -365,6 +366,16 @@ plain.
 - Pseudo-nodes: a black dot is where a machine or flow starts (`initial`, `start`, or an `entry` nobody performs — its
   name labels its edge); a ringed dot is a flow's `end`; a diamond is a `choice`, `if` or `switch`; `H` is a `history`
   node; a black bar is a `parallel` split or a `join`; a dashed pill is an `any` node ("from any state").
+
+**Highlights.** A box or an arrow can carry highlights: looks the project names in its catalog for what it wants to
+stand out — _Critical_, _Start_, _Review_ —, each with a meaning, a colour (`red`, `orange`, `amber`, `green`, `teal`,
+`blue`, `indigo`, `violet`, `pink`, `grey`, or a `#RRGGBB`), a border (`normal`, `bold`, `heavy`), a fill (`none` or
+`tint`) and whether it shows its name as a tag. The first highlight of an element gives it its border's colour and
+width and its tint, and an arrow its colour, width and arrowhead; the start dot, a choice's diamond and a frame take the
+colour on their outline. A highlight keeps what the rest says: provenance's dashes and chip, the kind, `FINAL`, the
+statuses, the findings' badge and a low confidence's fading. Every highlight that shows a tag adds it, on a box after
+your tags, on an arrow over its label. The legend lists the highlights the level uses, each with what it means. A hex
+colour is fitted to both themes: its stroke reads on the canvas and its tag on its tint.
 
 **Edges.** The first match wins: provenance, failure, an operator performing it, a timer-only trigger, the happy path,
 then the default; links to `ref` nodes are thin and dashed. Unless `label` is set, the label lists the triggers joined by
@@ -1515,6 +1526,10 @@ system as it runs the design.
     (`view_point` with a note) rather than describing where it is.
 12. **Present scenarios when explaining behaviour.** Show a run on the stage (`scenario_present`) instead of narrating
     it.
+13. **Highlight only when asked.** When the person asks to mark or emphasise elements, use the project's highlights
+    (`highlights` on the boxes and arrows, with `node.update` or `edge.update`); create one (`catalog.add` in
+    `highlights`) only when they ask for a new kind of mark, with the meaning they give it. Never use a highlight to say
+    what provenance, findings or statuses already say.
 
 ## Playbooks
 
@@ -2495,11 +2510,13 @@ Findings of other sources are left alone, and annotation changes never change th
 
 ## Format reference
 
-The JSON Schema of format 1.2 ships with the package as `statewright/schema.json`, is printed by `statewright schema`
-and is served by the platform at `/schema/1.3.json`. The schemas of formats 1.2, 1.1 and 1.0 stay at `/schema/1.2.json`, `/schema/1.1.json` and
-`/schema/1.0.json` for the files that still point to them; Statewright reads those files and writes them back in format
-1.3. Format 1.3 adds review comments and locks (`annotations.comments`, `annotations.locks`); format 1.2 added guests
-(participants, embedded steps, state guests) and the `party` fields they read.
+The JSON Schema of format 1.4 ships with the package as `statewright/schema.json`, is printed by `statewright schema`
+and is served by the platform at `/schema/1.4.json`. The schemas of formats 1.3, 1.2, 1.1 and 1.0 stay at
+`/schema/1.3.json`, `/schema/1.2.json`, `/schema/1.1.json` and `/schema/1.0.json` for the files that still point to
+them; Statewright reads those files and writes them back in format 1.4. Format 1.4 adds highlights
+(`catalog.highlights`, and `highlights` on nodes and edges); format 1.3 added review comments and locks
+(`annotations.comments`, `annotations.locks`); format 1.2 added guests (participants, embedded steps, state guests) and
+the `party` fields they read.
 
 <!-- generated:schema-reference -->
 

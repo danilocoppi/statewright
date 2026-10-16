@@ -362,6 +362,15 @@ describe("the platform guide", () => {
     );
   });
 
+  it("explains highlights: the catalog, how they look and what they keep, the rule for agents, and format 1.4", () => {
+    expect(source).toContain("`hlt` highlight");
+    expect(source).toContain("`highlights` (named looks for boxes and arrows");
+    expect(source).toContain("**Highlights.** A box or an arrow can carry highlights");
+    expect(source).toContain("your tags, then the tags of your highlights");
+    expect(source).toContain("13. **Highlight only when asked.**");
+    expect(source).toContain("The JSON Schema of format 1.4 ships with the package");
+  });
+
   it("tells an agent where to start, before anything else: the MCP server in each client, the Editor's address, pairing, reading, building level by level", () => {
     const start = source.indexOf("\n## AI agents: start here\n");
     expect(start).toBeGreaterThan(-1);

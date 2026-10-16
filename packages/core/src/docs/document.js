@@ -104,7 +104,8 @@ const CATALOG_HEADERS = {
   webhooks: ["Webhook", "Direction", "Party", "Description"],
   timers: ["Timer", "When", "Calendar", "Description"],
   statuses: ["Status", "Tone", "Description"],
-  parties: ["Party", "Kind", "Description"]
+  parties: ["Party", "Kind", "Description"],
+  highlights: ["Highlight", "Colour", "Look", "Meaning"]
 };
 
 /**
@@ -213,8 +214,24 @@ export function documentModel(doc) {
       cellOf(item.description)
     ],
     statuses: item => [cellOf(item.name), cellOf(item.tone), cellOf(item.description)],
-    parties: item => [cellOf(item.name), cellOf(item.kind), cellOf(item.description)]
+    parties: item => [cellOf(item.name), cellOf(item.kind), cellOf(item.description)],
+    highlights: item => [
+      cellOf(item.name),
+      cellOf(item.colour ?? "grey"),
+      cellOf(
+        [`${item.border ?? "bold"} border`, item.fill === "tint" ? "tint" : null, item.chip ? "tag" : null]
+          .filter(Boolean)
+          .join(" · ")
+      ),
+      cellOf(item.description)
+    ]
   };
+  /** The names of an element's highlights, for its row's notes (highlights spec §7). */
+  const highlightNames = value =>
+    (value.highlights ?? [])
+      .map(id => doc.catalog.highlights?.[id]?.name)
+      .filter(Boolean)
+      .join(", ");
   const catalog = Object.keys(CATALOG_COLLECTIONS)
     .filter(collection => sortedKeys(doc.catalog[collection]).length)
     .map(collection => ({
@@ -266,7 +283,12 @@ export function documentModel(doc) {
                   cellOf((node.statuses ?? []).map(named).join(", "), refs(node.statuses ?? [])),
                   cellOf([node.outcome, node.terminal ? "terminal" : null].filter(Boolean).join(", ")),
                   cellOf(
-                    [node.summary, node.inner ? `enters ${named(interior ?? "")}` : null, node.provenance]
+                    [
+                      node.summary,
+                      node.inner ? `enters ${named(interior ?? "")}` : null,
+                      node.provenance,
+                      highlightNames(node)
+                    ]
                       .filter(Boolean)
                       .join(" · "),
                     refs([interior])
@@ -286,7 +308,7 @@ export function documentModel(doc) {
               cells: [
                 cellOf(name, interior ? [{ id: interior, text: name }] : []),
                 cellOf(node.kind),
-                cellOf([node.summary, node.provenance].filter(Boolean).join(" · "))
+                cellOf([node.summary, node.provenance, highlightNames(node)].filter(Boolean).join(" · "))
               ]
             };
           })
@@ -530,6 +552,30 @@ export function toAIPack(doc, { guideUrl } = {}) {
     ),
     ""
   );
+
+  // What each highlight means and which elements carry it (highlights spec §7), when the project has any.
+  const highlightIds = sortedKeys(doc.catalog.highlights);
+  if (highlightIds.length) {
+    const carriers = new Map(highlightIds.map(id => [id, []]));
+    for (const entry of index.entries.values()) {
+      if (entry.type !== "node" && entry.type !== "edge") continue;
+      for (const id of entry.value.highlights ?? []) carriers.get(id)?.push(entry.id);
+    }
+    out.push(
+      "## Highlights",
+      "",
+      table(
+        ["ID", "Name", "Meaning", "On"],
+        highlightIds.map(id => [
+          code(id),
+          doc.catalog.highlights[id].name,
+          doc.catalog.highlights[id].description ?? "",
+          carriers.get(id).sort().map(code).join(", ")
+        ])
+      ),
+      ""
+    );
+  }
 
   const trees = hierarchy(doc);
   const lines = [];
