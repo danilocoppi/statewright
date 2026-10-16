@@ -25,6 +25,7 @@ import { hasTrigger } from "@/editing/triggers";
 import { setLanguage } from "@/i18n/language";
 import { toggleInspector } from "@/inspector/state";
 import { openFor, simulationStore } from "@/simulate/store";
+import { addHighlightCommands, drawnAmong, removeHighlightCommands } from "@/highlights/apply";
 import { editorStore } from "@/store/editor";
 import { THEMES, useTheme } from "@/stores/theme";
 import { useView } from "@/stores/view";
@@ -104,6 +105,8 @@ export function editorCommands({
       simulationStore.getState().back()
     ),
     ...when(simulating, "stop", t("simulate:commands.stop"), undefined, onStop),
+    // Each highlight of the project, on the selection's boxes and arrows (highlights spec §6).
+    ...(readOnly ? [] : highlightCommands(doc, selection, t)),
     ...when(!readOnly, "insert", words("insert"), "/", () => {
       useView.setState({ insertHint: false });
       editingStore.getState().open({ type: "insert", at: null });
@@ -194,4 +197,44 @@ export function editorCommands({
       )
     )
   ];
+}
+
+/** Apply or remove each of the project's highlights on the selected boxes and arrows, one change each. */
+function highlightCommands(doc, selection, t) {
+  const drawn = drawnAmong(doc, selection);
+  if (!drawn.length) return [];
+  const run = (commands, label) => commands.length && editorStore.getState().dispatch(commands, { label });
+  return Object.entries(doc.catalog.highlights ?? {}).flatMap(([id, highlight]) => {
+    const add = addHighlightCommands(doc, drawn, id);
+    const remove = removeHighlightCommands(doc, drawn, id);
+    const name = highlight.name;
+    return [
+      ...(add.length ?
+        [
+          {
+            id: `highlight-add-${id}`,
+            name: t("inspector:palette.commands.applyHighlight", { name }),
+            run: () =>
+              run(
+                addHighlightCommands(editorStore.getState().doc, drawn, id),
+                t("inspector:palette.commands.applyHighlight", { name })
+              )
+          }
+        ]
+      : []),
+      ...(remove.length ?
+        [
+          {
+            id: `highlight-remove-${id}`,
+            name: t("inspector:palette.commands.removeHighlight", { name }),
+            run: () =>
+              run(
+                removeHighlightCommands(editorStore.getState().doc, drawn, id),
+                t("inspector:palette.commands.removeHighlight", { name })
+              )
+          }
+        ]
+      : [])
+    ];
+  });
 }

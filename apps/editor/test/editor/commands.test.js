@@ -127,4 +127,23 @@ describe("the commands ⌘K lists", () => {
     expect(open).toHaveBeenCalledWith("/readme", "_blank", "noopener");
     open.mockRestore();
   });
+
+  it("applies and removes each highlight on the selection, and offers neither without one", () => {
+    const doc = readExample("get-paid-as-built");
+    doc.catalog.highlights.hlt_critical = { name: "Critical", colour: "red" };
+    doc.canvases.cnv_open.nodes.nod_created.highlights = ["hlt_critical"];
+    editorStore.getState().open(doc, { canvasId: "cnv_open" });
+    const ids = () => commands().map(command => command.id);
+    expect(ids()).not.toContain("highlight-add-hlt_critical");
+    editorStore.getState().select(["nod_created", "nod_awaitingPayment"]);
+    const add = commands().find(command => command.id === "highlight-add-hlt_critical");
+    expect(add.name).toBe('inspector:palette.commands.applyHighlight {"name":"Critical"}');
+    expect(ids()).toContain("highlight-remove-hlt_critical");
+    add.run();
+    expect(editorStore.getState().doc.canvases.cnv_open.nodes.nod_awaitingPayment.highlights).toEqual(["hlt_critical"]);
+    commands()
+      .find(command => command.id === "highlight-remove-hlt_critical")
+      .run();
+    expect(editorStore.getState().doc.canvases.cnv_open.nodes.nod_created.highlights ?? []).toEqual([]);
+  });
 });

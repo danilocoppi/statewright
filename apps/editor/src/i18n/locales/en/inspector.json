@@ -603,7 +603,9 @@
       "cut": "Cut",
       "paste": "Paste",
       "guide": "Open the guide",
-      "nextArea": "Move to the next area"
+      "nextArea": "Move to the next area",
+      "applyHighlight": "Apply highlight: {{name}}",
+      "removeHighlight": "Remove highlight: {{name}}"
     }
   },
   "kindNeeds": "{{kind}} — set {{field}} first",
@@ -696,6 +698,7 @@
       "critical": "Must not fail.",
       "review": "To look at again.",
       "done": "Finished and checked."
-    }
+    },
+    "count": "{{count}} of {{total}}"
   }
 }

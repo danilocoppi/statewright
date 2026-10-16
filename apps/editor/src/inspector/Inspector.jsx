@@ -14,6 +14,7 @@ import { editorStore, useEditor } from "@/store/editor";
 import { useInspectorWidth } from "@/stores/inspector";
 import { useView } from "@/stores/view";
 
+import { SeveralHighlights } from "@/highlights/Several";
 import { LockControl } from "@/locks/LockControl";
 
 import { TitleControl } from "./controls/text";
@@ -120,6 +121,7 @@ function Several({ count }) {
           </li>
         ))}
       </ul>
+      <SeveralHighlights selection={selection} />
     </div>
   );
 }

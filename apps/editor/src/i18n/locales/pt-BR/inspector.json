@@ -603,7 +603,9 @@
       "cut": "Recortar",
       "paste": "Colar",
       "guide": "Abrir o guia",
-      "nextArea": "Ir para a próxima área"
+      "nextArea": "Ir para a próxima área",
+      "applyHighlight": "Aplicar marcador: {{name}}",
+      "removeHighlight": "Remover marcador: {{name}}"
     }
   },
   "kindNeeds": "{{kind}} — defina {{field}} antes",
@@ -696,6 +698,7 @@
       "critical": "Não pode falhar.",
       "review": "Para olhar de novo.",
       "done": "Terminado e conferido."
-    }
+    },
+    "count": "{{count}} de {{total}}"
   }
 }
