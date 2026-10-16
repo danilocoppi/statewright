@@ -123,6 +123,23 @@ describe("the inspector", () => {
     expect(screen.getByRole("button", { name: "Hide details" })).toBeTruthy();
   });
 
+  it("keeps the basics on show with Details: the description, the highlights and the rest, then the details", async () => {
+    const user = userEvent.setup();
+    show();
+    select(["nod_awaitingPayment"]);
+    await user.click(screen.getByRole("button", { name: "Show details" }));
+    const panel = inspector();
+    expect(within(panel).getByRole("textbox", { name: "Description" })).toBeTruthy();
+    expect(within(panel).getByRole("button", { name: "Add highlight" })).toBeTruthy();
+    expect(within(panel).getByRole("radiogroup", { name: "Provenance" })).toBeTruthy();
+    // The basics first, the details after them.
+    const order = [...panel.querySelectorAll('[data-testid="inspector-field"]')].map(row => row.textContent);
+    const description = order.findIndex(text => text.startsWith("Description"));
+    const provenance = order.findIndex(text => text.startsWith("Provenance"));
+    expect(description).toBeGreaterThanOrEqual(0);
+    expect(description).toBeLessThan(provenance);
+  });
+
   it("changes a box's kind, leaving out what the new kind does not take", async () => {
     const user = userEvent.setup();
     show();

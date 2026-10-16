@@ -235,15 +235,18 @@ function InspectorIsland() {
           <div
             className={cn(
               "grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] content-start overflow-y-auto border-t border-hairline px-4 py-3.5 [scrollbar-color:var(--control-border)_transparent] [scrollbar-width:thin]",
-              layer === "details" ? "gap-2.5" : "gap-4"
+              "gap-4"
             )}
           >
-            {layer === "basics" ?
-              <FieldList id={id} fields={fields.basics} entry={entry} layer="basics" />
-            : <DetailsFrame entry={entry}>
-                <FieldList id={id} fields={fields.details} entry={entry} layer="details" />
-              </DetailsFrame>
-            }
+            {/* Details adds to the basics, under them: nothing a reviewer sees goes away when they ask for more. */}
+            <FieldList id={id} fields={fields.basics} entry={entry} layer="basics" />
+            {layer === "details" && (
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2.5 border-t border-hairline pt-3.5">
+                <DetailsFrame entry={entry}>
+                  <FieldList id={id} fields={fields.details} entry={entry} layer="details" />
+                </DetailsFrame>
+              </div>
+            )}
             {/* Don't let the AI change this: a box, an arrow, a region or the level (collaboration spec §8.2). */}
             {["node", "edge", "region", "canvas"].includes(entry?.type) && <LockControl id={id} />}
           </div>
