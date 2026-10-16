@@ -699,6 +699,7 @@
       "review": "Para olhar de novo.",
       "done": "Terminado e conferido."
     },
-    "count": "{{count}} de {{total}}"
+    "count": "{{count}} de {{total}}",
+    "editLook": "Editar aparência…"
   }
 }

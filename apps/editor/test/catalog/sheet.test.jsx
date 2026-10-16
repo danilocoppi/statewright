@@ -35,7 +35,7 @@ afterEach(() => {
 });
 
 describe("the catalog sheet", () => {
-  it("lists the nine collections and the reusable parts with their counts, and a list's items found by name", async () => {
+  it("lists the ten collections and the reusable parts with their counts, and a list's items found by name", async () => {
     const user = userEvent.setup();
     open("events");
     const nav = within(sheet()).getByRole("navigation");
@@ -53,6 +53,7 @@ describe("the catalog sheet", () => {
       "Timers2",
       "Statuses7",
       "Parties3",
+      "Highlights0",
       "Reusable parts3"
     ]);
     await user.type(within(sheet()).getByRole("textbox", { name: "Find…" }), "ops.");

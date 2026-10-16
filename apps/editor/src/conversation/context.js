@@ -10,7 +10,17 @@ export function itemOf(doc, index, id) {
   if (!entry) return null;
   const { value } = entry;
   const name = entry.type === "edge" ? edgeLabel(doc, id) || id : (value.name ?? value.label ?? value.text ?? id);
-  return { id, name, kind: entry.type === "node" ? value.kind : entry.type, level: entry.canvas };
+  // The highlights it carries, by name (highlights spec §7): "the critical ones" then means something to the agent.
+  const highlights = (value.highlights ?? [])
+    .map(highlight => doc.catalog.highlights?.[highlight]?.name)
+    .filter(Boolean);
+  return {
+    id,
+    name,
+    kind: entry.type === "node" ? value.kind : entry.type,
+    level: entry.canvas,
+    ...(highlights.length ? { highlights } : {})
+  };
 }
 
 /**

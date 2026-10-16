@@ -4,6 +4,8 @@ import { applyBatch } from "statewright";
 
 import { Button, IconButton } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
+import { HighlightEditor } from "@/highlights/HighlightEditor";
+import { highlightChipStyle } from "@/inspector/controls/highlights";
 import { cn } from "@/lib/cn";
 import { indexOf, usageCount } from "@/lib/derived";
 import { kindWords } from "@/inspector/describe";
@@ -167,6 +169,33 @@ function Remove({ id, uses }) {
   );
 }
 
+/** A highlight's look, as its tag, and the way to its editor (highlights spec §6). */
+function EditLook({ id, highlight }) {
+  const { t } = useTranslation("inspector");
+  const readOnly = useEditor(state => state.readOnly);
+  const [editing, setEditing] = useState(false);
+  return (
+    <div className="mt-2 flex items-center gap-2">
+      <span
+        style={highlightChipStyle(highlight)}
+        className="inline-flex h-6 items-center rounded-[6px] border px-2 text-[12px] font-medium"
+      >
+        {highlight.name}
+      </span>
+      {!readOnly && (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="text-[12px] font-medium text-accent hover:underline"
+        >
+          {t("highlights.editLook")}
+        </button>
+      )}
+      {editing && <HighlightEditor open id={id} onClose={() => setEditing(false)} />}
+    </div>
+  );
+}
+
 const TABS = ["fields", "schema"];
 
 /**
@@ -257,6 +286,7 @@ export function ItemDetail({ id, fresh = false, onNavigate }) {
               `${kindWords(t, doc, entry)} · ${t(`kinds.canvas.${entry.value.kind}`)}`
             : kindWords(t, doc, entry)}
           </p>
+          {entry.collection === "highlights" && <EditLook id={id} highlight={entry.value} />}
           {entry.type === "definition" && (
             <button
               type="button"

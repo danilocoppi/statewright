@@ -12,7 +12,8 @@ export const COLLECTIONS = [
   "webhooks",
   "timers",
   "statuses",
-  "parties"
+  "parties",
+  "highlights"
 ];
 
 /** The sheet's list of reusable parts (spec §7.6), after the collections. */

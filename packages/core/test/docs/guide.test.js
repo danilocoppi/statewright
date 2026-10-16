@@ -369,6 +369,8 @@ describe("the platform guide", () => {
     expect(source).toContain("your tags, then the tags of your highlights");
     expect(source).toContain("13. **Highlight only when asked.**");
     expect(source).toContain("The JSON Schema of format 1.4 ships with the package");
+    expect(source).toContain("**Highlights in the Editor.**");
+    expect(source).toContain("each selected element also names the `highlights` it carries");
   });
 
   it("tells an agent where to start, before anything else: the MCP server in each client, the Editor's address, pairing, reading, building level by level", () => {

@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import { PanelBoundary } from "@/components/PanelBoundary";
 import { Icon } from "@/components/ui/Icon";
 import { idsFor } from "@/editing/ids";
+import { HighlightEditor } from "@/highlights/HighlightEditor";
+import { highlightChipStyle } from "@/inspector/controls/highlights";
 import { createCommands, newItem } from "@/inspector/references";
 import { cn } from "@/lib/cn";
 import { instanceCounts } from "@/reuse/definitions";
@@ -90,6 +92,7 @@ function Sheet({ onNavigate }) {
   const [query, setQuery] = useState("");
   const [fresh, setFresh] = useState(null);
   const [kinds, setKinds] = useState(false);
+  const [making, setMaking] = useState(false);
   const parts = collection === PARTS;
 
   const items = parts ? partsOf(t, doc, instanceCounts(doc), query) : itemsOf(t, doc, collection, query);
@@ -103,6 +106,8 @@ function Sheet({ onNavigate }) {
   };
 
   const create = () => {
+    // A highlight is made in its own editor, where its look is chosen (highlights spec §6).
+    if (collection === "highlights") return setMaking(true);
     const made = newItem(collection, t(`catalog.newName.${collection}`));
     const { id, commands } = createCommands(doc, collection, made);
     const kind = t(`kinds.catalog.${collection}`).toLowerCase();
@@ -179,9 +184,20 @@ function Sheet({ onNavigate }) {
                 )}
               >
                 <span
-                  className={cn("truncate text-ui font-medium", collection === "events" && "font-mono text-[12px]")}
+                  className={cn(
+                    "flex min-w-0 items-center gap-2 text-ui font-medium",
+                    collection === "events" && "font-mono text-[12px]"
+                  )}
                 >
-                  {entry.name}
+                  {collection === "highlights" && (
+                    <span
+                      data-testid="highlight-swatch"
+                      aria-hidden="true"
+                      style={highlightChipStyle(doc.catalog.highlights[entry.id])}
+                      className="size-3.5 shrink-0 rounded-[4px] border-2"
+                    />
+                  )}
+                  <span className="truncate">{entry.name}</span>
                 </span>
                 <span className="truncate text-label text-muted">{entry.line}</span>
               </button>
@@ -214,6 +230,16 @@ function Sheet({ onNavigate }) {
             </button>)}
       </section>
       <ItemDetail key={chosen} id={chosen} fresh={chosen === fresh} onNavigate={onNavigate} />
+      {making && (
+        <HighlightEditor
+          open
+          onClose={() => setMaking(false)}
+          onSaved={id => {
+            setQuery("");
+            catalogStore.getState().choose({ item: id });
+          }}
+        />
+      )}
     </div>
   );
 }

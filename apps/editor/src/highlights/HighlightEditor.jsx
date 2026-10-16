@@ -124,9 +124,10 @@ function Preview({ form, label }) {
  * tag; what it means; a preview of a box in that look. Saving is one change: a new highlight is created together with
  * what `apply` does with it (applied to the element it was made for).
  * @param {{ open: boolean, onClose: () => void, id?: string, name?: string,
- *   apply?: (doc: any, highlightId: string) => object[] }} props `id`: the highlight edited; `name`: the name typed.
+ *   apply?: (doc: any, highlightId: string) => object[], onSaved?: (highlightId: string) => void }} props `id`: the
+ *   highlight edited; `name`: the name typed; `onSaved`: a new highlight was made.
  */
-export function HighlightEditor({ open, onClose, id, name = "", apply = () => [] }) {
+export function HighlightEditor({ open, onClose, id, name = "", apply = () => [], onSaved = () => {} }) {
   const { t } = useTranslation("inspector");
   const doc = useEditor(state => state.doc);
   const existing = id ? doc?.catalog.highlights[id] : null;
@@ -162,9 +163,10 @@ export function HighlightEditor({ open, onClose, id, name = "", apply = () => []
       });
     } else {
       const created = createCommands(store.doc, "highlights", item);
-      store.dispatch([...created.commands, ...apply(store.doc, created.id)], {
+      const { ok } = store.dispatch([...created.commands, ...apply(store.doc, created.id)], {
         label: t("highlights.created", { name: item.name })
       });
+      if (ok) onSaved(created.id);
     }
     onClose();
   };
@@ -228,6 +230,7 @@ export function HighlightEditor({ open, onClose, id, name = "", apply = () => []
                 }}
               />
               <TextField
+                className="mt-1.5"
                 label={t("highlights.hex")}
                 value={hex}
                 placeholder="#C2410C"

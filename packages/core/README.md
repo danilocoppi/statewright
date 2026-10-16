@@ -452,6 +452,16 @@ to a level of another kind. Select a box that can hold one (a system's box, a st
 **Create inside** → Flow, State machine or System, as the inspector's **Interior** adds it: the new level opens, with
 its tools in the dock, and one Undo takes it back. A box that already has a level offers to **Open** it instead.
 
+**Highlights in the Editor.** A box's or an arrow's **Highlights**, under its description in the inspector, lists the
+highlights it carries as tags in their look; the first gives the look, and Alt+← or Alt+→ on a tag moves it. **Add
+highlight** finds one of the project's, or **New highlight…** makes one in the highlight editor — its name, one of ten
+colours or any hex, its border, its fill, whether it shows its name as a tag, what it means, and a preview of a box in
+that look — and applies it in the same change. A project without highlights is offered _Start_, _Critical_, _Review_
+and _Done_ to begin from. With several boxes and arrows selected, the inspector lists the highlights any of them carries
+and how many: one is added to all of them, or taken off all of them, as one change; ⌘K has **Apply highlight** and
+**Remove highlight** for each. The catalog's **Highlights** lists them with their looks: **Edit look…** opens one in
+the editor, and removing one in use says how many elements lose it.
+
 **Levels…** (L, the project menu, or the layers button beside the zoom) is the project's map: every level from the top
 with its kind and how many elements it has, a level opened to its elements, the flows that implement catalog items,
 the reusable parts with where each is used (or that nothing uses them), and the levels nothing reaches. Its search
@@ -986,7 +996,8 @@ figure, cropped to them — comes as an image in the answer of `editor_wait` or 
 | `detail`    | Detail the box in a level of its own, top-down, as the playbook says; confirm the outline first.             |
 | `names`     | Propose clearer names as options (`editor_ask`); rename only what the person chooses.                        |
 
-A message reads `{ id, text, action?, context: { project, level, selection }, marks?, image?, answers?, proposal? }`.
+A message reads `{ id, text, action?, context: { project, level, selection }, marks?, image?, answers?, proposal? }`;
+each selected element also names the `highlights` it carries (`["Critical"]`), when it carries any.
 The bar shows the person whether you are
 working (a call in the last 5 seconds), listening (waiting with `editor_wait`, or reached by the Channel) or away (their
 message waits as _not read yet_). The conversation lasts as long as the pairing: nothing of it goes into the document.

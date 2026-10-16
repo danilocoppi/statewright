@@ -37,4 +37,13 @@ describe("what goes with a message (collaboration spec §5.4)", () => {
       { key: "selection", label: 'conversation.chips.selection {"count":1}' }
     ]);
   });
+
+  it("names the highlights a selected element carries, so the agent knows which are the critical ones", () => {
+    const doc = structuredClone(readExample("payments"));
+    doc.catalog.highlights.hlt_critical = { name: "Critical", colour: "red" };
+    doc.canvases.cnv_lifecycle.nodes.nod_expiryClock.highlights = ["hlt_critical"];
+    expect(contextOf(doc, "cnv_lifecycle", ["nod_expiryClock"]).selection).toEqual([
+      { id: "nod_expiryClock", name: "expiry_clock", kind: "state", level: "cnv_lifecycle", highlights: ["Critical"] }
+    ]);
+  });
 });
