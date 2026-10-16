@@ -468,98 +468,104 @@ export function ConversationBar({ onNavigate }) {
           {notSent}
         </p>
       )}
-      <div className="flex items-end gap-1.5">
-        <span className="mb-0.5">
-          <MarkTools />
-        </span>
-        <button
-          type="button"
-          aria-expanded={historyOpen}
-          aria-label={t("conversation.history")}
-          title={t("conversation.history")}
-          onClick={() => conversationStore.getState().toggleHistory()}
-          className="grid size-8 shrink-0 place-items-center rounded-control text-sub hover:bg-subtle hover:text-ink"
-        >
-          <Icon
-            name="chevron-down"
-            className={cn(
-              "transition-transform duration-150 motion-reduce:transition-none",
-              !historyOpen && "rotate-180"
-            )}
-          />
-        </button>
-        <div className="flex min-w-0 flex-1 flex-col gap-1 rounded-control border border-control-border px-2 py-1 focus-within:border-accent">
-          {chips.length > 0 && (
-            <span className="flex flex-wrap gap-1">
-              {chips.map(chip => (
-                <span
-                  key={chip.key}
-                  className="flex items-center gap-0.5 rounded-chip bg-accent-soft pl-1.5 text-label text-accent"
-                >
-                  {chip.label}
-                  <button
-                    type="button"
-                    aria-label={t("conversation.chips.leave", { label: chip.label })}
-                    onClick={() => setLeft({ key: selectionKey, set: new Set(leave).add(chip.key) })}
-                    className="grid size-4 place-items-center rounded-chip hover:bg-surface"
+      <div className="flex flex-col gap-1">
+        <div className="flex items-end gap-1.5">
+          <div className="flex min-w-0 flex-1 flex-col gap-1 rounded-control border border-control-border px-2 py-1 focus-within:border-accent">
+            {chips.length > 0 && (
+              <span className="flex flex-wrap gap-1">
+                {chips.map(chip => (
+                  <span
+                    key={chip.key}
+                    className="flex items-center gap-0.5 rounded-chip bg-accent-soft pl-1.5 text-label text-accent"
                   >
-                    <Icon name="close" size={10} />
-                  </button>
-                </span>
-              ))}
+                    {chip.label}
+                    <button
+                      type="button"
+                      aria-label={t("conversation.chips.leave", { label: chip.label })}
+                      onClick={() => setLeft({ key: selectionKey, set: new Set(leave).add(chip.key) })}
+                      className="grid size-4 place-items-center rounded-chip hover:bg-surface"
+                    >
+                      <Icon name="close" size={10} />
+                    </button>
+                  </span>
+                ))}
+              </span>
+            )}
+            <textarea
+              ref={field}
+              data-testid="conversation-field"
+              rows={1}
+              aria-label={t("conversation.field", { agent })}
+              placeholder={t("conversation.placeholder", { agent })}
+              value={draft}
+              onChange={event => conversationStore.getState().setDraft(event.target.value)}
+              onKeyDown={event => {
+                if (event.key === "Escape") {
+                  event.stopPropagation();
+                  event.currentTarget.blur();
+                  return;
+                }
+                if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing || event.isComposing) {
+                  return;
+                }
+                event.preventDefault();
+                send();
+              }}
+              className="max-h-[9lh] [field-sizing:content] min-h-[1lh] resize-none bg-transparent text-read text-ink outline-none placeholder:text-muted"
+            />
+          </div>
+          {/* The agent's status stands over the microphone. */}
+          <span className="mb-0.5 flex shrink-0 flex-col items-center gap-0.5">
+            <span className="hidden sm:flex">
+              <Status status={status} />
             </span>
-          )}
-          <textarea
-            ref={field}
-            data-testid="conversation-field"
-            rows={1}
-            aria-label={t("conversation.field", { agent })}
-            placeholder={t("conversation.placeholder", { agent })}
-            value={draft}
-            onChange={event => conversationStore.getState().setDraft(event.target.value)}
-            onKeyDown={event => {
-              if (event.key === "Escape") {
-                event.stopPropagation();
-                event.currentTarget.blur();
-                return;
-              }
-              if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing || event.isComposing) {
-                return;
-              }
-              event.preventDefault();
-              send();
-            }}
-            className="max-h-[9lh] [field-sizing:content] min-h-[1lh] resize-none bg-transparent text-read text-ink outline-none placeholder:text-muted"
-          />
+            <Voice />
+          </span>
+          <Button
+            variant={stopping ? "secondary" : "primary"}
+            size="sm"
+            data-testid="conversation-send"
+            onClick={stopping ? stop : send}
+            disabled={!stopping && !draft.trim()}
+            className="mb-0.5 shrink-0"
+          >
+            {stopping ? t("conversation.stop") : t("conversation.send")}
+          </Button>
         </div>
-        <span className="mb-2 hidden flex-col items-end gap-0.5 sm:flex">
-          <Status status={status} />
-          {/* The leave to delete without asking, shown while it holds, and taken back here (spec §7). */}
-          {allowDeletes && (
-            <button
-              type="button"
-              data-testid="conversation-deletes"
-              title={t("proposal.turnOff")}
-              onClick={() => proposalsStore.getState().setAllowDeletes(false)}
-              className="text-label text-warning hover:underline"
-            >
-              {t("proposal.deletesOn", { agent })} · {t("proposal.turnOff")}
-            </button>
-          )}
-        </span>
-        <span className="mb-0.5">
-          <Voice />
-        </span>
-        <Button
-          variant={stopping ? "secondary" : "primary"}
-          size="sm"
-          data-testid="conversation-send"
-          onClick={stopping ? stop : send}
-          disabled={!stopping && !draft.trim()}
-          className="mb-0.5 shrink-0"
-        >
-          {stopping ? t("conversation.stop") : t("conversation.send")}
-        </Button>
+        {/* Under the field: the marking tools and the history; the leave to delete, while it holds, at the right. */}
+        <div className="flex items-center gap-1.5">
+          <MarkTools />
+          <button
+            type="button"
+            aria-expanded={historyOpen}
+            aria-label={t("conversation.history")}
+            title={t("conversation.history")}
+            onClick={() => conversationStore.getState().toggleHistory()}
+            className="grid size-8 shrink-0 place-items-center rounded-control text-sub hover:bg-subtle hover:text-ink"
+          >
+            <Icon
+              name="chevron-down"
+              className={cn(
+                "transition-transform duration-150 motion-reduce:transition-none",
+                !historyOpen && "rotate-180"
+              )}
+            />
+          </button>
+          <span className="ml-auto flex items-center">
+            {/* The leave to delete without asking, shown while it holds, and taken back here (spec §7). */}
+            {allowDeletes && (
+              <button
+                type="button"
+                data-testid="conversation-deletes"
+                title={t("proposal.turnOff")}
+                onClick={() => proposalsStore.getState().setAllowDeletes(false)}
+                className="text-label text-warning hover:underline"
+              >
+                {t("proposal.deletesOn", { agent })} · {t("proposal.turnOff")}
+              </button>
+            )}
+          </span>
+        </div>
       </div>
     </Island>
   );
