@@ -37,7 +37,12 @@ export function Legend() {
   const canvasId = useEditor(state => state.canvasId);
   const legend = useMemo(() => legendFor(doc, canvasId), [doc, canvasId]);
   const count =
-    legend.nodes.length + legend.edges.length + legend.roles.length + legend.chips.length + (legend.findings ? 1 : 0);
+    legend.nodes.length +
+    legend.edges.length +
+    legend.roles.length +
+    legend.chips.length +
+    legend.highlights.length +
+    (legend.findings ? 1 : 0);
   // As wide as what it lists: up to three columns as wide as its longest entry, within 540 px.
   return (
     <Island
@@ -125,6 +130,22 @@ export function Legend() {
               }
             >
               {item.label}
+            </Entry>
+          ))}
+          {/* The level's highlights, each in its look, with what it means (highlights spec §4). */}
+          {legend.highlights.map(item => (
+            <Entry
+              key={item.id}
+              swatch={
+                <NodeSwatch
+                  fill={item.fill ? item.look.tint : "#FFFFFF"}
+                  stroke={item.look.stroke}
+                  width={Math.min(item.look.width.box, 2)}
+                />
+              }
+            >
+              <span>{item.name}</span>
+              {item.description && <span className="text-muted"> {item.description}</span>}
             </Entry>
           ))}
           {legend.findings && (

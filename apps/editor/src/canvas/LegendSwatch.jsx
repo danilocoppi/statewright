@@ -4,7 +4,7 @@ import { MARKER_PREFIX } from "./project";
 const markerOf = key => `url(#${MARKER_PREFIX}-m-${key.replace(/\./g, "-")})`;
 
 /** A node style's look, small: a box in its fill, stroke and dash, painted with the theme's diagram colours. */
-export function NodeSwatch({ fill, stroke, dash }) {
+export function NodeSwatch({ fill, stroke, dash, width }) {
   return (
     <svg aria-hidden="true" width="28" height="14" viewBox="0 0 28 14" className="shrink-0 overflow-visible">
       <rect
@@ -15,6 +15,7 @@ export function NodeSwatch({ fill, stroke, dash }) {
         rx="3"
         fill={paint(fill)}
         stroke={paint(stroke)}
+        strokeWidth={width}
         strokeDasharray={dash}
       />
     </svg>

@@ -1,7 +1,19 @@
 // The diagram's colours (spec §5.3). Core draws with the hex values of its palette; the canvas asks Core to paint each
 // one as a CSS variable, defined for the light theme with Core's own value (so the canvas looks like the export) and
 // for the dark theme with the same meaning on a dark surface. Dashes, chips and widths never change between themes.
-import { BADGE, EDGE_STYLES, INK, MUTED, NODE_STYLES, NOTE_TONES, RULE, SUB, TONES } from "statewright";
+import {
+  BADGE,
+  EDGE_STYLES,
+  HIGHLIGHT_COLOURS,
+  highlightLook,
+  INK,
+  MUTED,
+  NODE_STYLES,
+  NOTE_TONES,
+  RULE,
+  SUB,
+  TONES
+} from "statewright";
 
 /** Dark value of every colour of Core's palette, by its light value. */
 export const DARK = {
@@ -47,6 +59,12 @@ export const DARK = {
   "#F3F5F9": "#3A4151"
 };
 
+// The highlights' palette (highlights spec §3) brings its own dark values; a colour the diagram already uses keeps its
+// meaning's dark value.
+for (const { light, dark } of Object.values(HIGHLIGHT_COLOURS)) {
+  for (const role of ["stroke", "tint", "text"]) DARK[light[role]] ??= dark[role];
+}
+
 const variable = color => `--sw-${color.slice(1).toLowerCase()}`;
 
 /** How the canvas asks Core to paint a colour: `paint("#0A66C2")` is `var(--sw-0a66c2)`. */
@@ -66,7 +84,8 @@ const PALETTE = [
       ...Object.values(NODE_STYLES).flatMap(style => [style.fill, style.stroke]),
       ...Object.values(EDGE_STYLES).map(style => style.stroke),
       ...Object.values(TONES).flatMap(tone => [tone.color, tone.fill]),
-      ...Object.values(NOTE_TONES).flatMap(tone => [tone.color, tone.fill])
+      ...Object.values(NOTE_TONES).flatMap(tone => [tone.color, tone.fill]),
+      ...Object.values(HIGHLIGHT_COLOURS).flatMap(({ light }) => [light.stroke, light.tint, light.text])
     ].map(color => color.toUpperCase())
   )
 ];
@@ -83,3 +102,39 @@ export function diagramStyles() {
   const badge = ".dark g.badge > text {\n  fill: var(--canvas);\n}";
   return `${block(":root", color => color)}\n${block(".dark", color => DARK[color])}\n${label}\n${badge}\n`;
 }
+
+const known = new Set(PALETTE);
+
+/**
+ * The CSS of the open document's hex highlights (highlights spec §4): each colour Core draws them with, defined with
+ * its light value and, under `.dark`, the value Core derives for the dark theme. Palette highlights need none.
+ * @param {any} doc
+ */
+export function highlightStyles(doc) {
+  const light = new Map();
+  const dark = new Map();
+  for (const highlight of Object.values(doc?.catalog?.highlights ?? {})) {
+    if (!highlight.colour?.startsWith("#")) continue;
+    const day = highlightLook(highlight, "light");
+    const night = highlightLook(highlight, "dark");
+    for (const role of ["stroke", "tint", "text"]) {
+      if (known.has(day[role]) || light.has(day[role])) continue;
+      light.set(day[role], day[role]);
+      dark.set(day[role], night[role]);
+    }
+  }
+  if (!light.size) return "";
+  const block = (selector, values) =>
+    `${selector} {\n${[...values].map(([color, value]) => `  ${variable(color)}: ${value};`).join("\n")}\n}`;
+  return `${block(":root", light)}\n${block(".dark", dark)}\n`;
+}
+
+/** The arrowhead keys of highlights (Core names them after their colour): the palette's, and the document's hex ones. */
+export const highlightMarkers = doc => [
+  ...new Set([
+    ...Object.values(HIGHLIGHT_COLOURS).map(({ light }) => `highlight.${light.stroke.slice(1)}`),
+    ...Object.values(doc?.catalog?.highlights ?? {})
+      .filter(highlight => highlight.colour?.startsWith("#"))
+      .map(highlight => `highlight.${highlightLook(highlight).stroke.slice(1)}`)
+  ])
+];

@@ -1,7 +1,20 @@
-import { BADGE, EDGE_STYLES, INK, MUTED, NODE_STYLES, NOTE_TONES, RULE, SUB, TONES } from "statewright";
+import {
+  BADGE,
+  EDGE_STYLES,
+  HIGHLIGHT_COLOURS,
+  HIGHLIGHT_PALETTE,
+  highlightLook,
+  INK,
+  MUTED,
+  NODE_STYLES,
+  NOTE_TONES,
+  RULE,
+  SUB,
+  TONES
+} from "statewright";
 import { describe, expect, it } from "vitest";
 
-import { DARK, diagramStyles, paint } from "@/canvas/palette";
+import { DARK, diagramStyles, highlightStyles, paint } from "@/canvas/palette";
 
 /** The canvas behind the diagram (globals.css: --color-canvas). */
 const CANVAS = { light: "#FBFBFC", dark: "#121419" };
@@ -115,5 +128,40 @@ describe("the diagram palette", () => {
       return dark < Math.min(4.5, light);
     }).map(([what]) => what);
     expect(below).toEqual([]);
+  });
+});
+
+describe("the highlights' colours (highlights spec §4)", () => {
+  it("gives the ten highlight colours a dark value: the stroke reads on the dark canvas, the tag on its tint", () => {
+    const css = diagramStyles();
+    const light = variables(css, ":root");
+    const dark = variables(css, ".dark");
+    const key = color => color.slice(1).toLowerCase();
+    for (const name of HIGHLIGHT_PALETTE) {
+      const { stroke, tint, text } = HIGHLIGHT_COLOURS[name].light;
+      for (const color of [stroke, tint, text]) expect(light[key(color)], `${name} ${color}`).toBe(color);
+      expect(contrast(dark[key(stroke)], CANVAS.dark), `${name} stroke`).toBeGreaterThanOrEqual(3);
+      expect(contrast(dark[key(text)], dark[key(tint)]), `${name} tag`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("defines a hex highlight's colours for the open document, in light and in dark", () => {
+    const highlight = { name: "Brand", colour: "#C2410C", fill: "tint", chip: true };
+    const css = highlightStyles({ catalog: { highlights: { hlt_brand: highlight } } });
+    const light = highlightLook(highlight, "light");
+    const dark = highlightLook(highlight, "dark");
+    const key = color => color.slice(1).toLowerCase();
+    expect(variables(css, ":root")).toEqual({
+      [key(light.stroke)]: light.stroke,
+      [key(light.tint)]: light.tint,
+      [key(light.text)]: light.text
+    });
+    expect(variables(css, ".dark")).toEqual({
+      [key(light.stroke)]: dark.stroke,
+      [key(light.tint)]: dark.tint,
+      [key(light.text)]: dark.text
+    });
+    expect(highlightStyles({ catalog: { highlights: { hlt_red: { name: "Red", colour: "red" } } } })).toBe("");
+    expect(highlightStyles(null)).toBe("");
   });
 });

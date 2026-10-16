@@ -1,6 +1,9 @@
+import { useMemo } from "react";
 import { EDGE_STYLES, edgeMarkers } from "statewright";
 
-import { diagramStyles, paint } from "./palette";
+import { useEditor } from "@/store/editor";
+
+import { diagramStyles, highlightMarkers, highlightStyles, paint } from "./palette";
 import { MARKER_PREFIX } from "./project";
 
 const STYLES = diagramStyles();
@@ -13,11 +16,20 @@ const RUN_MARKER = `<marker id="${MARKER_PREFIX}-run" markerWidth="9" markerHeig
  * style. Rendered once, beside the canvas.
  */
 export function DiagramDefs() {
+  // The open document's highlights: their hex colours and their arrowheads (highlights spec §4).
+  const highlights = useEditor(state => state.doc?.catalog?.highlights);
+  const { styles, markers } = useMemo(() => {
+    const doc = { catalog: { highlights } };
+    return {
+      styles: highlightStyles(doc),
+      markers: edgeMarkers(highlightMarkers(doc), { idPrefix: MARKER_PREFIX, paint })
+    };
+  }, [highlights]);
   return (
     <>
-      <style>{STYLES}</style>
+      <style>{STYLES + styles}</style>
       <svg aria-hidden="true" className="absolute size-0">
-        <defs dangerouslySetInnerHTML={{ __html: MARKERS + RUN_MARKER }} />
+        <defs dangerouslySetInnerHTML={{ __html: MARKERS + markers + RUN_MARKER }} />
       </svg>
     </>
   );
