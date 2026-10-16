@@ -17,7 +17,7 @@ import { describe, expect, it } from "vitest";
 import { DARK, diagramStyles, highlightStyles, paint } from "@/canvas/palette";
 
 /** The canvas behind the diagram (globals.css: --color-canvas). */
-const CANVAS = { light: "#FBFBFC", dark: "#121419" };
+const CANVAS = { light: "#F4F5F7", dark: "#121419" };
 const WHITE = "#FFFFFF";
 
 /** Variables of one theme block of the generated CSS, by colour. */
@@ -112,9 +112,10 @@ describe("the diagram palette", () => {
     expect(contrast(CANVAS.dark, DARK[BADGE.fill.toUpperCase()])).toBeGreaterThanOrEqual(4.5);
   });
 
-  it("backs an edge's label with the canvas in dark, so a lighter box colour does not show behind it", () => {
-    expect(diagramStyles()).toContain(".dark g.label > rect {\n  fill: var(--canvas);\n}");
-    expect(diagramStyles()).toContain(".dark g.association > rect {\n  fill: var(--canvas);\n}");
+  it("backs an edge's label with the canvas in both themes, so no box colour shows behind it on the canvas", () => {
+    expect(diagramStyles()).toContain("\ng.label > rect {\n  fill: var(--canvas);\n}");
+    expect(diagramStyles()).toContain("\ng.association > rect {\n  fill: var(--canvas);\n}");
+    expect(diagramStyles()).not.toContain(".dark g.label");
   });
 
   it("keeps every text at least as legible in dark as in the exported figure, up to AA", () => {

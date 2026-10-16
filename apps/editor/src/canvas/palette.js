@@ -94,8 +94,8 @@ const PALETTE = [
 export function diagramStyles() {
   const block = (selector, valueOf) =>
     `${selector} {\n${PALETTE.map(color => `  ${variable(color)}: ${valueOf(color)};`).join("\n")}\n}`;
-  // A label's backing hides the edge under it: in dark it is the canvas, not the boxes' lighter surface.
-  const label = [".dark g.label > rect", ".dark g.association > rect"]
+  // A label's backing hides the edge under it: it is the canvas, not the boxes' surface, in both themes.
+  const label = ["g.label > rect", "g.association > rect"]
     .map(selector => `${selector} {\n  fill: var(--canvas);\n}`)
     .join("\n");
   // A finding badge's code is white on rose in the export; in dark the rose is light, so the code takes the canvas.
