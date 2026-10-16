@@ -5,6 +5,7 @@ import { edgeHome, homeKind, stateLevelOf } from "../roles/kinds.js";
 import { CHIP_LABELS, EDGE_STYLES, MUTED, NODE_STYLES, ROLE_STYLES, TONES } from "./palette.js";
 
 export { displayOf, figureCanvases, interiorOf } from "./frames.js";
+export { HIGHLIGHT_COLOURS, contrast, highlightLook } from "./highlights.js";
 
 export {
   BADGE,
