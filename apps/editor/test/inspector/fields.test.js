@@ -139,6 +139,7 @@ describe("the fields of an element", () => {
     expect(basics.map(field => field.key)).toEqual([
       "name",
       "description",
+      "highlights",
       "category",
       "outcome",
       "terminal",
@@ -160,6 +161,7 @@ describe("the fields of an element", () => {
     expect(transition.basics.map(field => field.key)).toEqual([
       "name",
       "description",
+      "highlights",
       "on",
       "after",
       "guard",

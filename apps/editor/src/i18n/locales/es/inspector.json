@@ -126,7 +126,8 @@
     "route": "Trazado",
     "legend": "Texto de la leyenda",
     "lanes": "Carriles",
-    "steps": "Pasos"
+    "steps": "Pasos",
+    "highlights": "Marcadores"
   },
   "choices": {
     "none": {
@@ -291,7 +292,8 @@
       "webhooks": "Webhook",
       "timers": "Temporizador",
       "statuses": "Estado",
-      "parties": "Participante"
+      "parties": "Participante",
+      "highlights": "Marcador"
     },
     "project": "Proyecto",
     "definition": "Parte reutilizable",
@@ -441,7 +443,8 @@
       "webhooks": "Webhooks",
       "timers": "Temporizadores",
       "statuses": "Estados",
-      "parties": "Participantes"
+      "parties": "Participantes",
+      "highlights": "Marcadores"
     },
     "newName": {
       "events": "Nuevo evento",
@@ -452,7 +455,8 @@
       "webhooks": "Nuevo webhook",
       "timers": "Nuevo temporizador",
       "statuses": "Nuevo estado",
-      "parties": "Nuevo participante"
+      "parties": "Nuevo participante",
+      "highlights": "Nuevo marcador"
     },
     "search": "Buscar…",
     "details": "Detalles",
@@ -635,5 +639,63 @@
     "locked": "Bloquear para la IA",
     "unlocked": "Desbloquear para la IA",
     "refused": "El bloqueo no se cambió: {{reason}}"
+  },
+  "highlights": {
+    "add": "Añadir marcador",
+    "remove": "Quitar {{name}}",
+    "new": "Nuevo marcador…",
+    "newTitle": "Nuevo marcador",
+    "editTitle": "Editar marcador",
+    "description": "Un marcador destaca cajas y flechas, con el significado que le des. Su aspecto es el mismo dondequiera que esté.",
+    "name": "Nombre",
+    "colour": "Color",
+    "hex": "Color en hex",
+    "hexHint": "O cualquier color, como #RRGGBB",
+    "hexInvalid": "Usa seis dígitos hex, como #C2410C",
+    "border": "Borde",
+    "fill": "Fondo",
+    "chip": "Mostrar el nombre como etiqueta",
+    "meaning": "Qué significa",
+    "preview": "Vista previa",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "suggestions": "Empezar desde",
+    "move": "{{name}} — Alt+← o Alt+→ para reordenar; el primero da el aspecto",
+    "created": "Nuevo marcador {{name}}",
+    "edited": "Editar marcador {{name}}",
+    "previewName": "Caja",
+    "borders": {
+      "normal": "Normal",
+      "bold": "Fuerte",
+      "heavy": "Más fuerte"
+    },
+    "fills": {
+      "none": "Ninguno",
+      "tint": "Claro"
+    },
+    "colours": {
+      "red": "Rojo",
+      "orange": "Naranja",
+      "amber": "Ámbar",
+      "green": "Verde",
+      "teal": "Petróleo",
+      "blue": "Azul",
+      "indigo": "Índigo",
+      "violet": "Violeta",
+      "pink": "Rosa",
+      "grey": "Gris"
+    },
+    "suggested": {
+      "start": "Inicio",
+      "critical": "Crítico",
+      "review": "Revisar",
+      "done": "Listo"
+    },
+    "suggestedMeaning": {
+      "start": "Donde empieza.",
+      "critical": "No puede fallar.",
+      "review": "Para mirar de nuevo.",
+      "done": "Terminado y comprobado."
+    }
   }
 }

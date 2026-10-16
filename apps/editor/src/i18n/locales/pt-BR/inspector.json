@@ -126,7 +126,8 @@
     "route": "Trajeto",
     "legend": "Texto da legenda",
     "lanes": "Faixas",
-    "steps": "Passos"
+    "steps": "Passos",
+    "highlights": "Marcadores"
   },
   "choices": {
     "none": {
@@ -291,7 +292,8 @@
       "webhooks": "Webhook",
       "timers": "Timer",
       "statuses": "Status",
-      "parties": "Participante"
+      "parties": "Participante",
+      "highlights": "Marcador"
     },
     "project": "Projeto",
     "definition": "Parte reutilizável",
@@ -441,7 +443,8 @@
       "webhooks": "Webhooks",
       "timers": "Timers",
       "statuses": "Status",
-      "parties": "Participantes"
+      "parties": "Participantes",
+      "highlights": "Marcadores"
     },
     "newName": {
       "events": "Novo evento",
@@ -452,7 +455,8 @@
       "webhooks": "Novo webhook",
       "timers": "Novo timer",
       "statuses": "Novo status",
-      "parties": "Novo participante"
+      "parties": "Novo participante",
+      "highlights": "Novo marcador"
     },
     "search": "Buscar…",
     "details": "Detalhes",
@@ -635,5 +639,63 @@
     "locked": "Travar para a IA",
     "unlocked": "Destravar para a IA",
     "refused": "A trava não foi alterada: {{reason}}"
+  },
+  "highlights": {
+    "add": "Adicionar marcador",
+    "remove": "Tirar {{name}}",
+    "new": "Novo marcador…",
+    "newTitle": "Novo marcador",
+    "editTitle": "Editar marcador",
+    "description": "Um marcador destaca caixas e setas, com o significado que você der a ele. A aparência é a mesma onde quer que esteja.",
+    "name": "Nome",
+    "colour": "Cor",
+    "hex": "Cor em hex",
+    "hexHint": "Ou qualquer cor, como #RRGGBB",
+    "hexInvalid": "Use seis dígitos hex, como #C2410C",
+    "border": "Borda",
+    "fill": "Fundo",
+    "chip": "Mostrar o nome como etiqueta",
+    "meaning": "O que significa",
+    "preview": "Prévia",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "suggestions": "Começar de",
+    "move": "{{name}} — Alt+← ou Alt+→ para reordenar; o primeiro dá a aparência",
+    "created": "Novo marcador {{name}}",
+    "edited": "Editar marcador {{name}}",
+    "previewName": "Caixa",
+    "borders": {
+      "normal": "Normal",
+      "bold": "Forte",
+      "heavy": "Mais forte"
+    },
+    "fills": {
+      "none": "Nenhum",
+      "tint": "Claro"
+    },
+    "colours": {
+      "red": "Vermelho",
+      "orange": "Laranja",
+      "amber": "Âmbar",
+      "green": "Verde",
+      "teal": "Petróleo",
+      "blue": "Azul",
+      "indigo": "Índigo",
+      "violet": "Violeta",
+      "pink": "Rosa",
+      "grey": "Cinza"
+    },
+    "suggested": {
+      "start": "Início",
+      "critical": "Crítico",
+      "review": "Revisar",
+      "done": "Pronto"
+    },
+    "suggestedMeaning": {
+      "start": "Onde começa.",
+      "critical": "Não pode falhar.",
+      "review": "Para olhar de novo.",
+      "done": "Terminado e conferido."
+    }
   }
 }

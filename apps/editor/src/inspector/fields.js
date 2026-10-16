@@ -46,6 +46,9 @@ const TAIL = [details("tags", "tags"), details("label", "text")];
 const DESCRIPTION = basics("description", "longtext");
 // In each layer: the description and the element's own fields first, provenance before the technical fields (mockup 09).
 const common = (...own) => [DESCRIPTION, ...PROVENANCE, ...CONFIDENCE, ...own, ...TAIL];
+/** What is drawn on a level — boxes and arrows — also carries highlights, under its description (highlights spec §6). */
+const HIGHLIGHTS = basics("highlights", "highlights");
+const drawn = (...own) => [DESCRIPTION, HIGHLIGHTS, ...PROVENANCE, ...CONFIDENCE, ...own, ...TAIL];
 const SUMMARY = details("summary", "summary");
 const INTERIOR = details("inner", "interior");
 const REGION = details("region", "region");
@@ -342,11 +345,11 @@ export function fieldsOfKind(type, { canvasKind, kind, collection, value } = {})
     const own = NODE_FIELDS[canvasKind][kind];
     // Guests take no part in the level's transitions or steps, so they have no connections section.
     const sections = isGuest(canvasKind, { kind }) ? NODE_SECTIONS.slice(1) : NODE_SECTIONS;
-    return [own[0], ...common(...own.slice(1)), ...sections];
+    return [own[0], ...drawn(...own.slice(1)), ...sections];
   }
   if (type === "edge") {
     const own = EDGE_FIELDS[canvasKind === "machine" ? kind : canvasKind];
-    return [own[0], ...common(...own.slice(1)), ...EDGE_SECTIONS];
+    return [own[0], ...drawn(...own.slice(1)), ...EDGE_SECTIONS];
   }
   if (type === "canvas") {
     return [
@@ -359,8 +362,7 @@ export function fieldsOfKind(type, { canvasKind, kind, collection, value } = {})
       section("findings", "findings")
     ];
   }
-  // A highlight is a look, not an element of the system: its name and meaning (highlights spec §6; plan H2 adds the
-  // rest of its editor).
+  // A highlight is a look, not an element of the system: its name and meaning here, its look in the highlight editor.
   if (type === "catalog" && collection === "highlights") return [name(true), DESCRIPTION];
   if (type === "catalog") {
     const own = CATALOG_FIELDS[collection];
@@ -439,12 +441,14 @@ export const ELSEWHERE = {
   "layout.edge.points": "Auto-layout, or Details of an arrow: Reset route.",
   "layout.edge.labelAt": "Auto-layout, or Details of an arrow: Reset route.",
   "layout.legend.labels": "The project's details: Legend wording.",
-  "node.*.highlights": "Highlights: the Editor's field arrives with plan H2 (highlights spec §6).",
-  "edge.*.highlights": "Highlights: the Editor's field arrives with plan H2 (highlights spec §6).",
-  "catalog.highlights.colour": "A highlight's look: its editor arrives with plan H2 (highlights spec §6).",
-  "catalog.highlights.border": "A highlight's look: its editor arrives with plan H2 (highlights spec §6).",
-  "catalog.highlights.fill": "A highlight's look: its editor arrives with plan H2 (highlights spec §6).",
-  "catalog.highlights.chip": "A highlight's look: its editor arrives with plan H2 (highlights spec §6)."
+  "catalog.highlights.colour":
+    "A highlight's look: the highlight editor (Highlights, then New highlight… or the catalog).",
+  "catalog.highlights.border":
+    "A highlight's look: the highlight editor (Highlights, then New highlight… or the catalog).",
+  "catalog.highlights.fill":
+    "A highlight's look: the highlight editor (Highlights, then New highlight… or the catalog).",
+  "catalog.highlights.chip":
+    "A highlight's look: the highlight editor (Highlights, then New highlight… or the catalog)."
 };
 
 /**

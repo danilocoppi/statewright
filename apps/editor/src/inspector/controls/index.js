@@ -1,5 +1,6 @@
 // The controls that edit each kind of field (see fields.js), by name. Each takes `{ id, field, value, layer, entry }`.
 import { FindingsControl, LanesControl } from "./annotations";
+import { HighlightsControl } from "./highlights";
 import { ChoiceControl, KindControl, ToggleControl } from "./choice";
 import { EvidenceControl, TagsControl } from "./common";
 import { ConnectionsControl } from "./connections";
@@ -49,6 +50,7 @@ export const CONTROLS = {
   done: DoneControl,
   evidence: EvidenceControl,
   tags: TagsControl,
+  highlights: HighlightsControl,
   focus: FocusControl,
   display: DisplayControl,
   size: SizeControl,

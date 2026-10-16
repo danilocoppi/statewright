@@ -126,7 +126,8 @@
     "route": "Route",
     "legend": "Legend wording",
     "lanes": "Lanes",
-    "steps": "Steps"
+    "steps": "Steps",
+    "highlights": "Highlights"
   },
   "choices": {
     "none": {
@@ -291,7 +292,8 @@
       "webhooks": "Webhook",
       "timers": "Timer",
       "statuses": "Status",
-      "parties": "Party"
+      "parties": "Party",
+      "highlights": "Highlight"
     },
     "project": "Project",
     "definition": "Reusable part",
@@ -441,7 +443,8 @@
       "webhooks": "Webhooks",
       "timers": "Timers",
       "statuses": "Statuses",
-      "parties": "Parties"
+      "parties": "Parties",
+      "highlights": "Highlights"
     },
     "newName": {
       "events": "New event",
@@ -452,7 +455,8 @@
       "webhooks": "New webhook",
       "timers": "New timer",
       "statuses": "New status",
-      "parties": "New party"
+      "parties": "New party",
+      "highlights": "New highlight"
     },
     "search": "Find…",
     "details": "Details",
@@ -635,5 +639,63 @@
     "locked": "Lock against the AI",
     "unlocked": "Unlock for the AI",
     "refused": "The lock was not changed: {{reason}}"
+  },
+  "highlights": {
+    "add": "Add highlight",
+    "remove": "Take out {{name}}",
+    "new": "New highlight…",
+    "newTitle": "New highlight",
+    "editTitle": "Edit highlight",
+    "description": "A highlight makes boxes and arrows stand out, with the meaning you give it. Its look is the same wherever it is.",
+    "name": "Name",
+    "colour": "Colour",
+    "hex": "Hex colour",
+    "hexHint": "Or any colour, as #RRGGBB",
+    "hexInvalid": "Use six hex digits, like #C2410C",
+    "border": "Border",
+    "fill": "Fill",
+    "chip": "Show its name as a tag",
+    "meaning": "What it means",
+    "preview": "Preview",
+    "save": "Save",
+    "cancel": "Cancel",
+    "suggestions": "Start from",
+    "move": "{{name}} — Alt+← or Alt+→ to reorder; the first gives the look",
+    "created": "New highlight {{name}}",
+    "edited": "Edit highlight {{name}}",
+    "previewName": "Box",
+    "borders": {
+      "normal": "Normal",
+      "bold": "Bold",
+      "heavy": "Heavy"
+    },
+    "fills": {
+      "none": "None",
+      "tint": "Tint"
+    },
+    "colours": {
+      "red": "Red",
+      "orange": "Orange",
+      "amber": "Amber",
+      "green": "Green",
+      "teal": "Teal",
+      "blue": "Blue",
+      "indigo": "Indigo",
+      "violet": "Violet",
+      "pink": "Pink",
+      "grey": "Grey"
+    },
+    "suggested": {
+      "start": "Start",
+      "critical": "Critical",
+      "review": "Review",
+      "done": "Done"
+    },
+    "suggestedMeaning": {
+      "start": "Where it begins.",
+      "critical": "Must not fail.",
+      "review": "To look at again.",
+      "done": "Finished and checked."
+    }
   }
 }
