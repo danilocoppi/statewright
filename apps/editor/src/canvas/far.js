@@ -23,11 +23,13 @@ export function farLook(part) {
   let look = looks.get(part);
   if (!look) {
     const svg = part.svg ?? "";
-    const fill = attribute(svg, "fill");
-    const rx = attribute(svg, "rx");
+    // The part's own shape: a box with a level inside has fainter cards stacked behind it, drawn first.
+    const shape = svg.match(/<(?:rect|circle|polygon|path)\b(?![^>]*stroke-opacity)[^>]*>/)?.[0] ?? svg;
+    const fill = attribute(shape, "fill");
+    const rx = attribute(shape, "rx");
     look = {
       fill: fill && fill !== "none" ? fill : undefined,
-      stroke: attribute(svg, "stroke"),
+      stroke: attribute(shape, "stroke"),
       radius: rx === undefined ? undefined : Number(rx),
       markerEnd: attribute(svg, "marker-end"),
       // A finding badge stays: it is what its findings are reached by (FindingPopover).

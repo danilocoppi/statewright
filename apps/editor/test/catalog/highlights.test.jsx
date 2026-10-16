@@ -4,7 +4,7 @@
 import "../dom.js";
 import "../i18n.js";
 
-import { act, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { applyBatch } from "statewright";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -82,5 +82,23 @@ describe("the catalog's highlights", () => {
     const groups = search({ ...entriesOf(t, marked()), commands: [] }, "Critic");
     const [found] = groups.find(entry => entry.group === "catalog").items;
     expect(found).toMatchObject({ id: "hlt_critical", collection: "highlights" });
+  });
+
+  it("closes only the highlight editor on Esc, not the catalog", async () => {
+    const user = userEvent.setup();
+    const sheet = open(readExample("payments"));
+    await user.click(within(sheet).getByRole("button", { name: "New highlight" }));
+    const editor = screen.getByRole("dialog", { name: "New highlight" });
+    fireEvent(editor, new Event("cancel", { cancelable: true }));
+    expect(screen.queryByRole("dialog", { name: "New highlight" })).toBeNull();
+    expect(catalogStore.getState().open).toBe(true);
+  });
+
+  it("puts the focus in the name field when the highlight editor opens", async () => {
+    const user = userEvent.setup();
+    const sheet = open(readExample("payments"));
+    await user.click(within(sheet).getByRole("button", { name: "New highlight" }));
+    const editor = screen.getByRole("dialog", { name: "New highlight" });
+    expect(document.activeElement).toBe(within(editor).getByLabelText("Name"));
   });
 });

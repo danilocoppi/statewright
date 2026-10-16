@@ -23,6 +23,7 @@ export function TextField({ label, value, onChange, hint, error, autoFocus, plac
         value={value}
         onChange={event => onChange(event.target.value)}
         autoFocus={autoFocus}
+        data-autofocus={autoFocus ? "" : undefined}
         placeholder={placeholder}
         aria-invalid={error ? true : undefined}
         aria-describedby={message ? messageId : undefined}

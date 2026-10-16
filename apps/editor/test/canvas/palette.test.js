@@ -165,3 +165,30 @@ describe("the highlights' colours (highlights spec §4)", () => {
     expect(highlightStyles(null)).toBe("");
   });
 });
+
+describe("hex highlights in dark", () => {
+  it("keeps every hex highlight's tag legible on its tint, and its stroke on the canvas, across the colour space", () => {
+    const key = color => color.slice(1).toLowerCase();
+    const failures = [];
+    for (let r = 0; r < 256; r += 51) {
+      for (let g = 0; g < 256; g += 51) {
+        for (let b = 0; b < 256; b += 51) {
+          const colour = `#${[r, g, b].map(value => value.toString(16).padStart(2, "0")).join("")}`.toUpperCase();
+          const highlight = { name: "X", colour };
+          const css = `${diagramStyles()}${highlightStyles({ catalog: { highlights: { hlt_x: highlight } } })}`;
+          // The document's variables come after the palette's, so they win where both define one.
+          const dark = {
+            ...variables(css, ".dark"),
+            ...variables(highlightStyles({ catalog: { highlights: { hlt_x: highlight } } }) || ".dark {}", ".dark")
+          };
+          const light = highlightLook(highlight, "light");
+          const text = dark[key(light.text)];
+          const tint = dark[key(light.tint)];
+          const stroke = dark[key(light.stroke)];
+          if (contrast(text, tint) < 4.5 || contrast(stroke, CANVAS.dark) < 3) failures.push(colour);
+        }
+      }
+    }
+    expect(failures).toEqual([]);
+  });
+});

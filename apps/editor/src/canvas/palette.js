@@ -117,7 +117,9 @@ export function highlightStyles(doc) {
     if (!highlight.colour?.startsWith("#")) continue;
     const day = highlightLook(highlight, "light");
     const night = highlightLook(highlight, "dark");
-    for (const role of ["stroke", "tint", "text"]) {
+    // One light colour is one variable: when a highlight's text and stroke are the same colour in light, the text's
+    // dark value wins — it is the one that must read on the tint, and it reads on the canvas too.
+    for (const role of ["text", "tint", "stroke"]) {
       if (known.has(day[role]) || light.has(day[role])) continue;
       light.set(day[role], day[role]);
       dark.set(day[role], night[role]);

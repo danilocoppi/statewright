@@ -29,7 +29,11 @@ export function Dialog({
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
+    if (open && !dialog.open) {
+      dialog.showModal();
+      // showModal focuses the first control; the field the dialog is for takes the focus instead.
+      dialog.querySelector("[data-autofocus]")?.focus();
+    }
     if (!open && dialog.open) dialog.close();
   }, [open]);
 
@@ -41,7 +45,12 @@ export function Dialog({
       aria-describedby={description ? descriptionId : undefined}
       onCancel={event => {
         event.preventDefault();
+        // A dialog opened from a panel (the inspector, the catalog) closes alone: Esc is not the panel's too.
+        event.stopPropagation();
         onClose();
+      }}
+      onKeyDown={event => {
+        if (event.key === "Escape") event.stopPropagation();
       }}
       onClick={event => {
         if (dismissable && event.target === ref.current) onClose();

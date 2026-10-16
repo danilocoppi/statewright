@@ -95,4 +95,15 @@ describe("the Highlights field", () => {
     expect(doc().catalog.highlights.hlt_hotPath).toBeUndefined();
     expect(highlightsOf()).toEqual(["hlt_critical"]);
   });
+
+  it("closes only the highlight editor on Esc, not the inspector it was opened from", async () => {
+    const user = userEvent.setup();
+    inspect(marked());
+    await user.click(within(field()).getByRole("button", { name: /^Critical/ }));
+    const dialog = screen.getByRole("dialog", { name: "Edit highlight" });
+    fireEvent.keyDown(within(dialog).getByLabelText("Name"), { key: "Escape" });
+    fireEvent(dialog, new Event("cancel", { cancelable: true }));
+    expect(screen.queryByRole("dialog", { name: "Edit highlight" })).toBeNull();
+    expect(inspectorStore.getState().closed).not.toBe(true);
+  });
 });

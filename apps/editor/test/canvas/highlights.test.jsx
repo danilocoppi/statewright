@@ -60,7 +60,9 @@ describe("highlights on the canvas", () => {
     const plain = structuredClone(doc);
     plain.canvases.cnv_runtime.nodes.nod_lifecycleEngine.highlights = [];
     const before = figureOf(plain, "cnv_runtime", { paint }).nodes.find(part => part.id === "nod_lifecycleEngine");
+    // The engine has a level inside: its stack cards are drawn behind it, but far out it is the front card's look.
     expect(farLook(box).stroke).toBe(paint("#DC2626"));
+    expect(farLook(box).fill).toBe(paint("#FEF2F2"));
     expect(farLook(box).stroke).not.toBe(farLook(before).stroke);
   });
 
