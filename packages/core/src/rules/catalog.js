@@ -111,7 +111,9 @@ export default [
       const used = new Set(
         facts.refs.filter(ref => ref.section === "content" && ref.source !== ref.target).map(ref => ref.target)
       );
-      for (const [, id] of items(facts.doc)) {
+      // A project may keep highlights ready before it uses them (highlights spec §5).
+      for (const [collection, id] of items(facts.doc)) {
+        if (collection === "highlights") continue;
         if (!used.has(id)) report({ target: id, message: `${facts.describe(id)} is not used anywhere` });
       }
     }

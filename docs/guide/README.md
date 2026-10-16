@@ -1124,7 +1124,7 @@ the design or of its scenarios:
 ```json
 {
   "results": "1",
-  "contract": "df627e4ae0bb2e09b4cb8cf6a749b830c668568cbdf07d751468d2086eac4f01",
+  "contract": "5acf99812530c6df6b62acde90305ff75e00c3ce099be773472df0bd0f7e0592",
   "runner": "node",
   "vectors": [
     { "id": "scn_aBookingIsDeclined", "steps": [{ "active": ["requested"] }, { "active": ["declined"] }] },

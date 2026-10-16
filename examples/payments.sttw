@@ -1,16 +1,16 @@
 {
-  "statewright": "1.3",
+  "statewright": "1.4",
   "generator": {
     "name": "statewright",
-    "version": "0.1.5",
+    "version": "0.2.1",
     "channel": "cli"
   },
   "signature": {
     "algorithm": "sha256",
-    "content": "904b84ce1ffe9e8af0e8e13273d66e8fccbce1d97e7f585aaeec82a6ca2811d7",
+    "content": "a7401742054649869b896ef51487ed5c7fbd32135bbfd0572cff4bfc80fa2e84",
     "annotations": "e70836e67840f1c11b3c5045e19e01d0967f734ab95a16be8c1fb8b518c1793a",
     "layout": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
-    "signedAt": "2026-10-15T12:38:30Z"
+    "signedAt": "2026-10-16T05:51:39Z"
   },
   "project": {
     "id": "prj_payments",
@@ -213,7 +213,8 @@
         "kind": "external",
         "name": "Providers"
       }
-    }
+    },
+    "highlights": {}
   },
   "definitions": {
     "def_complianceHold": {

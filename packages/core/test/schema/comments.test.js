@@ -7,7 +7,6 @@ const AT = "2026-10-15T12:00:00.000Z";
 /** The minimal document with a comment on its service, one at a point, and a lock on the level. */
 function reviewed() {
   const doc = minimalDoc();
-  doc.statewright = "1.3";
   const [service] = Object.keys(doc.canvases.cnv_root.nodes);
   doc.annotations = {
     comments: {
@@ -33,8 +32,8 @@ function reviewed() {
 }
 
 describe("format 1.3: comments and locks (collaboration spec §8)", () => {
-  it("is the format documents are written in now", () => {
-    expect(FORMAT_VERSION).toBe("1.3");
+  it("is a format documents are written in from 1.3 on", () => {
+    expect(Number(FORMAT_VERSION)).toBeGreaterThanOrEqual(1.3);
   });
 
   it("holds comments — on an element or at a point, open or resolved, each a thread — and locks", () => {
@@ -53,11 +52,11 @@ describe("format 1.3: comments and locks (collaboration spec §8)", () => {
     expect(documentSchema.safeParse(lock).success).toBe(false);
   });
 
-  it("stamps a 1.2 document as 1.3, changing nothing else", () => {
+  it("stamps a 1.2 document as the current format, changing nothing else", () => {
     const old = minimalDoc();
     old.statewright = "1.2";
     const { doc } = migrate(structuredClone(old));
-    expect(doc.statewright).toBe("1.3");
+    expect(doc.statewright).toBe(FORMAT_VERSION);
     expect({ ...doc, statewright: "1.2" }).toEqual(old);
   });
 

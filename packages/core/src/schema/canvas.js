@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Condition, Effect, Effective, Inner, Name, RetryPolicy, Summary, common } from "./blocks.js";
+import { Condition, Effect, Effective, Inner, Name, RetryPolicy, Summary, common, drawn } from "./blocks.js";
 import { EVENT_GLOB_PATTERN, anyId, idOf, mapOf, obj } from "./helpers.js";
 
 const OptionalName = Name.optional();
@@ -16,7 +16,7 @@ const refNode = withRegion =>
       target: anyId(),
       ...(withRegion ? { region: Region } : {}),
       summary: Summary.optional(),
-      ...common
+      ...drawn
     },
     { description: "A shortcut to another canvas, node, definition or catalog item." }
   );
@@ -30,7 +30,7 @@ const systemNode = (kind, extra = {}) =>
     ...extra,
     summary: Summary.optional(),
     inner: Inner.optional(),
-    ...common
+    ...drawn
   });
 
 export const SystemNode = z.discriminatedUnion("kind", [
@@ -52,7 +52,7 @@ export const SystemEdge = obj(
     endpoint: idOf("ept").optional(),
     webhook: idOf("whk").optional(),
     by: idOf("pty").optional(),
-    ...common
+    ...drawn
   },
   { description: "An interaction between system elements." }
 );
@@ -67,7 +67,7 @@ const participantNode = withRegion =>
       party: idOf("pty"),
       ...(withRegion ? { region: Region } : {}),
       summary: Summary.optional(),
-      ...common
+      ...drawn
     },
     { description: "A party on the level (role R1): it sends, receives or performs what its party does." }
   );
@@ -75,7 +75,7 @@ const participantNode = withRegion =>
 // ── Machine canvas (spec §12.3) ───────────────────────────────────────────────
 
 const pseudo = (kind, extra = {}) =>
-  obj({ kind: z.literal(kind), name: OptionalName, region: Region, ...extra, summary: Summary.optional(), ...common });
+  obj({ kind: z.literal(kind), name: OptionalName, region: Region, ...extra, summary: Summary.optional(), ...drawn });
 
 export const MachineNode = z.discriminatedUnion("kind", [
   pseudo("initial"),
@@ -90,7 +90,7 @@ export const MachineNode = z.discriminatedUnion("kind", [
       guard: Condition.optional(),
       effective: Effective.optional(),
       summary: Summary.optional(),
-      ...common
+      ...drawn
     },
     { description: "A named creation path." }
   ),
@@ -108,7 +108,7 @@ export const MachineNode = z.discriminatedUnion("kind", [
       sla: idOf("tmr").optional(),
       summary: Summary.optional(),
       inner: Inner.optional(),
-      ...common
+      ...drawn
     },
     { description: "A state; `outcome` colours it, `terminal` forbids exits." }
   ),
@@ -122,7 +122,7 @@ export const MachineNode = z.discriminatedUnion("kind", [
       action: idOf("act", "ept", "whk"),
       region: Region,
       summary: Summary.optional(),
-      ...common
+      ...drawn
     },
     { description: "The flow of an action, endpoint or webhook, drawn where it runs (role R2)." }
   ),
@@ -148,7 +148,7 @@ const transitionShape = {
   intent: z.enum(["happy", "failure"]).optional(),
   retry: RetryPolicy.optional(),
   effective: Effective.optional(),
-  ...common
+  ...drawn
 };
 const transitionCheck = (value, ctx) => {
   if (value.internal && value.from !== value.to) {
@@ -161,7 +161,7 @@ const Transition = obj(transitionShape, {
 });
 
 const Link = obj(
-  { kind: z.literal("link"), from: idOf("nod"), to: idOf("nod"), name: OptionalName, on: Events.optional(), ...common },
+  { kind: z.literal("link"), from: idOf("nod"), to: idOf("nod"), name: OptionalName, on: Events.optional(), ...drawn },
   { description: "A non-executable link to or from a ref node." }
 );
 
@@ -170,7 +170,7 @@ export const MachineEdge = z.union([Transition, Link]);
 // ── Flow canvas (spec §12.4) ──────────────────────────────────────────────────
 
 const step = (kind, extra = {}) =>
-  obj({ kind: z.literal(kind), name: OptionalName, ...extra, summary: Summary.optional(), ...common });
+  obj({ kind: z.literal(kind), name: OptionalName, ...extra, summary: Summary.optional(), ...drawn });
 
 export const FlowNode = z.discriminatedUnion("kind", [
   step("start"),
@@ -201,7 +201,7 @@ export const FlowNode = z.discriminatedUnion("kind", [
   step("subflow", { inner: Inner.optional() }),
   participantNode(false),
   obj(
-    { kind: z.literal("state"), target: idOf("nod"), summary: Summary.optional(), ...common },
+    { kind: z.literal("state"), target: idOf("nod"), summary: Summary.optional(), ...drawn },
     { description: "A state of a machine level, which steps lead to (role R4)." }
   ),
   refNode(false)
@@ -214,7 +214,7 @@ export const FlowEdge = obj(
     kind: z.enum(["next", "true", "false", "case", "default", "error", "link"]).optional(),
     case: z.json().optional(),
     name: OptionalName,
-    ...common
+    ...drawn
   },
   {
     description: "A flow edge; `case` is required exactly when kind is case.",

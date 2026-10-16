@@ -1,16 +1,16 @@
 {
-  "statewright": "1.3",
+  "statewright": "1.4",
   "generator": {
     "name": "statewright",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "channel": "cli"
   },
   "signature": {
     "algorithm": "sha256",
-    "content": "cd57550dcc2cb728576599e0800d6cf622017af05d40158f822488beda61aae7",
+    "content": "b2e3260c6c5d4c11660217e25beae74c15b6c5d980b84475b6d3d0431567d0bd",
     "annotations": "4fbca347f8b0fba0158e41f5b2668ff3cddc3ed8cf1729917e11d78ec0657bf2",
     "layout": "039f68d08033d64452f9dd8817f01533561501f9c20a41a68238f0870acea7de",
-    "signedAt": "2026-10-15T18:58:48Z"
+    "signedAt": "2026-10-16T05:51:39Z"
   },
   "project": {
     "id": "prj_airportOperations",
@@ -728,7 +728,8 @@
         "kind": "external",
         "name": "Slot coordinator"
       }
-    }
+    },
+    "highlights": {}
   },
   "definitions": {
     "def_gateBoarding": {

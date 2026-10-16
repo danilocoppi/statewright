@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Inner, Name, RetryPolicy, StatusTone, TypeRef, common } from "./blocks.js";
+import { HighlightColour, Inner, Name, RetryPolicy, StatusTone, TypeRef, common } from "./blocks.js";
 import { Duration, EVENT_NAME_PATTERN, SignedDuration, idOf, mapOf, obj } from "./helpers.js";
 
 const TypeRefOrNull = idOf("typ").nullable();
@@ -151,6 +151,18 @@ export const PartyDef = obj(
   { description: "Who acts or emits (spec §10.9)." }
 );
 
+export const HighlightDef = obj(
+  {
+    name: Name,
+    description: z.string().optional(),
+    colour: HighlightColour.optional(),
+    border: z.enum(["normal", "bold", "heavy"]).optional(),
+    fill: z.enum(["none", "tint"]).optional(),
+    chip: z.boolean().optional()
+  },
+  { description: "A named look for boxes and arrows (highlights spec §3)." }
+);
+
 export const Catalog = obj(
   {
     types: mapOf("typ", TypeDef),
@@ -161,7 +173,8 @@ export const Catalog = obj(
     webhooks: mapOf("whk", WebhookDef),
     timers: mapOf("tmr", TimerDef),
     statuses: mapOf("sts", StatusDef),
-    parties: mapOf("pty", PartyDef)
+    parties: mapOf("pty", PartyDef),
+    highlights: mapOf("hlt", HighlightDef)
   },
   { description: "Items referenced by ID from canvases (spec §10)." }
 );

@@ -1,16 +1,16 @@
 {
-  "statewright": "1.3",
+  "statewright": "1.4",
   "generator": {
     "name": "statewright",
-    "version": "0.1.5",
+    "version": "0.2.1",
     "channel": "cli"
   },
   "signature": {
     "algorithm": "sha256",
-    "content": "a42dedb8ed66007d5e34901a5817f6d4a9ae463b2a0c93c65aed79c5cda2aada",
+    "content": "40fe023391fcc4db2d780e77453fcc11ff9cc4e6e5051d18b4c8663455fc9f05",
     "annotations": "4166f8942f84c728932af1f15bd5b391bfcaf8a8f3ab067cac901a77a636e3e8",
     "layout": "9a9e2d99db318e888ecc70ad563ac4f20a2647c6d68c4639d8ce254142fcd16e",
-    "signedAt": "2026-10-15T12:38:30Z"
+    "signedAt": "2026-10-16T05:51:39Z"
   },
   "project": {
     "id": "prj_orderLifecycle",
@@ -92,7 +92,8 @@
         "kind": "system",
         "name": "Payments"
       }
-    }
+    },
+    "highlights": {}
   },
   "definitions": {},
   "canvases": {

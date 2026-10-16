@@ -22,6 +22,7 @@ import {
   EndpointDef,
   EventDef,
   GuardDef,
+  HighlightDef,
   PartyDef,
   StatusDef,
   TimerDef,
@@ -55,6 +56,7 @@ const NAMES = new Map([
   [TimerDef, "Timer"],
   [StatusDef, "Status"],
   [PartyDef, "Party"],
+  [HighlightDef, "Highlight"],
   [Definition, "Definition"],
   [Canvas, "Canvas"],
   [RegionDef, "Region"],
@@ -241,7 +243,8 @@ export function formatReference({ level = 3 } = {}) {
       ["Webhook", WebhookDef],
       ["Timer", TimerDef],
       ["Status", StatusDef],
-      ["Party", PartyDef]
+      ["Party", PartyDef],
+      ["Highlight", HighlightDef]
     ].map(([title, schema]) => section(sub, title, schema)),
     section(level, "Definition", Definition),
     section(level, "Canvas", Canvas),

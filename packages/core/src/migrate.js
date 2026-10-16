@@ -11,7 +11,13 @@ export const MIGRATIONS = [
   // 1.2 adds guests (mixed levels spec §5): new node kinds and optional fields only.
   { from: "1.1", to: "1.2", up: doc => doc },
   // 1.3 adds comments and locks (collaboration spec §8): optional annotations only.
-  { from: "1.2", to: "1.3", up: doc => doc }
+  { from: "1.2", to: "1.3", up: doc => doc },
+  // 1.4 adds highlights (highlights spec §8): a catalog collection, empty until the person declares one.
+  {
+    from: "1.3",
+    to: "1.4",
+    up: doc => ({ ...doc, catalog: { ...doc.catalog, highlights: doc.catalog?.highlights ?? {} } })
+  }
 ];
 
 const VERSION_PATTERN = /^\d+\.\d+$/;

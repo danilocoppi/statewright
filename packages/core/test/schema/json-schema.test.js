@@ -22,12 +22,12 @@ describe("toJSONSchema", () => {
   });
 
   it("sets $id from baseUrl", () => {
-    expect(toJSONSchema({ baseUrl: "https://example.com/" }).$id).toBe("https://example.com/schema/1.3.json");
+    expect(toJSONSchema({ baseUrl: "https://example.com/" }).$id).toBe("https://example.com/schema/1.4.json");
     expect(toJSONSchema().$id).toBeUndefined();
   });
 
-  it("matches the committed schema/1.3.json (run npm run build:schema after schema changes)", () => {
-    const committed = JSON.parse(readFileSync(new URL("../../schema/1.3.json", import.meta.url), "utf8"));
+  it("matches the committed schema/1.4.json (run npm run build:schema after schema changes)", () => {
+    const committed = JSON.parse(readFileSync(new URL("../../schema/1.4.json", import.meta.url), "utf8"));
     expect(committed).toEqual(toJSONSchema());
   });
 });

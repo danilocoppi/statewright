@@ -1,16 +1,16 @@
 {
-  "statewright": "1.3",
+  "statewright": "1.4",
   "generator": {
     "name": "statewright",
-    "version": "0.1.5",
+    "version": "0.2.1",
     "channel": "cli"
   },
   "signature": {
     "algorithm": "sha256",
-    "content": "64c61a2c633ba959f3894a19934adbc6cb46a1ca600582990e0234f71f5be1a3",
+    "content": "84d081f6f56ab9e791c19d7f69149340f818af37da4fe337dc857c65ec674e03",
     "annotations": "37451c33880e38f087617a714808a49b65e7f72910ccde56960a1211e74e3053",
     "layout": "5aa622e4f73a7f26d254b71250e1825b4275da0ce503d675d4a753287ff5e186",
-    "signedAt": "2026-10-15T12:38:30Z"
+    "signedAt": "2026-10-16T05:51:39Z"
   },
   "project": {
     "id": "prj_bookings",
@@ -70,7 +70,8 @@
         "kind": "operator",
         "name": "Restaurant staff"
       }
-    }
+    },
+    "highlights": {}
   },
   "definitions": {},
   "canvases": {

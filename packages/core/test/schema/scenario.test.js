@@ -39,7 +39,7 @@ function withScenario(value) {
 
 describe("scenarios in the document (format 1.1, spec §4)", () => {
   it("is format 1.1 or later", () => {
-    expect(FORMAT_VERSION).toBe("1.3");
+    expect(Number(FORMAT_VERSION)).toBeGreaterThanOrEqual(1.1);
   });
 
   it("accepts a scenario: where it starts, what was done, what was answered and where each step got to", () => {
@@ -97,7 +97,10 @@ describe("scenarios in the document (format 1.1, spec §4)", () => {
     const frozen = JSON.parse(readFileSync(new URL("../../schema/1.0.json", import.meta.url), "utf8"));
     const validate = new Ajv2020({ strict: false, validateFormats: false }).compile(frozen);
     expect(frozen.title).toBe("Statewright document (format 1.0)");
-    expect(validate({ ...minimalDoc(), statewright: "1.0" })).toBe(true);
+    // A 1.0 document has no highlights collection (1.4 added it).
+    const { highlights, ...catalog } = minimalDoc().catalog;
+    expect(highlights).toEqual({});
+    expect(validate({ ...minimalDoc(), catalog, statewright: "1.0" })).toBe(true);
     expect(validate({ ...withScenario(scenario()), statewright: "1.0" })).toBe(false);
   });
 });

@@ -5,6 +5,7 @@ import {
   EndpointDef,
   EventDef,
   GuardDef,
+  HighlightDef,
   PartyDef,
   StatusDef,
   TimerDef,
@@ -34,7 +35,8 @@ const SCHEMAS = {
   webhooks: WebhookDef,
   timers: TimerDef,
   statuses: StatusDef,
-  parties: PartyDef
+  parties: PartyDef,
+  highlights: HighlightDef
 };
 
 const Collection = z.enum(Object.keys(CATALOG_COLLECTIONS));

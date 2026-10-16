@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PRIMITIVE_TYPES } from "../constants.js";
+import { HIGHLIGHT_PALETTE, PRIMITIVE_TYPES } from "../constants.js";
 import { DateOrDateTime, Duration, idOf, obj } from "./helpers.js";
 
 export const Provenance = z
@@ -39,6 +39,17 @@ export const Evidence = z
 
 export const Tag = obj({ text: z.string().min(1), tone: Tone.optional() }, { id: "Tag", description: "A free chip." });
 
+/** A highlight's colour: a palette name or a `#RRGGBB` (highlights spec §3). */
+export const HighlightColour = z.union([
+  z.enum(HIGHLIGHT_PALETTE),
+  z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Expected a palette colour or #RRGGBB")
+]);
+
+/** The highlights an element carries, in order, each once (highlights spec §3). */
+export const Highlights = z
+  .array(idOf("hlt"))
+  .refine(ids => new Set(ids).size === ids.length, "A highlight appears once");
+
 /** Fields every element accepts (spec §9.1), appended after the element's own fields. */
 export const common = {
   label: z.string().min(1).optional(),
@@ -48,6 +59,9 @@ export const common = {
   evidence: z.array(Evidence).optional(),
   tags: z.array(Tag).optional()
 };
+
+/** Fields of what is drawn on a level — its nodes and edges: the common ones and their highlights. */
+export const drawn = { ...common, highlights: Highlights.optional() };
 
 export const Name = z.string().min(1);
 

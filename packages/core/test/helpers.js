@@ -26,7 +26,8 @@ export function minimalDoc() {
       webhooks: {},
       timers: {},
       statuses: {},
-      parties: {}
+      parties: {},
+      highlights: {}
     },
     definitions: {},
     canvases: { cnv_root: { kind: "system", name: "Root", nodes: {}, edges: {} } }

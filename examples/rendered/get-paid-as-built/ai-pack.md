@@ -1,6 +1,6 @@
 # Get paid (as built) — Statewright AI pack
 
-This is a generated summary of the Statewright document `prj_getPaid` (format 1.3). Read the Statewright guide (`npx statewright guide`) before changing it, change it only through commands (`statewright apply`), and reference elements by the IDs below.
+This is a generated summary of the Statewright document `prj_getPaid` (format 1.4). Read the Statewright guide (`npx statewright guide`) before changing it, change it only through commands (`statewright apply`), and reference elements by the IDs below.
 
 ## Glossary
 

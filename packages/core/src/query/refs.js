@@ -132,6 +132,7 @@ export function createRefCollector() {
     node(canvasKind, canvasId, id, node) {
       const base = ["canvases", canvasId, "nodes", id];
       inner(id, base, node.inner);
+      many(id, base, "highlights", node.highlights, ["hlt"]);
       if (canvasKind === "machine" || canvasKind === "mixed") one(id, base, "region", node.region, ["rgn"]);
       switch (node.kind) {
         case "ref":
@@ -199,6 +200,7 @@ export function createRefCollector() {
       one(id, base, "from", edge.from, ["nod"], "element");
       one(id, base, "to", edge.to, ["nod"], "element");
       many(id, base, "on", edge.on, ["evt"]);
+      many(id, base, "highlights", edge.highlights, ["hlt"]);
       // On a mixed level, a transition says it is one; any other connection holds a system's references or none.
       const kind =
         canvasKind === "mixed" ?

@@ -51,7 +51,8 @@ const ITEM = {
   webhooks: "webhook",
   timers: "timer",
   statuses: "status",
-  parties: "party"
+  parties: "party",
+  highlights: "highlight"
 };
 
 /** The kind of an indexed element as query.find reports it: a node's kind, a catalog item's kind, else its type. */

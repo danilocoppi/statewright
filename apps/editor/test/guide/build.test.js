@@ -72,7 +72,7 @@ describe("the guide built from Core's README", () => {
     const llms = real.files["llms.txt"];
     expect(llms).toMatch(/^# Statewright\n\n> Statewright is a builder for layered specifications of systems: /);
     expect(llms).toContain("(https://statewright.dev/README.md)");
-    expect(llms).toContain("(https://statewright.dev/schema/1.3.json)");
+    expect(llms).toContain("(https://statewright.dev/schema/1.4.json)");
     expect(buildGuide(readme).files["llms.txt"]).toContain("(/README.md)");
   });
 
@@ -108,7 +108,8 @@ describe("the guide built from Core's README", () => {
   });
 
   it("serves Core's schema as it is, and format 1.0's as it was, for the files that still point to it", () => {
-    expect(JSON.parse(real.files["schema/1.3.json"])).toEqual(schema);
+    expect(JSON.parse(real.files["schema/1.4.json"])).toEqual(schema);
+    expect(JSON.parse(real.files["schema/1.3.json"]).title).toBe("Statewright document (format 1.3)");
     expect(JSON.parse(real.files["schema/1.0.json"]).title).toBe("Statewright document (format 1.0)");
   });
 });
@@ -182,7 +183,8 @@ describe("the guide in the app", () => {
       "schema/1.0.json",
       "schema/1.1.json",
       "schema/1.2.json",
-      "schema/1.3.json"
+      "schema/1.3.json",
+      "schema/1.4.json"
     ]);
   });
 });

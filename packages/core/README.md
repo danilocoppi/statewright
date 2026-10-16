@@ -1302,7 +1302,7 @@ the design or of its scenarios:
 ```json
 {
   "results": "1",
-  "contract": "df627e4ae0bb2e09b4cb8cf6a749b830c668568cbdf07d751468d2086eac4f01",
+  "contract": "5acf99812530c6df6b62acde90305ff75e00c3ce099be773472df0bd0f7e0592",
   "runner": "node",
   "vectors": [
     { "id": "scn_aBookingIsDeclined", "steps": [{ "active": ["requested"] }, { "active": ["declined"] }] },
@@ -2512,7 +2512,7 @@ A Statewright document.
 | Field | Type | Notes |
 | --- | --- | --- |
 | `$schema?` | string |  |
-| `statewright` | "1.3" |  |
+| `statewright` | "1.4" |  |
 | `generator?` | Generator |  |
 | `signature?` | Signature |  |
 | `project` | Project |  |
@@ -2546,6 +2546,7 @@ Items referenced by ID from canvases (spec §10).
 | `timers` | map tmr_* → Timer |
 | `statuses` | map sts_* → Status |
 | `parties` | map pty_* → Party |
+| `highlights` | map hlt_* → Highlight |
 
 #### Type
 
@@ -2673,6 +2674,19 @@ Who acts or emits (spec §10.9).
 
 Also accepts the [common fields](#common-fields).
 
+#### Highlight
+
+A named look for boxes and arrows (highlights spec §3).
+
+| Field | Type |
+| --- | --- |
+| `name` | string |
+| `description?` | string |
+| `colour?` | "red" \| "orange" \| "amber" \| "green" \| "teal" \| "blue" \| "indigo" \| "violet" \| "pink" \| "grey" \| string |
+| `border?` | "normal" \| "bold" \| "heavy" |
+| `fill?` | "none" \| "tint" |
+| `chip?` | boolean |
+
 ### Definition
 
 A reusable canvas; elements whose inner points here are instances (spec §11).
@@ -2764,8 +2778,8 @@ Elements of every kind on one level; each connection means what its ends make it
 | `vars?` | typ_* |
 | `regions?` | map rgn_* → Region |
 | `transitions?` | "complete" \| "partial" \| "unknown" |
-| `nodes` | map nod_* → { kind, name?, region?, summary? } \| { kind, name, region?, via?, on?, by?, guard?, effective?, summary? } \| { kind, name, region?, category?, outcome?, terminal?, statuses?, onEntry?, onExit?, sla?, summary?, inner? } \| { kind, name?, region?, summary? } \| { kind, name?, region?, depth?, summary? } \| { kind, name?, region?, except?, summary? } \| { kind, party, region?, summary? } \| { kind, action, region?, summary? } \| { kind, name?, target, region?, summary? } \| { kind, name?, summary? } \| { kind, name?, outcome?, summary? } \| { kind, name?, action, args?, summary? } \| { kind, name?, condition?, summary? } \| { kind, name?, on?, summary? } \| { kind, name?, condition?, inner?, summary? } \| { kind, name?, items?, as?, inner?, summary? } \| { kind, name?, summary? } \| { kind, name?, summary? } \| { kind, name?, event, payload?, summary? } \| { kind, name?, on?, after?, summary? } \| { kind, name?, endpoint?, request?, party?, summary? } \| { kind, name?, webhook, summary? } \| { kind, name?, set?, summary? } \| { kind, name?, inner?, summary? } \| { kind, target, summary? } \| { kind, name?, party?, summary?, inner? } \| { kind, name?, party?, summary?, inner? } \| { kind, name?, party?, summary?, inner? } \| { kind, name?, party?, summary?, inner? } \| { kind, name?, party?, summary?, inner? } |
-| `edges` | map edg_* → { kind, from, to, name?, on?, onMatch?, after?, always?, done?, via?, by?, guard?, else?, actions?, internal?, intent?, retry?, effective? } \| { kind, from, to, name?, on? } \| Flow edge \| System edge |
+| `nodes` | map nod_* → { kind, name?, region?, summary?, highlights? } \| { kind, name, region?, via?, on?, by?, guard?, effective?, summary?, highlights? } \| { kind, name, region?, category?, outcome?, terminal?, statuses?, onEntry?, onExit?, sla?, summary?, inner?, highlights? } \| { kind, name?, region?, summary?, highlights? } \| { kind, name?, region?, depth?, summary?, highlights? } \| { kind, name?, region?, except?, summary?, highlights? } \| { kind, party, region?, summary?, highlights? } \| { kind, action, region?, summary?, highlights? } \| { kind, name?, target, region?, summary?, highlights? } \| { kind, name?, summary?, highlights? } \| { kind, name?, outcome?, summary?, highlights? } \| { kind, name?, action, args?, summary?, highlights? } \| { kind, name?, condition?, summary?, highlights? } \| { kind, name?, on?, summary?, highlights? } \| { kind, name?, condition?, inner?, summary?, highlights? } \| { kind, name?, items?, as?, inner?, summary?, highlights? } \| { kind, name?, summary?, highlights? } \| { kind, name?, summary?, highlights? } \| { kind, name?, event, payload?, summary?, highlights? } \| { kind, name?, on?, after?, summary?, highlights? } \| { kind, name?, endpoint?, request?, party?, summary?, highlights? } \| { kind, name?, webhook, summary?, highlights? } \| { kind, name?, set?, summary?, highlights? } \| { kind, name?, inner?, summary?, highlights? } \| { kind, target, summary?, highlights? } \| { kind, name?, party?, summary?, inner?, highlights? } \| { kind, name?, party?, summary?, inner?, highlights? } \| { kind, name?, party?, summary?, inner?, highlights? } \| { kind, name?, party?, summary?, inner?, highlights? } \| { kind, name?, party?, summary?, inner?, highlights? } |
+| `edges` | map edg_* → { kind, from, to, name?, on?, onMatch?, after?, always?, done?, via?, by?, guard?, else?, actions?, internal?, intent?, retry?, effective?, highlights? } \| { kind, from, to, name?, on?, highlights? } \| Flow edge \| System edge |
 
 Also accepts the [common fields](#common-fields).
 
@@ -2787,6 +2801,7 @@ Also accepts the [common fields](#common-fields).
 | `party?` | pty_* |
 | `summary?` | string |
 | `inner?` | Inner |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -2799,6 +2814,7 @@ Also accepts the [common fields](#common-fields).
 | `party?` | pty_* |
 | `summary?` | string |
 | `inner?` | Inner |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -2811,6 +2827,7 @@ Also accepts the [common fields](#common-fields).
 | `party?` | pty_* |
 | `summary?` | string |
 | `inner?` | Inner |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -2823,6 +2840,7 @@ Also accepts the [common fields](#common-fields).
 | `party?` | pty_* |
 | `summary?` | string |
 | `inner?` | Inner |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -2835,6 +2853,7 @@ Also accepts the [common fields](#common-fields).
 | `party?` | pty_* |
 | `summary?` | string |
 | `inner?` | Inner |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -2848,6 +2867,7 @@ A shortcut to another canvas, node, definition or catalog item.
 | `name?` | string |
 | `target` | any ID |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -2865,6 +2885,7 @@ An interaction between system elements.
 | `endpoint?` | ept_* |
 | `webhook?` | whk_* |
 | `by?` | pty_* |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -2878,6 +2899,7 @@ Also accepts the [common fields](#common-fields).
 | `name?` | string |
 | `region?` | rgn_* |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -2896,6 +2918,7 @@ A named creation path.
 | `guard?` | Condition |
 | `effective?` | Effective |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -2917,6 +2940,7 @@ A state; `outcome` colours it, `terminal` forbids exits.
 | `sla?` | tmr_* |
 | `summary?` | string |
 | `inner?` | Inner |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -2928,6 +2952,7 @@ Also accepts the [common fields](#common-fields).
 | `name?` | string |
 | `region?` | rgn_* |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -2940,6 +2965,7 @@ Also accepts the [common fields](#common-fields).
 | `region?` | rgn_* |
 | `depth?` | "shallow" \| "deep" |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -2952,6 +2978,7 @@ Also accepts the [common fields](#common-fields).
 | `region?` | rgn_* |
 | `except?` | nod_*[] |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -2965,6 +2992,7 @@ A party on the level (role R1): it sends, receives or performs what its party do
 | `party` | pty_* |
 | `region?` | rgn_* |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -2978,6 +3006,7 @@ The flow of an action, endpoint or webhook, drawn where it runs (role R2).
 | `action` | act_* \| ept_* \| whk_* |
 | `region?` | rgn_* |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -2992,6 +3021,7 @@ A shortcut to another canvas, node, definition or catalog item.
 | `target` | any ID |
 | `region?` | rgn_* |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3020,6 +3050,7 @@ A transition between states (no kind key).
 | `intent?` | "happy" \| "failure" |
 | `retry?` | RetryPolicy |
 | `effective?` | Effective |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3034,6 +3065,7 @@ A non-executable link to or from a ref node.
 | `to` | nod_* |
 | `name?` | string |
 | `on?` | evt_*[] |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3046,6 +3078,7 @@ Also accepts the [common fields](#common-fields).
 | `kind` | "start" |
 | `name?` | string |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3057,6 +3090,7 @@ Also accepts the [common fields](#common-fields).
 | `name?` | string |
 | `outcome?` | "success" \| "failure" |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3069,6 +3103,7 @@ Also accepts the [common fields](#common-fields).
 | `action` | act_* |
 | `args?` | map string → JSON |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3080,6 +3115,7 @@ Also accepts the [common fields](#common-fields).
 | `name?` | string |
 | `condition?` | Condition |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3091,6 +3127,7 @@ Also accepts the [common fields](#common-fields).
 | `name?` | string |
 | `on?` | JSON |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3103,6 +3140,7 @@ Also accepts the [common fields](#common-fields).
 | `condition?` | Condition |
 | `inner?` | Inner |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3116,6 +3154,7 @@ Also accepts the [common fields](#common-fields).
 | `as?` | identifier |
 | `inner?` | Inner |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3126,6 +3165,7 @@ Also accepts the [common fields](#common-fields).
 | `kind` | "parallel" |
 | `name?` | string |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3136,6 +3176,7 @@ Also accepts the [common fields](#common-fields).
 | `kind` | "join" |
 | `name?` | string |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3148,6 +3189,7 @@ Also accepts the [common fields](#common-fields).
 | `event` | evt_* |
 | `payload?` | map string → JSON |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3160,6 +3202,7 @@ Also accepts the [common fields](#common-fields).
 | `on?` | evt_*[] |
 | `after?` | tmr_* |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3173,6 +3216,7 @@ Also accepts the [common fields](#common-fields).
 | `request?` | { method, url } |
 | `party?` | pty_* |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3184,6 +3228,7 @@ Also accepts the [common fields](#common-fields).
 | `name?` | string |
 | `webhook` | whk_* |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3195,6 +3240,7 @@ Also accepts the [common fields](#common-fields).
 | `name?` | string |
 | `set?` | map vars or context path (vars.total) → JSON |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3206,6 +3252,7 @@ Also accepts the [common fields](#common-fields).
 | `name?` | string |
 | `inner?` | Inner |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3218,6 +3265,7 @@ A party on the level (role R1): it sends, receives or performs what its party do
 | `kind` | "participant" |
 | `party` | pty_* |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3230,6 +3278,7 @@ A state of a machine level, which steps lead to (role R4).
 | `kind` | "state" |
 | `target` | nod_* |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3243,6 +3292,7 @@ A shortcut to another canvas, node, definition or catalog item.
 | `name?` | string |
 | `target` | any ID |
 | `summary?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 
@@ -3257,6 +3307,7 @@ A flow edge; `case` is required exactly when kind is case.
 | `kind?` | "next" \| "true" \| "false" \| "case" \| "default" \| "error" \| "link" |
 | `case?` | JSON |
 | `name?` | string |
+| `highlights?` | hlt_*[] |
 
 Also accepts the [common fields](#common-fields).
 

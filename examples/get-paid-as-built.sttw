@@ -1,16 +1,16 @@
 {
-  "statewright": "1.3",
+  "statewright": "1.4",
   "generator": {
     "name": "statewright",
-    "version": "0.1.5",
+    "version": "0.2.1",
     "channel": "cli"
   },
   "signature": {
     "algorithm": "sha256",
-    "content": "908ad7711f12cf92e1320504ebf2fce4c195cef34ba3ea031073e6fcb7d70505",
+    "content": "1c30169dfd9c81934a1f9be9c4f00e51e058c89d6ba6fe32794606fd297cb3cb",
     "annotations": "a50eb1b0c4061e9d91885669a572ecd750ec49ba51debe0864a5de92612296cc",
     "layout": "6918e0b4d1294c0a4c304b16b740607f6c587ff96f398f1bbaa85d54d70bda94",
-    "signedAt": "2026-10-15T12:38:30Z"
+    "signedAt": "2026-10-16T05:51:39Z"
   },
   "project": {
     "id": "prj_getPaid",
@@ -124,7 +124,8 @@
         "kind": "external",
         "name": "PSP"
       }
-    }
+    },
+    "highlights": {}
   },
   "definitions": {},
   "canvases": {

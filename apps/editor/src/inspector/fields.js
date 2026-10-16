@@ -435,7 +435,9 @@ export const ELSEWHERE = {
   "layout.note.y": "Moving the note on the canvas.",
   "layout.edge.points": "Auto-layout, or Details of an arrow: Reset route.",
   "layout.edge.labelAt": "Auto-layout, or Details of an arrow: Reset route.",
-  "layout.legend.labels": "The project's details: Legend wording."
+  "layout.legend.labels": "The project's details: Legend wording.",
+  "node.*.highlights": "Highlights: the Editor's field arrives with plan H2 (highlights spec §6).",
+  "edge.*.highlights": "Highlights: the Editor's field arrives with plan H2 (highlights spec §6)."
 };
 
 /**

@@ -1,5 +1,5 @@
 /** Format version written by this package (`"MAJOR.MINOR"`). */
-export const FORMAT_VERSION = "1.3";
+export const FORMAT_VERSION = "1.4";
 
 /** Name stamped into `generator.name`. */
 export const GENERATOR_NAME = "statewright";
@@ -27,6 +27,7 @@ export const ID_PREFIXES = Object.freeze({
   timer: "tmr",
   status: "sts",
   party: "pty",
+  highlight: "hlt",
   finding: "fnd",
   note: "nte",
   lane: "lne",
@@ -45,8 +46,23 @@ export const CATALOG_COLLECTIONS = Object.freeze({
   webhooks: "whk",
   timers: "tmr",
   statuses: "sts",
-  parties: "pty"
+  parties: "pty",
+  highlights: "hlt"
 });
+
+/** The colours a highlight takes by name (highlights spec §3); a highlight may also take a `#RRGGBB`. */
+export const HIGHLIGHT_PALETTE = Object.freeze([
+  "red",
+  "orange",
+  "amber",
+  "green",
+  "teal",
+  "blue",
+  "indigo",
+  "violet",
+  "pink",
+  "grey"
+]);
 
 /** Built-in field types (spec §10.1). Anything else in a type position is a `typ_*` ID. */
 export const PRIMITIVE_TYPES = Object.freeze([
