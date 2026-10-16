@@ -113,12 +113,11 @@ function hexOfOklab([L, A, B]) {
 function until(hex, direction, good) {
   if (good(hex)) return hex;
   const [L, A, B] = oklabOf(hex);
-  let found = hex;
   for (let step = 1; step <= STEPS; step += 1) {
     const lightness = Math.min(1, Math.max(0, L + (direction * step) / STEPS));
     // Chroma fades towards the ends, so very light or dark values stay in gamut.
     const keep = 1 - Math.abs(lightness - L) * 0.5;
-    found = hexOfOklab([lightness, A * keep, B * keep]);
+    const found = hexOfOklab([lightness, A * keep, B * keep]);
     if (good(found)) return found;
   }
   return direction < 0 ? "#000000" : "#FFFFFF";
