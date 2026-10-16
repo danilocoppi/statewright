@@ -202,10 +202,16 @@ function buildScene(doc, geometry, canvasId) {
           w: size.w,
           h: size.h,
           lines: size.lines,
-          color: edgeStyle.stroke
+          color: edgeStyle.stroke,
+          chips: edgeStyle.chips
         };
         scene.labels.push(label);
         labelsById.set(edgeId, label);
+      }
+      // An arrow's highlight chips: over its label, or over the middle of its route when it has none.
+      if (edgeStyle.chips.length && !labelsById.has(edgeId)) {
+        const [x, y] = midpoint(points);
+        scene.edges.at(-1).chipsAt = [x, y - 4];
       }
       // An edge's findings: their badge under its label, or under the middle of its route.
       if (edgeStyle.badges.length) {
@@ -473,7 +479,7 @@ function drawBox(geometry, item, nodeStyle, paint, tooltips) {
       rx: 8,
       fill: paint(nodeStyle.fill),
       stroke: paint(nodeStyle.stroke),
-      "stroke-width": 1,
+      "stroke-width": nodeStyle.width ?? 1,
       "stroke-dasharray": nodeStyle.dash
     }),
     drawChips(nodeStyle.chips, rect.x + 8, rect.y + BOX.chipTop, paint),
@@ -499,22 +505,26 @@ function drawNode(doc, geometry, item, paint, tooltips) {
   const node = doc.canvases[item.canvasId].nodes[item.nodeId];
   const { rect } = item;
   const [cx, cy] = center(rect);
+  // A highlight colours a pseudo-node's outline, or a dot itself (highlights spec §4).
+  const highlight = nodeStyle.highlight;
+  const outline = color => paint(highlight?.stroke ?? color);
+  const ground = paint(highlight?.fill ? highlight.tint : WHITE);
   let body;
   switch (nodeStyle.shape) {
     case "dot":
-      body = el("circle", { cx, cy, r: 6, fill: paint(INK) });
+      body = el("circle", { cx, cy, r: 6, fill: outline(INK) });
       break;
     case "end": {
       const color =
         node.outcome === "failure" ? NODE_STYLES["outcome.failure"].stroke : NODE_STYLES["outcome.success"].stroke;
       body =
-        el("circle", { cx, cy, r: 9, fill: paint(WHITE), stroke: paint(color), "stroke-width": 1.5 }) +
+        el("circle", { cx, cy, r: 9, fill: ground, stroke: outline(color), "stroke-width": 1.5 }) +
         el("circle", { cx, cy, r: 5, fill: paint(color) });
       break;
     }
     case "history":
       body =
-        el("circle", { cx, cy, r: 12, fill: paint(WHITE), stroke: paint(NODE_STYLES["state.plain"].stroke) }) +
+        el("circle", { cx, cy, r: 12, fill: ground, stroke: outline(NODE_STYLES["state.plain"].stroke) }) +
         text(
           cx,
           cy + 4,
@@ -524,14 +534,15 @@ function drawNode(doc, geometry, item, paint, tooltips) {
         );
       break;
     case "bar":
-      body = el("rect", { x: rect.x, y: rect.y, width: rect.w, height: rect.h, rx: 2, fill: paint(INK) });
+      body = el("rect", { x: rect.x, y: rect.y, width: rect.w, height: rect.h, rx: 2, fill: outline(INK) });
       break;
     case "diamond": {
       const top = rect.y;
       body = el("polygon", {
         points: `${num(cx)},${num(top)} ${num(cx + 16)},${num(top + 16)} ${num(cx)},${num(top + 32)} ${num(cx - 16)},${num(top + 16)}`,
-        fill: paint(WHITE),
-        stroke: paint(NODE_STYLES["state.plain"].stroke)
+        fill: ground,
+        stroke: outline(NODE_STYLES["state.plain"].stroke),
+        "stroke-width": highlight ? highlight.width.box : undefined
       });
       geometry.diamondLines(item.canvasId, item.nodeId).forEach((line, index) => {
         body += text(cx, top + 46 + BOX.lineHeight * index, line, BOX.summary, {
@@ -549,8 +560,8 @@ function drawNode(doc, geometry, item, paint, tooltips) {
           width: rect.w,
           height: rect.h,
           rx: 13,
-          fill: paint(WHITE),
-          stroke: paint(MUTED),
+          fill: ground,
+          stroke: outline(MUTED),
           "stroke-dasharray": "3,2"
         }) + text(cx, cy + 3.5, "from any state", BOX.summary, { "text-anchor": "middle", fill: paint(MUTED) });
       break;
@@ -581,7 +592,8 @@ function drawFrame(geometry, item, paint, tooltips) {
       height: rect.h,
       rx: 10,
       fill: paint(frame.fill),
-      stroke: paint(frame.stroke),
+      stroke: paint(nodeStyle.highlight?.stroke ?? frame.stroke),
+      "stroke-width": nodeStyle.highlight ? nodeStyle.highlight.width.box : undefined,
       "stroke-dasharray": frame.dash
     }) +
       el("rect", {
@@ -590,8 +602,8 @@ function drawFrame(geometry, item, paint, tooltips) {
         width: tabWidth,
         height: 15,
         rx: 3,
-        fill: paint(WHITE),
-        stroke: paint(frame.stroke)
+        fill: paint(nodeStyle.highlight?.fill ? nodeStyle.highlight.tint : WHITE),
+        stroke: paint(nodeStyle.highlight?.stroke ?? frame.stroke)
       }) +
       text(rect.x + 16, rect.y + 18, tab, FONTS.caps, { fill: paint(SUB) }) +
       drawPills(nodeStyle.statuses, rect.x + rect.w - 10, rect.y + BOX.chipTop, paint) +
@@ -615,16 +627,25 @@ function drawRegion(region, paint) {
 }
 
 function drawEdge(item, idPrefix, paint) {
-  return el("path", {
-    d: pathData(item.points),
-    fill: "none",
-    stroke: paint(item.style.stroke),
-    "stroke-width": item.style.width,
-    "stroke-dasharray": item.style.dash,
-    "marker-end": `url(#${markerId(idPrefix, item.style.key)})`,
-    opacity: item.style.opacity < 1 ? item.style.opacity : undefined,
-    "data-id": item.edgeId
-  });
+  return (
+    el("path", {
+      d: pathData(item.points),
+      fill: "none",
+      stroke: paint(item.style.stroke),
+      "stroke-width": item.style.width,
+      "stroke-dasharray": item.style.dash,
+      "marker-end": `url(#${markerId(idPrefix, item.style.marker ?? item.style.key)})`,
+      opacity: item.style.opacity < 1 ? item.style.opacity : undefined,
+      "data-id": item.edgeId
+    }) + (item.chipsAt ? drawCentredChips(item.style.chips, item.chipsAt[0], item.chipsAt[1], paint) : "")
+  );
+}
+
+/** Chips centred on x, their bottom at y (an arrow's highlights, over its label or the middle of its route). */
+function drawCentredChips(chips, x, bottom, paint) {
+  if (!chips?.length) return "";
+  const w = chips.reduce((sum, chip) => sum + chipWidth(chip.text), 0) + 4 * (chips.length - 1);
+  return drawChips(chips, x - w / 2, bottom - BOX.chipHeight, paint);
 }
 
 /** An edge's label, named by its edge (`data-id`) like the edge's route, so a page can find both. */
@@ -632,7 +653,8 @@ function drawLabel(label, paint) {
   return el(
     "g",
     { class: "label", "data-id": label.edgeId },
-    el("rect", { x: label.x, y: label.y, width: label.w, height: label.h, rx: 2, fill: paint(WHITE) }) +
+    drawCentredChips(label.chips, label.x + label.w / 2, label.y - 2, paint) +
+      el("rect", { x: label.x, y: label.y, width: label.w, height: label.h, rx: 2, fill: paint(WHITE) }) +
       label.lines
         .map((line, index) =>
           text(label.x + label.w / 2, label.y + 11 + 12 * index, line, BOX.label, {
@@ -815,6 +837,7 @@ export function figureOf(
         to: item.to,
         points: item.points,
         key: item.style.key,
+        marker: item.style.marker,
         label: style.edgeLabel(item.edgeId),
         svg: drawEdge(item, idPrefix, paint) + badgeOf(item.edgeId, false)
       };
@@ -892,7 +915,11 @@ export function edgeMarkers(keys, { idPrefix, paint = identity }) {
           orient: "auto",
           markerUnits: "userSpaceOnUse"
         },
-        el("polygon", { points: "0 0, 9 3.5, 0 7", fill: paint(EDGE_STYLES[key].stroke) })
+        el("polygon", {
+          points: "0 0, 9 3.5, 0 7",
+          // A highlight's arrowhead is named after its colour: "highlight.DC2626".
+          fill: paint(key.startsWith("highlight.") ? `#${key.slice("highlight.".length)}` : EDGE_STYLES[key].stroke)
+        })
       )
     )
     .join("");

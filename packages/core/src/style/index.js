@@ -2,6 +2,7 @@ import { buildIndex } from "../query/build-index.js";
 import { figureCanvases, interiorOf, stepsItem } from "./frames.js";
 import { associationsOf } from "../roles/index.js";
 import { edgeHome, homeKind, stateLevelOf } from "../roles/kinds.js";
+import { highlightLook } from "./highlights.js";
 import { CHIP_LABELS, EDGE_STYLES, MUTED, NODE_STYLES, ROLE_STYLES, TONES } from "./palette.js";
 
 export { displayOf, figureCanvases, interiorOf } from "./frames.js";
@@ -141,6 +142,27 @@ export function createStyle(doc) {
     const entry = index.get(id);
     return entry?.type === "edge" ? entry : null;
   };
+  /** An element's highlights found in the catalog, in order, each with its look (highlights spec §4). */
+  const highlightsOf = value =>
+    (value.highlights ?? [])
+      .filter(id => doc.catalog.highlights?.[id])
+      .map(id => ({ id, item: doc.catalog.highlights[id], look: highlightLook(doc.catalog.highlights[id]) }));
+  /** The first highlight's look, as a style carries it; null without one. */
+  const highlightStyle = first =>
+    first ?
+      {
+        id: first.id,
+        stroke: first.look.stroke,
+        tint: first.look.tint,
+        fill: first.item.fill === "tint",
+        width: first.look.width
+      }
+    : null;
+  /** The chips of an element's highlights that show one, in its look. */
+  const highlightChips = highlights =>
+    highlights
+      .filter(({ item }) => item.chip)
+      .map(({ item, look }) => ({ text: item.name.toUpperCase(), color: look.text, fill: look.tint }));
 
   function node(id) {
     const entry = nodeEntry(id);
@@ -176,6 +198,9 @@ export function createStyle(doc) {
       const tone = TONES[tag.tone ?? "neutral"];
       chip(tag.text.toUpperCase(), tone.color, tone.fill);
     }
+    const highlights = highlightsOf(value);
+    for (const item of highlightChips(highlights)) chip(item.text, item.color, item.fill);
+    const highlight = highlightStyle(highlights[0]);
     const statuses = (value.statuses ?? [])
       .filter(statusId => doc.catalog.statuses[statusId])
       .map(statusId => ({
@@ -184,8 +209,10 @@ export function createStyle(doc) {
       }));
     return {
       key,
-      fill: style.fill,
-      stroke: style.stroke,
+      fill: highlight?.fill ? highlight.tint : style.fill,
+      stroke: highlight?.stroke ?? style.stroke,
+      width: highlight?.width.box ?? 1,
+      highlight,
       dash: style.dash ?? null,
       opacity: value.confidence === "low" ? 0.6 : 1,
       shape: shapeOf(doc, value),
@@ -221,10 +248,16 @@ export function createStyle(doc) {
     if (!entry) return null;
     const key = edgeKey(doc.canvases[entry.canvas].kind, entry.value);
     const style = EDGE_STYLES[key];
+    const highlights = highlightsOf(entry.value);
+    const highlight = highlightStyle(highlights[0]);
     return {
       key,
-      stroke: style.stroke,
-      width: style.width,
+      stroke: highlight?.stroke ?? style.stroke,
+      width: highlight ? Math.max(style.width, highlight.width.edge) : style.width,
+      // The arrowhead: the style's, or one of the highlight's colour.
+      marker: highlight ? `highlight.${highlight.stroke.slice(1)}` : key,
+      highlight,
+      chips: highlightChips(highlights),
       dash: style.dash ?? null,
       opacity: entry.value.confidence === "low" ? 0.6 : 1,
       badges: badges.get(id) ?? []
@@ -294,10 +327,12 @@ export function createStyle(doc) {
     let terminal = false;
     let findings = false;
     const drawnRoles = new Set(associationsOf(doc, canvasId).map(item => `role.${item.role}`));
+    const usedHighlights = new Set();
     for (const id of figureCanvases(doc, canvasId)) {
       const canvas = doc.canvases[id];
       const placed = doc.layout?.canvases?.[id]?.nodes ?? {};
       for (const nodeId of Object.keys(canvas.nodes)) {
+        for (const id of canvas.nodes[nodeId].highlights ?? []) usedHighlights.add(id);
         const style = node(nodeId);
         if (placed[nodeId]?.display === "frame" && style.interior) nodeKeys.add("frame");
         else if (STYLED_SHAPES.has(style.shape)) nodeKeys.add(style.key);
@@ -305,6 +340,7 @@ export function createStyle(doc) {
         if (style.badges.length) findings = true;
       }
       for (const edgeId of Object.keys(canvas.edges)) {
+        for (const id of canvas.edges[edgeId].highlights ?? []) usedHighlights.add(id);
         const style = edge(edgeId);
         edgeKeys.add(style.key);
         if (style.badges.length) findings = true;
@@ -321,6 +357,19 @@ export function createStyle(doc) {
       roles: Object.keys(ROLE_STYLES)
         .filter(key => drawnRoles.has(key))
         .map(key => ({ key, ...ROLE_STYLES[key], label: labels[key] ?? ROLE_STYLES[key].label })),
+      // The highlights the figure uses, in catalog order, each with what it means (highlights spec §4).
+      highlights: Object.keys(doc.catalog.highlights ?? {})
+        .filter(id => usedHighlights.has(id))
+        .map(id => {
+          const item = doc.catalog.highlights[id];
+          return {
+            id,
+            name: item.name,
+            description: item.description,
+            fill: item.fill === "tint",
+            look: highlightLook(item)
+          };
+        }),
       findings
     };
   }

@@ -63,6 +63,24 @@ function layoutLegend(legend, badgeCode, width, prefix) {
           drawChips([{ text: item.text, color: MUTED }], x, y - 10) +
           text(x + chipWidth(item.text) + 6, y, item.label, FONTS.legend, { fill: SUB })
       })),
+      // A highlight: a box in its look, its name and what it means (highlights spec §4).
+      ...legend.highlights.map(item => {
+        const label = item.description ? `${item.name}: ${item.description}` : item.name;
+        return {
+          w: 24 + textWidth(label, FONTS.legend),
+          draw: (x, y) =>
+            el("rect", {
+              x,
+              y: y - 10,
+              width: 18,
+              height: 13,
+              rx: 3,
+              fill: item.fill ? item.look.tint : "#FFFFFF",
+              stroke: item.look.stroke,
+              "stroke-width": Math.min(item.look.width.box, 2)
+            }) + text(x + 24, y, label, FONTS.legend, { fill: SUB })
+        };
+      }),
       ...(legend.findings ?
         [
           {
@@ -162,7 +180,12 @@ export async function toSVG(
   const badgeCode = figure.nodes.map(part => geometry.style.node(part.id).badges[0]).find(Boolean) ?? "F1";
   const hasLegend =
     showLegend &&
-    (legend.nodes.length || legend.edges.length || legend.roles.length || legend.chips.length || legend.findings);
+    (legend.nodes.length ||
+      legend.edges.length ||
+      legend.roles.length ||
+      legend.chips.length ||
+      legend.highlights.length ||
+      legend.findings);
   if (hasLegend) {
     const rows = layoutLegend(legend, badgeCode, width - 2 * PAD - 72, idPrefix);
     parts.push(el("line", { x1: PAD, y1: y, x2: width - PAD, y2: y, stroke: RULE }));
@@ -177,7 +200,10 @@ export async function toSVG(
   const markerKeys = Object.keys(EDGE_STYLES).filter(
     key => figure.edges.some(part => part.key === key) || (hasLegend && legend.edges.some(item => item.key === key))
   );
-  const defs = edgeMarkers(markerKeys, { idPrefix });
+  const highlightMarkers = [
+    ...new Set(figure.edges.map(part => part.marker).filter(key => key?.startsWith("highlight.")))
+  ].sort();
+  const defs = edgeMarkers([...markerKeys, ...highlightMarkers], { idPrefix });
   return (
     el(
       "svg",
