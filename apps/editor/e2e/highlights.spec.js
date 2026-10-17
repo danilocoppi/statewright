@@ -53,3 +53,34 @@ test("a box made Critical in the inspector, in both themes, then every box from 
   await expect(scheduler.getByText("CRITICAL")).toHaveCount(0);
   await expect(engine.getByText("CRITICAL")).toBeVisible();
 });
+
+test("a note made Critical in the inspector: a red, bold, tinted border and its tag inside it", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /^Airport operations/ }).click();
+  const note = page.locator(".react-flow__node-note", { hasText: "Wayfinding still reads" });
+  await expect(note).toBeVisible();
+  await note.click();
+  const panel = inspector(page);
+  await panel.getByRole("button", { name: "Add highlight" }).click();
+  await page.keyboard.type("Critical");
+  await page.getByRole("option", { name: /New highlight/ }).click();
+  const editor = page.getByRole("dialog", { name: "New highlight" });
+  await editor.getByRole("radio", { name: "Red" }).click();
+  await editor.getByRole("radio", { name: "Tint" }).click();
+  await editor.getByRole("checkbox", { name: "Show its name as a tag" }).check();
+  await editor.getByRole("button", { name: "Save" }).click();
+
+  // The level opens far out, where text is not drawn: come close to the note first.
+  const at = await note.boundingBox();
+  await page.mouse.move(at.x + at.width / 2, at.y + at.height / 2);
+  await page.keyboard.down("Control");
+  for (let step = 0; step < 6; step++) await page.mouse.wheel(0, -200);
+  await page.keyboard.up("Control");
+  await expect(note.getByText("CRITICAL")).toBeVisible();
+  const border = await note.evaluate(node => {
+    const style = getComputedStyle([...node.querySelectorAll('rect[rx="4"]')].at(-1));
+    return { stroke: style.stroke, width: style.strokeWidth, fill: style.fill };
+  });
+  expect(border).toEqual({ stroke: "rgb(220, 38, 38)", width: "2px", fill: "rgb(254, 242, 242)" });
+  await page.screenshot({ path: "test-results/highlight-note.png" });
+});

@@ -146,4 +146,16 @@ describe("the commands ⌘K lists", () => {
       .run();
     expect(editorStore.getState().doc.canvases.cnv_open.nodes.nod_created.highlights ?? []).toEqual([]);
   });
+
+  it("applies a highlight to a selected note, as to a box", () => {
+    const doc = readExample("get-paid-as-built");
+    doc.catalog.highlights.hlt_critical = { name: "Critical", colour: "red" };
+    doc.annotations = { ...doc.annotations, notes: { nte_watch: { text: "Watch", canvas: "cnv_open" } } };
+    editorStore.getState().open(doc, { canvasId: "cnv_open" });
+    editorStore.getState().select(["nte_watch"]);
+    commands()
+      .find(command => command.id === "highlight-add-hlt_critical")
+      .run();
+    expect(editorStore.getState().doc.annotations.notes.nte_watch.highlights).toEqual(["hlt_critical"]);
+  });
 });

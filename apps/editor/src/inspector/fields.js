@@ -309,6 +309,7 @@ const OTHER_FIELDS = {
   note: [
     basics("text", "longtext", { required: true }),
     basics("tone", "choice", { none: "plainNote" }),
+    HIGHLIGHTS,
     basics("target", "noteTarget", { label: "attachedTo" })
   ],
   lane: [

@@ -3,12 +3,10 @@
 import { fieldCommands } from "@/inspector/apply";
 import { indexOf } from "@/lib/derived";
 
-/** The boxes and arrows among some IDs: what carries highlights. */
-export const drawnAmong = (doc, ids) =>
-  ids.filter(id => {
-    const type = indexOf(doc).get(id)?.type;
-    return type === "node" || type === "edge";
-  });
+const CARRIERS = new Set(["node", "edge", "note"]);
+
+/** The boxes, arrows and notes among some IDs: what carries highlights. */
+export const drawnAmong = (doc, ids) => ids.filter(id => CARRIERS.has(indexOf(doc).get(id)?.type));
 
 const highlightsOf = (doc, id) => indexOf(doc).get(id)?.value.highlights ?? [];
 
