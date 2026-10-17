@@ -164,6 +164,14 @@ export function createStyle(doc) {
       .filter(({ item }) => item.chip)
       .map(({ item, look }) => ({ text: item.name.toUpperCase(), color: look.text, fill: look.tint }));
 
+  /** A note's highlight and the chips of its highlights; the tone draws the rest (highlights spec §4). */
+  function note(id) {
+    const value = doc.annotations?.notes?.[id];
+    if (!value) return null;
+    const highlights = highlightsOf(value);
+    return { highlight: highlightStyle(highlights[0]), chips: highlightChips(highlights) };
+  }
+
   function node(id) {
     const entry = nodeEntry(id);
     if (!entry) return null;
@@ -328,7 +336,8 @@ export function createStyle(doc) {
     let findings = false;
     const drawnRoles = new Set(associationsOf(doc, canvasId).map(item => `role.${item.role}`));
     const usedHighlights = new Set();
-    for (const id of figureCanvases(doc, canvasId)) {
+    const canvases = figureCanvases(doc, canvasId);
+    for (const id of canvases) {
       const canvas = doc.canvases[id];
       const placed = doc.layout?.canvases?.[id]?.nodes ?? {};
       for (const nodeId of Object.keys(canvas.nodes)) {
@@ -344,6 +353,11 @@ export function createStyle(doc) {
         const style = edge(edgeId);
         edgeKeys.add(style.key);
         if (style.badges.length) findings = true;
+      }
+    }
+    for (const value of Object.values(doc.annotations?.notes ?? {})) {
+      if (canvases.includes(value.canvas)) {
+        for (const id of value.highlights ?? []) usedHighlights.add(id);
       }
     }
     return {
@@ -427,7 +441,7 @@ export function createStyle(doc) {
    */
   const findings = id => targeted.get(id) ?? [];
 
-  return { node, edge, edgeLabel, legend, cardSummary, findings };
+  return { node, edge, edgeLabel, note, legend, cardSummary, findings };
 }
 
 /** Text of an unnamed flow step (its action, event, endpoint, …) or guest (what it stands for), for summaries. */

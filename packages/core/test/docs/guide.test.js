@@ -364,12 +364,14 @@ describe("the platform guide", () => {
 
   it("explains highlights: the catalog, how they look and what they keep, the rule for agents, and format 1.4", () => {
     expect(source).toContain("`hlt` highlight");
-    expect(source).toContain("`highlights` (named looks for boxes and arrows");
-    expect(source).toContain("**Highlights.** A box or an arrow can carry highlights");
+    expect(source).toContain("`highlights` (named looks for boxes, arrows and notes");
+    expect(source).toContain("**Highlights.** A box, an arrow or a note can carry highlights");
     expect(source).toContain("your tags, then the tags of your highlights");
     expect(source).toContain("13. **Highlight only when asked.**");
     expect(source).toContain("The JSON Schema of format 1.4 ships with the package");
     expect(source).toContain("**Highlights in the Editor.**");
+    expect(source).toContain("on a note above its text");
+    expect(source).toContain("`highlights` on nodes, edges and notes");
     expect(source).toContain("each selected element also names the `highlights` it carries");
   });
 

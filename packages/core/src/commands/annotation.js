@@ -162,7 +162,7 @@ export default [
   },
   {
     type: "note.update",
-    description: "Change a note's text, tone, target or canvas.",
+    description: "Change a note's text, tone, target, canvas or highlights.",
     args: z.strictObject({ id: z.string(), ...changeArgs }),
     run(ctx, { id, ...change }) {
       const entry = requireEntry(ctx, id, ["note"]);

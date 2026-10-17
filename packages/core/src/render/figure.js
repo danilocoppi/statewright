@@ -253,7 +253,16 @@ function buildScene(doc, geometry, canvasId) {
     for (const noteId of sortedKeys(doc.annotations?.notes)) {
       const note = doc.annotations.notes[noteId];
       if (note.canvas === id)
-        scene.notes.push({ noteId, canvasId: id, within, note, at: stored.notes?.[noteId], dx, dy });
+        scene.notes.push({
+          noteId,
+          canvasId: id,
+          within,
+          note,
+          look: style.note(noteId),
+          at: stored.notes?.[noteId],
+          dx,
+          dy
+        });
     }
   }
 
@@ -336,14 +345,18 @@ function drawAssociation(item, paint) {
 }
 
 /** Position and shape of a note: stored position, above its node, under its edge's label, or floating. */
-function placeNote({ noteId, canvasId, within, note, at, dx, dy }, rects, labels) {
+function placeNote({ noteId, canvasId, within, note, look, at, dx, dy }, rects, labels) {
   const tone = NOTE_TONES[note.tone ?? "info"];
   const lines = wrap(note.text, NOTE_WIDTH, line => textWidth(line, FONTS.note));
-  const w = Math.ceil(Math.max(...lines.map(line => textWidth(line, FONTS.note)))) + 16;
-  const h = lines.length * 15 + 10;
+  // A highlight's chips stand in a row of their own at the top of the note, inside it (highlights spec §4).
+  const chips = look?.chips ?? [];
+  const chipRow = chips.length ? BOX.chipHeight + 4 : 0;
+  const chipsWidth = chips.reduce((sum, chip) => sum + chipWidth(chip.text) + 4, -4);
+  const w = Math.ceil(Math.max(chipsWidth, ...lines.map(line => textWidth(line, FONTS.note)))) + 16;
+  const h = lines.length * 15 + 10 + chipRow;
   const target = note.target && rects.get(note.target);
   const label = note.target && labels.get(note.target);
-  const base = { noteId, canvasId, within, tone, lines, w, h };
+  const base = { noteId, canvasId, within, tone, highlight: look?.highlight ?? null, chips, chipRow, lines, w, h };
   if (at) return { ...base, kind: "box", x: at.x + dx, y: at.y + dy };
   if (target && note.tone === "defect") {
     return { ...base, kind: "loop", x: target.x + target.w / 2 - w / 2, y: target.y - 34 - h, target };
@@ -667,12 +680,18 @@ function drawLabel(label, paint) {
 }
 
 function drawNote(note, paint) {
+  const { highlight } = note;
+  const stroke = paint(highlight?.stroke ?? note.tone.color);
   const lines = (x, y, anchor) =>
     note.lines
       .map((line, index) =>
-        text(x, y + 13 + 15 * index, line, FONTS.note, { "text-anchor": anchor, fill: paint(note.tone.color) })
+        text(x, y + note.chipRow + 13 + 15 * index, line, FONTS.note, {
+          "text-anchor": anchor,
+          fill: paint(note.tone.color)
+        })
       )
       .join("");
+  const centredChips = () => drawCentredChips(note.chips, note.x + note.w / 2, note.y + 5 + BOX.chipHeight, paint);
   if (note.kind === "loop") {
     const { target } = note;
     const left = target.x + 16;
@@ -681,13 +700,15 @@ function drawNote(note, paint) {
       el("path", {
         d: `M ${num(left)} ${num(target.y)} C ${num(left)} ${num(target.y - 30)} ${num(right)} ${num(target.y - 30)} ${num(right)} ${num(target.y)}`,
         fill: "none",
-        stroke: paint(note.tone.color),
-        "stroke-width": 1.2,
+        stroke,
+        "stroke-width": highlight ? Math.max(1.2, highlight.width.box) : 1.2,
         "stroke-dasharray": "2,3"
-      }) + lines(note.x + note.w / 2, note.y, "middle")
+      }) +
+      centredChips() +
+      lines(note.x + note.w / 2, note.y, "middle")
     );
   }
-  if (note.kind === "text") return lines(note.x + note.w / 2, note.y, "middle");
+  if (note.kind === "text") return centredChips() + lines(note.x + note.w / 2, note.y, "middle");
   const leader =
     note.target ?
       el("line", {
@@ -695,7 +716,7 @@ function drawNote(note, paint) {
         y1: note.y + note.h,
         x2: note.x + 12,
         y2: note.target.y,
-        stroke: paint(note.tone.color),
+        stroke,
         "stroke-dasharray": "2,2",
         "stroke-opacity": 0.6
       })
@@ -708,10 +729,12 @@ function drawNote(note, paint) {
       width: note.w,
       height: note.h,
       rx: 4,
-      fill: paint(note.tone.fill),
-      stroke: paint(note.tone.color),
-      "stroke-opacity": 0.4
+      fill: paint(highlight?.fill ? highlight.tint : note.tone.fill),
+      stroke,
+      "stroke-width": highlight?.width.box,
+      "stroke-opacity": highlight ? undefined : 0.4
     }) +
+    drawChips(note.chips, note.x + 8, note.y + 5, paint) +
     lines(note.x + 8, note.y, "start")
   );
 }

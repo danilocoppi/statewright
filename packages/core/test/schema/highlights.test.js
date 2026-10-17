@@ -57,6 +57,19 @@ describe("highlights in the format", () => {
     expect(issues(marked)).toEqual(["canvases.cnv_m.nodes.nod_a.highlights"]);
   });
 
+  it("lets a note carry highlights, once each", () => {
+    const noted = withHighlight({ name: "Critical" }, doc => {
+      doc.annotations = {
+        ...doc.annotations,
+        notes: { nte_a: { text: "Watch", canvas: "cnv_m", highlights: ["hlt_critical"] } }
+      };
+      return doc;
+    });
+    expect(issues(noted)).toEqual([]);
+    noted.annotations.notes.nte_a.highlights = ["hlt_critical", "hlt_critical"];
+    expect(issues(noted)).toEqual(["annotations.notes.nte_a.highlights"]);
+  });
+
   it("does not let a level or a catalog item carry highlights", () => {
     const onLevel = withHighlight({ name: "Critical" }, doc => {
       doc.canvases.cnv_m.highlights = ["hlt_critical"];

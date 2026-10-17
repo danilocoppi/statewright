@@ -235,6 +235,9 @@ export function createRefCollector() {
       const base = ["annotations", "notes", id];
       push("annotations", id, "canvas", [...base, "canvas"], note.canvas, ["cnv"], "element");
       push("annotations", id, "target", [...base, "target"], note.target, null, "element");
+      (Array.isArray(note.highlights) ? note.highlights : []).forEach((value, index) =>
+        push("annotations", id, "highlights", [...base, "highlights", index], value, ["hlt"], "splice")
+      );
     },
 
     comment(id, comment) {

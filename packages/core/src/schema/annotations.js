@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Evidence, Name } from "./blocks.js";
+import { Evidence, Highlights, Name } from "./blocks.js";
 import { Duration, anyId, idOf, mapOf, obj } from "./helpers.js";
 
 export const Finding = obj(
@@ -20,7 +20,8 @@ export const Note = obj(
     text: z.string().min(1),
     canvas: idOf("cnv"),
     target: anyId().optional(),
-    tone: z.enum(["info", "warning", "defect"]).optional()
+    tone: z.enum(["info", "warning", "defect"]).optional(),
+    highlights: Highlights.optional()
   },
   { description: "A note floating on a canvas or attached to an element." }
 );

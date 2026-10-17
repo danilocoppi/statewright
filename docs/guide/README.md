@@ -241,7 +241,7 @@ Definitions may contain instances of other definitions, but never of themselves.
 Things that diagrams mention are declared once in the catalog and referenced by ID: `types` (data contracts), `events`
 (`payin.confirmed`), `actions`, `guards` (named predicates), `endpoints` (`POST /payments`), `webhooks`, `timers`,
 `statuses` (public status values), `parties` (who acts: humans, operators, systems, external providers) and
-`highlights` (named looks for boxes and arrows, see [Reading a diagram](#reading-a-diagram)). Renaming a catalog item
+`highlights` (named looks for boxes, arrows and notes, see [Reading a diagram](#reading-a-diagram)). Renaming a catalog item
 never breaks its references.
 
 ### Reality and confidence
@@ -321,14 +321,14 @@ plain.
   name labels its edge); a ringed dot is a flow's `end`; a diamond is a `choice`, `if` or `switch`; `H` is a `history`
   node; a black bar is a `parallel` split or a `join`; a dashed pill is an `any` node ("from any state").
 
-**Highlights.** A box or an arrow can carry highlights: looks the project names in its catalog for what it wants to
+**Highlights.** A box, an arrow or a note can carry highlights: looks the project names in its catalog for what it wants to
 stand out — _Critical_, _Start_, _Review_ —, each with a meaning, a colour (`red`, `orange`, `amber`, `green`, `teal`,
 `blue`, `indigo`, `violet`, `pink`, `grey`, or a `#RRGGBB`), a border (`normal`, `bold`, `heavy`), a fill (`none` or
 `tint`) and whether it shows its name as a tag. The first highlight of an element gives it its border's colour and
-width and its tint, and an arrow its colour, width and arrowhead; the start dot, a choice's diamond and a frame take the
-colour on their outline. A highlight keeps what the rest says: provenance's dashes and chip, the kind, `FINAL`, the
+width and its tint (a note keeps its tone's text), and an arrow its colour, width and arrowhead; the start dot, a
+choice's diamond, a frame and a defect note's loop take the colour on their outline. A highlight keeps what the rest says: provenance's dashes and chip, the kind, `FINAL`, the
 statuses, the findings' badge and a low confidence's fading. Every highlight that shows a tag adds it, on a box after
-your tags, on an arrow over its label. The legend lists the highlights the level uses, each with what it means. A hex
+your tags, on an arrow over its label, on a note above its text. The legend lists the highlights the level uses, each with what it means. A hex
 colour is fitted to both themes: its stroke reads on the canvas and its tag on its tint.
 
 **Edges.** The first match wins: provenance, failure, an operator performing it, a timer-only trigger, the happy path,
@@ -369,12 +369,12 @@ to a level of another kind. Select a box that can hold one (a system's box, a st
 **Create inside** → Flow, State machine or System, as the inspector's **Interior** adds it: the new level opens, with
 its tools in the dock, and one Undo takes it back. A box that already has a level offers to **Open** it instead.
 
-**Highlights in the Editor.** A box's or an arrow's **Highlights**, under its description in the inspector, lists the
-highlights it carries as tags in their look; the first gives the look, and Alt+← or Alt+→ on a tag moves it. **Add
+**Highlights in the Editor.** A box's or an arrow's **Highlights**, under its description in the inspector (a note's,
+under its tone), lists the highlights it carries as tags in their look; the first gives the look, and Alt+← or Alt+→ on a tag moves it. **Add
 highlight** finds one of the project's, or **New highlight…** makes one in the highlight editor — its name, one of ten
 colours or any hex, its border, its fill, whether it shows its name as a tag, what it means, and a preview of a box in
 that look — and applies it in the same change. A project without highlights is offered _Start_, _Critical_, _Review_
-and _Done_ to begin from. With several boxes and arrows selected, the inspector lists the highlights any of them carries
+and _Done_ to begin from. With several boxes, arrows and notes selected, the inspector lists the highlights any of them carries
 and how many: one is added to all of them, or taken off all of them, as one change; ⌘K has **Apply highlight** and
 **Remove highlight** for each. The catalog's **Highlights** lists them with their looks: **Edit look…** opens one in
 the editor, and removing one in use says how many elements lose it.
@@ -1360,7 +1360,7 @@ system as it runs the design.
 12. **Present scenarios when explaining behaviour.** Show a run on the stage (`scenario_present`) instead of narrating
     it.
 13. **Highlight only when asked.** When the person asks to mark or emphasise elements, use the project's highlights
-    (`highlights` on the boxes and arrows, with `node.update` or `edge.update`); create one (`catalog.add` in
+    (`highlights` on the boxes, arrows and notes, with `node.update`, `edge.update` or `note.update`); create one (`catalog.add` in
     `highlights`) only when they ask for a new kind of mark, with the meaning they give it. Never use a highlight to say
     what provenance, findings or statuses already say.
 
@@ -2347,7 +2347,7 @@ The JSON Schema of format 1.4 ships with the package as `statewright/schema.json
 and is served by the platform at `/schema/1.4.json`. The schemas of formats 1.3, 1.2, 1.1 and 1.0 stay at
 `/schema/1.3.json`, `/schema/1.2.json`, `/schema/1.1.json` and `/schema/1.0.json` for the files that still point to
 them; Statewright reads those files and writes them back in format 1.4. Format 1.4 adds highlights
-(`catalog.highlights`, and `highlights` on nodes and edges); format 1.3 added review comments and locks
+(`catalog.highlights`, and `highlights` on nodes, edges and notes); format 1.3 added review comments and locks
 (`annotations.comments`, `annotations.locks`); format 1.2 added guests (participants, embedded steps, state guests) and
 the `party` fields they read.
 

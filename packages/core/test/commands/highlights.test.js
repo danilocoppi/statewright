@@ -14,7 +14,8 @@ const marked = () =>
     machineDoc(minimalDoc()),
     critical,
     cmd("node.update", { id: "nod_a", set: { highlights: ["hlt_critical"] } }),
-    cmd("edge.update", { id: "edg_ab", set: { highlights: ["hlt_critical"] } })
+    cmd("edge.update", { id: "edg_ab", set: { highlights: ["hlt_critical"] } }),
+    cmd("note.add", { id: "nte_a", note: { text: "Watch", canvas: "cnv_m", highlights: ["hlt_critical"] } })
   );
 const codes = (doc, target) =>
   check(doc)
@@ -22,8 +23,9 @@ const codes = (doc, target) =>
     .map(problem => problem.code);
 
 describe("highlights through commands", () => {
-  it("adds a highlight to the catalog and applies it to a box and an arrow", () => {
+  it("adds a highlight to the catalog and applies it to a box, an arrow and a note", () => {
     const doc = marked();
+    expect(doc.annotations.notes.nte_a.highlights).toEqual(["hlt_critical"]);
     expect(doc.catalog.highlights.hlt_critical.name).toBe("Critical");
     expect(doc.canvases.cnv_m.nodes.nod_a.highlights).toEqual(["hlt_critical"]);
     expect(doc.canvases.cnv_m.edges.edg_ab.highlights).toEqual(["hlt_critical"]);
@@ -35,12 +37,14 @@ describe("highlights through commands", () => {
     expect(doc.catalog.highlights).toEqual({});
     expect(doc.canvases.cnv_m.nodes.nod_a.highlights ?? []).toEqual([]);
     expect(doc.canvases.cnv_m.edges.edg_ab.highlights ?? []).toEqual([]);
+    expect(doc.annotations.notes.nte_a.highlights ?? []).toEqual([]);
   });
 
   it("reports a highlight that is not in the catalog as a dangling reference", () => {
     const doc = structuredClone(marked());
     delete doc.catalog.highlights.hlt_critical;
     expect(codes(doc, "nod_a")).toContain("ref.dangling");
+    expect(codes(doc, "nte_a")).toContain("ref.dangling");
   });
 
   it("does not report a highlight nobody uses: a project may keep a set ready", () => {

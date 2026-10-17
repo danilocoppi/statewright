@@ -7738,6 +7738,13 @@
                   "warning",
                   "defect"
                 ]
+              },
+              "highlights": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^(hlt)_[A-Za-z0-9]+$"
+                }
               }
             },
             "required": [

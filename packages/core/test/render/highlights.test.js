@@ -27,11 +27,20 @@ async function highlighted(marks, edit = doc => doc) {
     hlt_calm: { name: "Calm", colour: "blue", border: "heavy" },
     hlt_brand: { name: "Brand", colour: "#7C3AED" }
   };
+  doc.annotations = {
+    ...doc.annotations,
+    notes: {
+      nte_watch: { text: "Watch the retries", canvas: "cnv_m", target: "nod_busy" },
+      nte_loose: { text: "Loose end", canvas: "cnv_m" },
+      nte_loop: { text: "Loops forever", canvas: "cnv_m", target: "nod_idle", tone: "defect" }
+    }
+  };
   for (const [id, highlights] of Object.entries(marks)) {
     for (const canvas of Object.values(doc.canvases)) {
       if (canvas.nodes[id]) canvas.nodes[id].highlights = highlights;
       if (canvas.edges[id]) canvas.edges[id].highlights = highlights;
     }
+    if (doc.annotations?.notes?.[id]) doc.annotations.notes[id].highlights = highlights;
   }
   doc = edit(doc);
   for (const canvasId of ["cnv_root", "cnv_m"]) doc = applyBatch(doc, await autoLayout(doc, canvasId)).doc;
@@ -141,5 +150,43 @@ describe("drawing highlights", () => {
     const svg = await toSVG(doc, "cnv_m");
     expect(svg).toContain("Critical: The path that must not fail.");
     expect(svg).toContain(">Brand<");
+  });
+  it("draws a note in its highlight: the border's colour and width, the tint, and its chip inside the note", async () => {
+    const doc = await highlighted({ nte_watch: ["hlt_critical"] });
+    const figure = figureOf(doc, "cnv_m");
+    const note = figure.notes.find(item => item.id === "nte_watch");
+    const rect = note.svg.match(/<rect [^>]*rx="4"[^>]*\/>/g).at(-1);
+    expect(rect).toContain(`stroke="${RED}"`);
+    expect(rect).toContain('stroke-width="2"');
+    expect(rect).toContain(`fill="${RED_TINT}"`);
+    expect(rect).not.toContain("stroke-opacity");
+    expect(note.svg).toContain(">CRITICAL<");
+    const chipY = Number(note.svg.match(/<rect [^>]*y="([\d.-]+)"[^>]*rx="2"/)[1]);
+    expect(chipY).toBeGreaterThan(note.y);
+    const plain = figureOf(await highlighted({}), "cnv_m").notes.find(item => item.id === "nte_watch");
+    expect(note.h).toBeGreaterThan(plain.h);
+  });
+
+  it("keeps a note's tone where its highlight does not tint, and a plain note as it was", async () => {
+    const doc = await highlighted({ nte_loose: ["hlt_calm"] });
+    const figure = figureOf(doc, "cnv_m");
+    const rect = part(figure, "notes", "nte_loose")
+      .match(/<rect [^>]*rx="4"[^>]*\/>/g)
+      .at(-1);
+    expect(rect).toContain(`stroke="${BLUE}"`);
+    expect(rect).toContain('stroke-width="3"');
+    expect(rect).toContain('fill="#EEF4FB"');
+    expect(part(figure, "notes", "nte_watch")).toContain('stroke-opacity="0.4"');
+  });
+
+  it("colours a defect note's loop in its highlight", async () => {
+    const doc = await highlighted({ nte_loop: ["hlt_critical"] });
+    const loop = part(figureOf(doc, "cnv_m"), "notes", "nte_loop");
+    expect(loop).toMatch(new RegExp(`<path [^>]*stroke="${RED}"[^>]*stroke-width="2"`));
+  });
+
+  it("lists a highlight that only a note carries in the legend", async () => {
+    const doc = await highlighted({ nte_watch: ["hlt_calm"] });
+    expect(legendFor(doc, "cnv_m").highlights.map(item => item.id)).toEqual(["hlt_calm"]);
   });
 });
