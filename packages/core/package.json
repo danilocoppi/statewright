@@ -1,6 +1,6 @@
 {
   "name": "statewright",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Layered system specifications (architecture, state machines, flows) as one signed JSON document.",
   "license": "MIT",
   "homepage": "https://statewright.cpss.com.br",
