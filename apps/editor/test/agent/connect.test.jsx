@@ -13,7 +13,7 @@ import { CONNECTED_MS, ConnectDialog } from "@/agent/ConnectDialog";
 import { sayEnded } from "@/agent/connection";
 import { HandOverDialog } from "@/agent/HandOverDialog";
 import { PairedBadge } from "@/agent/PairedBadge";
-import { createPairing } from "@/agent/pairing";
+import { RETRY_MS, createPairing } from "@/agent/pairing";
 import { editorCommands } from "@/features/editor/commands";
 import i18n from "@/i18n";
 import { editorStore } from "@/store/editor";
@@ -72,7 +72,7 @@ const settle = () => act(() => new Promise(resolve => setTimeout(resolve, 0)));
 
 const opened = [];
 afterEach(() => {
-  for (const pairing of opened.splice(0)) act(() => pairing.disconnect());
+  for (const pairing of opened.splice(0)) act(() => (pairing.disconnect(), pairing.cancel()));
   act(() => {
     useToastStore.setState({ items: [] });
     editorStore.getState().close();
@@ -133,33 +133,52 @@ describe("Connect an AI… (AI interface spec §7.4)", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it("says why it cannot pair, and tries again with a new code, at the address typed", async () => {
+  it("keeps the code to copy while nothing answers, and looks again by itself", async () => {
     const { server } = await connectDialog();
     const first = server.code();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     server.unreachable();
-    await settle();
-    expect(screen.getByTestId("connect-status").textContent).toBe("Nothing answers at 127.0.0.1:47615.");
-    expect(screen.getByText(/^Set up statewright mcp in your agent/)).toBeTruthy();
+    await act(async () => {
+      for (let turn = 0; turn < 10; turn += 1) await Promise.resolve();
+    });
+    expect(screen.getByTestId("connect-status").textContent).toBe("Nothing answers at 127.0.0.1:47615 yet.");
+    expect(screen.getByText(/^Start statewright mcp in your agent/)).toBeTruthy();
+    expect(screen.getByTestId("connect-code").textContent).toBe(first);
+    expect(screen.getByTestId("connect-code").className).not.toContain("line-through");
+    expect(screen.getByRole("button", { name: "Copy" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBe(null);
+    const asked = server.requests.length;
+    act(() => vi.advanceTimersByTime(RETRY_MS));
+    expect(server.requests.length).toBe(asked + 1);
+    expect(server.code()).toBe(first);
+  });
 
+  it("offers Update once another address is typed, and looks there with the same code", async () => {
+    const { server } = await connectDialog();
+    const first = server.code();
+    expect(screen.queryByRole("button", { name: "Update" })).toBe(null);
     fireEvent.change(screen.getByTestId("connect-address"), { target: { value: "http://127.0.0.1:47620/" } });
-    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    fireEvent.click(screen.getByRole("button", { name: "Update" }));
     await settle();
     expect(server.requests.at(-1)).toMatchObject({ method: "POST", host: "127.0.0.1:47620", path: "/pair" });
-    expect(server.code()).not.toBe(first);
-    expect(screen.getByTestId("connect-code").textContent).toBe(server.code());
+    expect(server.code()).toBe(first);
+    expect(screen.getByTestId("connect-code").textContent).toBe(first);
+    expect(screen.queryByRole("button", { name: "Update" })).toBe(null);
 
     server.refuse(403);
     await settle();
     expect(screen.getByTestId("connect-status").textContent).toBe(
       "The server at 127.0.0.1:47620 does not accept this Editor."
     );
-    expect(screen.getByText(`Start it with --origin ${location.origin}, then try again.`)).toBeTruthy();
+    expect(screen.getByText(`Start it with --origin ${location.origin}; the Editor keeps looking.`)).toBeTruthy();
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    await settle();
+  it("says when the code expired, and gives a new one", async () => {
+    const { server } = await connectDialog();
     server.refuse(410);
     await settle();
     expect(screen.getByTestId("connect-status").textContent).toBe("This code expired before an agent used it.");
+    expect(screen.getByTestId("connect-code").className).toContain("line-through");
     fireEvent.click(screen.getByRole("button", { name: "New code" }));
     await settle();
     expect(screen.getByTestId("connect-status").textContent).toBe("Waiting for the agent…");
@@ -177,7 +196,7 @@ describe("Connect an AI… (AI interface spec §7.4)", () => {
     server.unreachable();
     await settle();
     fireEvent.change(screen.getByTestId("connect-address"), { target: { value: "evil.example:80" } });
-    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    fireEvent.click(screen.getByRole("button", { name: "Update" }));
     await settle();
     expect(screen.getByTestId("connect-status").textContent).toBe("evil.example:80 is not on this computer.");
     expect(screen.getByText("Type 127.0.0.1 or localhost with the port the server gives.")).toBeTruthy();

@@ -243,7 +243,7 @@ for (const theme of ["light", "dark"]) {
         await openPayments(page);
         await page.getByTestId("project-menu").click();
         await page.getByTestId("project-menu-connect").click();
-        await expect(page.getByTestId("connect-status")).toHaveText("Nothing answers at 127.0.0.1:47615.");
+        await expect(page.getByTestId("connect-status")).toHaveText("Nothing answers at 127.0.0.1:47615 yet.");
         await expectAccessible(page, "Connect an AI…, nothing answering");
         await page.getByTestId("connect-address").fill(mcp.address);
         await page.getByTestId("connect-address").press("Enter");

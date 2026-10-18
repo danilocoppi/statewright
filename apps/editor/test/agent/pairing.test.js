@@ -5,6 +5,7 @@ import {
   ADDRESS_KEY,
   BRIDGE_ADDRESS,
   CODE_ALPHABET,
+  CODE_MS,
   addressOf,
   createPairing,
   newCode,
@@ -46,7 +47,9 @@ function tab({
   fetch: request = fromPage(origin),
   conversation = createConversationStore(),
   marks = createMarksStore(),
-  proposals = createProposalsStore()
+  proposals = createProposalsStore(),
+  retryMs,
+  now
 } = {}) {
   const hellos = [];
   const ends = [];
@@ -61,9 +64,11 @@ function tab({
     onEnd: (reason, agent) => ends.push({ reason, agent }),
     conversation,
     marks,
-    proposals
+    proposals,
+    retryMs,
+    now
   });
-  opened.push(() => pairing.disconnect());
+  opened.push(() => (pairing.disconnect(), pairing.cancel()));
   return {
     pairing,
     hellos,
@@ -143,6 +148,55 @@ describe("pairing a tab with an agent (AI interface spec §6, §7.4)", () => {
     const elsewhere = tab({ origin: "https://editor.example.com" });
     await elsewhere.pairing.begin(address);
     expect(elsewhere.state().status).toBe("refused");
+  });
+
+  it("keeps looking where nothing answers yet, with the same code, and pairs once the server starts there", async () => {
+    const probe = createBridge();
+    const { port } = await probe.listen(0);
+    await probe.close();
+    const looking = tab({ retryMs: 20 });
+    await looking.pairing.begin(`127.0.0.1:${port}`);
+    expect(looking.state().status).toBe("unreachable");
+    const { code } = looking.state();
+    const bridge = createBridge();
+    opened.push(() => bridge.close());
+    await bridge.listen(port);
+    expect((await bring(bridge, code)).ok).toBe(true);
+    await expect.poll(() => looking.state().status).toBe("connected");
+  });
+
+  it("moves to another address keeping its code, so the code already given to the agent still pairs", async () => {
+    const { bridge, address } = await bridgeOn();
+    const moving = tab({ retryMs: 20 });
+    await moving.pairing.begin("127.0.0.1:9");
+    const { code } = moving.state();
+    moving.pairing.begin(address, { keep: true });
+    expect(moving.state()).toMatchObject({ status: "waiting", address, code });
+    expect((await bring(bridge, code)).ok).toBe(true);
+    await expect.poll(() => moving.state().status).toBe("connected");
+  });
+
+  it("pairs when the person confirms the address it already waits at", async () => {
+    const { bridge, address } = await bridgeOn();
+    const confirming = tab({ retryMs: 20 });
+    confirming.pairing.begin(address);
+    const { code } = confirming.state();
+    await new Promise(resolve => setTimeout(resolve, 30));
+    confirming.pairing.begin(address, { keep: true });
+    expect(confirming.state().code).toBe(code);
+    expect((await bring(bridge, code)).ok).toBe(true);
+    await expect.poll(() => confirming.state().status).toBe("connected");
+  });
+
+  it("stops looking once its code is five minutes old", async () => {
+    let time = 0;
+    const late = tab({ retryMs: 10, now: () => time });
+    await late.pairing.begin("127.0.0.1:9");
+    time = CODE_MS;
+    await expect.poll(() => late.state().status).toBe("expired");
+    const { code } = late.state();
+    late.pairing.begin("127.0.0.1:9", { keep: true });
+    expect(late.state().code).not.toBe(code);
   });
 
   it("pairs only with a server on this computer", async () => {

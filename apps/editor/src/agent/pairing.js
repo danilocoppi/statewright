@@ -17,6 +17,12 @@ import { APP } from "@/config/app";
 export const BRIDGE_ADDRESS = "127.0.0.1:47615";
 /** The characters of a code: no 0 and O, no 1, I and L, so a code read aloud is not misheard. */
 export const CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+/** How long a code is good for, as the bridge keeps it (spec §6: "valid five minutes"). */
+export const CODE_MS = 5 * 60 * 1000;
+/** How often the tab looks again where nothing answers yet, or the server refused it. */
+export const RETRY_MS = 2000;
+/** A server that answers holds the registration: one still open after this long reached it. */
+const HELD_MS = 300;
 /** Where the address the person last paired with is kept. */
 export const ADDRESS_KEY = `${APP.storagePrefix}:bridge`;
 
@@ -77,8 +83,8 @@ export const addressOf = text =>
 /**
  * @typedef {"off" | "waiting" | "invalid" | "unreachable" | "refused" | "expired" | "connected"} PairingStatus
  *   `waiting`: the code is shown and registered; `invalid`: the address is not on this computer; `unreachable`: no
- *   bridge answers at the address; `refused`: one answers, but not to this Editor's address (it needs `--origin`);
- *   `expired`: no agent brought the code in five minutes.
+ *   bridge answers at the address yet; `refused`: one answers, but not to this Editor's address (it needs `--origin`);
+ *   `expired`: no agent brought the code in five minutes. While `unreachable` or `refused`, the tab looks again.
  * @typedef {{ status: PairingStatus, code: string | null, address: string, agent: string | null,
  *   handover: { id: string, agent: string | null } | null }} PairingState
  */
@@ -87,7 +93,8 @@ export const addressOf = text =>
  * The pairing of a tab.
  * @param {{ api?: () => { hello: (options: { agent?: string }) => unknown,
  *   call: (name: string, args: object) => Promise<object> }, fetch?: typeof fetch, storage?: Storage,
- *   random?: (bytes: Uint8Array) => Uint8Array, onEnd?: (reason: string, agent: string | null) => void }} [options]
+ *   random?: (bytes: Uint8Array) => Uint8Array, onEnd?: (reason: string, agent: string | null) => void,
+ *   retryMs?: number, now?: () => number }} [options]
  *   `api`: what runs the agent's calls (`window.statewright`); `onEnd`: told why a pairing ended — `agent` (the agent
  *   disconnected), `replaced` (another tab took over), `server` (the server stopped), `lost`, or `person`;
  *   `conversation`: the conversation the person's messages and the agent's replies go to (collaboration spec §3).
@@ -100,7 +107,9 @@ export function createPairing({
   onEnd = () => {},
   conversation = conversationStore,
   marks = marksStore,
-  proposals = proposalsStore
+  proposals = proposalsStore,
+  retryMs = RETRY_MS,
+  now = () => Date.now()
 } = {}) {
   const saved = (() => {
     try {
@@ -113,6 +122,10 @@ export function createPairing({
   const store = createStore(() => ({ status: "off", code: null, address: saved, agent: null, handover: null }));
   /** The registration waiting for an agent: its AbortController. */
   let waiting = null;
+  /** The next look where nothing answered yet: its timer. */
+  let retry = null;
+  /** When the code shown was made: it is good for CODE_MS. */
+  let madeAt = 0;
   /** The pairing at work: `{ address, token, agent, controller }`. */
   let link = null;
 
@@ -126,6 +139,55 @@ export function createPairing({
   function stopWaiting() {
     waiting?.abort();
     waiting = null;
+    clearTimeout(retry);
+    retry = null;
+  }
+
+  /** Not registered this time: say why, and look again while the code is good. */
+  function lookAgain(status, where, code) {
+    if (now() - madeAt >= CODE_MS) return store.setState({ status: "expired" });
+    store.setState({ status });
+    retry = setTimeout(() => {
+      retry = null;
+      register(where, code);
+    }, retryMs);
+  }
+
+  /** Register the code at the bridge and wait there for an agent to bring it. */
+  async function register(where, code) {
+    const controller = new AbortController();
+    waiting = controller;
+    // A look again keeps saying what failed until the server holds the registration.
+    const held = setTimeout(() => {
+      if (waiting === controller) store.setState({ status: "waiting" });
+    }, HELD_MS);
+    let response;
+    try {
+      response = await request(`http://${where}/pair`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ code }),
+        signal: controller.signal
+      });
+    } catch {
+      clearTimeout(held);
+      if (waiting === controller) {
+        waiting = null;
+        lookAgain("unreachable", where, code);
+      }
+      return;
+    }
+    clearTimeout(held);
+    if (waiting !== controller) return;
+    waiting = null;
+    if (response.status === 410) return store.setState({ status: "expired" });
+    if (response.status === 403) return lookAgain("refused", where, code);
+    if (!response.ok) return lookAgain("unreachable", where, code);
+    const { token, agent } = await response.json();
+    const own = { address: where, token, agent: agent ?? null, controller: new AbortController() };
+    link = own;
+    api()?.hello({ agent: own.agent ?? undefined });
+    await listen(own);
   }
 
   function ended(own, reason) {
@@ -190,44 +252,23 @@ export function createPairing({
   return {
     store,
 
-    /** Show a new code at `address` and wait for an agent to bring it. */
-    async begin(address = store.getState().address) {
-      stopWaiting();
+    /**
+     * Show a code at `address` and wait for an agent to bring it; where nothing answers yet, look again.
+     * @param {string} [address]
+     * @param {{ keep?: boolean }} [options] `keep`: the code shown stays while it is good (another address typed).
+     */
+    async begin(address = store.getState().address, { keep = false } = {}) {
       const where = addressOf(address);
-      const code = newCode(random);
-      const controller = new AbortController();
-      waiting = controller;
+      // Already waiting there with this code: registering it again would race the bridge's withdrawal of the first.
+      if (keep && waiting && where === store.getState().address) return;
+      stopWaiting();
+      const shown = store.getState().code;
+      const code = keep && shown && now() - madeAt < CODE_MS ? shown : newCode(random);
+      if (code !== shown) madeAt = now();
       // Only a server on this computer: one elsewhere would be given this browser's projects.
-      if (!LOCAL.test(where)) {
-        waiting = null;
-        return store.setState({ status: "invalid", code, address: where, agent: null });
-      }
+      if (!LOCAL.test(where)) return store.setState({ status: "invalid", code, address: where, agent: null });
       store.setState({ status: "waiting", code, address: where, agent: null });
-      let response;
-      try {
-        response = await request(`http://${where}/pair`, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ code }),
-          signal: controller.signal
-        });
-      } catch {
-        if (waiting === controller) {
-          waiting = null;
-          store.setState({ status: "unreachable" });
-        }
-        return;
-      }
-      if (waiting !== controller) return;
-      waiting = null;
-      if (response.status === 410) return store.setState({ status: "expired" });
-      if (response.status === 403) return store.setState({ status: "refused" });
-      if (!response.ok) return store.setState({ status: "unreachable" });
-      const { token, agent } = await response.json();
-      const own = { address: where, token, agent: agent ?? null, controller: new AbortController() };
-      link = own;
-      api()?.hello({ agent: own.agent ?? undefined });
-      await listen(own);
+      await register(where, code);
     },
 
     /** Stop waiting: the code is withdrawn (the dialog closed before an agent brought it). */

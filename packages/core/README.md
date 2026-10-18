@@ -918,7 +918,9 @@ ends the pairing; until the agent pairs again or calls `editor_disconnect`, the 
 The bridge listens on 127.0.0.1 alone and answers only the Editor's pages: at https://statewright.cpss.com.br, on
 `http://localhost` (where the Editor runs while it is developed) and at the addresses `--origin` names; pairing takes the code, which only your agent can bring, and every
 call after it the pairing's token. When the bridge takes another port (`47616`), the server says so in its log and in
-`editor_pair`'s answers: type that address in Connect an AI…. Chrome asks once whether the page may reach your local
+`editor_pair`'s answers: type that address in Connect an AI… and choose **Update**; the code stays the same. While
+nothing answers at the address, the dialog keeps its code and looks again every two seconds, so it connects by itself
+once the server starts. Chrome asks once whether the page may reach your local
 network: allow it. Your document travels only between the tab and the `statewright mcp` your agent started on your
 computer; what the agent then sends to its own model is yours and the agent's choice.
 

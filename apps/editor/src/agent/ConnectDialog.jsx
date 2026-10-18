@@ -7,22 +7,30 @@ import { TextField } from "@/components/ui/TextField";
 import { cn } from "@/lib/cn";
 
 import { connection } from "./connection";
-import { serverCommand, usePairing } from "./pairing";
+import { addressOf, serverCommand, usePairing } from "./pairing";
 
 /** How long "Connected to <agent>" stays before the dialog gives the page back to the agent's calls. */
 export const CONNECTED_MS = 1500;
 
-const FAILED = new Set(["invalid", "unreachable", "refused", "expired"]);
+/** What stops the pairing until the person acts: the code shown is of no use. */
+const FAILED = new Set(["invalid", "expired"]);
+/** Where the tab looks again by itself: the code stays good to give. */
+const LOOKING = new Set(["unreachable", "refused"]);
 
-/** The status's dot: the run's accent while waiting or connected, the danger colour when it failed. */
+/**
+ * The status's dot: the run's accent while waiting or connected, muted and breathing while it looks again, the danger
+ * colour when it failed.
+ */
 function Dot({ tone }) {
   return (
     <span
       aria-hidden="true"
       className={cn(
         "size-2 shrink-0 rounded-full",
-        tone === "danger" ? "bg-danger" : "bg-accent shadow-[0_0_0_3px_var(--accent-soft)]",
-        tone === "waiting" && "motion-safe:animate-[sw-breathe_1.6s_var(--ease-soft)_infinite]"
+        tone === "danger" ? "bg-danger"
+        : tone === "looking" ? "bg-muted"
+        : "bg-accent shadow-[0_0_0_3px_var(--accent-soft)]",
+        (tone === "waiting" || tone === "looking") && "motion-safe:animate-[sw-breathe_1.6s_var(--ease-soft)_infinite]"
       )}
     />
   );
@@ -71,6 +79,9 @@ export function ConnectDialog({ onClose, pairing = connection }) {
     setCopied(false);
     pairing.begin(typed);
   };
+  // Another address typed: look there, with the code the agent may already have.
+  const moved = addressOf(typed) !== address;
+  const update = () => pairing.begin(typed, { keep: true });
   const copy = () => {
     globalThis.navigator?.clipboard
       ?.writeText(t("pairing.copyText", { code, address, command: serverCommand(address) }))
@@ -79,6 +90,7 @@ export function ConnectDialog({ onClose, pairing = connection }) {
   };
   const connected = status === "connected";
   const failed = FAILED.has(status);
+  const looking = LOOKING.has(status);
   const said = {
     waiting: t("pairing.waiting"),
     connected: t("pairing.connected", { agent }),
@@ -120,9 +132,9 @@ export function ConnectDialog({ onClose, pairing = connection }) {
           </>
         : <>
             <Button onClick={close}>{t("common:actions.cancel")}</Button>
-            {failed && (
+            {status === "expired" && (
               <Button variant="primary" onClick={again}>
-                {status === "expired" ? t("pairing.newCode") : t("pairing.tryAgain")}
+                {t("pairing.newCode")}
               </Button>
             )}
           </>
@@ -137,12 +149,12 @@ export function ConnectDialog({ onClose, pairing = connection }) {
               aria-label={t("pairing.code")}
               className={cn(
                 "font-mono text-[28px] font-medium leading-none tracking-[0.14em] tabular-nums",
-                status === "waiting" ? "text-ink" : "text-muted line-through decoration-1"
+                failed ? "text-muted line-through decoration-1" : "text-ink"
               )}
             >
               {code}
             </output>
-            {status === "waiting" && (
+            {(status === "waiting" || looking) && (
               <Button size="sm" onClick={copy}>
                 {copied ? t("pairing.copied") : t("pairing.copy")}
               </Button>
@@ -160,7 +172,14 @@ export function ConnectDialog({ onClose, pairing = connection }) {
             : "text-ink"
           )}
         >
-          <Dot tone={failed ? "danger" : status} />
+          <Dot
+            tone={
+              status === "refused" || failed ? "danger"
+              : looking ?
+                "looking"
+              : status
+            }
+          />
           {said}
         </p>
         {hint && <p className="mt-1 pl-4 text-ui text-muted">{hint}</p>}
@@ -168,13 +187,20 @@ export function ConnectDialog({ onClose, pairing = connection }) {
 
       {!connected && (
         <form
-          className="mt-4"
+          className="mt-4 flex items-end gap-2"
           onSubmit={event => {
             event.preventDefault();
-            again();
+            update();
           }}
         >
-          <TextField label={t("pairing.address")} value={typed} onChange={setTyped} testId="connect-address" />
+          <div className="min-w-0 flex-1">
+            <TextField label={t("pairing.address")} value={typed} onChange={setTyped} testId="connect-address" />
+          </div>
+          {moved && (
+            <Button type="submit" variant="primary">
+              {t("pairing.update")}
+            </Button>
+          )}
         </form>
       )}
       <div className="mt-4 grid gap-2 text-ui leading-relaxed text-sub">
