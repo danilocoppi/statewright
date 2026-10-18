@@ -30,7 +30,10 @@ describe("where a change is seen", () => {
   });
 
   it("shows a catalog item through the elements that use it, and opens one nobody uses in the catalog", () => {
-    expect(whereIs(doc, "evt_legCompleted")).toEqual({ level: "cnv_crossBorderSend", ids: ["edg_convertingPayingOut"] });
+    expect(whereIs(doc, "evt_legCompleted")).toEqual({
+      level: "cnv_crossBorderSend",
+      ids: ["edg_convertingPayingOut"]
+    });
     const unused = structuredClone(doc);
     unused.catalog.events.evt_nobody = { name: "nobody" };
     expect(whereIs(unused, "evt_nobody")).toEqual({
