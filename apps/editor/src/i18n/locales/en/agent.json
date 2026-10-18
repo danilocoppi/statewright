@@ -167,7 +167,7 @@
     "changed_other": "{{count}} changed",
     "levels_one": "on {{count}} level",
     "levels_other": "on {{count}} levels",
-    "show": "Show",
+    "show": "Show where",
     "hide": "Hide",
     "previous": "Previous change",
     "next": "Next change",

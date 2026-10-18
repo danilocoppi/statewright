@@ -1,13 +1,17 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { beacon } from "@/canvas/beacon";
+import { catalogStore } from "@/catalog/state";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
+import { indexOf } from "@/lib/derived";
 import { isSimulating } from "@/simulate/store";
 import { editorStore, useEditor } from "@/store/editor";
 
 import { diffOf, summaryOf, whereToShow } from "./diff";
 import { proposalsStore, useProposals } from "./store";
+import { whereIs } from "./where";
 
 /** A value as a change shows it: short. */
 const shortly = value => {
@@ -15,6 +19,9 @@ const shortly = value => {
   const text = typeof value === "string" ? value : JSON.stringify(value);
   return text.length > 40 ? `${text.slice(0, 39)}…` : text;
 };
+
+/** Whether the document has this element. */
+const indexHas = (doc, id) => indexOf(doc).has(id);
 
 /** The changes, in order, to step through: new, removed, changed. */
 function stepsOf(diff) {
@@ -27,7 +34,8 @@ function stepsOf(diff) {
 
 /**
  * A proposal of the agent's in the conversation (collaboration spec §7): its title, why, what it would do — counted,
- * then each change before → after —, Show (drawn on the canvas), ‹ › through the changes across levels, Accept, and
+ * then each change before → after —, Show where (drawn on the canvas, the first change's level shown and what it
+ * touches ringing), ‹ › through the changes across levels, Accept, and
  * Reject with an optional reason. A removal says it was proposed for that, and offers to let the agent delete without
  * asking for the session. One that no longer applies says why, and can be dismissed.
  * @param {{ proposal: import("./store").Proposal, agent: string, onNavigate: (canvasId: string) => void }} props
@@ -48,6 +56,12 @@ export function ProposalCard({ proposal, agent, onNavigate }) {
   const [where, setWhere] = useState(null);
   const steps = stepsOf(diff);
   const summary = summaryOf(diff);
+  // Where each change is seen: in the document as it is, or — for what the proposal adds — as it would leave it.
+  const places = useMemo(
+    () => stepsOf(diff).map(item => whereIs(indexHas(doc, item.id) ? doc : diff.preview, item.id)),
+    [doc, diff]
+  );
+  const levels = new Set(places.map(place => place.level).filter(Boolean)).size;
   const counts = [
     ...(summary.added ? [t("proposal.new", { count: summary.added })] : []),
     ...(summary.removed ? [t("proposal.removed", { count: summary.removed })] : []),
@@ -55,25 +69,42 @@ export function ProposalCard({ proposal, agent, onNavigate }) {
   ].join(", ");
 
   /**
-   * Go to a change: its level — for a level the batch makes, the level of the box that would hold it — and the
-   * element brought into view (a new one once its ghost is drawn); the proposal drawn.
+   * Go to a change: its level — for a level the batch makes, the level of the box that would hold it — brought into
+   * view with what it touches ringing (a new box once its ghost is drawn); the proposal drawn. A catalog item nothing
+   * uses opens in the catalog.
    */
   const go = index => {
     setStep(index);
     const target = steps[index];
+    const place = places[index];
     proposalsStore.getState().show(id);
-    if (!target?.level) return setWhere(null);
+    if (place?.catalog) {
+      setWhere(null);
+      return catalogStore.getState().show(place.catalog);
+    }
+    if (!target || !place?.level) return setWhere(null);
     const editor = editorStore.getState();
-    const shown = whereToShow(editor.doc, diff.preview, target.level);
+    const shown = whereToShow(editor.doc, diff.preview, place.level);
     setWhere(shown);
     if (!shown.level) return;
     if (shown.level !== editor.canvasId) onNavigate(shown.level);
+    const level = editor.doc.canvases[shown.level];
     if (shown.fresh) {
-      if (shown.owner && editor.doc.canvases[shown.level]?.nodes[shown.owner]) editor.reveal(shown.level, shown.owner);
+      if (shown.owner && level?.nodes[shown.owner]) {
+        editor.reveal(shown.level, shown.owner);
+        beacon(shown.level, [shown.owner]);
+      }
       return;
     }
-    if (target.mark === "+") proposalsStore.getState().setFocus({ level: target.level, id: target.id });
-    else if (!isSimulating()) editor.reveal(target.level, target.id);
+    if (target.mark === "+" && !indexHas(editor.doc, target.id)) {
+      proposalsStore.getState().setFocus({ level: place.level, id: target.id });
+    }
+    const ring = place.ids.filter(
+      item => level?.nodes[item] || level?.edges[item] || editor.doc.annotations?.notes?.[item]
+    );
+    if (!ring.length) return;
+    if (!isSimulating()) editor.reveal(shown.level, ring[0]);
+    beacon(shown.level, ring);
   };
 
   if (state === "stale" || !live.ok) {
@@ -120,7 +151,7 @@ export function ProposalCard({ proposal, agent, onNavigate }) {
           </p>
         )}
         <p className="text-label text-muted">
-          {[counts, t("proposal.levels", { count: summary.levels })].filter(Boolean).join(", ")}
+          {[counts, t("proposal.levels", { count: levels })].filter(Boolean).join(", ")}
         </p>
       </div>
       {diff.changed.length > 0 && (
@@ -135,7 +166,7 @@ export function ProposalCard({ proposal, agent, onNavigate }) {
         </ul>
       )}
       <div className="flex flex-wrap items-center gap-1.5">
-        <Button size="sm" onClick={() => proposalsStore.getState().show(shown ? null : id)}>
+        <Button size="sm" onClick={() => (shown ? proposalsStore.getState().show(null) : go(Math.max(step, 0)))}>
           {shown ? t("proposal.hide") : t("proposal.show")}
         </Button>
         {steps.length > 0 && (
@@ -180,10 +211,14 @@ export function ProposalCard({ proposal, agent, onNavigate }) {
         </span>
       </div>
       {step >= 0 && steps[step] && (
-        <p className="text-label text-sub">
+        <button
+          type="button"
+          onClick={() => go(step)}
+          className="justify-self-start truncate rounded-control text-left text-label text-sub hover:text-accent"
+        >
           {`${steps[step].mark} ${steps[step].name} (${steps[step].kind})`}
           {where?.fresh ? ` ${t("proposal.newLevel")}` : ""}
-        </p>
+        </button>
       )}
       {rejecting && (
         <div className="flex items-center gap-1.5">

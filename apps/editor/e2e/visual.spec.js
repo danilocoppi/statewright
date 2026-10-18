@@ -674,8 +674,10 @@ for (const theme of ["light", "dark"]) {
           ]
         });
         const card = page.getByTestId("conversation-proposal");
-        await card.getByRole("button", { name: "Show" }).click();
+        await card.getByRole("button", { name: "Show where" }).click();
         await expect(page.locator('[data-proposed="add"][data-id="nod_late"]')).toBeVisible();
+        // What it touches rings for a moment: the picture is of the proposal drawn, once the ring is out.
+        await expect(page.locator(".sw-beacon")).toHaveCount(0);
         await page.mouse.move(8, 892);
         await expect(page).toHaveScreenshot(`proposal-${theme}.png`, { maxDiffPixelRatio: 0.001 });
       } finally {

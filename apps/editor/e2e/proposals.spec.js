@@ -95,3 +95,43 @@ test("a proposal is drawn, stepped through, accepted as the agent's change; a re
     await mcp.stop();
   }
 });
+
+test("Show where takes the person to what a proposal touches, ringing it clear of the conversation", async ({
+  page
+}) => {
+  await openLevel(page, "cnv_expiryClock");
+  const mcp = await startMcp({ agent: "claude-code" });
+  try {
+    await pair(page, mcp);
+    await mcp.tool("batch_apply", {
+      label: "Rename stopped",
+      propose: true,
+      title: "Stopped is closed",
+      commands: [{ type: "node.update", args: { id: "nod_stopped", set: { name: "closed" } } }]
+    });
+    const card = page.getByTestId("conversation-proposal");
+    await card.getByRole("button", { name: "Show where" }).click();
+    const stopped = page.locator('.react-flow__node[data-id="nod_stopped"]');
+    await expect(stopped).toHaveClass(/sw-beacon/);
+    const bar = await page.getByTestId("conversation-bar").boundingBox();
+    await expect
+      .poll(async () => (await stopped.boundingBox()).y + (await stopped.boundingBox()).height)
+      .toBeLessThan(bar.y);
+    await card.getByRole("button", { name: "Reject" }).click();
+    await card.getByRole("button", { name: "Reject it" }).click();
+
+    // A scenario: the level where its run goes most, its path ringing.
+    await mcp.tool("batch_apply", {
+      label: "Drop a scenario",
+      propose: true,
+      title: "No more paid in time",
+      commands: [{ type: "scenario.remove", args: { id: "scn_paysInTime" } }]
+    });
+    await expect(card).toContainText("1 removed, on 1 level");
+    await card.getByRole("button", { name: "Show where" }).click();
+    await expect(page).toHaveURL(/\/cnv_crossBorderSend$/);
+    await expect(page.locator('.react-flow__edge[data-id="edg_convertingPayingOut"]')).toHaveClass(/sw-beacon/);
+  } finally {
+    await mcp.stop();
+  }
+});

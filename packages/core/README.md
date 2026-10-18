@@ -947,7 +947,9 @@ too, each with Undo.
   on while you wait.
 - **Propose** what is large, structural or not asked for: `batch_apply { commands, label, propose: true, title, why }`
   changes nothing and answers `{ proposed: "prp_…" }`. The person sees it in the conversation and drawn on the canvas
-  (new parts as ghosts, removed ones red, changed ones with "~"), steps through it, and accepts — one change of yours,
+  (new parts as ghosts, removed ones red, changed ones with "~"); **Show where** takes them to each change, ringing what
+  it touches — a scenario by the path it runs, a catalog item by the elements that use it. They step through it, and
+  accept — one change of yours,
   undone in one Undo — or rejects it with a reason. Their answer reaches you as a message with `proposal: { id,
 accepted, reason?, stale? }`; `stale` says it no longer applied to the document as it was then. A batch that removes
   anything is always proposed (`forced: "deletes"`) unless the person lets you delete without asking for the session.

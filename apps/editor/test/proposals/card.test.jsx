@@ -7,6 +7,8 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { connection } from "@/agent/connection";
+import { beaconStore } from "@/canvas/beacon";
+import { catalogStore } from "@/catalog/state";
 import { editOperations } from "@/agent/edit";
 import { ConversationBar } from "@/conversation/ConversationBar";
 import { conversationStore } from "@/conversation/store";
@@ -31,6 +33,8 @@ afterEach(() => {
   vi.restoreAllMocks();
   act(() => {
     proposalsStore.getState().clear();
+    beaconStore.setState({ asked: null, lit: null });
+    catalogStore.getState().close();
     conversationStore.getState().clear();
     connection.store.setState({ status: "off", agent: null });
     editorStore.getState().close();
@@ -62,11 +66,56 @@ describe("a proposal in the conversation (collaboration spec §7)", () => {
     expect(card().getByText("they wait too long")).toBeTruthy();
     expect(card().getByText("1 new, 1 changed, on 1 level")).toBeTruthy();
     expect(card().getByText("on hold: name paused → on hold")).toBeTruthy();
-    await user.click(card().getByRole("button", { name: "Show" }));
+    await user.click(card().getByRole("button", { name: "Show where" }));
     expect(proposalsStore.getState().shown).toBe("prp_1");
-    await user.click(card().getByRole("button", { name: "Next change" }));
     expect(onNavigate).toHaveBeenCalledWith("cnv_expiryClock");
     expect(card().getByText("1 of 2")).toBeTruthy();
+    await user.click(card().getByRole("button", { name: "Next change" }));
+    expect(card().getByText("2 of 2")).toBeTruthy();
+  });
+
+  it("shows where a change lands: its level, the element ringing, again from the change's line, then hides", async () => {
+    const user = userEvent.setup();
+    propose({
+      propose: true,
+      title: "Rename paused",
+      commands: [{ type: "node.update", args: { id: "nod_paused", set: { name: "on hold" } } }]
+    });
+    await user.click(card().getByRole("button", { name: "Show where" }));
+    expect(proposalsStore.getState().shown).toBe("prp_1");
+    expect(onNavigate).toHaveBeenCalledWith("cnv_expiryClock");
+    expect(beaconStore.getState().asked).toEqual({ canvasId: "cnv_expiryClock", ids: ["nod_paused"] });
+    expect(card().getByText("1 of 1")).toBeTruthy();
+    act(() => beaconStore.setState({ asked: null }));
+    await user.click(card().getByRole("button", { name: "~ on hold (state)" }));
+    expect(beaconStore.getState().asked).toEqual({ canvasId: "cnv_expiryClock", ids: ["nod_paused"] });
+    await user.click(card().getByRole("button", { name: "Hide" }));
+    expect(proposalsStore.getState().shown).toBe(null);
+  });
+
+  it("shows a scenario it removes by the path it runs, on the level where it runs most", async () => {
+    const user = userEvent.setup();
+    propose({ title: "Drop a scenario", commands: [{ type: "scenario.remove", args: { id: "scn_paysInTime" } }] });
+    expect(card().getByText("1 removed, on 1 level")).toBeTruthy();
+    await user.click(card().getByRole("button", { name: "Show where" }));
+    expect(onNavigate).toHaveBeenCalledWith("cnv_crossBorderSend");
+    expect(beaconStore.getState().asked.canvasId).toBe("cnv_crossBorderSend");
+    expect(beaconStore.getState().asked.ids).toContain("edg_convertingPayingOut");
+  });
+
+  it("opens in the catalog an item it removes that nothing uses", async () => {
+    const user = userEvent.setup();
+    act(() => {
+      editorStore
+        .getState()
+        .dispatch(
+          [{ type: "catalog.add", args: { collection: "events", id: "evt_nobody", item: { name: "nobody" } } }],
+          { label: "An event" }
+        );
+    });
+    propose({ title: "Drop an event", commands: [{ type: "catalog.remove", args: { id: "evt_nobody" } }] });
+    await user.click(card().getByRole("button", { name: "Show where" }));
+    expect(catalogStore.getState()).toMatchObject({ open: true, collection: "events", item: "evt_nobody" });
   });
 
   it("accepts, or rejects with a reason", async () => {

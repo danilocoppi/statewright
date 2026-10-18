@@ -195,7 +195,7 @@ test("finds every hook on its screen, once where it is unique (§7.5)", async ({
       commands: [{ type: "node.update", args: { id: "nod_complianceHold", set: { name: "hold" } } }]
     });
     await shows("conversation-proposal");
-    await page.getByTestId("conversation-proposal").getByRole("button", { name: "Show" }).click();
+    await page.getByTestId("conversation-proposal").getByRole("button", { name: "Show where" }).click();
     await shows("proposal-layer");
     await page.getByTestId("conversation-proposal").getByRole("button", { name: "Reject" }).click();
     await page.getByTestId("conversation-proposal").getByRole("button", { name: "Reject it" }).click();
