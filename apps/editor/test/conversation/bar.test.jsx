@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/marks/image", () => ({ imageOf: vi.fn(async () => "data:image/png;base64,AAAA") }));
 
+import { autonomyStore } from "@/agent/autonomy";
 import { connection } from "@/agent/connection";
 import { ConversationBar } from "@/conversation/ConversationBar";
 import { conversationStore } from "@/conversation/store";
@@ -37,6 +38,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   act(() => {
     connection.store.setState({ status: "off", agent: null });
+    autonomyStore.getState().set(false);
     conversationStore.getState().clear();
     marksStore.getState().clear();
     editorStore.getState().close();
@@ -73,6 +75,20 @@ describe("the conversation bar (collaboration spec §4)", () => {
     expect(field().value).toBe("one\ntwo");
     fireEvent.keyDown(field(), { key: "Enter", isComposing: true });
     expect(sent).toEqual([]);
+  });
+
+  it("lets the person have the agent work without asking, and tells it with each message", async () => {
+    const user = userEvent.setup();
+    const toggle = within(bar()).getByRole("switch", { name: "Work without asking" });
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
+    await user.click(toggle);
+    expect(toggle.getAttribute("aria-checked")).toBe("true");
+    expect(autonomyStore.getState().on).toBe(true);
+    await user.type(field(), "build the whole thing{Enter}");
+    expect(sent[0].context.autonomous).toBe(true);
+    await user.click(toggle);
+    await user.type(field(), "and now ask me{Enter}");
+    expect(sent[1].context).not.toHaveProperty("autonomous");
   });
 
   it("sends the selection with it unless the person takes it off", async () => {

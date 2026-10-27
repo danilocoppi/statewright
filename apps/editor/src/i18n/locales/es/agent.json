@@ -58,6 +58,8 @@
     "field": "Escribe a {{agent}}",
     "placeholder": "Escribe a {{agent}}…",
     "send": "Enviar",
+    "autonomous": "Trabajar sin preguntar",
+    "autonomousHint": "{{agent}} cambia el diseño sin detenerse a preguntarte; cada cambio se puede deshacer, y lo que bloqueaste sigue solo como propuesta",
     "stop": "Detener",
     "history": "Historial de la conversación",
     "you": "Tú",

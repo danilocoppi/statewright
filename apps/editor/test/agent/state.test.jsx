@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { createEditorHost } from "@/agent/host";
 import { statewrightOf } from "@/agent/install";
+import { autonomyStore } from "@/agent/autonomy";
 import { editorStateOf } from "@/agent/state";
 import { catalogStore } from "@/catalog/state";
 import { inspectorStore } from "@/inspector/state";
@@ -97,6 +98,13 @@ describe("what the Editor shows, as an agent reads it (AI interface spec §7.2)"
       open: { simulation: true, stage: false, inspector: null },
       run: { canvas: "cnv_lifecycle", shown: 2, steps: 2, question: { kind: "transition" }, failure: null }
     });
+  });
+
+  it("says whether the person lets the agent work without asking", () => {
+    expect(editorStateOf().autonomous).toBe(false);
+    act(() => autonomyStore.getState().set(true));
+    expect(editorStateOf().autonomous).toBe(true);
+    act(() => autonomyStore.getState().set(false));
   });
 
   it("is the answer of editor.state and of statewright.state(), in the contract's shape", async () => {

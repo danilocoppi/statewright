@@ -10,6 +10,8 @@ import { simulationStore } from "@/simulate/store";
 import { editorStore } from "@/store/editor";
 import { useTheme } from "@/stores/theme";
 
+import { autonomous } from "./autonomy";
+
 /** The dialog open in the page, by its hook or its title; the command palette and the catalog are said apart. */
 function dialogOf(page) {
   const open = [...(page?.querySelectorAll("dialog[open]") ?? [])].filter(
@@ -54,6 +56,8 @@ export function editorStateOf({ page = globalThis.document, location = globalThi
       simulation: simulating,
       stage: simulation.stage
     },
+    // Whether the person lets the agent work without asking (collaboration spec §7).
+    autonomous: autonomous(),
     theme: page?.documentElement.classList.contains("dark") ? "dark" : "light",
     themeSetting: useTheme.getState().theme,
     language: i18n.language ?? null,

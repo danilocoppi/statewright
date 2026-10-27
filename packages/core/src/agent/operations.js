@@ -171,7 +171,8 @@ export const OPERATIONS = [
         .optional()
         .describe(
           "Propose it instead of making it (the person accepts or rejects it in the Editor; the answer comes as a " +
-            "message). Anything that removes is always proposed. Only with the Editor."
+            "message). Anything that removes is always proposed, unless the person lets you work without asking " +
+            "(editor_state.autonomous), when a proposal is applied too. Only with the Editor."
         ),
       title: z.string().min(1).optional().describe("A proposal's title, as the person reads it"),
       why: z.string().min(1).optional().describe("Why you propose it, in a sentence")

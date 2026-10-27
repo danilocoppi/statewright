@@ -362,6 +362,16 @@ describe("the platform guide", () => {
     );
   });
 
+  it("tells an agent how to work without asking when the person turns it on, and what still holds", () => {
+    expect(source).toContain("**Working without asking.** The person can turn on **Work without asking**");
+    expect(source).toContain(
+      "`editor_state` then\nsays `autonomous: true`, and each of their messages carries `context.autonomous: true`"
+    );
+    expect(source).toContain("What\ntouches a lock is still only proposed.");
+    expect(source).toContain("14. **Work without asking when the person says so.**");
+    expect(source).toContain("ask the person to confirm it — unless they let you work without asking (rule 14) —");
+  });
+
   it("explains highlights: the catalog, how they look and what they keep, the rule for agents, and format 1.4", () => {
     expect(source).toContain("`hlt` highlight");
     expect(source).toContain("`highlights` (named looks for boxes, arrows and notes");

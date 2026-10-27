@@ -14,6 +14,7 @@ import { lockedBy } from "@/locks/locked";
 import { diffOf, removes } from "@/proposals/diff";
 import { proposalsStore } from "@/proposals/store";
 
+import { autonomous } from "./autonomy";
 import { connection } from "./connection";
 import { announce } from "./notice";
 
@@ -86,7 +87,8 @@ function removedBy(entry) {
 
 /**
  * An agent's batch while it is paired (collaboration spec §7): kept as a proposal when it asks, or when it removes
- * anything and the person has not let it delete without asking; applied otherwise.
+ * anything and the person has not let it delete without asking; applied otherwise. While the person lets it work
+ * without asking, only what touches a lock is proposed.
  */
 function applyOrPropose(context, { commands: asked, label, propose, title, why }) {
   const commands = signedBy(asked, context.agent);
@@ -104,10 +106,13 @@ function applyOrPropose(context, { commands: asked, label, propose, title, why }
   }
   // What is locked is only ever proposed; a removal, unless the person lets the agent delete (spec §7, §8.2).
   const held = lockedBy(editorStore.getState().doc, diff);
+  const free = autonomous();
   const forced =
     held.length ? "locked"
-    : removes(diff) && !proposalsStore.getState().allowDeletes ? "deletes"
+    : removes(diff) && !free && !proposalsStore.getState().allowDeletes ? "deletes"
     : null;
+  // Applied, and the agent told why it was not kept as a proposal.
+  if (free && !forced) return changeAsAgent(commands, label, context).then(done => ({ ...done, autonomous: true }));
   if (!propose && !forced) return changeAsAgent(commands, label, context);
   // A tab that only reads cannot accept anything: no proposal is kept there.
   if (editorStore.getState().readOnly) throw refusal();
@@ -153,7 +158,7 @@ export const editOperations = {
     const entry = editorStore.getState().history.future[0];
     ownEntry(entry, agent, "redo");
     // Redoing a removal the person undid needs their yes again (collaboration spec §7).
-    const removed = paired() && !proposalsStore.getState().allowDeletes ? removedBy(entry) : [];
+    const removed = paired() && !autonomous() && !proposalsStore.getState().allowDeletes ? removedBy(entry) : [];
     if (removed.length) {
       throw new AgentError(
         "NOT_ALLOWED",

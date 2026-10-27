@@ -58,6 +58,8 @@
     "field": "Write to {{agent}}",
     "placeholder": "Write to {{agent}}…",
     "send": "Send",
+    "autonomous": "Work without asking",
+    "autonomousHint": "{{agent}} changes the design without stopping to ask you; each change can be undone, and what you locked is still only proposed",
     "stop": "Stop",
     "history": "Conversation history",
     "you": "You",

@@ -77,7 +77,8 @@ holds.
 first: what the system is for, who and what takes part (people, services, stores, outside providers) and which records
 have a status that matters (an order, a booking, a payment). To map their system, read the code first (the playbook's
 survey); to build from a design, read it level by level and implement it in the same order. Build level 0 alone and
-ask the person to confirm it; then go one level deeper at a time, in the order they care about. Name things in the
+ask the person to confirm it — unless they let you work without asking (rule 14) —; then go one level deeper at a
+time, in the order they care about. Name things in the
 person's words and language, and give each batch a `label` they will recognise in the history.
 
 **5. Show, check and hand over.** After each batch, read `problems_list` and fix the errors; `incomplete` is fine while
@@ -957,7 +958,8 @@ too, each with Undo.
   accept — one change of yours,
   undone in one Undo — or rejects it with a reason. Their answer reaches you as a message with `proposal: { id,
 accepted, reason?, stale? }`; `stale` says it no longer applied to the document as it was then. A batch that removes
-  anything is always proposed (`forced: "deletes"`) unless the person lets you delete without asking for the session.
+  anything is always proposed (`forced: "deletes"`) unless the person lets you delete without asking for the session,
+  or lets you work without asking.
   Proposals need the Editor: on files, `propose` is refused (`NOT_ALLOWED`).
 - **Comments.** The person leaves review comments on elements or points of a level; each open one is a Problem,
   `comment.open`, with its ID in `data.comment`. Answer in its thread with `batch_apply` and
@@ -1007,6 +1009,14 @@ figure, cropped to them — comes as an image in the answer of `editor_wait` or 
 
 A message reads `{ id, text, action?, context: { project, level, selection }, marks?, image?, answers?, proposal? }`;
 each selected element also names the `highlights` it carries (`["Critical"]`), when it carries any.
+
+**Working without asking.** The person can turn on **Work without asking** in the conversation bar. `editor_state` then
+says `autonomous: true`, and each of their messages carries `context.autonomous: true`. Do not stop to confirm: build
+every level the request needs, choose names and reasonable defaults yourself, do not propose, and use `editor_ask` only
+when you cannot go on without an answer; say in your reply what you assumed. A batch you propose, or one that removes,
+is applied, and its answer says `autonomous: true`; each is still one change of yours that the person can undo. What
+touches a lock is still only proposed. The quick requests follow it too: `review` applies its fixes, `detail` does not
+wait on the outline, `names` renames.
 The bar shows the person whether you are
 working (a call in the last 5 seconds), listening (waiting with `editor_wait`, or reached by the Channel) or away (their
 message waits as _not read yet_). The conversation lasts as long as the pairing: nothing of it goes into the document.
@@ -1562,6 +1572,10 @@ system as it runs the design.
     (`highlights` on the boxes, arrows and notes, with `node.update`, `edge.update` or `note.update`); create one (`catalog.add` in
     `highlights`) only when they ask for a new kind of mark, with the meaning they give it. Never use a highlight to say
     what provenance, findings or statuses already say.
+14. **Work without asking when the person says so.** While `editor_state.autonomous` is true (or a message carries
+    `context.autonomous`), go on without confirming or proposing: decide, build, check, and report what you did and
+    what you assumed. Rules 1 to 13 still hold: do not invent what you do not know — mark it `unknown`, `low`
+    confidence or unspecified, and say so.
 
 ## Playbooks
 

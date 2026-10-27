@@ -5,6 +5,7 @@ import "../i18n.js";
 import { act } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { autonomyStore } from "@/agent/autonomy";
 import { connection } from "@/agent/connection";
 import { editOperations } from "@/agent/edit";
 import { proposalsStore } from "@/proposals/store";
@@ -33,6 +34,7 @@ beforeEach(() => {
 afterEach(() =>
   act(() => {
     proposalsStore.getState().clear();
+    autonomyStore.getState().set(false);
     connection.store.setState({ status: "off", agent: null });
     simulationStore.getState().close();
     editorStore.getState().close();
@@ -161,6 +163,25 @@ describe("proposals (collaboration spec §7)", () => {
     });
     expect(apply({ commands: LATE })).toMatchObject({ proposed: "prp_2", forced: "locked" });
     expect(editorStore.getState().dispatch(LATE, { label: "Mine" }).ok).toBe(true);
+  });
+
+  it("works without asking when the person says so: what it proposes or removes is applied, and redone", async () => {
+    autonomyStore.getState().set(true);
+    const proposed = await apply({ commands: LATE, propose: true, title: "A state for late payers" });
+    expect(proposed).toMatchObject({ created: expect.anything(), autonomous: true });
+    expect(editorStore.getState().doc.canvases.cnv_expiryClock.nodes.nod_late).toBeTruthy();
+    expect(await apply({ commands: REMOVE })).toMatchObject({ autonomous: true });
+    expect(editorStore.getState().doc.canvases.cnv_expiryClock.nodes.nod_elapsed).toBeUndefined();
+    expect(proposalsStore.getState().list).toEqual([]);
+    editorStore.getState().undo();
+    expect(() => editOperations["history.redo"]({ agent: "claude-code" }, {})).not.toThrow();
+    expect(editorStore.getState().doc.canvases.cnv_expiryClock.nodes.nod_elapsed).toBeUndefined();
+  });
+
+  it("still only proposes what touches a lock, even working without asking", () => {
+    autonomyStore.getState().set(true);
+    editorStore.getState().dispatch([{ type: "lock.add", args: { target: "nod_elapsed" } }], { label: "Lock" });
+    expect(apply({ commands: REMOVE })).toMatchObject({ proposed: "prp_1", forced: "locked" });
   });
 
   it("signs the agent's comments as the agent's, whatever it says", () => {

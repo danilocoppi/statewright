@@ -58,6 +58,8 @@
     "field": "Escreva para {{agent}}",
     "placeholder": "Escreva para {{agent}}…",
     "send": "Enviar",
+    "autonomous": "Trabalhar sem perguntar",
+    "autonomousHint": "{{agent}} altera o design sem parar para perguntar; cada mudança pode ser desfeita, e o que você travou continua só como proposta",
     "stop": "Parar",
     "history": "Histórico da conversa",
     "you": "Você",

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { autonomyStore, useAutonomous } from "@/agent/autonomy";
 import { connection } from "@/agent/connection";
 import { markChanged } from "@/agent/notice";
 import { usePairing } from "@/agent/pairing";
@@ -292,6 +293,7 @@ export function ConversationBar({ onNavigate }) {
   const draft = useConversation(state => state.draft);
   const proposals = useProposals(state => state.list);
   const allowDeletes = useProposals(state => state.allowDeletes);
+  const free = useAutonomous();
   const action = useConversation(state => state.action);
   const historyOpen = useConversation(state => state.historyOpen);
   const listening = useConversation(state => state.listening);
@@ -367,7 +369,8 @@ export function ConversationBar({ onNavigate }) {
     const answer = await connection.send({
       text,
       ...(action ? { action } : {}),
-      context,
+      // The agent knows, with each message, whether the person lets it work without asking (spec §7).
+      context: autonomyStore.getState().on ? { ...context, autonomous: true } : context,
       ...(marks.length ? { marks } : {}),
       ...(image ? { image } : {})
     });
@@ -551,9 +554,9 @@ export function ConversationBar({ onNavigate }) {
               )}
             />
           </button>
-          <span className="ml-auto flex items-center">
+          <span className="ml-auto flex items-center gap-3">
             {/* The leave to delete without asking, shown while it holds, and taken back here (spec §7). */}
-            {allowDeletes && (
+            {allowDeletes && !free && (
               <button
                 type="button"
                 data-testid="conversation-deletes"
@@ -564,6 +567,35 @@ export function ConversationBar({ onNavigate }) {
                 {t("proposal.deletesOn", { agent })} · {t("proposal.turnOff")}
               </button>
             )}
+            {/* Working without asking: the agent changes the design without stopping to confirm; locks still hold. */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={free}
+              title={t("conversation.autonomousHint", { agent })}
+              data-testid="conversation-autonomous"
+              onClick={() => autonomyStore.getState().set(!free)}
+              className={cn(
+                "flex items-center gap-2 rounded-control px-1.5 py-1 text-label hover:bg-subtle",
+                free ? "font-medium text-accent" : "text-sub hover:text-ink"
+              )}
+            >
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "relative h-3.5 w-6 shrink-0 rounded-full transition-colors duration-150 motion-reduce:transition-none",
+                  free ? "bg-accent" : "bg-control-border"
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute top-0.5 size-2.5 rounded-full bg-surface shadow-sm transition-[left] duration-150 motion-reduce:transition-none",
+                    free ? "left-3" : "left-0.5"
+                  )}
+                />
+              </span>
+              {t("conversation.autonomous")}
+            </button>
           </span>
         </div>
       </div>

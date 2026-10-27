@@ -1,6 +1,6 @@
 {
   "name": "statewright",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Model, simulate and audit layered system specifications (architecture views, state machines and flows) in one signed JSON document, and pair with the Statewright Editor.",
   "author": {
     "name": "Danilo Coppi",
