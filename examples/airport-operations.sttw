@@ -2,15 +2,15 @@
   "statewright": "1.4",
   "generator": {
     "name": "statewright",
-    "version": "0.2.1",
+    "version": "0.3.1",
     "channel": "cli"
   },
   "signature": {
     "algorithm": "sha256",
-    "content": "b2e3260c6c5d4c11660217e25beae74c15b6c5d980b84475b6d3d0431567d0bd",
+    "content": "e997711f1f496456c9076c94960d32b6e58eb85a69fcd5169f3a09c76aba7e2f",
     "annotations": "4fbca347f8b0fba0158e41f5b2668ff3cddc3ed8cf1729917e11d78ec0657bf2",
-    "layout": "039f68d08033d64452f9dd8817f01533561501f9c20a41a68238f0870acea7de",
-    "signedAt": "2026-10-16T05:51:39Z"
+    "layout": "89ee422332ee4e37e6f44fae59f9e66ff43b05726c9002092e16065a69a3ff04",
+    "signedAt": "2026-10-25T05:50:51Z"
   },
   "project": {
     "id": "prj_airportOperations",
@@ -9458,6 +9458,10 @@
           "name": "stopped at the gate",
           "category": "hold"
         },
+        "nod_everyoneBoarded": {
+          "kind": "choice",
+          "name": "everyone boarded?"
+        },
         "nod_finalCall": {
           "kind": "state",
           "name": "final call",
@@ -9515,21 +9519,15 @@
         },
         "edg_e2z": {
           "from": "nod_finalCall",
-          "to": "nod_gateClosed",
+          "to": "nod_everyoneBoarded",
           "on": [
             "evt_gateClosed"
           ],
-          "guard": {
-            "text": "every checked-in passenger has boarded"
-          },
           "intent": "happy"
         },
         "edg_e30": {
-          "from": "nod_finalCall",
+          "from": "nod_everyoneBoarded",
           "to": "nod_offloading",
-          "on": [
-            "evt_gateClosed"
-          ],
           "else": true,
           "label": "someone is missing"
         },
@@ -9573,6 +9571,14 @@
           "from": "nod_phaseResume",
           "to": "nod_priorityBoarding",
           "label": "from the start"
+        },
+        "edg_everyoneBoarded": {
+          "from": "nod_everyoneBoarded",
+          "to": "nod_gateClosed",
+          "guard": {
+            "text": "every checked-in passenger has boarded"
+          },
+          "intent": "happy"
         }
       }
     },
@@ -27507,35 +27513,39 @@
         "nodes": {
           "nod_boardingStopped": {
             "x": 872,
-            "y": 73
+            "y": 65
+          },
+          "nod_everyoneBoarded": {
+            "x": 1630,
+            "y": 7
           },
           "nod_finalCall": {
             "x": 1272,
-            "y": 16
+            "y": 8
           },
           "nod_gateClosed": {
-            "x": 1738,
+            "x": 2430,
             "y": 8
           },
           "nod_generalBoarding": {
             "x": 472,
-            "y": 16
+            "y": 8
           },
           "nod_offloading": {
-            "x": 2114,
-            "y": 16
+            "x": 2027,
+            "y": 0
           },
           "nod_phaseResume": {
             "x": 1272,
-            "y": 116
+            "y": 108
           },
           "nod_phasesStart": {
             "x": 0,
-            "y": 46
+            "y": 38
           },
           "nod_priorityBoarding": {
             "x": 84,
-            "y": 28
+            "y": 20
           }
         },
         "edges": {
@@ -27543,11 +27553,11 @@
             "points": [
               [
                 12,
-                52
+                44
               ],
               [
                 84,
-                52
+                44
               ]
             ]
           },
@@ -27555,32 +27565,32 @@
             "points": [
               [
                 224,
-                40
+                32
               ],
               [
                 472,
-                40
+                32
               ]
             ],
             "labelAt": [
               348,
-              28
+              20
             ]
           },
           "edg_e2y": {
             "points": [
               [
                 612,
-                32
+                24
               ],
               [
                 1272,
-                32
+                24
               ]
             ],
             "labelAt": [
               942,
-              20
+              12
             ]
           },
           "edg_e2z": {
@@ -27590,197 +27600,213 @@
                 32
               ],
               [
-                1738,
+                1630,
                 32
               ]
             ],
             "labelAt": [
-              1575,
-              14
+              1521,
+              45
             ]
           },
           "edg_e30": {
             "points": [
               [
-                1412,
-                48
+                1740,
+                24
               ],
               [
-                1432,
-                48
-              ],
-              [
-                1432,
-                96
-              ],
-              [
-                2062,
-                96
-              ],
-              [
-                2062,
-                48
-              ],
-              [
-                2114,
-                48
+                2027,
+                24
               ]
             ],
             "labelAt": [
-              1808,
-              109
+              1870,
+              12
             ]
           },
           "edg_e31": {
             "points": [
               [
-                2114,
-                32
+                2167,
+                24
               ],
               [
-                1878,
-                32
+                2430,
+                24
               ]
             ],
             "labelAt": [
-              1996,
-              20
+              2312,
+              12
             ]
           },
           "edg_e32": {
             "points": [
               [
                 224,
-                52
+                44
               ],
               [
                 254,
-                52
+                44
               ],
               [
                 254,
-                130
+                122
               ],
               [
                 820,
-                130
+                122
               ],
               [
                 820,
-                105
+                97
               ],
               [
                 872,
-                105
+                97
               ]
             ],
             "labelAt": [
               542,
-              118
+              110
             ]
           },
           "edg_e33": {
             "points": [
               [
                 612,
-                48
+                40
               ],
               [
                 632,
-                48
+                40
               ],
               [
                 632,
-                89
+                81
               ],
               [
                 872,
-                89
+                81
               ]
             ],
             "labelAt": [
               742,
-              102
+              94
             ]
           },
           "edg_e34": {
             "points": [
               [
                 1272,
-                48
+                40
               ],
               [
                 1220,
-                48
+                40
               ],
               [
                 1220,
-                89
+                81
               ],
               [
                 1012,
-                89
+                81
               ]
             ],
             "labelAt": [
               1142,
-              102
+              94
             ]
           },
           "edg_e35": {
             "points": [
               [
                 1012,
-                105
+                97
               ],
               [
                 1032,
-                105
+                97
               ],
               [
                 1032,
-                124
+                116
               ],
               [
                 1272,
-                124
+                116
               ]
             ],
             "labelAt": [
               1142,
-              137
+              129
             ]
           },
           "edg_e36": {
             "points": [
               [
                 1272,
-                132
+                124
               ],
               [
                 1220,
-                132
+                124
               ],
               [
                 1220,
-                165
+                157
               ],
               [
                 244,
-                165
+                157
               ],
               [
                 244,
-                64
+                56
               ],
               [
                 224,
-                64
+                56
               ]
             ],
             "labelAt": [
               742,
-              178
+              170
+            ]
+          },
+          "edg_everyoneBoarded": {
+            "points": [
+              [
+                1740,
+                41
+              ],
+              [
+                1760,
+                41
+              ],
+              [
+                1760,
+                88
+              ],
+              [
+                2378,
+                88
+              ],
+              [
+                2378,
+                40
+              ],
+              [
+                2430,
+                40
+              ]
+            ],
+            "labelAt": [
+              2097,
+              107
             ]
           }
         }

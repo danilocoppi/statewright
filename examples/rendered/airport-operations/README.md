@@ -3185,14 +3185,15 @@ Starts 2026-10-01T06:00:00Z.
 | initial | priority |  |  |  |
 | priority | general | boarding.general |  |  |
 | general | final call | boarding.finalCall |  |  |
-| final call | gate closed | gate.closed | every checked-in passenger has boarded |  |
-| final call | offloading no-shows | someone is missing |  |  |
+| final call | everyone boarded? | gate.closed |  |  |
+| everyone boarded? | offloading no-shows | someone is missing |  |  |
 | offloading no-shows | gate closed | bags.offloaded |  |  |
 | priority | stopped at the gate | boarding.suspended |  |  |
 | general | stopped at the gate | boarding.suspended |  |  |
 | final call | stopped at the gate | boarding.suspended |  |  |
 | stopped at the gate | the phase it was in | boarding.resumed |  |  |
 | the phase it was in | priority | from the start |  |  |
+| everyone boarded? | gate closed | [every checked-in passenger has boarded] | every checked-in passenger has boarded |  |
 
 ## Airport operations › Into-plane fuelling
 

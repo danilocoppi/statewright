@@ -2128,6 +2128,11 @@
       "name": "Boarding phases",
       "nodes": [
         {
+          "id": "nod_everyoneBoarded",
+          "kind": "choice",
+          "name": "everyone boarded?"
+        },
+        {
           "id": "nod_phaseResume",
           "kind": "history",
           "name": "the phase it was in"
@@ -2201,23 +2206,17 @@
         },
         {
           "from": "final call",
-          "guard": {
-            "text": "every checked-in passenger has boarded"
-          },
           "id": "edg_e2z",
           "intent": "happy",
           "on": [
             "gate.closed"
           ],
-          "to": "gate closed"
+          "to": "choice:nod_everyoneBoarded"
         },
         {
           "else": true,
-          "from": "final call",
+          "from": "choice:nod_everyoneBoarded",
           "id": "edg_e30",
-          "on": [
-            "gate.closed"
-          ],
           "to": "offloading no-shows"
         },
         {
@@ -2265,6 +2264,15 @@
           "from": "history:nod_phaseResume",
           "id": "edg_e36",
           "to": "priority"
+        },
+        {
+          "from": "choice:nod_everyoneBoarded",
+          "guard": {
+            "text": "every checked-in passenger has boarded"
+          },
+          "id": "edg_everyoneBoarded",
+          "intent": "happy",
+          "to": "gate closed"
         }
       ],
       "within": {
@@ -4035,7 +4043,7 @@
     }
   ],
   "source": {
-    "content": "b2e3260c6c5d4c11660217e25beae74c15b6c5d980b84475b6d3d0431567d0bd",
+    "content": "e997711f1f496456c9076c94960d32b6e58eb85a69fcd5169f3a09c76aba7e2f",
     "format": "1.4",
     "name": "Airport operations",
     "project": "prj_airportOperations"

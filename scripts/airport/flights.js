@@ -164,16 +164,20 @@ export function flights(b) {
   ph("finalCall", "final call", { category: "processing" });
   ph("gateClosed", "gate closed", { outcome: "success", terminal: true });
   ph("offloading", "offloading no-shows", { category: "hold" });
+  // Closing the gate asks whether everyone boarded: `else` belongs to a choice, where it is the branch taken when no
+  // other holds; on a state it would always hold.
+  b.node(phases, "everyoneBoarded", { kind: "choice", name: "everyone boarded?" });
   const pt = (from, to, fields) => b.edge(phases, `nod_${from}`, `nod_${to}`, fields);
   pt("phasesStart", "priorityBoarding", {});
   pt("priorityBoarding", "generalBoarding", { ...on("boarding.general"), intent: "happy" });
   pt("generalBoarding", "finalCall", { ...on("boarding.finalCall"), intent: "happy" });
-  pt("finalCall", "gateClosed", {
-    ...on("gate.closed"),
+  pt("finalCall", "everyoneBoarded", { ...on("gate.closed"), intent: "happy" });
+  pt("everyoneBoarded", "offloading", { else: true, label: "someone is missing" });
+  pt("everyoneBoarded", "gateClosed", {
+    id: "edg_everyoneBoarded",
     guard: { text: "every checked-in passenger has boarded" },
     intent: "happy"
   });
-  pt("finalCall", "offloading", { ...on("gate.closed"), else: true, label: "someone is missing" });
   pt("offloading", "gateClosed", { ...on("bags.offloaded"), by: P("groundHandler") });
   // A boarding stopped at the gate (a security check, a fault at the bridge) resumes at the phase it was in.
   ph("boardingStopped", "stopped at the gate", { category: "hold" });

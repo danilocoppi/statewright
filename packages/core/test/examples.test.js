@@ -1,6 +1,7 @@
 import { readdirSync } from "node:fs";
 import Ajv2020 from "ajv/dist/2020.js";
 import { describe, expect, it } from "vitest";
+import { check } from "../src/rules/index.js";
 import { toJSONSchema } from "../src/schema/index.js";
 import { parse } from "../src/serialize/parse.js";
 import { stringify } from "../src/serialize/stringify.js";
@@ -55,5 +56,13 @@ describe.each([
     const scenarios = Object.entries(result.doc.annotations?.scenarios ?? {});
     expect(scenarios.length).toBeGreaterThan(0);
     for (const [id, scenario] of scenarios) expect(replay(result.doc, scenario).first, id).toBeNull();
+  });
+
+  it("has no errors under the rules", () => {
+    expect(
+      check(result.doc)
+        .filter(p => p.severity === "error")
+        .map(p => `${p.code} ${p.target}`)
+    ).toEqual([]);
   });
 });

@@ -7,6 +7,7 @@ import { fire, moves as movesOf, start as begin, step } from "../simulate/index.
 import { namePath } from "../contract/vectors.js";
 import { effectsOf } from "./effects.js";
 import { callId, entryId, idByName, pathExists, stateOf } from "./names.js";
+import { warningsOf } from "./warnings.js";
 
 /** ISO 8601 date-time in UTC, as the format writes it. */
 const INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
@@ -30,7 +31,8 @@ export function machineOf(doc, canvasId, { content, guards }) {
   const done = (session, trace) => ({
     snapshot: stamp(session),
     state: stateOf(doc, session),
-    effects: effectsOf(doc, canvasId, trace)
+    effects: effectsOf(doc, canvasId, trace),
+    warnings: warningsOf(doc, canvasId, trace)
   });
 
   /** Why an engine result is a refusal. */

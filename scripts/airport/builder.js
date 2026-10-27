@@ -80,9 +80,13 @@ export function createBuilder(doc) {
       commands.push({ type: "node.update", args: { id, set } });
     },
 
-    edge(canvas, from, to, fields = {}) {
-      edges += 1;
-      const id = unique(`edg_e${edges.toString(36)}`);
+    /**
+     * An arrow, numbered in the order arrows are made; an explicit `id` is used as given and takes no number, so an
+     * arrow added later does not renumber the ones made after it.
+     */
+    edge(canvas, from, to, { id: given, ...fields } = {}) {
+      if (given === undefined) edges += 1;
+      const id = unique(given ?? `edg_e${edges.toString(36)}`);
       commands.push({ type: "edge.add", args: { canvas, id, edge: { from, to, ...fields } } });
       return id;
     },

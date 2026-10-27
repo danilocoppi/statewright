@@ -61,13 +61,18 @@ describe("the guide's runtime (source-of-truth spec §7, §8)", () => {
       "**`start({ entry?, at, context? })`**",
       "**`send(snapshot, { event | call | timer, payload?, at })`**",
       "`effects.timers`: the `after` timers to `schedule`, once per state, each with when it is `due`, and those to `cancel`",
+      "Both answer `{ snapshot, state, effects, warnings }`",
+      "`warnings`: what the run went past without refusing it",
+      "or several edges left one node of a flow an action ran within the step (`path`, that node in the flow, instead of `state`)",
       "one whose guards all fail is spent, and `send` answers with the state as it was",
-      "synchronous), a function names a guard the design does not have, or one is asynchronous",
+      "synchronous and pure: to find a tie, a step may call a guard of a transition it does not take",
+      "a function names a guard the design does not have, or one is asynchronous",
       "Neither ever throws for the design's sake",
       "**`can(snapshot, trigger)`**",
       "**`moves(snapshot)`**",
       "A snapshot is plain JSON: the engine's session, stamped with the design's content hash",
-      "the records follow it with no change to the code, as long as the guards and actions it names exist"
+      "the records follow it with no change to the code, as long as the guards and actions it names exist",
+      "An entry's own `guard` is judged by `start` alone"
     ]) {
       expect(said).toContain(words);
     }

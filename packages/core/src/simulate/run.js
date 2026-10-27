@@ -173,39 +173,63 @@ export function dataFor(run, key, event) {
   };
 }
 
+/** A condition's expression: its own, or its named guard's in the catalog; undefined when it has none. */
+const exprOf = (run, condition) =>
+  condition.expr !== undefined ? condition.expr : run.doc.catalog.guards[condition.guard]?.expr;
+
+/**
+ * A condition's verdict (spec §16.10): its expression's, or else that of the function the caller bound to its named
+ * guard (the runtime's `guards`), which sees a copy of the instance's context and the input; null when neither
+ * decides it (a guard with nothing bound, a condition only in words). What fails throws, as it failed: `judge` and
+ * `decides` say what that means.
+ */
+function verdictOf(run, condition, key, event) {
+  const expr = exprOf(run, condition);
+  if (expr !== undefined) return truthy(evaluate(expr, dataFor(run, key, event)));
+  const decide = condition.guard ? run.guards[condition.guard] : undefined;
+  if (typeof decide !== "function") return null;
+  const verdict = decide(
+    copy(contextOf(run, key)),
+    event ? { name: event.name, payload: event.payload ?? null } : null
+  );
+  if (typeof verdict?.then === "function") throw new Error("it returned a promise, and guards are synchronous");
+  return truthy(verdict);
+}
+
 /**
  * Whether a condition holds: true or false when it can be evaluated, null when it cannot — no expression (only a
- * guard's name, a text) or one that fails (spec §5.7: the person is asked instead).
+ * guard's name, a text) or one that fails (spec §5.7: the person is asked instead). A bound function that fails stops
+ * the step.
  */
 export function judge(run, condition, key, event) {
   if (!condition) return true;
-  const expr = condition.expr !== undefined ? condition.expr : run.doc.catalog.guards[condition.guard]?.expr;
-  if (expr === undefined) return bound(run, condition, key, event);
   try {
-    return truthy(evaluate(expr, dataFor(run, key, event)));
+    return verdictOf(run, condition, key, event);
   } catch (error) {
+    const expr = exprOf(run, condition);
+    if (expr === undefined) {
+      const name = run.doc.catalog.guards[condition.guard]?.name ?? condition.guard;
+      throw new EngineError("guard", `The guard ${name} failed: ${error?.message ?? error}`, {
+        guard: condition.guard
+      });
+    }
     warn(run, "unevaluated", `${error.message}; the person is asked instead`, { expr });
     return null;
   }
 }
 
 /**
- * A named guard without an expression, decided by the function the caller bound to it (the runtime's `guards`): it
- * sees a copy of the instance's context and the input; null — a question — when nothing is bound.
+ * The verdict `judge` would give, told quietly: true or false, or null when nothing decides it — an expression that
+ * fails, a named guard with no function bound, a condition only in words, a function that throws or returns a
+ * promise. It never warns, asks or throws, so the tie checks can look past the transition taken without changing the
+ * step: an undecidable condition is skipped.
  */
-function bound(run, condition, key, event) {
-  const decide = condition.guard ? run.guards[condition.guard] : undefined;
-  if (typeof decide !== "function") return null;
-  const name = run.doc.catalog.guards[condition.guard]?.name ?? condition.guard;
+export function decides(run, condition, key, event) {
+  if (!condition) return true;
   try {
-    const verdict = decide(
-      copy(contextOf(run, key)),
-      event ? { name: event.name, payload: event.payload ?? null } : null
-    );
-    if (typeof verdict?.then === "function") throw new Error("it returned a promise, and guards are synchronous");
-    return truthy(verdict);
-  } catch (error) {
-    throw new EngineError("guard", `The guard ${name} failed: ${error?.message ?? error}`, { guard: condition.guard });
+    return verdictOf(run, condition, key, event);
+  } catch {
+    return null;
   }
 }
 
@@ -371,6 +395,16 @@ function enterChoice(run, path, event) {
     const verdict = judge(run, branch[1].guard, key, event);
     if (verdict === true) {
       taken = branch;
+      // Later branches that hold too make a tie: the first is taken, with a warning; one nothing decides is skipped.
+      const holding = branches.slice(index + 1).filter(([, later]) => decides(run, later.guard, key, event) === true);
+      if (holding.length) {
+        warn(
+          run,
+          "ambiguous",
+          `${holding.length + 1} branches of ${run.model.nameAt(path)} hold; the first in ID order is taken`,
+          { state: path, edges: [branch[0], ...holding.map(([id]) => id)] }
+        );
+      }
       break;
     }
     if (verdict === null) {
@@ -771,6 +805,37 @@ export function isEntry(run, nodeId) {
   return run.doc.canvases[run.model.top].nodes[nodeId]?.kind === "entry";
 }
 
+/**
+ * Warn when other transitions a timer drives from the same state would be taken too (spec §16.5): the armed one, first
+ * in ID order, is taken, and leaving the state cancels the rest. Each is judged quietly, with the input `receive` will
+ * get; one nothing decides is skipped.
+ */
+function timerTie(run, armed, input) {
+  const others = run.state.timers.filter(
+    item =>
+      item.kind === "after" && item.timer === armed.timer && item.state === armed.state && item.edge !== armed.edge
+  );
+  if (others.length === 0) return;
+  const key = instanceOf(run, armed.state);
+  const edges = new Map(run.model.leaving(armed.state));
+  const holds = edgeId => {
+    const edge = edges.get(edgeId);
+    return Boolean(edge) && inEffect(run, edge) && decides(run, edge.guard, key, { ...input, edge: edgeId }) === true;
+  };
+  if (!holds(armed.edge)) return;
+  const holding = others
+    .map(item => item.edge)
+    .filter(holds)
+    .sort(compareText);
+  if (holding.length === 0) return;
+  warn(
+    run,
+    "ambiguous",
+    `${holding.length + 1} transitions leave ${run.model.nameAt(armed.state)} on ${input.label}; the first in ID order is taken`,
+    { state: armed.state, edges: [armed.edge, ...holding], timer: input.label }
+  );
+}
+
 /** A timer falls due (spec §16.8): an `after` fires its transition; an `sla` or a reminder only warns. */
 export function fireTimer(run, armed) {
   run.trace.push({ type: "timerFired", ...armed });
@@ -780,7 +845,9 @@ export function fireTimer(run, armed) {
   } else if (armed.kind === "reminder") {
     warn(run, "reminder", `${name}: reminder ${armed.reminder} from its deadline`, { state: armed.state });
   } else {
-    receive(run, { kind: "timer", timer: armed.timer, state: armed.state, edge: armed.edge, label: name });
+    const input = { kind: "timer", timer: armed.timer, state: armed.state, edge: armed.edge, label: name };
+    timerTie(run, armed, input);
+    receive(run, input);
     drain(run);
   }
 }

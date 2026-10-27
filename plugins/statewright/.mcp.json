@@ -2,7 +2,7 @@
   "mcpServers": {
     "statewright": {
       "command": "npx",
-      "args": ["-y", "statewright@0.3.1", "mcp"]
+      "args": ["-y", "statewright@0.3.2", "mcp"]
     }
   }
 }

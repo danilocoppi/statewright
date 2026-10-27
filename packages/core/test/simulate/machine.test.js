@@ -435,6 +435,47 @@ describe("guards, effects and data (spec §16.3, §16.10)", () => {
     });
     expect(result.session).toBeUndefined();
   });
+
+  it("warns when two branches of a choice hold, judging each with the event (expressions)", () => {
+    const doc = docOf(
+      {
+        cnv_pick: machine(
+          "Pick",
+          {
+            nod_start: { kind: "initial" },
+            nod_waiting: { kind: "state", name: "waiting" },
+            nod_which: { kind: "choice", name: "which?" },
+            nod_big: { kind: "state", name: "big", terminal: true },
+            nod_positive: { kind: "state", name: "positive", terminal: true },
+            nod_none: { kind: "state", name: "none", terminal: true }
+          },
+          {
+            edg_begin: { from: "nod_start", to: "nod_waiting" },
+            edg_decide: { from: "nod_waiting", to: "nod_which", on: ["evt_decide"] },
+            edg_whichBig: {
+              from: "nod_which",
+              to: "nod_big",
+              guard: { expr: { ">": [{ var: "event.payload.n" }, 1] } }
+            },
+            edg_whichPositive: {
+              from: "nod_which",
+              to: "nod_positive",
+              guard: { expr: { ">": [{ var: "event.payload.n" }, 0] } }
+            },
+            edg_whichNone: { from: "nod_which", to: "nod_none", else: true }
+          }
+        )
+      },
+      { events: events("decide") }
+    );
+    const two = walk(doc, begin(doc), { do: { event: "evt_decide", payload: { n: 2 } } });
+    expect(two.session.active).toEqual(["nod_big"]);
+    expect(of(two.trace, "warning")).toEqual([
+      expect.objectContaining({ code: "ambiguous", state: "nod_which", edges: ["edg_whichBig", "edg_whichPositive"] })
+    ]);
+    const one = walk(doc, begin(doc), { do: { event: "evt_decide", payload: { n: 1 } } });
+    expect([one.session.active, of(one.trace, "warning")]).toEqual([["nod_positive"], []]);
+  });
 });
 
 describe("questions (simulator spec §5.4)", () => {

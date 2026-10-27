@@ -13,6 +13,50 @@ function withRegions() {
   return doc;
 }
 
+/** cleanDoc with an entry on cnv_m (its own fields `entry`) and these extra edges. */
+function withEntry(edges = {}, entry = {}) {
+  const doc = cleanDoc();
+  doc.catalog.guards.grd_ready = { name: "ready", description: "Ready to go" };
+  doc.canvases.cnv_m.nodes.nod_entry = { kind: "entry", name: "POST /machines", ...entry };
+  Object.assign(doc.canvases.cnv_m.edges, edges);
+  return doc;
+}
+
+/** cleanDoc whose nod_idle takes evt_go by edg_one (to nod_busy) and edg_two (to nod_done), with these fields. */
+function twoOnGo(one = {}, two = {}) {
+  const doc = cleanDoc();
+  doc.catalog.guards.grd_a = { name: "a", description: "Condition a" };
+  doc.catalog.guards.grd_b = { name: "b", description: "Condition b" };
+  doc.catalog.guards.grd_n = { name: "n is one", description: "n is one", expr: { "==": [{ var: "context.n" }, 1] } };
+  const edges = doc.canvases.cnv_m.edges;
+  delete edges.edg_idleBusy;
+  edges.edg_one = { from: "nod_idle", to: "nod_busy", on: ["evt_go"], ...one };
+  edges.edg_two = { from: "nod_idle", to: "nod_done", on: ["evt_go"], ...two };
+  return doc;
+}
+
+/** cleanDoc whose nod_busy has the interior cnv_inner: initial → working, and working → paused on stop (with `inner`). */
+function withInterior(inner = {}) {
+  const doc = cleanDoc();
+  doc.catalog.guards.grd_a = { name: "a", description: "Condition a" };
+  doc.catalog.timers.tmr_t = { name: "t", duration: "PT1H" };
+  doc.canvases.cnv_m.nodes.nod_busy.inner = { canvas: "cnv_inner" };
+  doc.canvases.cnv_inner = {
+    kind: "machine",
+    name: "Inner",
+    nodes: {
+      nod_innerInit: { kind: "initial" },
+      nod_working: { kind: "state", name: "working" },
+      nod_paused: { kind: "state", name: "paused" }
+    },
+    edges: {
+      edg_innerInitWorking: { from: "nod_innerInit", to: "nod_working" },
+      edg_workingPaused: { from: "nod_working", to: "nod_paused", on: ["evt_stop"], ...inner }
+    }
+  };
+  return doc;
+}
+
 describe("machine.region", () => {
   it("requires a region on canvases with regions and forbids it on canvases without", () => {
     const doc = withRegions();
@@ -71,6 +115,47 @@ describe("machine.multipleInitial / machine.initialEdge", () => {
   it("accepts one initial with one triggerless transition", () => {
     const doc = cleanDoc();
     expect([...targets(doc, "machine.multipleInitial"), ...targets(doc, "machine.initialEdge")]).toEqual([]);
+  });
+});
+
+describe("machine.entryEdge", () => {
+  it("reports an entry without exactly one transition: none, or two", () => {
+    expect(targets(withEntry(), "machine.entryEdge")).toEqual(["nod_entry"]);
+    const two = withEntry({
+      edg_entryIdle: { from: "nod_entry", to: "nod_idle" },
+      edg_entryBusy: { from: "nod_entry", to: "nod_busy" }
+    });
+    expect(problems(two, "machine.entryEdge").map(p => [p.target, p.severity])).toEqual([["nod_entry", "error"]]);
+  });
+  it("reports the transition of an entry that has a trigger", () => {
+    const doc = withEntry({ edg_entryIdle: { from: "nod_entry", to: "nod_idle", on: ["evt_go"] } });
+    expect(targets(doc, "machine.entryEdge")).toEqual(["edg_entryIdle"]);
+  });
+  it("reports a guarded transition leaving an entry or an initial node: nothing judges it", () => {
+    const doc = withEntry({ edg_entryIdle: { from: "nod_entry", to: "nod_idle", guard: { guard: "grd_ready" } } });
+    doc.canvases.cnv_m.edges.edg_initIdle.guard = { text: "always" };
+    expect(problems(doc, "machine.entryEdge").map(p => [p.target, p.severity])).toEqual([
+      ["edg_entryIdle", "error"],
+      ["edg_initIdle", "error"]
+    ]);
+  });
+  it("reports a guarded transition leaving a history node, and accepts an unguarded one", () => {
+    const doc = withInterior();
+    doc.canvases.cnv_inner.nodes.nod_resume = { kind: "history" };
+    doc.canvases.cnv_inner.edges.edg_resumeWorking = {
+      from: "nod_resume",
+      to: "nod_working",
+      guard: { guard: "grd_a" }
+    };
+    expect(problems(doc, "machine.entryEdge").map(p => [p.target, p.severity])).toEqual([
+      ["edg_resumeWorking", "error"]
+    ]);
+    delete doc.canvases.cnv_inner.edges.edg_resumeWorking.guard;
+    expect(targets(doc, "machine.entryEdge")).toEqual([]);
+  });
+  it("accepts one untriggered, unguarded transition, and a guard on the entry itself", () => {
+    const doc = withEntry({ edg_entryIdle: { from: "nod_entry", to: "nod_idle" } }, { guard: { guard: "grd_ready" } });
+    expect(targets(doc, "machine.entryEdge")).toEqual([]);
   });
 });
 
@@ -136,6 +221,46 @@ describe("machine.terminalWithExits", () => {
   });
 });
 
+describe("machine.timerSelfLoop", () => {
+  const loop = (timer, fields = {}) => {
+    const doc = cleanDoc();
+    doc.catalog.timers.tmr_due = { name: "due", ...timer };
+    doc.canvases.cnv_m.edges.edg_idleAgain = { from: "nod_idle", to: "nod_idle", after: "tmr_due", ...fields };
+    return doc;
+  };
+  it("reports an external self-transition on a timer whose date comes from the context", () => {
+    expect(
+      problems(loop({ at: "context.dueAt" }), "machine.timerSelfLoop").map(p => [p.target, p.severity, p.data])
+    ).toEqual([["edg_idleAgain", "error", { timer: "tmr_due" }]]);
+    expect(targets(loop({ at: "context.dueAt", offset: "PT1H" }), "machine.timerSelfLoop")).toEqual(["edg_idleAgain"]);
+  });
+  it("accepts an internal one, and one on a duration", () => {
+    expect(targets(loop({ at: "context.dueAt" }, { internal: true }), "machine.timerSelfLoop")).toEqual([]);
+    expect(targets(loop({ duration: "PT1H" }), "machine.timerSelfLoop")).toEqual([]);
+  });
+  it("accepts one that can end: a guard, or the date moved by its actions, the state's or a flow they run", () => {
+    const due = { at: "context.dueAt" };
+    const moved = [{ assign: { "context.dueAt": "2027-01-01T00:00:00Z" } }];
+    expect(
+      targets(loop(due, { guard: { expr: { "<": [{ var: "context.n" }, 3] } } }), "machine.timerSelfLoop")
+    ).toEqual([]);
+    expect(targets(loop(due, { actions: moved }), "machine.timerSelfLoop")).toEqual([]);
+    for (const hook of ["onEntry", "onExit"]) {
+      const doc = loop(due);
+      doc.canvases.cnv_m.nodes.nod_idle[hook] = moved;
+      expect(targets(doc, "machine.timerSelfLoop")).toEqual([]);
+    }
+    const byFlow = loop(due, { actions: [{ action: "act_work" }] });
+    byFlow.canvases.cnv_f.nodes.nod_tell = { kind: "assign", set: { "context.dueAt": "2027-01-01T00:00:00Z" } };
+    expect(targets(byFlow, "machine.timerSelfLoop")).toEqual([]);
+  });
+
+  it("still reports one whose actions write something else", () => {
+    const doc = loop({ at: "context.dueAt" }, { actions: [{ assign: { "context.n": 1 } }, { action: "act_work" }] });
+    expect(targets(doc, "machine.timerSelfLoop")).toEqual(["edg_idleAgain"]);
+  });
+});
+
 describe("machine.ambiguous", () => {
   it("reports two transitions on the same trigger that no guard tells apart", () => {
     const doc = cleanDoc();
@@ -174,6 +299,110 @@ describe("machine.ambiguous", () => {
   });
 });
 
+describe("machine.ambiguous, by what the runtime evaluates", () => {
+  it("reports one guard written twice, with and without a text", () => {
+    const doc = twoOnGo({ guard: { guard: "grd_a" } }, { guard: { guard: "grd_a", text: "a, in words" } });
+    expect(problems(doc, "machine.ambiguous").map(p => [p.target, p.data])).toEqual([
+      ["nod_idle", { trigger: "on:evt_go", edges: ["edg_one", "edg_two"] }]
+    ]);
+  });
+  it("reports a catalog guard beside its own expression written inline", () => {
+    const doc = twoOnGo({ guard: { guard: "grd_n" } }, { guard: { expr: { "==": [{ var: "context.n" }, 1] } } });
+    expect(targets(doc, "machine.ambiguous")).toEqual(["nod_idle"]);
+  });
+  it("accepts different guards, different texts, and a condition whose own expression differs", () => {
+    expect(targets(twoOnGo({ guard: { guard: "grd_a" } }, { guard: { guard: "grd_b" } }), "machine.ambiguous")).toEqual(
+      []
+    );
+    expect(targets(twoOnGo({ guard: { text: "a" } }, { guard: { text: "b" } }), "machine.ambiguous")).toEqual([]);
+    const own = twoOnGo(
+      { guard: { guard: "grd_a" } },
+      { guard: { guard: "grd_a", expr: { "==": [{ var: "context.n" }, 2] } } }
+    );
+    expect(targets(own, "machine.ambiguous")).toEqual([]);
+  });
+});
+
+describe("machine.unguardedBesideGuarded", () => {
+  it("reports an unguarded transition beside a guarded one on the same trigger", () => {
+    const doc = twoOnGo({ guard: { guard: "grd_a" } }, {});
+    expect(problems(doc, "machine.unguardedBesideGuarded").map(p => [p.target, p.severity, p.data])).toEqual([
+      ["nod_idle", "warning", { trigger: "on:evt_go", edges: ["edg_one", "edg_two"] }]
+    ]);
+  });
+  it("counts a self-transition", () => {
+    const doc = twoOnGo({ guard: { guard: "grd_a" } }, { to: "nod_idle", internal: true });
+    expect(targets(doc, "machine.unguardedBesideGuarded")).toEqual(["nod_idle"]);
+  });
+  it("counts an edge with two events once per event", () => {
+    const doc = twoOnGo({ on: ["evt_go", "evt_stop"] }, { guard: { guard: "grd_a" } });
+    expect(problems(doc, "machine.unguardedBesideGuarded").map(p => p.data.trigger)).toEqual(["on:evt_go"]);
+  });
+  it("treats an any node's transitions as each state's own, except where it says", () => {
+    const doc = cleanDoc();
+    doc.catalog.guards.grd_a = { name: "a", description: "Condition a" };
+    doc.canvases.cnv_m.edges.edg_idleBusy.guard = { guard: "grd_a" };
+    doc.canvases.cnv_m.nodes.nod_any = { kind: "any" };
+    doc.canvases.cnv_m.edges.edg_anyDone = { from: "nod_any", to: "nod_done", on: ["evt_go"] };
+    expect(problems(doc, "machine.unguardedBesideGuarded").map(p => [p.target, p.data.edges])).toEqual([
+      ["nod_idle", ["edg_anyDone", "edg_idleBusy"]]
+    ]);
+    doc.canvases.cnv_m.nodes.nod_any.except = ["nod_idle"];
+    expect(targets(doc, "machine.unguardedBesideGuarded")).toEqual([]);
+  });
+  it("accepts guarded transitions only, and transitions in different validity periods", () => {
+    const guarded = twoOnGo({ guard: { guard: "grd_a" } }, { guard: { guard: "grd_b" } });
+    expect(targets(guarded, "machine.unguardedBesideGuarded")).toEqual([]);
+    const periods = twoOnGo(
+      { guard: { guard: "grd_a" }, effective: { until: "2027-01-01" } },
+      { effective: { from: "2027-01-01" } }
+    );
+    expect(targets(periods, "machine.unguardedBesideGuarded")).toEqual([]);
+  });
+});
+
+describe("machine.innerShadowsOuter", () => {
+  it("reports an unguarded inner transition on a trigger an enclosing state also takes", () => {
+    expect(problems(withInterior(), "machine.innerShadowsOuter").map(p => [p.target, p.severity, p.data])).toEqual([
+      ["edg_workingPaused", "warning", { trigger: "on:evt_stop", outer: ["edg_busyDone"] }]
+    ]);
+  });
+  it("sees an enclosing state's any transitions", () => {
+    const doc = withInterior({ on: ["evt_go"] });
+    doc.canvases.cnv_m.nodes.nod_any = { kind: "any", except: ["nod_idle"] };
+    doc.canvases.cnv_m.edges.edg_anyDone = { from: "nod_any", to: "nod_done", on: ["evt_go"] };
+    expect(problems(doc, "machine.innerShadowsOuter").map(p => p.data.outer)).toEqual([["edg_anyDone"]]);
+  });
+  it("climbs through every enclosing state, guarded transitions included", () => {
+    const doc = withInterior({ guard: { guard: "grd_a" } });
+    doc.canvases.cnv_inner.nodes.nod_working.inner = { canvas: "cnv_deep" };
+    doc.canvases.cnv_deep = {
+      kind: "machine",
+      name: "Deep",
+      nodes: {
+        nod_deepInit: { kind: "initial" },
+        nod_step: { kind: "state", name: "step" },
+        nod_stepped: { kind: "state", name: "stepped" }
+      },
+      edges: {
+        edg_deepInitStep: { from: "nod_deepInit", to: "nod_step" },
+        edg_stepStepped: { from: "nod_step", to: "nod_stepped", on: ["evt_stop"] }
+      }
+    };
+    expect(problems(doc, "machine.innerShadowsOuter").map(p => [p.target, p.data.outer])).toEqual([
+      ["edg_stepStepped", ["edg_busyDone", "edg_workingPaused"]]
+    ]);
+  });
+  it("accepts a guarded inner transition, another trigger, and a timer", () => {
+    expect(targets(withInterior({ guard: { guard: "grd_a" } }), "machine.innerShadowsOuter")).toEqual([]);
+    expect(targets(withInterior({ on: ["evt_go"] }), "machine.innerShadowsOuter")).toEqual([]);
+    const timers = withInterior({ after: "tmr_t" });
+    delete timers.canvases.cnv_inner.edges.edg_workingPaused.on;
+    timers.canvases.cnv_m.edges.edg_busyDone = { from: "nod_busy", to: "nod_done", after: "tmr_t" };
+    expect(targets(timers, "machine.innerShadowsOuter")).toEqual([]);
+  });
+});
+
 describe("machine.crossRegion", () => {
   it("reports a transition between regions", () => {
     const doc = withRegions();
@@ -207,6 +436,23 @@ describe("choice.else", () => {
 
   it("accepts guarded branches with one else", () => {
     expect(targets(withChoice(), "choice.else")).toEqual([]);
+  });
+});
+
+describe("machine.elseOutsideChoice", () => {
+  it("reports else on a transition that does not leave a choice, and leaves choices to choice.else", () => {
+    const doc = cleanDoc();
+    doc.catalog.guards.grd_ready = { name: "ready", description: "Ready to go" };
+    const machine = doc.canvases.cnv_m;
+    machine.nodes.nod_pick = { kind: "choice" };
+    machine.edges.edg_idleBusy.to = "nod_pick";
+    machine.edges.edg_pickBusy = { from: "nod_pick", to: "nod_busy", guard: { guard: "grd_ready" } };
+    machine.edges.edg_pickDone = { from: "nod_pick", to: "nod_done", else: true };
+    machine.edges.edg_busyIdleElse = { from: "nod_busy", to: "nod_idle", on: ["evt_go"], else: true };
+    expect(targets(doc, "machine.elseOutsideChoice")).toEqual(["edg_busyIdleElse"]);
+    machine.edges.edg_pickIdle = { from: "nod_pick", to: "nod_idle", else: true };
+    expect(targets(doc, "machine.elseOutsideChoice")).toEqual(["edg_busyIdleElse"]);
+    expect(targets(doc, "choice.else")).toEqual(["nod_pick"]);
   });
 });
 

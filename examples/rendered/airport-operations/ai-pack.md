@@ -1166,6 +1166,7 @@ This is a generated summary of the Statewright document `prj_airportOperations` 
 | `nod_edsD6` | service node | EDS D6 | `cnv_beltNetwork` |
 | `nod_emergencyResponse` | service node | Emergency response | `cnv_airportOperations` |
 | `nod_entered` | state node | entered | `cnv_parkingStay` |
+| `nod_everyoneBoarded` | choice node | everyone boarded? | `cnv_boardingPhases` |
 | `nod_exited` | state node | exited | `cnv_parkingStay` |
 | `nod_explosiveTrace` | state node | trace detection | `cnv_alarmResolution` |
 | `nod_fees` | parallel node | the fees | `cnv_billOneOperator` |
@@ -3299,14 +3300,15 @@ machine · transitions complete · subject flight.boarding
 | `edg_e2w` | `nod_phasesStart` | `nod_priorityBoarding` | (none) |  |  |
 | `edg_e2x` | `nod_priorityBoarding` | `nod_generalBoarding` | on:evt_boardingGeneral |  |  |
 | `edg_e2y` | `nod_generalBoarding` | `nod_finalCall` | on:evt_boardingFinalCall |  |  |
-| `edg_e2z` | `nod_finalCall` | `nod_gateClosed` | on:evt_gateClosed | "every checked-in passenger has boarded" |  |
-| `edg_e30` | `nod_finalCall` | `nod_offloading` | on:evt_gateClosed |  |  |
+| `edg_e2z` | `nod_finalCall` | `nod_everyoneBoarded` | on:evt_gateClosed |  |  |
+| `edg_e30` | `nod_everyoneBoarded` | `nod_offloading` | (none) |  |  |
 | `edg_e31` | `nod_offloading` | `nod_gateClosed` | on:evt_bagsOffloaded |  |  |
 | `edg_e32` | `nod_priorityBoarding` | `nod_boardingStopped` | on:evt_boardingSuspended |  |  |
 | `edg_e33` | `nod_generalBoarding` | `nod_boardingStopped` | on:evt_boardingSuspended |  |  |
 | `edg_e34` | `nod_finalCall` | `nod_boardingStopped` | on:evt_boardingSuspended |  |  |
 | `edg_e35` | `nod_boardingStopped` | `nod_phaseResume` | on:evt_boardingResumed |  |  |
 | `edg_e36` | `nod_phaseResume` | `nod_priorityBoarding` | (none) |  |  |
+| `edg_everyoneBoarded` | `nod_everyoneBoarded` | `nod_gateClosed` | (none) | "every checked-in passenger has boarded" |  |
 
 ### `cnv_boardingProcedure` "Boarding procedure"
 

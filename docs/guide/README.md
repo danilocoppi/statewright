@@ -1292,15 +1292,17 @@ console.log(state); // no-show
 
 **`createRuntime(doc, { guards?, expect? })`** checks the design first and throws a `RuntimeError` whose `code` and
 `problems` say what is wrong: `design` when it has errors; `guards` when a named guard without an expression has no
-function in `guards` (by the guard's name, `(context, input) => boolean`, synchronous), a function names a guard the
-design does not have, or one is asynchronous; `expect` when `expect` is given and is not the design's content hash
+function in `guards` (by the guard's name, `(context, input) => boolean`, synchronous and pure: to find a tie, a step
+may call a guard of a transition it does not take, and a throw there is ignored), a function names a guard the design
+does not have, or one is asynchronous; `expect` when `expect` is given and is not the design's content hash
 (`computeHashes(doc).content`, the contract's `source.content`). It is asynchronous: the hash is computed with Web
 Crypto. `runtime.machine(key)` gives a machine that runs on its own, by its subject or its level's ID, and throws for
 any other.
 
 **`start({ entry?, at, context? })`** starts a record at the machine's initial state, or at an entry by its name or the
 call that reaches it. **`send(snapshot, { event | call | timer, payload?, at })`** sends one trigger by name: an event,
-a call (`POST /bookings`, or a webhook's name) or a timer that is due. Both answer `{ snapshot, state, effects }`:
+a call (`POST /bookings`, or a webhook's name) or a timer that is due. Both answer
+`{ snapshot, state, effects, warnings }`:
 
 - `state`: the active state by name (`open/created` inside another), or a list of them when regions hold several;
 - `effects.actions`: the actions to run, by name, with their arguments and the `transition` or the `state` (`on` its
@@ -1308,6 +1310,12 @@ a call (`POST /bookings`, or a webhook's name) or a timer that is due. Both answ
 - `effects.events`: the events the machine emitted;
 - `effects.timers`: the `after` timers to `schedule`, once per state, each with when it is `due`, and those to
   `cancel` (an SLA is the Simulator's warning, not the system's to send).
+- `warnings`: what the run went past without refusing it, each with a `code` and a `message`: `timerNotArmed` when a
+  state it entered could not arm a timer (the date its `at` reads is missing or is not a date; `state` and `timer` say
+  which), `ambiguous` when several transitions, branches of a choice or transitions on one timer held and the first in
+  ID order was taken (`state` and `edges` say where), or several edges left one node of a flow an action ran within
+  the step (`path`, that node in the flow, instead of `state`), and any other warning of the run as it came. A system
+  should not keep a step whose warnings include `timerNotArmed`, and should raise an alarm on `ambiguous`.
 
 Neither ever throws for the design's sake: what the design does not allow is `{ refused: { reason, message, … },
 snapshot }`, with the snapshot as it was. The reasons:
@@ -1321,6 +1329,10 @@ snapshot }`, with the snapshot as it was. The reasons:
 - `notDue`: the timer is not due yet (`due` says when);
 - `noEntry` (`start` only), `badInput` (no `at`, or not one trigger), and `error` (`code`: a guard function that threw,
   a machine that never settles).
+
+An entry's own `guard` is judged by `start` alone: the Simulator, scenarios and vectors do not judge it. A guard on the
+transition that leaves an entry, an initial or a history node is never judged; `validate` reports it
+(`machine.entryEdge`).
 
 **`can(snapshot, trigger)`** says whether a trigger would be taken now, `{ ok: true }` or the refusal;
 **`moves(snapshot)`** lists what can happen next — events, calls and timers, with where each leads (`to`). A snapshot is
