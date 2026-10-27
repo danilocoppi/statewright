@@ -17,6 +17,26 @@ describe("the Claude Code and Codex plugin", () => {
     }
   });
 
+  it("says where to get support, and links its privacy policy and terms, which are in the repository", () => {
+    const repo = "https://github.com/danilocoppi/statewright";
+    const links = {
+      support: `${repo}/issues`,
+      privacy: `${repo}/blob/main/PRIVACY.md`,
+      terms: `${repo}/blob/main/TERMS.md`
+    };
+    expect(json(".claude-plugin/plugin.json")).toMatchObject({
+      supportUrl: links.support,
+      privacyPolicyUrl: links.privacy,
+      termsOfServiceUrl: links.terms,
+      icon: "./.claude-plugin/icon.png"
+    });
+    expect(json(".codex-plugin/plugin.json").interface).toMatchObject({
+      privacyPolicyURL: links.privacy,
+      termsOfServiceURL: links.terms
+    });
+    for (const file of ["PRIVACY.md", "TERMS.md"]) expect(existsSync(new URL(`../../${file}`, plugin))).toBe(true);
+  });
+
   it("has a square PNG icon of 512 to 2048 px, under 2 MB", () => {
     const icon = new URL(".claude-plugin/icon.png", plugin);
     expect(existsSync(icon)).toBe(true);

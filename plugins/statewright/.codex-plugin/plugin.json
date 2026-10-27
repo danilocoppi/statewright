@@ -1,6 +1,6 @@
 {
   "name": "statewright",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Model, simulate and audit layered system specifications (architecture views, state machines and flows) in one signed JSON document, and pair with the Statewright Editor.",
   "author": {
     "name": "Danilo Coppi",
@@ -19,6 +19,8 @@
     "category": "Developer Tools",
     "capabilities": ["Read", "Write"],
     "websiteURL": "https://statewright.cpss.com.br",
+    "privacyPolicyURL": "https://github.com/danilocoppi/statewright/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/danilocoppi/statewright/blob/main/TERMS.md",
     "brandColor": "#0A66C2",
     "defaultPrompt": [
       "Pair with my Statewright Editor and design the architecture of this project.",

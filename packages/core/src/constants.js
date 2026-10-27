@@ -8,7 +8,7 @@ export const GENERATOR_NAME = "statewright";
 export const EDITOR_ORIGIN = "https://statewright.cpss.com.br";
 
 /** Must match `version` in package.json (a test enforces it). */
-export const PACKAGE_VERSION = "0.3.2";
+export const PACKAGE_VERSION = "0.3.3";
 
 /** ID prefix for every element type (spec §8.2). */
 export const ID_PREFIXES = Object.freeze({

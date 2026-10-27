@@ -1,6 +1,6 @@
 {
   "name": "statewright",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Layered system specifications (architecture, state machines, flows) as one signed JSON document.",
   "license": "MIT",
   "homepage": "https://statewright.cpss.com.br",
@@ -35,11 +35,13 @@
   "files": [
     "src",
     "schema",
-    "README.md"
+    "README.md",
+    "npm-shrinkwrap.json"
   ],
   "scripts": {
     "test": "vitest run",
     "build:schema": "node scripts/build-schema.js",
+    "build:shrinkwrap": "node scripts/build-shrinkwrap.js",
     "budgets": "vitest run --config vitest.budgets.config.js"
   },
   "dependencies": {

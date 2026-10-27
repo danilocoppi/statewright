@@ -1,6 +1,7 @@
 node_modules
 coverage
 package-lock.json
+npm-shrinkwrap.json
 dist
 dist-hosted
 test-results
