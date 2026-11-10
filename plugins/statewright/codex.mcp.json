@@ -2,7 +2,7 @@
   "mcpServers": {
     "statewright": {
       "command": "npx",
-      "args": ["-y", "statewright@0.3.4", "mcp"],
+      "args": ["-y", "statewright@0.3.5", "mcp"],
       "startup_timeout_sec": 60
     }
   }

@@ -9,6 +9,8 @@ import { machineOf } from "./machine.js";
 import { typedView } from "../roles/typed.js";
 
 export { RuntimeError } from "./errors.js";
+// The JSON Schema of a catalog type, for the system to check an event's payload before it sends it.
+export { typeSchema } from "../docs/type-schema.js";
 
 /** The conditions of a design's machines: each transition's guard, and each entry's. */
 function conditionsOf(doc) {

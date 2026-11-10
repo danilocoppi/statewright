@@ -68,6 +68,7 @@ describe("the guide's runtime (source-of-truth spec §7, §8)", () => {
       "synchronous and pure: to find a tie, a step may call a guard of a transition it does not take",
       "a function names a guard the design does not have, or one is asynchronous",
       "Neither ever throws for the design's sake",
+      "**`typeSchema(doc, typeId)`**, also from `statewright/runtime`, is the JSON Schema of a catalog type, as the package's root gives it",
       "**`can(snapshot, trigger)`**",
       "**`moves(snapshot)`**",
       "A snapshot is plain JSON: the engine's session, stamped with the design's content hash",
